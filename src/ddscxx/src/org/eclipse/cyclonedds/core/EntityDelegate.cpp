@@ -78,7 +78,7 @@ org::eclipse::cyclonedds::core::EntityDelegate::status_changes() const
     check();
     ret = dds_get_status_changes(ddsc_entity, &ddsc_mask);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Could not set internal listener.");
-    mask = ::dds::core::status::StatusMask(ddsc_mask);
+    mask = convertStatusMask(ddsc_mask);
 
     return mask;
 }
