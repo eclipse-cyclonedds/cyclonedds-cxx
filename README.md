@@ -1,92 +1,180 @@
-# CXX API for CycloneDDS
+# C++ binding for Eclipse Cyclone DDS
 
-This project provides a CXX API for [CycloneDDS](https://github.com/eclipse-cyclonedds/cyclonedds/)
+An implementation of the [ISO/IEC C++ PSM][1], or simply put, a C++ binding
+for [Eclipse Cyclone DDS][2]. Cyclone DDS is developed completely in the open
+as an Eclipse IoT project (see [eclipse-cyclone-dds][3]) with a growing list
+of [adopters][4] (if you're one of them, please add your [logo][5]). It is a
+tier-1 middleware for the Robot Operating System [ROS 2][6].
 
-[![Build Status](https://dev.azure.com/thijssassen/CXX-API/_apis/build/status/ThijsSassen.cdds-cxx?branchName=master)](https://dev.azure.com/thijssassen/CXX-API/_build/latest?definitionId=4&branchName=master)
-
-## Requirements for the CXX API
-
-In order to build the Idl compiler you need a Linux, Mac or Windows 10 machine with the following
-installed on your host:
-
-  * Git
-  * [Conan](https://conan.io/), this is needed to install build dependencies
-  * [CMake](https://cmake.org/download/), version 3.7 or later.  (Version 3.6 should work but you
-    will have to edit the ``cmake_minimum_required`` version.)
-  * [CycloneDDS](https://github.com/eclipse-cyclonedds/cyclonedds/)
-  * [CXX Idl compiler](https://github.com/ADLINK-IST/idlpp-cxx/)
+[1]: https://www.omg.org/spec/DDS-PSM-Cxx/
+[2]: https://github.com/eclipse-cyclonedds/cyclonedds/
+[3]: https://projects.eclipse.org/projects/iot.cyclonedds
+[4]: https://iot.eclipse.org/adopters/?#iot.cyclonedds
+[5]: https://github.com/EclipseFdn/iot.eclipse.org/issues/new?template=adopter_request.md
+[6]: https://index.ros.org/doc/ros2/
 
 
-## Building
+# Getting Started
 
-Building the CXX API, requires only a few simple steps. There are some small differences
-between Linux and macOS on the one hand, and Windows on the other. For Linux or macOS:
+## Building the Eclipse Cyclone DDS C++ binding
 
-    $ git clone https://github.com/ThijsSassen/cdds-cxx.git
+In order to build the C++ binding for Cyclone DDS you need a Linux, Mac or
+Windows 10 machine (or, with some caveats, a \*BSD, OpenIndiana one) with the
+following installed on your host:
+
+ * C and C++ compilers (most commonly GCC on Linux, Visual Studio on Windows,
+   Xcode on macOS);
+ * [Git](https://git-scm.com/) version control system;
+ * [CMake](https://cmake.org/download/), version 3.7 or later;
+ * [Eclipse Cyclone DDS](https://github.com/eclipse-cyclonedds/cyclonedds/)
+ * [CXX Idl compiler](https://github.com/ADLINK-IST/idlpp-cxx/)
+
+*Eclipse Cyclone DDS* and the *CXX Idl compiler* have dependencies of their
+own, most notably Java and Apache Maven. To build and install the respective
+projects, please consult their build instructions. Ensure both projects are
+installed into locations convenient for you by specifying
+`CMAKE_INSTALL_PREFIX`.
+
+> The *CXX Idl compiler* is a temporary dependency, a new IDL compiler for
+> both Eclipse Cyclone DDS and Eclipse Cyclone DDS CXX is in the works.
+
+To obtain the C++ binding for Cyclone DDS, do
+
+    $ git clone https://github.com/eclipse-cyclonedds/cyclonedds-cxx.git
+    $ cd cyclonedds-cxx
     $ mkdir build
+
+Depending on whether you want to develop applications using the C++ binding
+for Cyclone DDS or contribute to it you can follow different procedures.
+
+### For application developers
+
+To build and install the required libraries needed to develop your own
+applications using the C++ binding for Cyclone DDS requires a few simple
+steps. There are some small differences between Linux and macOS on the one
+hand, and Windows on the other. For Linux or macOS:
+
     $ cd build
-    $ cmake -DCMAKE_PREFIX_PATH="<idlpp-cxx install path>/lib/cmake/Idlpp-cxx;<CycloneDDS install path>/lib/cmake/CycloneDDS" <cmake-config_options> ..
+    $ cmake -DCMAKE_INSTALL_PREFIX=<install-location> \
+            -DCMAKE_PREFIX_PATH="<idlpp-cxx-install-location>;<cyclonedds-install-location>" \
+            ..
     $ cmake --build .
 
 and for Windows:
 
-    $ git clone https://github.com/ThijsSassen/cdds-cxx.git
-    $ mkdir build
     $ cd build
-    $ cmake -DCMAKE_PREFIX_PATH="<idlpp-cxx install path>\lib\cmake\Idlpp-cxx;<CycloneDDS install path>\lib\cmake\CycloneDDS" -G "<generator-name>" <cmake-config_options> ..
+    $ cmake -G "<generator-name>" \
+            -DCMAKE_INSTALL_PREFIX=<install-location> \
+            -DCMAKE_PREFIX_PATH="<idlpp-cxx-install-location>;<cyclonedds-install-location>" \
+            ..
     $ cmake --build .
 
-where you replace ``<generator-name>`` by one of the ways
-CMake [generators](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html) offer for
-generating build files.  For example, "Visual Studio 15 2017 Win64" would target a 64-bit build
-using Visual Studio 2017.
+where you should replace `<install-location>` by the directory under which you
+would like to install the C++ binding for Cyclone DDS and `<generator-name>`
+by one of the ways CMake [generators][6] offer for generating build files. For
+example, "Visual Studio 15 2017 Win64" would target a 64-bit build using
+Visual Studio 2017.
 
-The ``<cmake-config_options>`` can be ignored or replaced. A few of the most common options are:
--DCMAKE_INSTALL_PREFIX=``<install-location>``
--DCMAKE_BUILD_TYPE=Debug
--DBUILD_TESTING=ON, to enable testing
--DUSE_DOCS=1, to generate documentation
+To install it after a successful build, do:
 
-    $ cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-
-## Packaging
-
-If you want to package the product, the config step and build step are slightly different compared
-to how it is normally build.
-
-The -DCMAKE_INSTALL_PREFIX=``<install-location>`` option should be added to the configuration,
-where the ``<install-location>`` is replaced by the directory under which you would like to
-install the Idl compiler.
-
-During the build step, you have to specify that you want to build the install target as well.
-
-
-This would make the build look like
-
-    $ mkdir build
-    $ cd build
-    $ cmake -DCMAKE_PREFIX_PATH="<idlpp-cxx install path>/lib/cmake/Idlpp-cxx;<CycloneDDS install path>/lib/cmake/CycloneDDS" -DCMAKE_INSTALL_PREFIX=<install-location>  ..
     $ cmake --build . --target install
 
-Don't forget the generator when building on Windows.
+Which will copy everything to:
 
-After the build, required files are copied to:
+ * `<install-location>/lib`
+ * `<install-location>/bin`
+ * `<install-location>/include/ddsc`
+ * `<install-location>/share/CycloneDDS-CXX`
 
-  * ``<install-location>/lib``
-  * ``<install-location>/share``
+Depending on the installation location you may need administrator privileges.
 
-The ``<install-location>`` directory is will be used to create the package(s).
+At this point you are ready to use Eclipse Cyclone DDS in your own projects.
 
-    $ cpack
+Note that the default build type is a release build with debug information
+included (RelWithDebInfo), which is generally the most convenient type of
+build to use from applications because of a good mix between performance and
+still being able to debug things. If you'd rather have a Debug or pure Release
+build, set `CMAKE_BUILD_TYPE` accordingly.
 
-Depending on the target, you now have packages.
+[6]: https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html
+
+### Contributing to Eclipse Cyclone DDS
+
+We very much welcome all contributions to the project, whether that is
+questions, examples, bug fixes, enhancements or improvements to the
+documentation, or anything else really. When considering contributing code,
+it might be good to know that build configurations for Travis CI and AppVeyor
+are present in the repository and that there is a test suite using CTest and
+Google Test that can be built locally if desired. To build it, set the cmake
+variable `BUILD_TESTING` to on when configuring, e.g.:
+
+    $ cd build
+    $ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON ..
+    $ cmake --build .
+    $ ctest
+
+Such a build requires the presence of [Google Test][7]. You can install this
+yourself, or you can choose to instead rely on the [Conan][8] package manager
+that the CI build infrastructure also uses. In that case, install Conan and do:
+
+    $ conan install .. --build missing
+
+in the build directory prior to running `cmake`. This will automatically
+download and/or build Google Test.
+
+The Google Test Conan package is hosted in the Bincrafters Bintray repository.
+In case this repository was not added to your Conan remotes list yet (and the
+above mentioned install command failed because it could not find the
+Google Test package), you can add the Bintray repository by:
+
+    $ conan remote add <REMOTE> https://api.bintray.com/conan/bincrafters/public-conan
+
+Replace `<REMOTE>` with a name that identifies the repository (e.g. `bincrafters`).
+
+For Windows, depending on the generator, you might also need to add switches
+to select the architecture and build type, e.g.,
+
+    $ conan install -s arch=x86_64 -s build_type=Debug ..
+
+[7]: https://github.com/google/googletest
+[8]: https://conan.io/
 
 ## Documentation
 
-Documentation for the CXX API can be found [here](https://atolab.github.io/cdds-docs/api/cxx/index.html)
+The documentation is still rather limited, and at the moment only available in
+the sources (in the form of restructured text files in ``docs`` and Doxygen
+comments in the header files). The intent is to automate the process of
+building the documentation and have them available in more convenient formats
+and in the usual locations.
 
-## License
+## Building and Running the HelloWorld Example
+
+We will show you how to build and run an example program that illustrates the
+necessary steps to setup DCPS entities. The examples are built automatically
+when you build the C++ language binding for Cyclone DDS, so you don't need to
+follow these steps to be able to run the program, it is merely to illustrate
+the process.
+
+    $ mkdir helloworld
+    $ cd helloworld
+    $ cmake <install-location>/share/CycloneDDS-CXX/examples/helloworld
+    $ cmake --build .
+
+On one terminal start the application that will be responding to messages:
+
+    $ ./ddscxxHelloWorldSubscriber
+
+On another terminal, start the application that will be sending the messages:
+
+    $ ./ddscxxHelloWorldPublisher
+
+# Trademarks
+
+ * "Eclipse Cyclone DDS" and "Cyclone DDS" are trademarks of the Eclipse Foundation.
+ * "DDS" is a trademark of the Object Management Group, Inc.
+ * "ROS" is a trademark of Open Source Robotics Foundation, Inc.
+
+# License
 
 This project contains 2 types of license: Apache2 and Eclipse Public License / Eclipse Distribution License
 * The Apache2 license located in src/ddscxx/include/dds is for all files under src/ddscxx/include/dds except the details directories
