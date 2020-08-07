@@ -141,8 +141,37 @@ option(BUILD_DOCS "Build documentation." OFF)
 # since it is not required to build the project, switch to off by default.
 option(BUILD_TESTING "Build the testing tree." OFF)
 
+include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 include(CTest)
+
+set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+# Generate <Package>Config.cmake
+configure_package_config_file(
+  "PackageConfig.cmake.in"
+  "${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+
+# Generate <Package>Version.cmake
+write_basic_package_version_file(
+  "${PROJECT_NAME}Version.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion)
+
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Version.cmake"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+  COMPONENT dev)
+
+# Generate <Package>Targets.cmake
+install(
+  EXPORT ${PROJECT_NAME}
+  FILE "${PROJECT_NAME}Targets.cmake"
+  NAMESPACE "${PROJECT_NAME}::"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+  COMPONENT dev)
 
 add_subdirectory(src)
 if(BUILD_DOCS)
