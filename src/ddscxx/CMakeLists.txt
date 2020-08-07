@@ -11,8 +11,6 @@
 #
 include(GenerateExportHeader)
 
-find_package(CycloneDDS REQUIRED)
-
 set(sources
     src/dds/core/Duration.cpp
     src/dds/core/Exception.cpp
@@ -107,10 +105,6 @@ install(
             "${CMAKE_CURRENT_SOURCE_DIR}/include/org"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ddscxx"
   COMPONENT dev)
-
-if(BUILD_TESTING)
-  add_subdirectory(tests)
-endif()
 
 # Preprocess headers to make the documentation more readable. The steps
 # involved have been converted from a Python script into CMake logic. This is

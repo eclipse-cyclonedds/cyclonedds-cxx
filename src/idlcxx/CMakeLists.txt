@@ -9,5 +9,17 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-add_subdirectory(ddscxx)
-add_subdirectory(idlcxx)
+
+add_library(
+  idlcxx SHARED
+    src/backendCpp11.c
+    src/streamer_generator.c)
+
+target_include_directories(
+  idlcxx
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+
+target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
