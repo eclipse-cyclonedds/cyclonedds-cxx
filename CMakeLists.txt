@@ -140,6 +140,9 @@ option(BUILD_DOCS "Build documentation." OFF)
 # By default building the testing tree is enabled by including CTest, but
 # since it is not required to build the project, switch to off by default.
 option(BUILD_TESTING "Build the testing tree." OFF)
+# Disable building the examples by default until the Idlpp-cxx has been
+# deprecated.
+option(BUILD_EXAMPLES "Build examples." OFF)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -174,6 +177,9 @@ install(
   COMPONENT dev)
 
 add_subdirectory(src)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
 if(BUILD_DOCS)
   add_subdirectory(docs)
 endif()
