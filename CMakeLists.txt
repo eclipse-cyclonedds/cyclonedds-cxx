@@ -176,6 +176,8 @@ install(
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
   COMPONENT dev)
 
+find_package(CycloneDDS REQUIRED)
+
 add_subdirectory(src)
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
