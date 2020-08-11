@@ -34,7 +34,9 @@ static const char* primitive_incr_fmt = "  position += ";
 static const char* primitive_incr_alignment_fmt = "  position += alignmentbytes;";
 static const char* primitive_write_func_padding_fmt = "  memset(data+position,0x0,%d);  //setting padding bytes to 0x0\n";
 static const char* primitive_write_func_alignment_fmt = "  memset(data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n";
-static const char* primitive_write_func_write_fmt = "  memcpy(data+position,&obj.%s(),%d%s);  //bytes for member: %s\n";
+static const char* primitive_write_func_write_fmt = "  *(reinterpret_cast<%s*>(data+position)) = obj.%s();  //writing bytes for member: %s\n";
+static const char* primitive_write_func_seq_fmt = "sequenceentries = obj.%s()%s;  //number of entries in the sequence\n";
+static const char* primitive_write_func_seq2_fmt = "  *(reinterpret_cast<uint32_t>(data + position)) = sequenceentries;  //writing bytes for member: %s\n";
 static const char* incr_comment = "  //moving position indicator\n";
 static const char* align_comment = "  //alignment\n";
 static const char* padding_comment = "  //padding bytes\n";
@@ -44,17 +46,31 @@ static const char* struct_write_size_func_fmt = "size_t write_size(const %s &obj
 static const char* primitive_incr_pos = "  position += %d;";
 static const char* instance_size_func_calc_fmt = "  position += write_size(obj.%s(), position);\n";
 static const char* struct_read_func_fmt = "size_t read_struct(%s &obj, void *data, size_t position)";
-static const char* primitive_read_func_read_fmt = "  memcpy(&obj.%s(), data+position, %d);  //bytes for member: %s\n";
-static const char* primitive_read_func_seq_fmt = "  memcpy(&sequenceentries, data+position, %d);  //number of entries in the sequence\n";
+static const char* primitive_read_func_read_fmt = "  obj.%s() = *(reinterpret_cast<%s*>(data+position));  //reading bytes for member: %s\n";
+static const char* primitive_read_func_seq_fmt = "sequenceentries = *(reinterpret_cast<%s*>(data+position));  //number of entries in the sequence\n";
 static const char* instance_read_func_fmt = "  position = read_struct(obj.%s(), data, position);\n";
 static const char* seq_size_fmt = "%s().size";
-static const char* seq_read_reserve_fmt = "  obj.%s().reserve(sequenceentries);\n";
+static const char* seq_read_resize_fmt = "  obj.%s().resize(sequenceentries);\n";
 static const char* seq_structured_write_fmt = "  for (const auto &%s:obj.%s()) position = write_struct(%s,data,position);\n";
 static const char* seq_structured_write_size_fmt = "  for (const auto &%s:obj.%s()) position += write_size(%s, position);\n";
 static const char* seq_structured_read_copy_fmt = "  for (size_t %s = 0; %s < sequenceentries; %s++) position = read_struct(obj.%s()[%s], data, position);\n";
 static const char* seq_primitive_write_fmt = "  memcpy(data+position,obj.%s().data(),sequenceentries*%d);  //contents for %s\n";
-static const char* seq_primitive_read_fmt = "  memcpy(obj.%s().data(),data+position,sequenceentries*%d);\n";
-static const char* seq_incr_fmt = "  position += sequenceentries*%d;\n";
+static const char* seq_primitive_read_fmt = "  obj.%s().assign(data+position,data+position+sequenceentries*%d);  //putting data into container\n";
+static const char* seq_incr_fmt = "  position += sequenceentries*%d;";
+static const char* seq_entries_fmt = "  position += (obj.%s().size()%s)*%d;  //entries of sequence\n";
+
+static const char* char_cast = "char";
+static const char* bool_cast = "bool";
+static const char* int8_cast = "int8_t";
+static const char* uint8_cast = "uint8_t";
+static const char* int16_cast = "int16_t";
+static const char* uint16_cast = "uint16_t";
+static const char* int32_cast = "int32_t";
+static const char* uint32_cast = "uint32_t";
+static const char* int64_cast = "int64_t";
+static const char* uint64_cast = "uint64_t";
+static const char* float_cast = "float";
+static const char* double_cast = "double";
 
 #if 0
 static const char* fixed_pt_write_digits = "    long long int digits = ((long double)obj.%s()/pow(10.0,obj.%s().fixed_scale()));\n";
@@ -128,9 +144,10 @@ static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_instance(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_base(context_t* ctx, idl_member_t* member);
 static idl_retcode_t process_template(context_t* ctx, idl_member_t* member);
-static idl_retcode_t process_known_width(context_t* ctx, const char* name, int bytewidth, int sequence, const char* seqappend);
-static int determine_byte_width(const idl_type_spec_t* typespec);
+static idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_kind_t typespec, int sequence, const char *seqsizeappend);
+static int determine_byte_width(idl_kind_t typespec);
 static idl_retcode_t add_alignment(context_t* ctx, int bytewidth);
+static idl_retcode_t add_null(context_t* ctx, int nbytes);
 static idl_retcode_t process_member(context_t* ctx, idl_member_t* member);
 static idl_retcode_t process_module(context_t* ctx, idl_module_t* module);
 static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
@@ -175,17 +192,16 @@ static char* generatealignment(int alignto)
   return returnval;
 }
 
-int determine_byte_width(const idl_type_spec_t* typespec)
+int determine_byte_width(idl_kind_t kind)
 {
-  if ((typespec->kind & IDL_ENUM_TYPE) == IDL_ENUM_TYPE)
+  if ((kind & IDL_ENUM_TYPE) == IDL_ENUM_TYPE)
     return 4;
 
-  switch (typespec->kind)
+  switch (kind)
   {
   case IDL_INT8:
   case IDL_UINT8:
   case IDL_CHAR:
-  case IDL_WCHAR:
   case IDL_BOOL:
   case IDL_OCTET:
     return 1;
@@ -199,7 +215,6 @@ int determine_byte_width(const idl_type_spec_t* typespec)
   case IDL_INT64: //is equal to IDL_LLONG
   case IDL_UINT64: //is equal to IDL_ULLONG
   case IDL_DOUBLE:
-  case IDL_LDOUBLE:
     return 8;
   }
 
@@ -343,13 +358,11 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
     if (0 == ctx->alignmentpresent)
     {
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  size_t alignmentbytes = ");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  size_t alignmentbytes = ");
       ctx->alignmentpresent = 1;
     }
     else
     {
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  alignmentbytes = ");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  alignmentbytes = ");
     }
 
 
@@ -360,10 +373,9 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
     format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_incr_alignment_fmt);
     format_ostream_indented(0, ctx->write_stream, incr_comment);
 
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_fmt);
     format_ostream_indented(0, ctx->read_stream, buffer);
     format_ostream_indented(0, ctx->read_stream, align_comment);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_alignment_fmt);
-    format_ostream_indented(0, ctx->read_stream, incr_comment);
 
     format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_fmt);
     format_ostream_indented(0, ctx->write_size_stream, buffer);
@@ -380,14 +392,7 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
     int missingbytes = (bytewidth - (ctx->accumulatedalignment % bytewidth)) % bytewidth;
     if (0 != missingbytes)
     {
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_padding_fmt, missingbytes);
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_pos, missingbytes);
-      format_ostream_indented(0, ctx->write_size_stream, padding_comment);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_pos, missingbytes);
-      format_ostream_indented(0, ctx->read_stream, padding_comment);
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_incr_pos, missingbytes);
-      format_ostream_indented(0, ctx->write_stream, incr_comment);
-
+      add_null(ctx, missingbytes);
       ctx->accumulatedalignment = 0;
     }
   }
@@ -395,29 +400,103 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_known_width(context_t* ctx, const char* name, int bytewidth, int sequence, const char* seqappend)
+idl_retcode_t add_null(context_t* ctx, int nbytes)
+{
+  format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_padding_fmt, nbytes);
+  format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_incr_pos, nbytes);
+  format_ostream_indented(0, ctx->write_stream, incr_comment);
+  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_pos, nbytes);
+  format_ostream_indented(0, ctx->write_size_stream, padding_comment);
+  format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_pos, nbytes);
+  format_ostream_indented(0, ctx->read_stream, padding_comment);
+
+  return IDL_RETCODE_OK;
+}
+
+idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_kind_t kind, int sequence, const char *seqsizeappend)
 {
   if (NULL == ctx || NULL == name)
     return IDL_RETCODE_INVALID_PARSETREE;
 
+  const char* cast_fmt = NULL;
+  switch (kind)
+  {
+  case IDL_CHAR:
+    cast_fmt = char_cast;
+    break;
+  case IDL_BOOL:
+    cast_fmt = bool_cast;
+    break;
+  case IDL_INT8:
+    cast_fmt = int8_cast;
+    break;
+  case IDL_UINT8:
+  //case IDL_OCTET:
+    cast_fmt = uint8_cast;
+    break;
+  case IDL_INT16:
+  //case IDL_SHORT:
+    cast_fmt = int16_cast;
+    break;
+  case IDL_UINT16:
+  //case IDL_USHORT:
+    cast_fmt = uint16_cast;
+    break;
+  case IDL_INT32:
+  //case IDL_LONG:
+    cast_fmt = int32_cast;
+    break;
+  case IDL_UINT32:
+  //case IDL_ULONG:
+    cast_fmt = uint32_cast;
+    break;
+  case IDL_INT64:
+  //case IDL_LLONG:
+    cast_fmt = int64_cast;
+    break;
+  case IDL_UINT64:
+  //case IDL_ULLONG:
+    cast_fmt = uint64_cast;
+    break;
+  case IDL_FLOAT:
+    cast_fmt = float_cast;
+    break;
+  case IDL_DOUBLE:
+    cast_fmt = double_cast;
+    break;
+  }
+
+  if (NULL == cast_fmt)
+    return IDL_RETCODE_INVALID_PARSETREE;
+
+  int bytewidth = determine_byte_width(kind);
+  if (-1 == bytewidth)
+    return IDL_RETCODE_INVALID_PARSETREE;
+
   if (ctx->currentalignment != bytewidth)
     add_alignment(ctx, bytewidth);
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_write_fmt, name, bytewidth, seqappend ? seqappend : "", name);
+
 
   ctx->accumulatedalignment += bytewidth;
 
   if (0 == sequence)
   {
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_read_func_read_fmt, name, bytewidth, name);
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_read_func_read_fmt, name, cast_fmt, name);
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_write_fmt, cast_fmt, name, name);
   }
   else
   {
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  ");
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  ");
     if (0 == ctx->sequenceentriespresent)
     {
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  uint32_t sequenceentries;");
+      format_ostream_indented(0, ctx->read_stream, "uint32_t ");
+      format_ostream_indented(0, ctx->write_stream, "uint32_t ");
       ctx->sequenceentriespresent = 1;
     }
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_read_func_seq_fmt, bytewidth);
+    format_ostream_indented(0, ctx->read_stream, primitive_read_func_seq_fmt, cast_fmt);
+    format_ostream_indented(0, ctx->write_stream, primitive_write_func_seq_fmt, name, seqsizeappend);
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_seq2_fmt, name);
   }
 
   format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_pos, bytewidth);
@@ -442,89 +521,63 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
   char* cpp11name = NULL;
   idl_type_spec_t* type_spec = member->type_spec;
 
-  if ((type_spec->kind & IDL_SEQUENCE_TYPE) == IDL_SEQUENCE_TYPE)
+  if ((type_spec->kind & IDL_SEQUENCE_TYPE) == IDL_SEQUENCE_TYPE ||
+      (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE)
   {
     // FIXME: loop!?
     cpp11name = get_cpp_name(member->declarators->identifier);
 
-    size_t cpp11len = strlen(cpp11name);
-    size_t bufsize = cpp11len + strlen(seq_size_fmt) - 2 + 1;
+    size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
     char* buffer = malloc(bufsize);
     sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
-    process_known_width(ctx, buffer, 4, 1, NULL);
+    process_known_width(ctx, buffer, IDL_UINT32, 1, (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE ? "+1":"");
 
     if (buffer)
       free(buffer);
 
-    //TODO!!! determine whether the templated type is a base type or no
-    bool is_base_type = false;
-    if (is_base_type)
+    if ((type_spec->kind & IDL_WCHAR) == IDL_WCHAR)
     {
-      int bytewidth = determine_byte_width(type_spec);  //determine byte width of base type?
+      return IDL_RETCODE_INVALID_PARSETREE;
+    }
+    if (type_spec->kind & IDL_BASE_TYPE || 
+       (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE)
+    {
+      int bytewidth = 1;
 
+      if (type_spec->kind & IDL_BASE_TYPE)
+        bytewidth = determine_byte_width(type_spec->kind);  //determine byte width of base type
       if (bytewidth > 4)
         add_alignment(ctx, bytewidth);
 
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_primitive_write_fmt, cpp11name, bytewidth, cpp11name);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_read_reserve_fmt, cpp11name);
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_primitive_read_fmt, cpp11name, bytewidth);
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_incr_fmt, bytewidth);
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_incr_fmt, bytewidth);
+      format_ostream_indented(0, ctx->write_stream, incr_comment);
+      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_entries_fmt, cpp11name, (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE ? "+1" : "", bytewidth);
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_incr_fmt, bytewidth);
+      format_ostream_indented(0, ctx->read_stream, incr_comment);
     }
     else
     {
-      char* iterated_name = NULL;
-      size_t iterated_name_size = 0;
+      char* iterated_name = strdup("_1");
 
-      if (strcmp(cpp11name, "_1"))
-      {
-        iterated_name_size = strlen("_1") + 1;
-        iterated_name = malloc(iterated_name_size);
-        strcpy_s(iterated_name, iterated_name_size, "_1");
-      }
-      else
-      {
-        iterated_name_size = strlen("_2") + 1;
-        iterated_name = malloc(iterated_name_size);
-        strcpy_s(iterated_name, iterated_name_size, "_2");
-      }
+      if (0 == strcmp(cpp11name, iterated_name))
+        iterated_name = strdup("_2");
 
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_structured_write_fmt, iterated_name, cpp11name, iterated_name);
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_structured_write_size_fmt, iterated_name, cpp11name, iterated_name);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_read_reserve_fmt, cpp11name);
+      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_read_resize_fmt, cpp11name);
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_structured_read_copy_fmt, iterated_name, iterated_name, iterated_name, cpp11name, iterated_name);
 
-      if (NULL != iterated_name)
-        free(iterated_name);
+      free(iterated_name);
     }
 
     ctx->accumulatedalignment = 0;
     ctx->currentalignment = -1;
   }
-  else if ((type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE ||
-    (type_spec->kind & IDL_WSTRING_TYPE) == IDL_WSTRING_TYPE)
+  else if ((type_spec->kind & IDL_WSTRING_TYPE) == IDL_WSTRING_TYPE)
   {
-    // FIXME: loop!?
-    cpp11name = get_cpp_name(member->declarators->identifier);
-    size_t cpp11len = strlen(cpp11name);
-    size_t bufsize = cpp11len + strlen(seq_size_fmt) - 2 + 1;
-    char* buffer = malloc(bufsize);
-    sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
-    process_known_width(ctx, buffer, 4, 1, "+1");
-
-    if (buffer)
-      free(buffer);
-
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_primitive_write_fmt, cpp11name, 1, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_read_reserve_fmt, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_primitive_read_fmt, cpp11name, 1);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_incr_fmt, 1);
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_incr_fmt, 1);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_incr_fmt, 1);
-
-    ctx->accumulatedalignment = 0;
-    ctx->currentalignment = -1;
+    return IDL_RETCODE_INVALID_PARSETREE;
   }
 #if 0
   else if ((type_spec->kind & IDL_FIXED_PT_TYPE) == IDL_FIXED_PT_TYPE)
@@ -661,11 +714,7 @@ idl_retcode_t process_base(context_t* ctx, idl_member_t* member)
     return IDL_RETCODE_INVALID_PARSETREE;
 
   char* cpp11name = get_cpp_name(member->declarators->identifier);
-  int bytewidth = determine_byte_width(member->type_spec);
-  if (1 > bytewidth)
-    return IDL_RETCODE_PARSE_ERROR;
-
-  process_known_width(ctx, cpp11name, bytewidth, 0, NULL);
+  process_known_width(ctx, cpp11name, member->type_spec->kind, 0, "");
 
   free(cpp11name);
   return IDL_RETCODE_OK;
