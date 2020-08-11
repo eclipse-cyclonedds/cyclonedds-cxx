@@ -32,11 +32,11 @@ static const char* primitive_calc_alignment_modulo_fmt = "(%d - position%%%d)%%%
 static const char* primitive_calc_alignment_shift_fmt = "(%d - position&%#x)&%#x;";
 static const char* primitive_incr_fmt = "  position += ";
 static const char* primitive_incr_alignment_fmt = "  position += alignmentbytes;";
-static const char* primitive_write_func_padding_fmt = "  memset(data+position,0x0,%d);  //setting padding bytes to 0x0\n";
-static const char* primitive_write_func_alignment_fmt = "  memset(data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n";
-static const char* primitive_write_func_write_fmt = "  *(reinterpret_cast<%s*>(data+position)) = obj.%s();  //writing bytes for member: %s\n";
+static const char* primitive_write_func_padding_fmt = "  memset((char*)data+position,0x0,%d);  //setting padding bytes to 0x0\n";
+static const char* primitive_write_func_alignment_fmt = "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n";
+static const char* primitive_write_func_write_fmt = "  *((%s*)((char*)data+position)) = obj.%s();  //writing bytes for member: %s\n";
 static const char* primitive_write_func_seq_fmt = "sequenceentries = obj.%s()%s;  //number of entries in the sequence\n";
-static const char* primitive_write_func_seq2_fmt = "  *(reinterpret_cast<uint32_t>(data + position)) = sequenceentries;  //writing bytes for member: %s\n";
+static const char* primitive_write_func_seq2_fmt = "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing bytes for member: %s\n";
 static const char* incr_comment = "  //moving position indicator\n";
 static const char* align_comment = "  //alignment\n";
 static const char* padding_comment = "  //padding bytes\n";
@@ -46,16 +46,16 @@ static const char* struct_write_size_func_fmt = "size_t write_size(const %s &obj
 static const char* primitive_incr_pos = "  position += %d;";
 static const char* instance_size_func_calc_fmt = "  position += write_size(obj.%s(), position);\n";
 static const char* struct_read_func_fmt = "size_t read_struct(%s &obj, void *data, size_t position)";
-static const char* primitive_read_func_read_fmt = "  obj.%s() = *(reinterpret_cast<%s*>(data+position));  //reading bytes for member: %s\n";
-static const char* primitive_read_func_seq_fmt = "sequenceentries = *(reinterpret_cast<%s*>(data+position));  //number of entries in the sequence\n";
+static const char* primitive_read_func_read_fmt = "  obj.%s() = *((%s*)((char*)data+position));  //reading bytes for member: %s\n";
+static const char* primitive_read_func_seq_fmt = "sequenceentries = *((%s*)((char*)data+position));  //number of entries in the sequence\n";
 static const char* instance_read_func_fmt = "  position = read_struct(obj.%s(), data, position);\n";
 static const char* seq_size_fmt = "%s().size";
 static const char* seq_read_resize_fmt = "  obj.%s().resize(sequenceentries);\n";
 static const char* seq_structured_write_fmt = "  for (const auto &%s:obj.%s()) position = write_struct(%s,data,position);\n";
 static const char* seq_structured_write_size_fmt = "  for (const auto &%s:obj.%s()) position += write_size(%s, position);\n";
 static const char* seq_structured_read_copy_fmt = "  for (size_t %s = 0; %s < sequenceentries; %s++) position = read_struct(obj.%s()[%s], data, position);\n";
-static const char* seq_primitive_write_fmt = "  memcpy(data+position,obj.%s().data(),sequenceentries*%d);  //contents for %s\n";
-static const char* seq_primitive_read_fmt = "  obj.%s().assign(data+position,data+position+sequenceentries*%d);  //putting data into container\n";
+static const char* seq_primitive_write_fmt = "  memcpy((char*)data+position,obj.%s().data(),sequenceentries*%d);  //contents for %s\n";
+static const char* seq_primitive_read_fmt = "  obj.%s().assign((char*)data+position,(char*)data+position+sequenceentries*%d);  //putting data into container\n";
 static const char* seq_incr_fmt = "  position += sequenceentries*%d;";
 static const char* seq_entries_fmt = "  position += (obj.%s().size()%s)*%d;  //entries of sequence\n";
 
@@ -519,33 +519,37 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
     return IDL_RETCODE_INVALID_PARSETREE;
 
   char* cpp11name = NULL;
-  idl_type_spec_t* type_spec = member->type_spec;
+  idl_kind_t member_kind = member->type_spec->kind;
 
-  if ((type_spec->kind & IDL_SEQUENCE_TYPE) == IDL_SEQUENCE_TYPE ||
-      (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE)
+  if (member_kind == IDL_SEQUENCE_TYPE ||
+      member_kind == IDL_STRING_TYPE)
   {
     // FIXME: loop!?
     cpp11name = get_cpp_name(member->declarators->identifier);
 
+    if (member_kind == IDL_SEQUENCE_TYPE)
+      //change member_kind to the type of the sequence template
+      member_kind = member->type_spec->sequence_type.type_spec->kind;
+
     size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
     char* buffer = malloc(bufsize);
     sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
-    process_known_width(ctx, buffer, IDL_UINT32, 1, (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE ? "+1":"");
+    process_known_width(ctx, buffer, IDL_UINT32, 1, member_kind  == IDL_STRING_TYPE ? "+1":"");
 
     if (buffer)
       free(buffer);
 
-    if ((type_spec->kind & IDL_WCHAR) == IDL_WCHAR)
+    if (member_kind == IDL_WCHAR)
     {
       return IDL_RETCODE_INVALID_PARSETREE;
     }
-    if (type_spec->kind & IDL_BASE_TYPE || 
-       (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE)
+    else if (member_kind & IDL_BASE_TYPE ||
+             member_kind == IDL_STRING_TYPE)
     {
       int bytewidth = 1;
 
-      if (type_spec->kind & IDL_BASE_TYPE)
-        bytewidth = determine_byte_width(type_spec->kind);  //determine byte width of base type
+      if (member_kind & IDL_BASE_TYPE)
+        bytewidth = determine_byte_width(member_kind);  //determine byte width of base type
       if (bytewidth > 4)
         add_alignment(ctx, bytewidth);
 
@@ -553,7 +557,7 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_primitive_read_fmt, cpp11name, bytewidth);
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_incr_fmt, bytewidth);
       format_ostream_indented(0, ctx->write_stream, incr_comment);
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_entries_fmt, cpp11name, (type_spec->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE ? "+1" : "", bytewidth);
+      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_entries_fmt, cpp11name, (member_kind & IDL_STRING_TYPE) == IDL_STRING_TYPE ? "+1" : "", bytewidth);
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_incr_fmt, bytewidth);
       format_ostream_indented(0, ctx->read_stream, incr_comment);
     }
@@ -575,12 +579,12 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
     ctx->accumulatedalignment = 0;
     ctx->currentalignment = -1;
   }
-  else if ((type_spec->kind & IDL_WSTRING_TYPE) == IDL_WSTRING_TYPE)
+  else if (member_kind == IDL_WSTRING_TYPE)
   {
     return IDL_RETCODE_INVALID_PARSETREE;
   }
 #if 0
-  else if ((type_spec->kind & IDL_FIXED_PT_TYPE) == IDL_FIXED_PT_TYPE)
+  else if (member_kind == IDL_FIXED_PT_TYPE)
   {
     //fputs("fixed point type template classes not supported at this time", stderr);
 
