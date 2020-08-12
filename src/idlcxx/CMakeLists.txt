@@ -23,3 +23,7 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
 
 target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()

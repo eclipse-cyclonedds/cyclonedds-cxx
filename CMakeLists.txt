@@ -114,6 +114,8 @@ if(CMAKE_VERSION VERSION_LESS 3.13)
   endmacro()
 endif()
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
+
 # Make it easy to enable Clang and GCC analyzers
 if(USE_SANITIZER)
   string(REGEX REPLACE " " "" USE_SANITIZER "${USE_SANITIZER}")

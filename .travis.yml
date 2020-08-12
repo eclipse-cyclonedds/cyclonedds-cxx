@@ -185,7 +185,7 @@ build_cyclonedds: &build_cyclonedds
   - git clone --single-branch --branch ${CYCLONEDDS_BRANCH} ${CYCLONEDDS_REPOSITORY} cyclonedds
   - mkdir cyclonedds/build
   - cd cyclonedds/build
-  #- conan install -b missing -s arch=${ARCH} -s build_type=${BUILD_TYPE} ..
+  - conan install -b missing -s arch=${ARCH} -s build_type=${BUILD_TYPE} ..
   - cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install
           -DUSE_SANITIZER=${SANITIZER}
