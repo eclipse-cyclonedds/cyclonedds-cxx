@@ -431,7 +431,7 @@ idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_kind_t k
     cast_fmt = int8_cast;
     break;
   case IDL_UINT8:
-  //case IDL_OCTET:
+  case IDL_OCTET:
     cast_fmt = uint8_cast;
     break;
   case IDL_INT16:
