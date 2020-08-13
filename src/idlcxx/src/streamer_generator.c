@@ -21,6 +21,7 @@
 #define strcpy_s(ptr, len, str) strcpy(ptr, str)
 #define sprintf_s(ptr, len, str, ...) sprintf(ptr, str, __VA_ARGS__)
 #define strcat_s(ptr, len, str) strcat(ptr, str)
+#define _strdup(str) strdup(str)
 #endif
 
 #define format_ostream_indented(depth,ostr,str,...) \
@@ -563,10 +564,10 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
     }
     else
     {
-      char* iterated_name = strdup("_1");
+      char* iterated_name = _strdup("_1");
 
       if (0 == strcmp(cpp11name, iterated_name))
-        iterated_name = strdup("_2");
+        iterated_name = _strdup("_2");
 
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_structured_write_fmt, iterated_name, cpp11name, iterated_name);
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_structured_write_size_fmt, iterated_name, cpp11name, iterated_name);
@@ -593,7 +594,9 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
     format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_byte, cpp11name);
 
     for (size_t i = 0; i < sizeof(fixed_pt_write_fill) / sizeof(const char*); i++)
+    {
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_fill[i]);
+    }
     format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_position, cpp11name);
     format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  ");
     format_ostream_indented(0, ctx->write_size_stream, fixed_pt_write_position, cpp11name);
@@ -602,7 +605,9 @@ idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
     format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_byte, cpp11name);
 
     for (size_t i = 0; i < sizeof(fixed_pt_read_fill) / sizeof(const char*); i++)
+    {
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_fill[i]);
+    }
 
     format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_assign, cpp11name, cpp11name);
     format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_position, cpp11name);
