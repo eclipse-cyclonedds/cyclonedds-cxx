@@ -486,7 +486,7 @@ dds::sub::detail::DataReader<T>::common_constructor(
     org::eclipse::cyclonedds::sub::qos::DataReaderQosDelegate drQos = qos_.delegate();
 
     dds_entity_t ddsc_sub = (dds_entity_t)(sub_.delegate()->get_ddsc_entity());
-    dds_entity_t ddsc_top = ((dds::topic::Topic<T>)this->AnyDataReaderDelegate::td_).delegate()->get_ddsc_entity();
+    dds_entity_t ddsc_top = this->AnyDataReaderDelegate::td_.delegate()->get_ddsc_entity();
 
     // get and validate the ddsc qos
     drQos.check();
