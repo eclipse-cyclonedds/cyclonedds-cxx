@@ -46,16 +46,6 @@ public:
             const dds::sub::AnyDataReader& dr,
             const dds::sub::status::DataState& state_filter);
 
-    template<typename FUN>
-    ReadConditionDelegate(
-            const dds::sub::AnyDataReader& dr,
-            const dds::sub::status::DataState& state_filter,
-            const FUN& functor)
-                :  QueryDelegate(dr, state_filter)
-     {
-        this->set_handler<FUN>(functor);
-     }
-
     ~ReadConditionDelegate();
 
     void init(ObjectDelegate::weak_ref_type weak_ref);

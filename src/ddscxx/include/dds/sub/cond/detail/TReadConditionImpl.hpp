@@ -45,7 +45,7 @@ template <typename FUN>
 TReadCondition<DELEGATE>::TReadCondition(
         const dds::sub::AnyDataReader& dr,
         const dds::sub::status::DataState& status,
-        FUN& functor)
+        FUN functor)
 {
     this->set_ref(new DELEGATE(dr, status));
 	this->delegate()->init(this->impl_);

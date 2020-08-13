@@ -45,7 +45,7 @@ template <typename DELEGATE>
 template <typename FUN>
 TQueryCondition<DELEGATE>::TQueryCondition(
     const dds::sub::Query& query,
-    const dds::sub::status::DataState& status, FUN& functor)
+    const dds::sub::status::DataState& status, FUN functor)
 {
     this->set_ref(new DELEGATE(query.data_reader(),
                                query.expression(), query.delegate()->parameters(), status));
@@ -80,7 +80,7 @@ TQueryCondition<DELEGATE>::TQueryCondition(
     const std::string& expression,
     const std::vector<std::string>& params,
     const dds::sub::status::DataState& status,
-    FUN& functor)
+    FUN functor)
 {
     this->set_ref(new DELEGATE(dr, expression, params, status));
     this->delegate()->set_handler(functor);
