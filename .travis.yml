@@ -1,5 +1,59 @@
 language: cpp
 
+# Coverity Scan can be configured through Travis addons, but this allows for
+# more control over the build instructions and does not require the addition
+# of a coverity_scan branch in the repository. travisci_build_coverity_scan.sh
+# does more checks before it decides to download Coverity (around 500M), but
+# these instructions assume Coverity Scan is not installed if the directory
+# does not exist and expects the download to fail if the token is incorrect.
+# Coverity Scan quota are not checked as the Coverity enabled build must only
+# run from cron.
+install_coverity: &install_coverity
+  if [ "${COVERITY_SCAN}" = "true" ]; then
+    COV_DIR="/tmp/coverity-scan-analysis";
+    COV_ARC="/tmp/cov-analysis-${COV_PLATFORM}.tgz";
+    test ! -d "${COV_DIR}" &&
+      mkdir -p "${COV_DIR}" &&
+      curl -s -S -F project="${TRAVIS_REPO_SLUG}"
+                 -F token="${COVERITY_SCAN_TOKEN}"
+                 -o "${COV_ARC}"
+                 "https://scan.coverity.com/download/cxx/${COV_PLATFORM}" &&
+      tar -xzf "${COV_ARC}" -C "${COV_DIR}";
+    COV_ANALYSIS=$(find "${COV_DIR}" -type d -name "cov-analysis*");
+    eval "export PATH=\"${PATH}:${COV_ANALYSIS}/bin\"";
+    eval "export SCAN_BUILD=\"cov-build --dir cov-int\"";
+    cov-configure --comptype ${COV_COMPTYPE} --compiler ${CC} --template;
+  fi
+
+submit_to_coverity_scan: &submit_to_coverity_scan
+  if [ "${COVERITY_SCAN}" = "true" ]; then
+    tar -czf analysis-results.tgz cov-int &&
+    curl -s -S -F project="${TRAVIS_REPO_SLUG}"
+               -F token="${COVERITY_SCAN_TOKEN}"
+               -F file=@analysis-results.tgz
+               -F version=$(git rev-parse --short HEAD)
+               -F description="Travis CI build"
+               -F email="${COVERITY_SCAN_EMAIL:=cyclonedds-inbox@eclipse.org}"
+               "https://scan.coverity.com/builds";
+  fi
+
+# Coverity Scan does not support GCC 10 yet.
+ubuntu1804_gcc7: &ubuntu1804_gcc7
+  os: linux
+  dist: bionic
+  compiler: gcc
+  addons:
+    apt:
+      update: true
+  before_install:
+    - eval "export CC=gcc CXX=g++"
+    - eval "export COV_COMPTYPE=gcc COV_PLATFORM=linux64"
+    - eval "export BUILD_TOOL_OPTIONS='-j 4'"
+    - eval "export GENERATOR='Unix Makefiles'"
+  install:
+    - *install_coverity
+    - pip install conan --upgrade --user
+
 ubuntu1804_gcc10: &ubuntu1804_gcc10
   os: linux
   dist: bionic
@@ -99,6 +153,9 @@ windows1809_vs2017: &windows1809_vs2017
 
 jobs:
   include:
+    - <<: *ubuntu1804_gcc7
+      env: [ ARCH=x86_64, BUILD_TYPE=Debug, COVERITY_SCAN=true ]
+      if: type = cron
     - <<: *ubuntu1804_gcc10
       env: [ ARCH=x86_64, BUILD_TYPE=Debug ]
     - <<: *ubuntu1804_gcc10
@@ -141,9 +198,12 @@ script:
   - *build_cyclonedds
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+  - ${SCAN_BUILD} cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install
           -DCMAKE_PREFIX_PATH=${TRAVIS_BUILD_DIR}/cyclonedds/build/install
           -DUSE_SANITIZER=${SANITIZER}
           -G "${GENERATOR}" ..
   - cmake --build . --config ${BUILD_TYPE} --target install -- ${BUILD_TOOL_OPTIONS}
+
+after_success:
+  - *submit_to_coverity_scan
