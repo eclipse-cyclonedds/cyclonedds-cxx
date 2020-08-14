@@ -13,6 +13,8 @@ tier-1 middleware for the Robot Operating System [ROS 2][6].
 [5]: https://github.com/EclipseFdn/iot.eclipse.org/issues/new?template=adopter_request.md
 [6]: https://index.ros.org/doc/ros2/
 
+[![Build Status](https://travis-ci.com/eclipse-cyclonedds/cyclonedds-cxx.svg?branch=master)](https://travis-ci.com/eclipse-cyclonedds/cyclonedds-cxx)
+[![Coverity Status](https://scan.coverity.com/projects/21579/badge.svg)](https://scan.coverity.com/projects/eclipse-cyclonedds-cyclonedds-cxx)
 
 # Getting Started
 
