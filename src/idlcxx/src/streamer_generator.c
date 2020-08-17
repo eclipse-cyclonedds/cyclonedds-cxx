@@ -29,6 +29,9 @@ if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
 format_ostream(ostr, str, ##__VA_ARGS__);
 
 static const char* struct_write_func_fmt = "size_t write_struct(const %s &obj, void *data, size_t position)";
+static const char* union_switch_fmt = "  switch (obj._d())\n";
+static const char* union_case_fmt = "  case %s:\n";
+static const char* union_case_ending = "  break;\n";
 static const char* primitive_calc_alignment_modulo_fmt = "(%d - position%%%d)%%%d;";
 static const char* primitive_calc_alignment_shift_fmt = "(%d - position&%#x)&%#x;";
 static const char* primitive_incr_fmt = "  position += ";
@@ -142,9 +145,9 @@ struct context
 
 
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
-static idl_retcode_t process_instance(context_t* ctx, idl_node_t* node);
-static idl_retcode_t process_base(context_t* ctx, idl_member_t* member);
-static idl_retcode_t process_template(context_t* ctx, idl_member_t* member);
+static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl);
+static idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec);
+static idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec);
 static idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_kind_t typespec, int sequence, const char *seqsizeappend);
 static int determine_byte_width(idl_kind_t typespec);
 static idl_retcode_t add_alignment(context_t* ctx, int bytewidth);
@@ -152,8 +155,12 @@ static idl_retcode_t add_null(context_t* ctx, int nbytes);
 static idl_retcode_t process_member(context_t* ctx, idl_member_t* member);
 static idl_retcode_t process_module(context_t* ctx, idl_module_t* module);
 static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
-static context_t* create_context(idl_streamer_output_t* str, const char* ctx);
+static idl_retcode_t process_case(context_t* ctx, idl_case_t* _case);
+static idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label);
+static context_t* create_context(idl_streamer_output_t* str, const char* name);
+static context_t* child_context(context_t* ctx, const char* name);
 static void flush_streams(context_t* ctx);
+static void transfer_streams(context_t* ctx);
 static void close_context(context_t* ctx);
 
 static char* generatealignment(int alignto)
@@ -224,10 +231,9 @@ int determine_byte_width(idl_kind_t kind)
 
 idl_streamer_output_t* create_idl_streamer_output()
 {
-  idl_streamer_output_t* ptr = malloc(sizeof(idl_streamer_output_t));
+  idl_streamer_output_t* ptr = calloc(sizeof(idl_streamer_output_t),1);
   if (NULL != ptr)
   {
-    ptr->indent = 0;
     ptr->header_stream = create_idl_ostream(NULL);
     ptr->impl_stream = create_idl_ostream(NULL);
   }
@@ -256,27 +262,32 @@ idl_ostream_t* get_idl_streamer_header_buf(const idl_streamer_output_t* str)
   return str->header_stream;
 }
 
-context_t* create_context(idl_streamer_output_t* str, const char* ctx)
+context_t* create_context(idl_streamer_output_t* str, const char* name)
 {
-  context_t* ptr = malloc(sizeof(context_t));
+  context_t* ptr = calloc(sizeof(context_t),1);
   if (NULL != ptr)
   {
     ptr->str = str;
-    ptr->depth = 0;
-    size_t len = strlen(ctx) + 1;
-    ptr->context = malloc(len);
-    ptr->context[strlen(ctx)] = 0x0;
-    strcpy_s(ptr->context, len, ctx);
+    ptr->context = _strdup(name);
     ptr->currentalignment = -1;
-    ptr->accumulatedalignment = 0;
-    ptr->alignmentpresent = 0;
-    ptr->sequenceentriespresent = 0;
     ptr->header_stream = create_idl_ostream(NULL);
     ptr->write_size_stream = create_idl_ostream(NULL);
     ptr->write_stream = create_idl_ostream(NULL);
     ptr->read_stream = create_idl_ostream(NULL);
   }
-  //printf("new context generated: %s\n", ctx);
+  return ptr;
+}
+
+context_t* child_context(context_t* ctx, const char* name)
+{
+  context_t *ptr = create_context(ctx->str, name);
+
+  if (NULL != ptr)
+  {
+    ptr->parent = ctx;
+    ptr->depth = ctx->depth + 1;
+  }
+
   return ptr;
 }
 
@@ -288,10 +299,25 @@ void flush_streams(context_t* ctx)
   transfer_ostream_buffer(ctx->read_stream, ctx->str->impl_stream);
 }
 
+void transfer_streams(context_t* ctx)
+{
+  if (NULL == ctx->parent)
+  {
+    flush_streams(ctx);
+  }
+  else
+  {
+    transfer_ostream_buffer(ctx->header_stream, ctx->parent->header_stream);
+    transfer_ostream_buffer(ctx->write_stream, ctx->parent->write_stream);
+    transfer_ostream_buffer(ctx->write_size_stream, ctx->parent->write_size_stream);
+    transfer_ostream_buffer(ctx->read_stream, ctx->parent->read_stream);
+  }
+}
+
 void close_context(context_t* ctx)
 {
   //add closing statements to buffers?
-  flush_streams(ctx);
+  transfer_streams(ctx);
 
   destruct_idl_ostream(ctx->header_stream);
   destruct_idl_ostream(ctx->write_stream);
@@ -303,9 +329,7 @@ void close_context(context_t* ctx)
 
 idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
 {
-  if (idl_is_member(node))
-    process_member(ctx, (idl_member_t*)node);
-  else if (idl_is_module(node))
+  if (idl_is_module(node))
     process_module(ctx, (idl_module_t*)node);
   else if (idl_is_constructed_type(node))
     process_constructed(ctx, node);
@@ -321,22 +345,26 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
   if (NULL == ctx || NULL == member)
     return IDL_RETCODE_INVALID_PARSETREE;
   if (member->type_spec->kind & IDL_BASE_TYPE)
-    process_base(ctx, member);
+    // FIXME: this probably needs to loop to find the correct declarator?
+    process_base(ctx, member->declarators, member->type_spec);
   else if (member->type_spec->kind & IDL_SCOPED_NAME)
-    process_instance(ctx, &member->node);
+    // FIXME: this probably needs to loop to find the correct declarator?
+    process_instance(ctx, member->declarators);
   else if (member->type_spec->kind & IDL_TEMPL_TYPE)
-    process_template(ctx, member);
+    // FIXME: this probably needs to loop to find the correct declarator?
+    process_template(ctx, member->declarators, member->type_spec);
+
+  if (member->node.next)
+    process_member(ctx, (idl_member_t*)member->node.next);
 
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_instance(context_t* ctx, idl_node_t* node)
+idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl)
 {
-  if (NULL == ctx || NULL == node)
+  if (NULL == ctx || NULL == decl)
     return IDL_RETCODE_INVALID_PARSETREE;
-  idl_member_t* member = (idl_member_t*)node;
-  // FIXME: this probably needs to loop?
-  char* cpp11name = get_cpp_name(member->declarators->identifier);
+  char* cpp11name = get_cpp_name(decl->identifier);
   format_ostream_indented(ctx->depth * 2, ctx->write_stream, instance_write_func_fmt, cpp11name);
   format_ostream_indented(ctx->depth * 2, ctx->read_stream, instance_read_func_fmt, cpp11name);
   format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, instance_size_func_calc_fmt, cpp11name);
@@ -514,23 +542,23 @@ idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_kind_t k
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_template(context_t* ctx, idl_member_t* member)
+idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec)
 {
-  if (NULL == ctx || NULL == member)
+  if (NULL == ctx || NULL == decl || NULL == tspec)
     return IDL_RETCODE_INVALID_PARSETREE;
 
   char* cpp11name = NULL;
-  idl_kind_t member_kind = member->type_spec->kind;
+  idl_kind_t member_kind = tspec->kind;
 
   if (member_kind == IDL_SEQUENCE_TYPE ||
       member_kind == IDL_STRING_TYPE)
   {
     // FIXME: loop!?
-    cpp11name = get_cpp_name(member->declarators->identifier);
+    cpp11name = get_cpp_name(decl->identifier);
 
     if (member_kind == IDL_SEQUENCE_TYPE)
       //change member_kind to the type of the sequence template
-      member_kind = member->type_spec->sequence_type.type_spec->kind;
+      member_kind = tspec->sequence_type.type_spec->kind;
 
     size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
     char* buffer = malloc(bufsize);
@@ -631,22 +659,22 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
   if (module->definitions)
   {
     char* cpp11name = get_cpp_name(module->identifier);
-    format_ostream_indented(ctx->depth * 2, ctx->str->header_stream, namespace_declaration_fmt, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->str->header_stream, "{\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->str->impl_stream, namespace_declaration_fmt, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->str->impl_stream, "{\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->header_stream, namespace_declaration_fmt, cpp11name);
+    format_ostream_indented(ctx->depth * 2, ctx->header_stream, "{\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, namespace_declaration_fmt, cpp11name);
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "{\n\n");
 
-    context_t* newctx = create_context(ctx->str, cpp11name);
-    newctx->depth = ctx->depth + 1;
+    flush_streams(ctx);
 
+    context_t* newctx = child_context(ctx, cpp11name);
     process_node(newctx, (idl_node_t*)module->definitions);
-
     close_context(newctx);
-
     free(newctx);
 
-    format_ostream_indented(ctx->depth * 2, ctx->str->header_stream, "}\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->str->impl_stream, "}\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->header_stream, "}\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "}\n\n");
+
+    flush_streams(ctx);
 
     free(cpp11name);
   }
@@ -661,51 +689,75 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
 
   char* cpp11name = NULL;
 
-  if (idl_is_struct(node))
+  if (idl_is_struct(node) ||
+      idl_is_union(node))
   {
-    idl_struct_type_t* _struct = (idl_struct_type_t*)node;
-    if (_struct->members)
+    if (idl_is_struct(node))
+      cpp11name = get_cpp_name(((idl_struct_type_t*)node)->identifier);
+    else if (idl_is_union(node))
+      cpp11name = get_cpp_name(((idl_union_type_t*)node)->identifier);
+
+    format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_write_func_fmt, cpp11name);
+    format_ostream_indented(0, ctx->header_stream, ";\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, struct_write_func_fmt, cpp11name);
+    format_ostream_indented(0, ctx->write_stream, "\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "{\n");
+
+    format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_write_size_func_fmt, cpp11name);
+    format_ostream_indented(0, ctx->header_stream, ";\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, struct_write_size_func_fmt, cpp11name);
+    format_ostream_indented(0, ctx->write_size_stream, "\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "{\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  size_t position = offset;\n");
+
+    format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_read_func_fmt, cpp11name);
+    format_ostream_indented(0, ctx->header_stream, ";\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, struct_read_func_fmt, cpp11name);
+    format_ostream_indented(0, ctx->read_stream, "\n");
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "{\n");
+
+    ctx->currentalignment = -1;
+    ctx->alignmentpresent = 0;
+    ctx->sequenceentriespresent = 0;
+    ctx->accumulatedalignment = 0;
+
+    if (idl_is_struct(node))
     {
-      cpp11name = get_cpp_name(_struct->identifier);
-      format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_write_func_fmt, cpp11name);
-      format_ostream_indented(0, ctx->header_stream, ";\n\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, struct_write_func_fmt, cpp11name);
-      format_ostream_indented(0, ctx->write_stream, "\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "{\n");
-
-      format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_write_size_func_fmt, cpp11name);
-      format_ostream_indented(0, ctx->header_stream, ";\n\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, struct_write_size_func_fmt, cpp11name);
-      format_ostream_indented(0, ctx->write_size_stream, "\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "{\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  size_t position = offset;\n");
-
-      format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_read_func_fmt, cpp11name);
-      format_ostream_indented(0, ctx->header_stream, ";\n\n");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, struct_read_func_fmt, cpp11name);
-      format_ostream_indented(0, ctx->read_stream, "\n");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "{\n");
-
-      ctx->currentalignment = -1;
-      ctx->alignmentpresent = 0;
-      ctx->sequenceentriespresent = 0;
-      ctx->accumulatedalignment = 0;
-
-      process_node(ctx, (idl_node_t*)_struct->members);
-
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  return position-offset;\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "}\n\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  return position;\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "}\n\n");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  return position;\n");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "}\n\n");
-
-      //flush_streams(ctx);
+      idl_struct_type_t* _struct = (idl_struct_type_t*)node;
+      if (_struct->members)
+        process_member(ctx, _struct->members);
     }
-  }
-  else if (idl_is_union(node))
-  {
-    fputs("union constructed types not supported at this time", stderr);
+    else if (idl_is_union(node))
+    {
+      idl_union_type_t* _union = (idl_union_type_t*)node;
+
+      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_switch_fmt);
+      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  {\n");
+      format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_switch_fmt);
+      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  {\n");
+      format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_switch_fmt);
+      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
+
+      //add discriminator entry
+
+      if (_union->cases)
+      {
+        context_t* newctx = child_context(ctx, cpp11name);
+        process_case(newctx, _union->cases);
+        close_context(newctx);
+      }
+
+      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  }\n");
+      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  }\n");
+      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  }\n");
+    }
+
+    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  return position-offset;\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "}\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  return position;\n");
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "}\n\n");
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  return position;\n");
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "}\n\n");
   }
   else if (idl_is_enum(node))
   {
@@ -717,13 +769,106 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_base(context_t* ctx, idl_member_t* member)
+idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
 {
-  if (NULL == ctx || NULL == member)
+  if (_case->case_labels)
+    process_case_label(ctx, _case->case_labels);
+
+  format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  {\n");
+  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  {\n");
+  format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
+  ctx->depth++;
+
+  if (_case->type_spec->kind & IDL_BASE_TYPE)
+    process_base(ctx, _case->declarator, _case->type_spec);
+  else if (_case->type_spec->kind & IDL_SCOPED_NAME)
+    process_instance(ctx, _case->declarator);
+  else if (_case->type_spec->kind & IDL_TEMPL_TYPE)
+    process_template(ctx, _case->declarator, _case->type_spec);
+  else
+    return IDL_RETCODE_PARSE_ERROR;
+
+  ctx->depth--;
+  format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  }\n");
+  format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_case_ending);
+  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  }\n");
+  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_case_ending);
+  format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  }\n");
+  format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_case_ending);
+
+  if (_case->node.next)
+    process_case(ctx, (idl_case_t*)_case->node.next);
+  return IDL_RETCODE_OK;
+}
+
+idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
+{
+  idl_const_expr_t* ce = label->const_expr;
+  char* buffer = NULL;
+  if (ce->kind & IDL_LITERAL)
+  {
+    idl_literal_t* lit = (idl_literal_t*)ce;
+    void* ptr = &(lit->value);
+    if ((ce->kind & IDL_INTEGER_TYPE) == IDL_INTEGER_TYPE)
+    {
+      int n = snprintf(buffer, 0, lit->negative ? "-%lu" : "%lu", *((uint64_t*)ptr));
+      if (n < 0)
+        return IDL_RETCODE_PARSE_ERROR;
+      buffer = malloc((size_t)n + 1);
+      snprintf(buffer, (size_t)n + 1, lit->negative ? "-%lu" : "%lu", *((uint64_t*)ptr));
+    }
+    else if ((ce->kind & IDL_BOOL) == IDL_BOOL)
+    {
+      buffer = _strdup(*((bool*)ptr) ? "true" : "false");
+    }
+    else if ((ce->kind & IDL_STRING_TYPE) == IDL_STRING_TYPE)
+    {
+      size_t len = strlen((char*)ptr)+3;
+      buffer = malloc(len);
+      snprintf(buffer, len, "\"%s\"", (char*)ptr);
+    }
+  }
+  else if (ce->kind & IDL_SCOPED_NAME)
+  {
+    idl_scoped_name_t* sn = (idl_scoped_name_t*)ce;
+    //use reference to determine type?
+    size_t len = strlen(sn->name)+3;
+    buffer = malloc(len);
+    snprintf(buffer, len, "\"%s\"", sn->name);
+  }
+  else
+    return IDL_RETCODE_PARSE_ERROR;
+  /*
+  else if (ce->kind & IDL_BINARY_EXPR)
+  {
+    idl_binary_expr_t* be = (idl_binary_expr_t*)ce;
+  }
+  else if (ce->kind & IDL_UNARY_EXPR)
+  {
+    idl_unary_expr_t* ue = (idl_unary_expr_t*)ce;
+  }
+  */
+
+  if (buffer)
+  {
+    format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_case_fmt, buffer);
+    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_case_fmt, buffer);
+    format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_case_fmt, buffer);
+  }
+
+  if (label->node.next)
+    process_case_label(ctx, (idl_case_label_t*)label->node.next);
+
+  return IDL_RETCODE_OK;
+}
+
+idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec)
+{
+  if (NULL == ctx || NULL == decl || NULL == tspec)
     return IDL_RETCODE_INVALID_PARSETREE;
 
-  char* cpp11name = get_cpp_name(member->declarators->identifier);
-  process_known_width(ctx, cpp11name, member->type_spec->kind, 0, "");
+  char* cpp11name = get_cpp_name(decl->identifier);
+  process_known_width(ctx, cpp11name, tspec->kind, 0, "");
 
   free(cpp11name);
   return IDL_RETCODE_OK;
