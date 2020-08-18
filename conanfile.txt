@@ -1,0 +1,7 @@
+[requires]
+gtest/1.8.1@bincrafters/stable
+cunit/2.1-3@bincrafters/stable
+OpenSSL/1.1.1c@conan/stable
+
+[generators]
+cmake
