@@ -50,7 +50,7 @@ static const char* struct_write_size_func_fmt = "size_t write_size(const %s &obj
 static const char* primitive_incr_pos = "  position += %d;";
 static const char* instance_size_func_calc_fmt = "  position += write_size(obj.%s(), position);\n";
 static const char* struct_read_func_fmt = "size_t read_struct(%s &obj, void *data, size_t position)";
-static const char* primitive_read_func_read_fmt = "  obj.%s() = *((%s*)((char*)data+position));  //reading bytes for member: %s\n";
+static const char* primitive_read_func_read_fmt = "  obj.%s(*((%s*)((char*)data+position)));  //reading bytes for member: %s\n";
 static const char* primitive_read_func_seq_fmt = "sequenceentries = *((%s*)((char*)data+position));  //number of entries in the sequence\n";
 static const char* instance_read_func_fmt = "  position = read_struct(obj.%s(), data, position);\n";
 static const char* seq_size_fmt = "%s().size";
@@ -203,7 +203,7 @@ static char* generatealignment(int alignto)
 int determine_byte_width(idl_kind_t kind)
 {
   if ((kind & IDL_ENUM_TYPE) == IDL_ENUM_TYPE)
-    return 4;
+    kind = IDL_UINT32;
 
   switch (kind)
   {
@@ -344,13 +344,13 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
 {
   if (NULL == ctx || NULL == member)
     return IDL_RETCODE_INVALID_PARSETREE;
-  if (member->type_spec->kind & IDL_BASE_TYPE)
+  if ((member->type_spec->kind & IDL_BASE_TYPE) == IDL_BASE_TYPE)
     // FIXME: this probably needs to loop to find the correct declarator?
     process_base(ctx, member->declarators, member->type_spec);
-  else if (member->type_spec->kind & IDL_SCOPED_NAME)
+  else if ((member->type_spec->kind & IDL_SCOPED_NAME) == IDL_SCOPED_NAME)
     // FIXME: this probably needs to loop to find the correct declarator?
     process_instance(ctx, member->declarators);
-  else if (member->type_spec->kind & IDL_TEMPL_TYPE)
+  else if ((member->type_spec->kind & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
     // FIXME: this probably needs to loop to find the correct declarator?
     process_template(ctx, member->declarators, member->type_spec);
 
@@ -572,12 +572,12 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     {
       return IDL_RETCODE_INVALID_PARSETREE;
     }
-    else if (member_kind & IDL_BASE_TYPE ||
-             member_kind == IDL_STRING_TYPE)
+    else if ((member_kind & IDL_BASE_TYPE) == IDL_BASE_TYPE ||
+              member_kind == IDL_STRING_TYPE)
     {
       int bytewidth = 1;
 
-      if (member_kind & IDL_BASE_TYPE)
+      if ((member_kind & IDL_BASE_TYPE) == IDL_BASE_TYPE)
         bytewidth = determine_byte_width(member_kind);  //determine byte width of base type
       if (bytewidth > 4)
         add_alignment(ctx, bytewidth);
@@ -730,15 +730,23 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     else if (idl_is_union(node))
     {
       idl_union_type_t* _union = (idl_union_type_t*)node;
+      idl_switch_type_spec_t* st = _union->switch_type_spec;
 
+      idl_kind_t disc_kind = st->kind;
+      if ((disc_kind & IDL_FLOATING_PT_TYPE) == IDL_FLOATING_PT_TYPE)
+        return IDL_RETCODE_INVALID_PARSETREE;
+      else if ((disc_kind & IDL_ENUMERATOR) == IDL_ENUMERATOR)
+        disc_kind = IDL_ULONG;
+      else if ((disc_kind & IDL_BASE_TYPE) != IDL_BASE_TYPE)
+        return IDL_RETCODE_INVALID_PARSETREE;
+
+      process_known_width(ctx, "_d", disc_kind, 0, "");
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_switch_fmt);
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  {\n");
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_switch_fmt);
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  {\n");
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_switch_fmt);
       format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
-
-      //add discriminator entry
 
       if (_union->cases)
       {
@@ -779,11 +787,11 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
   ctx->depth++;
 
-  if (_case->type_spec->kind & IDL_BASE_TYPE)
+  if ((_case->type_spec->kind & IDL_BASE_TYPE) == IDL_BASE_TYPE)
     process_base(ctx, _case->declarator, _case->type_spec);
-  else if (_case->type_spec->kind & IDL_SCOPED_NAME)
+  else if ((_case->type_spec->kind & IDL_SCOPED_NAME) == IDL_SCOPED_NAME)
     process_instance(ctx, _case->declarator);
-  else if (_case->type_spec->kind & IDL_TEMPL_TYPE)
+  else if ((_case->type_spec->kind & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
     process_template(ctx, _case->declarator, _case->type_spec);
   else
     return IDL_RETCODE_PARSE_ERROR;
@@ -805,7 +813,7 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 {
   idl_const_expr_t* ce = label->const_expr;
   char* buffer = NULL;
-  if (ce->kind & IDL_LITERAL)
+  if ((ce->kind & IDL_LITERAL) == IDL_LITERAL)
   {
     idl_literal_t* lit = (idl_literal_t*)ce;
     void* ptr = &(lit->value);
@@ -828,7 +836,7 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
       snprintf(buffer, len, "\"%s\"", (char*)ptr);
     }
   }
-  else if (ce->kind & IDL_SCOPED_NAME)
+  else if ((ce->kind & IDL_SCOPED_NAME) == IDL_SCOPED_NAME)
   {
     idl_scoped_name_t* sn = (idl_scoped_name_t*)ce;
     //use reference to determine type?
