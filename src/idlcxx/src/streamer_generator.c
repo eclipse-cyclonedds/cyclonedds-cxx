@@ -28,6 +28,18 @@
 if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
 format_ostream(ostr, str, ##__VA_ARGS__);
 
+#define format_write_stream(indent,ctx,str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_stream, str, ##__VA_ARGS__);
+
+#define format_write_size_stream(indent,ctx,str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_size_stream, str, ##__VA_ARGS__);
+
+#define format_read_stream(indent,ctx,str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, str, ##__VA_ARGS__);
+
+#define format_header_stream(indent,ctx,str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->header_stream, str, ##__VA_ARGS__);
+
 static const char* struct_write_func_fmt = "size_t write_struct(const %s &obj, void *data, size_t position)";
 static const char* union_switch_fmt = "  switch (obj._d())\n";
 static const char* union_case_fmt = "  case %s:\n";
@@ -351,9 +363,9 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl)
   if (NULL == ctx || NULL == decl)
     return IDL_RETCODE_INVALID_PARSETREE;
   char* cpp11name = get_cpp_name(decl->identifier);
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, instance_write_func_fmt, cpp11name);
-  format_ostream_indented(ctx->depth * 2, ctx->read_stream, instance_read_func_fmt, cpp11name);
-  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, instance_size_func_calc_fmt, cpp11name);
+  format_write_stream(1, ctx, instance_write_func_fmt, cpp11name);
+  format_read_stream(1, ctx, instance_read_func_fmt, cpp11name);
+  format_write_size_stream(1, ctx, instance_size_func_calc_fmt, cpp11name);
 
   ctx->accumulatedalignment = 0;
   ctx->currentalignment = -1;
@@ -371,29 +383,29 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
   {
     if (0 == ctx->alignmentpresent)
     {
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  size_t alignmentbytes = ");
+      format_write_stream(1, ctx, "  size_t alignmentbytes = ");
       ctx->alignmentpresent = 1;
     }
     else
     {
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  alignmentbytes = ");
+      format_write_stream(1, ctx, "  alignmentbytes = ");
     }
 
 
     char* buffer = generatealignment(bytewidth);
-    format_ostream_indented(0, ctx->write_stream, buffer);
-    format_ostream_indented(0, ctx->write_stream, align_comment);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_alignment_fmt);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_incr_alignment_fmt);
-    format_ostream_indented(0, ctx->write_stream, incr_comment);
+    format_write_stream(0, ctx, buffer);
+    format_write_stream(0, ctx, align_comment);
+    format_write_stream(1, ctx, primitive_write_func_alignment_fmt);
+    format_write_stream(1, ctx, primitive_incr_alignment_fmt);
+    format_write_stream(0, ctx, incr_comment);
 
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_fmt);
-    format_ostream_indented(0, ctx->read_stream, buffer);
-    format_ostream_indented(0, ctx->read_stream, align_comment);
+    format_read_stream(1, ctx, primitive_incr_fmt);
+    format_read_stream(0, ctx, buffer);
+    format_read_stream(0, ctx, align_comment);
 
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_fmt);
-    format_ostream_indented(0, ctx->write_size_stream, buffer);
-    format_ostream_indented(0, ctx->write_size_stream, align_comment);
+    format_write_size_stream(1, ctx, primitive_incr_fmt);
+    format_write_size_stream(0, ctx, buffer);
+    format_write_size_stream(0, ctx, align_comment);
 
     ctx->accumulatedalignment = 0;
     ctx->currentalignment = bytewidth;
@@ -416,13 +428,13 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
 
 idl_retcode_t add_null(context_t* ctx, int nbytes)
 {
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_padding_fmt, nbytes);
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_incr_pos, nbytes);
-  format_ostream_indented(0, ctx->write_stream, incr_comment);
-  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_pos, nbytes);
-  format_ostream_indented(0, ctx->write_size_stream, padding_comment);
-  format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_pos, nbytes);
-  format_ostream_indented(0, ctx->read_stream, padding_comment);
+  format_write_stream(1, ctx, primitive_write_func_padding_fmt, nbytes);
+  format_write_stream(1, ctx, primitive_incr_pos, nbytes);
+  format_write_stream(0, ctx, incr_comment);
+  format_write_size_stream(1, ctx, primitive_incr_pos, nbytes);
+  format_write_size_stream(0, ctx, padding_comment);
+  format_read_stream(1, ctx, primitive_incr_pos, nbytes);
+  format_read_stream(0, ctx, padding_comment);
 
   return IDL_RETCODE_OK;
 }
@@ -505,34 +517,34 @@ idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t m
 
   if (0 == sequence)
   {
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_read_func_read_fmt, name, cast_fmt, name);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_write_fmt, cast_fmt, name, name);
+    format_read_stream(1, ctx, primitive_read_func_read_fmt, name, cast_fmt, name);
+    format_write_stream(1, ctx, primitive_write_func_write_fmt, cast_fmt, name, name);
   }
   else
   {
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  ");
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  ");
+    format_read_stream(1, ctx, "  ");
+    format_write_stream(1, ctx, "  ");
     if (0 == ctx->sequenceentriespresent)
     {
-      format_ostream_indented(0, ctx->read_stream, "uint32_t ");
-      format_ostream_indented(0, ctx->write_stream, "uint32_t ");
+      format_read_stream(0, ctx, "uint32_t ");
+      format_write_stream(0, ctx, "uint32_t ");
       ctx->sequenceentriespresent = 1;
     }
-    format_ostream_indented(0, ctx->read_stream, primitive_read_func_seq_fmt, cast_fmt);
-    format_ostream_indented(0, ctx->write_stream, primitive_write_func_seq_fmt, name, seqsizeappend);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_write_func_seq2_fmt, name);
+    format_read_stream(0, ctx, primitive_read_func_seq_fmt, cast_fmt);
+    format_write_stream(0, ctx, primitive_write_func_seq_fmt, name, seqsizeappend);
+    format_write_stream(1, ctx, primitive_write_func_seq2_fmt, name);
   }
 
-  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, primitive_incr_pos, bytewidth);
-  format_ostream_indented(0, ctx->write_size_stream, "  //bytes for member: ");
-  format_ostream_indented(0, ctx->write_size_stream, name);
-  format_ostream_indented(0, ctx->write_size_stream, "\n");
+  format_write_size_stream(1, ctx, primitive_incr_pos, bytewidth);
+  format_write_size_stream(0, ctx, "  //bytes for member: ");
+  format_write_size_stream(0, ctx, name);
+  format_write_size_stream(0, ctx, "\n");
 
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, primitive_incr_pos, bytewidth);
-  format_ostream_indented(0, ctx->write_stream, incr_comment);
+  format_write_stream(1, ctx, primitive_incr_pos, bytewidth);
+  format_write_stream(0, ctx, incr_comment);
 
-  format_ostream_indented(ctx->depth * 2, ctx->read_stream, primitive_incr_pos, bytewidth);
-  format_ostream_indented(0, ctx->read_stream, incr_comment);
+  format_read_stream(1, ctx, primitive_incr_pos, bytewidth);
+  format_read_stream(0, ctx, incr_comment);
 
   return IDL_RETCODE_OK;
 }
@@ -581,13 +593,13 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       if (bytewidth > 4)
         add_alignment(ctx, bytewidth);
 
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_primitive_write_fmt, cpp11name, bytewidth, cpp11name);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_primitive_read_fmt, cpp11name, cast_fmt, cast_fmt);
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_incr_fmt, bytewidth);
-      format_ostream_indented(0, ctx->write_stream, incr_comment);
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_entries_fmt, cpp11name, (member_mask & IDL_STRING) == IDL_STRING ? "+1" : "", bytewidth);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_incr_fmt, bytewidth);
-      format_ostream_indented(0, ctx->read_stream, incr_comment);
+      format_write_stream(1, ctx, seq_primitive_write_fmt, cpp11name, bytewidth, cpp11name);
+      format_read_stream(1, ctx, seq_primitive_read_fmt, cpp11name, cast_fmt, cast_fmt);
+      format_write_stream(1, ctx, seq_incr_fmt, bytewidth);
+      format_write_stream(0, ctx, incr_comment);
+      format_write_size_stream(1, ctx, seq_entries_fmt, cpp11name, (member_mask & IDL_STRING) == IDL_STRING ? "+1" : "", bytewidth);
+      format_read_stream(1, ctx, seq_incr_fmt, bytewidth);
+      format_read_stream(0, ctx, incr_comment);
     }
     else
     {
@@ -596,10 +608,10 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       if (0 == strcmp(cpp11name, iterated_name))
         iterated_name = _strdup("_2");
 
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, seq_structured_write_fmt, iterated_name, cpp11name, iterated_name);
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, seq_structured_write_size_fmt, iterated_name, cpp11name, iterated_name);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_read_resize_fmt, cpp11name);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, seq_structured_read_copy_fmt, iterated_name, iterated_name, iterated_name, cpp11name, iterated_name);
+      format_write_stream(1, ctx, seq_structured_write_fmt, iterated_name, cpp11name, iterated_name);
+      format_write_size_stream(1, ctx, seq_structured_write_size_fmt, iterated_name, cpp11name, iterated_name);
+      format_read_stream(1, ctx, seq_read_resize_fmt, cpp11name);
+      format_read_stream(1, ctx, seq_structured_read_copy_fmt, iterated_name, iterated_name, iterated_name, cpp11name, iterated_name);
 
       free(iterated_name);
     }
@@ -616,29 +628,29 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
   {
     //fputs("fixed point type template classes not supported at this time", stderr);
 
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  {\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_digits, cpp11name, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_byte, cpp11name);
+    format_write_stream(1, ctx, "  {\n");
+    format_write_stream(1, ctx, fixed_pt_write_digits, cpp11name, cpp11name);
+    format_write_stream(1, ctx, fixed_pt_write_byte, cpp11name);
 
     for (size_t i = 0; i < sizeof(fixed_pt_write_fill) / sizeof(const char*); i++)
     {
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_fill[i]);
+      format_write_stream(1, ctx, fixed_pt_write_fill[i]);
     }
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, fixed_pt_write_position, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  ");
-    format_ostream_indented(0, ctx->write_size_stream, fixed_pt_write_position, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  }\n");
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_byte, cpp11name);
+    format_write_stream(1, ctx, fixed_pt_write_position, cpp11name);
+    format_write_size_stream(1, ctx, "  ");
+    format_write_size_stream(0, ctx, fixed_pt_write_position, cpp11name);
+    format_write_stream(1, ctx, "  }\n");
+    format_read_stream(1, ctx, "  {\n");
+    format_read_stream(1, ctx, fixed_pt_read_byte, cpp11name);
 
     for (size_t i = 0; i < sizeof(fixed_pt_read_fill) / sizeof(const char*); i++)
     {
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_fill[i]);
+      format_read_stream(1, ctx, fixed_pt_read_fill[i]);
     }
 
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_assign, cpp11name, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, fixed_pt_read_position, cpp11name);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  }\n");
+    format_read_stream(1, ctx, fixed_pt_read_assign, cpp11name, cpp11name);
+    format_read_stream(1, ctx, fixed_pt_read_position, cpp11name);
+    format_read_stream(1, ctx, "  }\n");
 
     ctx->accumulatedalignment = 0;
     ctx->currentalignment = -1;
@@ -659,22 +671,23 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
   {
     char* cpp11name = get_cpp_name(module->identifier);
 
-    flush_streams(ctx);
-
     context_t* newctx = child_context(ctx, cpp11name);
 
-    format_ostream_indented(ctx->depth * 2, newctx->header_stream, namespace_declaration_fmt, cpp11name);
-    format_ostream_indented(ctx->depth * 2, newctx->header_stream, "{\n\n");
-    format_ostream_indented(ctx->depth * 2, newctx->write_stream, namespace_declaration_fmt, cpp11name);
-    format_ostream_indented(ctx->depth * 2, newctx->write_stream, "{\n\n");
+    format_header_stream(1, ctx, namespace_declaration_fmt, cpp11name);
+    format_header_stream(1, ctx, "{\n\n");
+    format_write_stream(1, ctx, namespace_declaration_fmt, cpp11name);
+    format_write_stream(1, ctx, "{\n\n");
+
+    flush_streams(ctx);
 
     process_node(newctx, (idl_node_t*)module->definitions);
 
-    format_ostream_indented(ctx->depth * 2, newctx->header_stream, namespace_closure_fmt, cpp11name);
-    format_ostream_indented(ctx->depth * 2, newctx->read_stream, namespace_closure_fmt, cpp11name);
-
     close_context(newctx);
     free(newctx);
+
+    format_header_stream(1, ctx, namespace_closure_fmt, cpp11name);
+    format_read_stream(1, ctx, namespace_closure_fmt, cpp11name);
+
 
     free(cpp11name);
   }
@@ -697,24 +710,24 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     else if (idl_is_union(node))
       cpp11name = get_cpp_name(((idl_union_t*)node)->identifier);
 
-    format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_write_func_fmt, cpp11name);
-    format_ostream_indented(0, ctx->header_stream, ";\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, struct_write_func_fmt, cpp11name);
-    format_ostream_indented(0, ctx->write_stream, "\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "{\n");
+    format_header_stream(1, ctx, struct_write_func_fmt, cpp11name);
+    format_header_stream(0, ctx, ";\n\n");
+    format_write_stream(1, ctx, struct_write_func_fmt, cpp11name);
+    format_write_stream(0, ctx, "\n");
+    format_write_stream(1, ctx, "{\n");
 
-    format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_write_size_func_fmt, cpp11name);
-    format_ostream_indented(0, ctx->header_stream, ";\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, struct_write_size_func_fmt, cpp11name);
-    format_ostream_indented(0, ctx->write_size_stream, "\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "{\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  size_t position = offset;\n");
+    format_header_stream(1, ctx, struct_write_size_func_fmt, cpp11name);
+    format_header_stream(0, ctx, ";\n\n");
+    format_write_size_stream(1, ctx, struct_write_size_func_fmt, cpp11name);
+    format_write_size_stream(0, ctx, "\n");
+    format_write_size_stream(1, ctx, "{\n");
+    format_write_size_stream(1, ctx, "  size_t position = offset;\n");
 
-    format_ostream_indented(ctx->depth * 2, ctx->header_stream, struct_read_func_fmt, cpp11name);
-    format_ostream_indented(0, ctx->header_stream, ";\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, struct_read_func_fmt, cpp11name);
-    format_ostream_indented(0, ctx->read_stream, "\n");
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "{\n");
+    format_header_stream(1, ctx, struct_read_func_fmt, cpp11name);
+    format_header_stream(0, ctx, ";\n\n");
+    format_read_stream(1, ctx, struct_read_func_fmt, cpp11name);
+    format_read_stream(0, ctx, "\n");
+    format_read_stream(1, ctx, "{\n");
 
     ctx->currentalignment = -1;
     ctx->alignmentpresent = 0;
@@ -740,14 +753,14 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       else if ((disc_mask & IDL_BASE_TYPE) != IDL_BASE_TYPE)
         return IDL_RETCODE_INVALID_PARSETREE;
 
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_clear_func);
+      format_read_stream(1, ctx, union_clear_func);
       process_known_width(ctx, "_d", disc_mask, 0, "");
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_switch_fmt);
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  {\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_switch_fmt);
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  {\n");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_switch_fmt);
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
+      format_write_size_stream(1, ctx, union_switch_fmt);
+      format_write_size_stream(1, ctx, "  {\n");
+      format_write_stream(1, ctx, union_switch_fmt);
+      format_write_stream(1, ctx, "  {\n");
+      format_read_stream(1, ctx, union_switch_fmt);
+      format_read_stream(1, ctx, "  {\n");
 
       if (_union->cases)
       {
@@ -760,17 +773,17 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       ctx->accumulatedalignment = 0;
       ctx->alignmentpresent = 0;
 
-      format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  }\n");
-      format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  }\n");
-      format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  }\n");
+      format_write_stream(1, ctx, "  }\n");
+      format_write_size_stream(1, ctx, "  }\n");
+      format_read_stream(1, ctx, "  }\n");
     }
 
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  return position-offset;\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "}\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  return position;\n");
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, "}\n\n");
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  return position;\n");
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, "}\n\n");
+    format_write_size_stream(1, ctx, "  return position-offset;\n");
+    format_write_size_stream(1, ctx, "}\n\n");
+    format_write_stream(1, ctx, "  return position;\n");
+    format_write_stream(1, ctx, "}\n\n");
+    format_read_stream(1, ctx, "  return position;\n");
+    format_read_stream(1, ctx, "}\n\n");
   }
   else if (idl_is_enum(node))
   {
@@ -787,9 +800,9 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   if (_case->case_labels)
     process_case_label(ctx, _case->case_labels);
 
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  {\n");
-  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  {\n");
-  format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  {\n");
+  format_write_stream(1, ctx, "  {\n");
+  format_write_size_stream(1, ctx, "  {\n");
+  format_read_stream(1, ctx, "  {\n");
   ctx->depth++;
 
   if ((_case->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE)
@@ -802,12 +815,12 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
     return IDL_RETCODE_PARSE_ERROR;
 
   ctx->depth--;
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  }\n");
-  format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_case_ending);
-  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  }\n");
-  format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_case_ending);
-  format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  }\n");
-  format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_case_ending);
+  format_write_stream(1, ctx, "  }\n");
+  format_write_stream(1, ctx, union_case_ending);
+  format_write_size_stream(1, ctx, "  }\n");
+  format_write_size_stream(1, ctx, union_case_ending);
+  format_read_stream(1, ctx, "  }\n");
+  format_read_stream(1, ctx, union_case_ending);
 
   //reset alignment to 4
   ctx->currentalignment = 4;
@@ -852,9 +865,9 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 
   if (buffer)
   {
-    format_ostream_indented(ctx->depth * 2, ctx->write_stream, union_case_fmt, buffer);
-    format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_case_fmt, buffer);
-    format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_case_fmt, buffer);
+    format_write_stream(1, ctx, union_case_fmt, buffer);
+    format_write_size_stream(1, ctx, union_case_fmt, buffer);
+    format_read_stream(1, ctx, union_case_fmt, buffer);
   }
 
   if (label->node.next)
