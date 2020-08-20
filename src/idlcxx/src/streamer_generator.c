@@ -32,6 +32,7 @@ static const char* struct_write_func_fmt = "size_t write_struct(const %s &obj, v
 static const char* union_switch_fmt = "  switch (obj._d())\n";
 static const char* union_case_fmt = "  case %s:\n";
 static const char* union_case_ending = "  break;\n";
+static const char* union_clear_func = "  obj.clear();\n";
 static const char* primitive_calc_alignment_modulo_fmt = "(%d - position%%%d)%%%d;";
 static const char* primitive_calc_alignment_shift_fmt = "(%d - position&%#x)&%#x;";
 static const char* primitive_incr_fmt = "  position += ";
@@ -170,13 +171,13 @@ static char* generatealignment(int alignto)
   if (alignto < 2)
   {
     size_t len = strlen("0;") + 1;
-    returnval = malloc(len);
+    returnval = calloc(len,1);
     strcpy_s(returnval, len, "0;");
   }
   else if (alignto == 2)
   {
     size_t len = strlen("position&0x1;") + 1;
-    returnval = malloc(len);
+    returnval = calloc(len,1);
     strcpy_s(returnval, len, "position&0x1;");
   }
   else
@@ -187,7 +188,7 @@ static char* generatealignment(int alignto)
       if (alignto == mask + 1)
       {
         size_t len = strlen(primitive_calc_alignment_shift_fmt) - 2 + 30 + 1;
-        returnval = malloc(len);
+        returnval = calloc(len,1);
         sprintf_s(returnval, len, primitive_calc_alignment_shift_fmt, alignto, mask, mask);
         return returnval;
       }
@@ -195,7 +196,7 @@ static char* generatealignment(int alignto)
     }
 
     size_t len = strlen(primitive_calc_alignment_modulo_fmt) - 10 + 5 + 1;
-    returnval = malloc(len);
+    returnval = calloc(len,1);
     sprintf_s(returnval, len, primitive_calc_alignment_modulo_fmt, alignto, alignto, alignto);
   }
   return returnval;
@@ -500,7 +501,6 @@ idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t m
   if (ctx->currentalignment != bytewidth)
     add_alignment(ctx, bytewidth);
 
-
   ctx->accumulatedalignment += bytewidth;
 
   if (0 == sequence)
@@ -556,7 +556,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       member_mask = ((idl_sequence_t*)tspec)->type_spec->mask;
 
     size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
-    char* buffer = malloc(bufsize);
+    char* buffer = calloc(bufsize,1);
     sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
     process_known_width(ctx, buffer, IDL_UINT32, 1, member_mask == IDL_STRING ? "+1":"");
 
@@ -740,6 +740,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       else if ((disc_mask & IDL_BASE_TYPE) != IDL_BASE_TYPE)
         return IDL_RETCODE_INVALID_PARSETREE;
 
+      format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_clear_func);
       process_known_width(ctx, "_d", disc_mask, 0, "");
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, union_switch_fmt);
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  {\n");
@@ -750,10 +751,14 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
 
       if (_union->cases)
       {
-        context_t* newctx = child_context(ctx, cpp11name);
-        process_case(newctx, _union->cases);
-        close_context(newctx);
+        ctx->depth++;
+        process_case(ctx, _union->cases);
+        ctx->depth--;
       }
+
+      ctx->currentalignment = -1;
+      ctx->accumulatedalignment = 0;
+      ctx->alignmentpresent = 0;
 
       format_ostream_indented(ctx->depth * 2, ctx->write_stream, "  }\n");
       format_ostream_indented(ctx->depth * 2, ctx->write_size_stream, "  }\n");
@@ -804,6 +809,12 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   format_ostream_indented(ctx->depth * 2, ctx->read_stream, "  }\n");
   format_ostream_indented(ctx->depth * 2, ctx->read_stream, union_case_ending);
 
+  //reset alignment to 4
+  ctx->currentalignment = 4;
+  ctx->accumulatedalignment = 0;
+  ctx->alignmentpresent = 1;
+
+  //go to next case
   if (_case->node.next)
     process_case(ctx, (idl_case_t*)_case->node.next);
   return IDL_RETCODE_OK;
@@ -813,49 +824,31 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 {
   idl_const_expr_t* ce = label->const_expr;
   char* buffer = NULL;
-  /*if ((ce->mask & IDL_LITERAL) == IDL_LITERAL)
+  if ((ce->mask & IDL_LITERAL) == IDL_LITERAL)
   {
     idl_literal_t* lit = (idl_literal_t*)ce;
     void* ptr = &(lit->value);
-    if ((ce->mask & IDL_INTEGER_TYPE) == IDL_INTEGER_TYPE)
+    if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
     {
-      int n = snprintf(buffer, 0, "%lu", *((uint64_t*)ptr));
+      int n = snprintf(buffer, 0, "%llu", *((uint64_t*)ptr));
       if (n < 0)
         return IDL_RETCODE_PARSE_ERROR;
-      buffer = malloc((size_t)n + 1);
-      snprintf(buffer, (size_t)n + 1, "%lu", *((uint64_t*)ptr));
+      buffer = calloc((size_t)n + 1,1);
+      snprintf(buffer, (size_t)n + 1, "%llu", *((uint64_t*)ptr));
     }
-    else if ((ce->mask & IDL_BOOL) == IDL_BOOL)
+    else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
     {
       buffer = _strdup(*((bool*)ptr) ? "true" : "false");
     }
-    else if ((ce->mask & IDL_STRING) == IDL_STRING)
+    else if ((ce->mask & IDL_CHAR_LITERAL) == IDL_CHAR_LITERAL)
     {
       size_t len = strlen((char*)ptr)+3;
-      buffer = malloc(len);
-      snprintf(buffer, len, "\"%s\"", (char*)ptr);
+      buffer = calloc(len,1);
+      snprintf(buffer, len, "\'%s\'", (char*)ptr);
     }
   }
-  else if ((ce->mask & IDL_STRUCT) == IDL_STRUCT)
-  {
-    idl_scoped_name_t* sn = (idl_scoped_name_t*)ce;
-    //use reference to determine type?
-    size_t len = strlen(sn->name)+3;
-    buffer = malloc(len);
-    snprintf(buffer, len, "\"%s\"", sn->name);
-  }
-  else*/
+  else 
     return IDL_RETCODE_PARSE_ERROR;
-  /*
-  else if (ce->mask & IDL_BINARY_EXPR)
-  {
-    idl_binary_expr_t* be = (idl_binary_expr_t*)ce;
-  }
-  else if (ce->mask & IDL_UNARY_EXPR)
-  {
-    idl_unary_expr_t* ue = (idl_unary_expr_t*)ce;
-  }
-  */
 
   if (buffer)
   {
