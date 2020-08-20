@@ -24,6 +24,21 @@ target_include_directories(
 
 target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
 
+include(GenerateExportHeader)
+
+generate_export_header(
+  idlcxx
+  BASE_NAME IDLCXX_EXPORT
+  EXPORT_MACRO_NAME IDLCXX_EXPORT
+  EXPORT_FILE_NAME "include/idlcxx/export.h")
+
+install(
+  TARGETS idlcxx
+  EXPORT "${CMAKE_PROJECT_NAME}"
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib)
+
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()

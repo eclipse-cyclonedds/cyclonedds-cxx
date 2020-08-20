@@ -18,17 +18,18 @@
 #include "idl/tree.h"
 #include "idl/retcode.h"
 #include "idl/idl_ostream.h"
+#include "idlcxx/export.h"
 
 typedef struct idl_streamer_output idl_streamer_output_t;
 
-IDL_EXPORT idl_streamer_output_t* create_idl_streamer_output(void);
+IDLCXX_EXPORT idl_streamer_output_t* create_idl_streamer_output(void);
 
-IDL_EXPORT idl_ostream_t* get_idl_streamer_impl_buf(const idl_streamer_output_t* str);
+IDLCXX_EXPORT idl_ostream_t* get_idl_streamer_impl_buf(const idl_streamer_output_t* str);
 
-IDL_EXPORT idl_ostream_t* get_idl_streamer_header_buf(const idl_streamer_output_t* str);
+IDLCXX_EXPORT idl_ostream_t* get_idl_streamer_header_buf(const idl_streamer_output_t* str);
 
-IDL_EXPORT void destruct_idl_streamer_output(idl_streamer_output_t* str);
+IDLCXX_EXPORT void destruct_idl_streamer_output(idl_streamer_output_t* str);
 
-IDL_EXPORT void idl_streamers_generate(idl_tree_t* tree, idl_streamer_output_t* str);
+IDLCXX_EXPORT void idl_streamers_generate(idl_tree_t* tree, idl_streamer_output_t* str);
 
 #endif
