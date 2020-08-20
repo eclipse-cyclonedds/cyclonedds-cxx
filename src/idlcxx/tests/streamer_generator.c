@@ -342,9 +342,6 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 2:\n");
   format_ostream_indented(ns * 2, ostr, "    case 3:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
-  format_ostream_indented(ns * 2, ostr, "      size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
-  format_ostream_indented(ns * 2, ostr, "      memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
-  format_ostream_indented(ns * 2, ostr, "      position += alignmentbytes;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "      *((int32_t*)((char*)data+position)) = obj._long();  //writing bytes for member: _long\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
@@ -379,7 +376,6 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 2:\n");
   format_ostream_indented(ns * 2, ostr, "    case 3:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
-  format_ostream_indented(ns * 2, ostr, "      position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //bytes for member: _long\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
@@ -396,6 +392,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(0, ostr, "\n");
   format_ostream_indented(ns * 2, ostr, "size_t read_struct(s &obj, void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  obj.clear();\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  obj._d(*((uint32_t*)((char*)data+position)));  //reading bytes for member: _d\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
@@ -411,7 +408,6 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 2:\n");
   format_ostream_indented(ns * 2, ostr, "    case 3:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
-  format_ostream_indented(ns * 2, ostr, "      position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "      obj._long(*((int32_t*)((char*)data+position)));  //reading bytes for member: _long\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
@@ -421,7 +417,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    {\n");
   format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
-  format_ostream_indented(ns * 2, ostr, "      obj._str().assign((char*)data+position,(char*)data+position+sequenceentries*1);  //putting data into container\n");
+  format_ostream_indented(ns * 2, ostr, "      obj._str().assign((char*)((char*)data+position),(char*)((char*)data+position)+sequenceentries);  //putting data into container\n");
   format_ostream_indented(ns * 2, ostr, "      position += sequenceentries*1;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
@@ -431,7 +427,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   if (ns)
   {
-    format_ostream_indented(0, ostr, "}  //end namespace N\n\n");
+    format_ostream_indented(0, ostr, "} //end namespace N\n\n");
   }
 }
 
@@ -612,11 +608,11 @@ idl_case_t* generate_union_int_switch_case(const uint64_t* labels, const idl_mas
   return returnval;
 }
 
-idl_union_t* generate_union_int_switch(const char* name, const uint64_t* cases, const idl_mask_t* case_types, const char** case_names)
+idl_union_t* generate_union_int_switch(const uint64_t* cases, const idl_mask_t* case_types, const char** case_names)
 {
   idl_union_t* returnval = idl_create_union();
 
-  returnval->identifier = _strdup(name);
+  returnval->identifier = _strdup("s");
 
   returnval->switch_type_spec = calloc(sizeof(idl_switch_type_spec_t), 1);
   returnval->switch_type_spec->mask = IDL_ULONG;
@@ -790,7 +786,7 @@ void test_string(bool ns)
 
 void test_union(bool ns)
 {
-  idl_union_t* _union = generate_union_int_switch("s", union_switch_int_case_labels, union_switch_int_case_types, union_switch_int_case_names);
+  idl_union_t* _union = generate_union_int_switch(union_switch_int_case_labels, union_switch_int_case_types, union_switch_int_case_names);
   idl_tree_t* tree = calloc(sizeof(idl_tree_t),1);
 
   if (ns)
