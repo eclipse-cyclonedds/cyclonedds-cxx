@@ -14,7 +14,6 @@
 #include "idl/processor.h"
 
 #include <string.h>
-#include <stdarg.h>
 
 struct idl_ostream
 {
@@ -70,6 +69,13 @@ void format_ostream(idl_ostream_t* ostr, const char* fmt, ...)
   va_list args;
   va_start(args, fmt);
 
+  format_ostream_va_args(ostr, fmt, args);
+
+  va_end(args);
+}
+
+void format_ostream_va_args(idl_ostream_t* ostr, const char* fmt, va_list args)
+{
   size_t space = ostr->_buf.size - ostr->_buf.used;
   int wb = vsnprintf(ostr->_buf.data + ostr->_buf.used,
                       space,
@@ -111,8 +117,6 @@ void format_ostream(idl_ostream_t* ostr, const char* fmt, ...)
       fprintf(stderr,"format_ostream out of memory error\n");
     }
   }
-
-  va_end(args);
 }
 
 size_t transfer_ostream_buffer(idl_ostream_t* from, idl_ostream_t* to)

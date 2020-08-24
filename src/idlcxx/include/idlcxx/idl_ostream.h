@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #include "idlcxx/export.h"
 
@@ -35,6 +36,8 @@ IDLCXX_EXPORT FILE* get_ostream_file(idl_ostream_t* str);
 IDLCXX_EXPORT void destruct_idl_ostream(idl_ostream_t* ostr);
 
 IDLCXX_EXPORT void format_ostream(idl_ostream_t* ostr, const char* fmt, ...);
+
+IDLCXX_EXPORT void format_ostream_va_args(idl_ostream_t* ostr, const char* fmt, va_list args);
 
 IDLCXX_EXPORT size_t transfer_ostream_buffer(idl_ostream_t* from, idl_ostream_t* to);
 
