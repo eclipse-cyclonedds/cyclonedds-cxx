@@ -216,8 +216,7 @@ static char* generatealignment(int alignto)
 
 int determine_byte_width(idl_mask_t mask)
 {
-  mask %= IDL_BASE_TYPE * 2;
-  switch (mask)
+  switch (mask % (IDL_BASE_TYPE*2))
   {
   case IDL_INT8:
   case IDL_UINT8:
@@ -570,7 +569,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
     char* buffer = calloc(bufsize,1);
     sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
-    process_known_width(ctx, buffer, IDL_UINT32, 1, member_mask == IDL_STRING ? "+1":"");
+    process_known_width(ctx, buffer, IDL_UINT32, 1, (member_mask & IDL_STRING) == IDL_STRING ? "+1":"");
 
     if (buffer)
       free(buffer);
@@ -580,7 +579,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       return IDL_RETCODE_INVALID_PARSETREE;
     }
     else if ((member_mask & IDL_BASE_TYPE) == IDL_BASE_TYPE ||
-              member_mask == IDL_STRING)
+             (member_mask & IDL_STRING) == IDL_STRING)
     {
       int bytewidth = 1;
 
@@ -843,11 +842,11 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
     void* ptr = &(lit->value);
     if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
     {
-      int n = snprintf(buffer, 0, "%llu", *((uint64_t*)ptr));
+      int n = snprintf(buffer, 0, "%lu", *((uint64_t*)ptr));
       if (n < 0)
         return IDL_RETCODE_PARSE_ERROR;
       buffer = calloc((size_t)n + 1,1);
-      snprintf(buffer, (size_t)n + 1, "%llu", *((uint64_t*)ptr));
+      snprintf(buffer, (size_t)n + 1, "%lu", *((uint64_t*)ptr));
     }
     else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
     {
