@@ -341,7 +341,8 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
 {
   if (NULL == ctx || NULL == member)
     return IDL_RETCODE_INVALID_PARSETREE;
-  if ((member->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE)
+  if ((member->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE ||
+      (member->type_spec->mask & IDL_ENUM) == IDL_ENUM)
     // FIXME: this probably needs to loop to find the correct declarator?
     process_base(ctx, member->declarators, member->type_spec);
   else if ((member->type_spec->mask & IDL_STRUCT) == IDL_STRUCT)
@@ -783,10 +784,6 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_write_stream(1, ctx, "}\n\n");
     format_read_stream(1, ctx, "  return position;\n");
     format_read_stream(1, ctx, "}\n\n");
-  }
-  else if (idl_is_enum(node))
-  {
-    fputs("enum constructed types not supported at this time", stderr);
   }
 
   if (cpp11name)

@@ -15,6 +15,8 @@
 #include <stdbool.h>
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#define sprintf_s(ptr, len, str, ...) sprintf(ptr, str __VA_OPT__(,) __VA_ARGS__)
 #endif
 
 #include "idlcxx/streamer_generator.h"
@@ -424,6 +426,11 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   }
 }
 
+void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
+{
+  create_funcs_base(ostr, 7, ns);
+}
+
 #define HNA "size_t write_struct(const s &obj, void *data, size_t position);\n\n"\
 "size_t write_size(const s &obj, size_t offset);\n\n"\
 "size_t read_struct(s &obj, void *data, size_t position);\n\n"
@@ -455,7 +462,7 @@ void test_base(size_t n, bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "module N {\n"\
       "struct s {\n"\
       "%s mem;\n"\
@@ -465,7 +472,7 @@ void test_base(size_t n, bool ns)
   }
   else
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "struct s {\n"\
       "%s mem;\n"\
       "};\n",
@@ -494,7 +501,7 @@ void test_instance(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "module N {\n"\
       "struct I {\n"\
       "long l;\n"
@@ -506,7 +513,7 @@ void test_instance(bool ns)
   }
   else
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "struct I {\n"\
       "long l;\n"
       "};\n"
@@ -534,7 +541,7 @@ void test_sequence(size_t n, bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "module N {\n"\
       "struct s {\n"\
       "sequence<%s> mem;\n"\
@@ -544,7 +551,7 @@ void test_sequence(size_t n, bool ns)
   }
   else
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "struct s {\n"\
       "sequence<%s> mem;\n"\
       "};\n",
@@ -570,7 +577,7 @@ void test_string(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "module N {\n"\
       "struct s {\n"\
       "string str;\n"\
@@ -579,7 +586,7 @@ void test_string(bool ns)
   }
   else
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "struct s {\n"\
       "string str;\n"\
       "};\n");
@@ -604,7 +611,7 @@ void test_union(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "module N {\n"\
       "union s switch (long) {\n"\
       "case 0:\n"\
@@ -618,7 +625,7 @@ void test_union(bool ns)
   }
   else
   {
-    sprintf(buffer,
+    sprintf_s(buffer, 1024,
       "union s switch (long) {\n"\
       "case 0:\n"\
       "case 1: octet o;\n"\
@@ -640,7 +647,47 @@ void test_union(bool ns)
   /*
   printf("=========generated============\n%s\n============================\n", get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   printf("=========tested============\n%s\n============================\n", get_ostream_buffer(impl));
+  FILE* f1 = fopen("a.txt","w");
+  FILE* f2 = fopen("b.txt","w");
+  fprintf(f1, get_ostream_buffer(impl));
+  fprintf(f2, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  fclose(f1);
+  fclose(f2);
   */
+
+  CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+}
+
+void test_enum(bool ns)
+{
+  char buffer[1024];
+  if (ns)
+  {
+    sprintf_s(buffer, 1024,
+      "module N {\n"\
+      "enum E {e_0, e_1, e_2, e_3};\n"\
+      "struct s {\n"\
+      "E mem;\n"\
+      "};"\
+      "};\n");
+  }
+  else
+  {
+    sprintf_s(buffer, 1024,
+      "enum E {e_0, e_1, e_2, e_3};\n"\
+      "struct s {\n"\
+      "E mem;\n"\
+      "};\n");
+  }
+  idl_tree_t* tree = NULL;
+  idl_parse_string(buffer, 0u, &tree);
+
+  idl_streamer_output_t* generated = create_idl_streamer_output();
+  idl_streamers_generate(tree, generated);
+
+  idl_ostream_t* impl = create_idl_ostream(NULL);
+  generate_enum_funcs(impl, ns);
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
@@ -698,4 +745,14 @@ CU_Test(streamer_generator, union_case_int_namespace_absent)
 CU_Test(streamer_generator, union_case_int_namespace_present)
 {
   test_union(true);
+}
+
+CU_Test(streamer_generator, enumerator_namespace_absent)
+{
+  test_enum(false);
+}
+
+CU_Test(streamer_generator, enumerator_namespace_present)
+{
+  test_enum(true);
 }

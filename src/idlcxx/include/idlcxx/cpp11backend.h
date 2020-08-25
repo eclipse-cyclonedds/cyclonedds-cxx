@@ -13,9 +13,7 @@
 #ifndef IDL_CPP11BACKEND_H
 #define IDL_CPP11BACKEND_H
 
-#include "idl/export.h"
-
-IDL_EXPORT char *get_cpp_name(
+char *get_cpp_name(
   const char* name);
 
 #endif /* IDL_CPP11BACKEND_H */
