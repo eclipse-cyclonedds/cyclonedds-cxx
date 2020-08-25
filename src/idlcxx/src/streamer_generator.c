@@ -811,7 +811,7 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   else if ((_case->type_spec->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
     process_template(ctx, _case->declarator, _case->type_spec);
   else
-    return IDL_RETCODE_PARSE_ERROR;
+    return IDL_RETCODE_INVALID_PARSETREE;
 
   ctx->depth--;
   format_write_stream(1, ctx, "  }\n");
@@ -844,7 +844,7 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
     {
       int n = snprintf(buffer, 0, "%lu", *((uint64_t*)ptr));
       if (n < 0)
-        return IDL_RETCODE_PARSE_ERROR;
+        return IDL_RETCODE_SYNTAX_ERROR;
       buffer = calloc((size_t)n + 1,1);
       snprintf(buffer, (size_t)n + 1, "%lu", *((uint64_t*)ptr));
     }
@@ -860,7 +860,7 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
     }
   }
   else 
-    return IDL_RETCODE_PARSE_ERROR;
+    return IDL_RETCODE_INVALID_PARSETREE;
 
   if (buffer)
   {
