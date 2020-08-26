@@ -52,21 +52,26 @@ static const char* primitive_incr_alignment_fmt = "  position += alignmentbytes;
 static const char* primitive_write_func_padding_fmt = "  memset((char*)data+position,0x0,%d);  //setting padding bytes to 0x0\n";
 static const char* primitive_write_func_alignment_fmt = "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n";
 static const char* primitive_write_func_write_fmt = "  *((%s*)((char*)data+position)) = obj.%s();  //writing bytes for member: %s\n";
+static const char* primitive_write_func_array_fmt = "  memcpy((char*)data+position,obj.%s().data(),%d);  //writing bytes for member: %s\n";
 static const char* primitive_write_func_seq_fmt = "sequenceentries = obj.%s()%s;  //number of entries in the sequence\n";
 static const char* primitive_write_func_seq2_fmt = "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing bytes for member: %s\n";
 static const char* incr_comment = "  //moving position indicator\n";
 static const char* align_comment = "  //alignment\n";
 static const char* padding_comment = "  //padding bytes\n";
 static const char* instance_write_func_fmt = "  position = write_struct(obj.%s(), data, position);\n";
+static const char* instance_write_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = write_struct(obj.%s()[_i], data, position);\n";
 static const char* namespace_declaration_fmt = "namespace %s\n";
 static const char* namespace_closure_fmt = "} //end namespace %s\n\n";
 static const char* struct_write_size_func_fmt = "size_t write_size(const %s &obj, size_t offset)";
 static const char* primitive_incr_pos = "  position += %d;";
 static const char* instance_size_func_calc_fmt = "  position += write_size(obj.%s(), position);\n";
+static const char* instance_size_array_calc_fmt = "  for (size_t _i = 0; _i < %d; _i++) position += write_size(obj.%s()[_i], position);\n";
 static const char* struct_read_func_fmt = "size_t read_struct(%s &obj, void *data, size_t position)";
 static const char* primitive_read_func_read_fmt = "  obj.%s(*((%s*)((char*)data+position)));  //reading bytes for member: %s\n";
+static const char* primitive_read_func_array_fmt = "  memcpy(obj.%s().data(),(char*)data+position,%d);  //reading bytes for member: %s\n";
 static const char* primitive_read_func_seq_fmt = "sequenceentries = *((%s*)((char*)data+position));  //number of entries in the sequence\n";
 static const char* instance_read_func_fmt = "  position = read_struct(obj.%s(), data, position);\n";
+static const char* instance_read_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = read_struct(obj.%s()[_i], data, position);\n";
 static const char* seq_size_fmt = "%s().size";
 static const char* seq_read_resize_fmt = "  obj.%s().resize(sequenceentries);\n";
 static const char* seq_structured_write_fmt = "  for (const auto &%s:obj.%s()) position = write_struct(%s,data,position);\n";
@@ -163,6 +168,7 @@ static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl);
 static idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec);
 static idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec);
 static idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t typespec, int sequence, const char *seqsizeappend);
+static idl_retcode_t process_known_width_array(context_t* ctx, const char* name, uint64_t entries, idl_mask_t mask);
 static int determine_byte_width(idl_mask_t typespec);
 static const char* determine_cast(idl_mask_t mask);
 static idl_retcode_t add_alignment(context_t* ctx, int bytewidth);
@@ -343,10 +349,8 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
     return IDL_RETCODE_INVALID_PARSETREE;
   if ((member->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE ||
       (member->type_spec->mask & IDL_ENUM) == IDL_ENUM)
-    // FIXME: this probably needs to loop to find the correct declarator?
     process_base(ctx, member->declarators, member->type_spec);
   else if ((member->type_spec->mask & IDL_STRUCT) == IDL_STRUCT)
-    // FIXME: this probably needs to loop to find the correct declarator?
     process_instance(ctx, member->declarators);
   else if ((member->type_spec->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
     // FIXME: this probably needs to loop to find the correct declarator?
@@ -363,14 +367,62 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl)
   if (NULL == ctx || NULL == decl)
     return IDL_RETCODE_INVALID_PARSETREE;
   char* cpp11name = get_cpp_name(decl->identifier);
-  format_write_stream(1, ctx, instance_write_func_fmt, cpp11name);
-  format_read_stream(1, ctx, instance_read_func_fmt, cpp11name);
-  format_write_size_stream(1, ctx, instance_size_func_calc_fmt, cpp11name);
+
+  idl_const_expr_t* ce = decl->const_expr;
+  uint64_t entries = 0;
+  while (ce)
+  {
+    if ((ce->mask & IDL_CONST) == IDL_CONST)
+    {
+      idl_variant_t* var = (idl_variant_t*)ce;
+      idl_mask_t mask = var->node.mask;
+      if ((mask & IDL_UINT8) == IDL_UINT8)
+      {
+        if (entries)
+          entries *= var->value.oct;
+        else
+          entries = var->value.oct;
+      }
+      else if ((mask & IDL_UINT32) == IDL_UINT32)
+      {
+        if (entries)
+          entries *= var->value.ulng;
+        else
+          entries = var->value.ulng;
+      }
+      else if ((mask & IDL_UINT64) == IDL_UINT64)
+      {
+        if (entries)
+          entries *= var->value.ullng;
+        else
+          entries = var->value.ullng;
+      }
+    }
+
+    ce = ce->next;
+  }
+
+  if (entries)
+  {
+    format_write_stream(1, ctx, instance_write_array_fmt, entries, cpp11name);
+    format_read_stream(1, ctx, instance_read_array_fmt, entries, cpp11name);
+    format_write_size_stream(1, ctx, instance_size_array_calc_fmt, entries, cpp11name);
+  }
+  else
+  {
+    format_write_stream(1, ctx, instance_write_func_fmt, cpp11name);
+    format_read_stream(1, ctx, instance_read_func_fmt, cpp11name);
+    format_write_size_stream(1, ctx, instance_size_func_calc_fmt, cpp11name);
+  }
 
   ctx->accumulatedalignment = 0;
   ctx->currentalignment = -1;
 
   free(cpp11name);
+
+  if (((idl_node_t*)decl)->next)
+    process_instance(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next);
+
   return IDL_RETCODE_OK;
 }
 
@@ -544,6 +596,41 @@ idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t m
   format_write_stream(0, ctx, incr_comment);
 
   format_read_stream(1, ctx, primitive_incr_pos, bytewidth);
+  format_read_stream(0, ctx, incr_comment);
+
+  return IDL_RETCODE_OK;
+}
+
+idl_retcode_t process_known_width_array(context_t* ctx, const char *name, uint64_t entries, idl_mask_t mask)
+{
+  if (NULL == ctx)
+    return IDL_RETCODE_INVALID_PARSETREE;
+
+  if ((mask & IDL_ENUM) == IDL_ENUM)
+    mask = IDL_UINT32;
+
+  int bytewidth = determine_byte_width(mask);
+  if (-1 == bytewidth)
+    return IDL_RETCODE_INVALID_PARSETREE;
+
+  long long int bytesinarray = bytewidth * entries;
+
+  if (ctx->currentalignment != bytewidth)
+    add_alignment(ctx, bytewidth);
+
+  ctx->accumulatedalignment += bytewidth*entries;
+  format_write_stream(1, ctx, primitive_write_func_array_fmt, name, bytesinarray, name);
+  format_read_stream(1, ctx, primitive_read_func_array_fmt, name, bytesinarray, name);
+
+  format_write_size_stream(1, ctx, primitive_incr_pos, bytesinarray);
+  format_write_size_stream(0, ctx, "  //bytes for member: ");
+  format_write_size_stream(0, ctx, name);
+  format_write_size_stream(0, ctx, "\n");
+
+  format_write_stream(1, ctx, primitive_incr_pos, bytesinarray);
+  format_write_stream(0, ctx, incr_comment);
+
+  format_read_stream(1, ctx, primitive_incr_pos, bytesinarray);
   format_read_stream(0, ctx, incr_comment);
 
   return IDL_RETCODE_OK;
@@ -833,28 +920,24 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 {
   idl_const_expr_t* ce = label->const_expr;
   char* buffer = NULL;
-  if ((ce->mask & IDL_LITERAL) == IDL_LITERAL)
+  idl_literal_t* lit = (idl_variant_t*)ce;
+  if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
   {
-    idl_literal_t* lit = (idl_literal_t*)ce;
-    void* ptr = &(lit->value);
-    if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
-    {
-      int n = snprintf(buffer, 0, "%lu", *((uint64_t*)ptr));
-      if (n < 0)
-        return IDL_RETCODE_SYNTAX_ERROR;
-      buffer = calloc((size_t)n + 1,1);
-      snprintf(buffer, (size_t)n + 1, "%lu", *((uint64_t*)ptr));
-    }
-    else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
-    {
-      buffer = _strdup(*((bool*)ptr) ? "true" : "false");
-    }
-    else if ((ce->mask & IDL_CHAR_LITERAL) == IDL_CHAR_LITERAL)
-    {
-      size_t len = strlen((char*)ptr)+3;
-      buffer = calloc(len,1);
-      snprintf(buffer, len, "\'%s\'", (char*)ptr);
-    }
+    int n = snprintf(buffer, 0, "%lu", lit->value.ullng);
+    if (n < 0)
+      return IDL_RETCODE_SYNTAX_ERROR;
+    buffer = calloc((size_t)n + 1,1);
+    snprintf(buffer, (size_t)n + 1, "%lu", lit->value.ullng);
+  }
+  else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
+  {
+    buffer = _strdup(lit->value.bln ? "true" : "false");
+  }
+  else if ((ce->mask & IDL_CHAR_LITERAL) == IDL_CHAR_LITERAL)
+  {
+    size_t len = strlen(lit->value.str)+3;
+    buffer = calloc(len,1);
+    snprintf(buffer, len, "\'%s\'", lit->value.str);
   }
   else 
     return IDL_RETCODE_INVALID_PARSETREE;
@@ -878,9 +961,49 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
     return IDL_RETCODE_INVALID_PARSETREE;
 
   char* cpp11name = get_cpp_name(decl->identifier);
-  process_known_width(ctx, cpp11name, tspec->mask, 0, "");
 
+  idl_const_expr_t* ce = decl->const_expr;
+  uint64_t entries = 0;
+  while (ce)
+  {
+    if ((ce->mask & IDL_CONST) == IDL_CONST)
+    {
+      idl_variant_t* var = (idl_variant_t*)ce;
+      idl_mask_t mask = var->node.mask;
+      if ((mask & IDL_UINT8) == IDL_UINT8)
+      {
+        if (entries)
+          entries *= var->value.oct;
+        else
+          entries = var->value.oct;
+      }
+      else if ((mask & IDL_UINT32) == IDL_UINT32)
+      {
+        if (entries)
+          entries *= var->value.ulng;
+        else
+          entries = var->value.ulng;
+      }
+      else if ((mask & IDL_UINT64) == IDL_UINT64)
+      {
+        if (entries)
+          entries *= var->value.ullng;
+        else
+          entries = var->value.ullng;
+      }
+    }
+
+    ce = ce->next;
+  }
+  if (entries)
+    process_known_width_array(ctx, cpp11name, entries, tspec->mask);
+  else
+    process_known_width(ctx, cpp11name, tspec->mask, 0, "");
   free(cpp11name);
+
+  if (((idl_node_t*)decl)->next)
+    process_base(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, tspec);
+
   return IDL_RETCODE_OK;
 }
 
