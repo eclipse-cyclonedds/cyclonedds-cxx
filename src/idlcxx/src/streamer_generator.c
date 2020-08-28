@@ -83,6 +83,7 @@ static const char* seq_incr_fmt = "  position += sequenceentries*%d;";
 static const char* seq_entries_fmt = "  position += (obj.%s().size()%s)*%d;  //entries of sequence\n";
 static const char* ref_cast_fmt = "dynamic_cast<%s&>(obj)";
 static const char* member_access_fmt = "obj.%s()";
+static const char* sequence_length_exception_fmt = "  if (sequenceentries > %zu) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %zu\");\n";
 
 static const char* char_cast = "char";
 static const char* bool_cast = "bool";
@@ -166,9 +167,9 @@ struct context
 };
 
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
-static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl);
-static idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec);
-static idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec);
+static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec);
+static idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec);
+static idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec);
 static idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t typespec, int sequence, const char *seqsizeappend);
 static idl_retcode_t process_known_width_array(context_t* ctx, const char* name, uint64_t entries, idl_mask_t mask);
 static int determine_byte_width(idl_mask_t typespec);
@@ -354,7 +355,7 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
       (member->type_spec->mask & IDL_ENUM) == IDL_ENUM)
     process_base(ctx, member->declarators, member->type_spec);
   else if ((member->type_spec->mask & IDL_STRUCT) == IDL_STRUCT)
-    process_instance(ctx, member->declarators);
+    process_instance(ctx, member->declarators, (idl_struct_t*)member->type_spec);
   else if ((member->type_spec->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
     // FIXME: this probably needs to loop to find the correct declarator?
     process_template(ctx, member->declarators, member->type_spec);
@@ -365,11 +366,13 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl)
+idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec)
 {
   if (NULL == ctx || NULL == decl)
     return IDL_RETCODE_INVALID_PARSETREE;
   char* cpp11name = get_cpp_name(decl->identifier);
+  if (NULL == cpp11name)
+    return IDL_RETCODE_INVALID_PARSETREE;
 
   idl_const_expr_t* ce = decl->const_expr;
   uint64_t entries = 0;
@@ -405,12 +408,11 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl)
     ce = ce->next;
   }
 
-  write_instance_funcs(ctx, cpp11name, entries,false);
-
+  write_instance_funcs(ctx, cpp11name, entries, false);
   free(cpp11name);
 
   if (((idl_node_t*)decl)->next)
-    process_instance(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next);
+    process_instance(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, spec);
 
   return IDL_RETCODE_OK;
 }
@@ -632,10 +634,10 @@ idl_retcode_t process_known_width_array(context_t* ctx, const char *name, uint64
     mask = IDL_UINT32;
 
   int bytewidth = determine_byte_width(mask);
-  if (-1 == bytewidth)
+  if (0 > bytewidth)
     return IDL_RETCODE_INVALID_PARSETREE;
 
-  long long int bytesinarray = bytewidth * entries;
+  size_t bytesinarray = bytewidth * entries;
 
   if (ctx->currentalignment != bytewidth)
     add_alignment(ctx, bytewidth);
@@ -672,14 +674,40 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     // FIXME: loop!?
     cpp11name = get_cpp_name(decl->identifier);
 
+    idl_const_expr_t* ce = NULL;
     if ((member_mask & IDL_SEQUENCE) == IDL_SEQUENCE)
+    {
       //change member_mask to the type of the sequence template
       member_mask = ((idl_sequence_t*)tspec)->type_spec->mask;
+      ce = ((idl_sequence_t*)tspec)->const_expr;
+    }
+    else if ((member_mask & IDL_STRING) == IDL_STRING)
+    {
+      ce = ((idl_string_t*)tspec)->const_expr;
+    }
+
+    size_t bound = 0;
+    while (ce)
+    {
+      if ((ce->mask & IDL_CONST) == IDL_CONST &&
+          (ce->mask & IDL_INTEGER_TYPE) == IDL_INTEGER_TYPE)
+      {
+        bound = ((idl_literal_t*)ce)->value.ullng;
+        break;
+      }
+      ce = ce->next;
+    }
 
     size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
     char* buffer = calloc(bufsize,1);
     sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
     process_known_width(ctx, buffer, IDL_UINT32, 1, (member_mask & IDL_STRING) == IDL_STRING ? "+1":"");
+
+    if (bound)
+    {
+      //add boundary checking function
+      format_write_stream(1, ctx, sequence_length_exception_fmt, bound, cpp11name, bound);
+    }
 
     if (buffer)
       free(buffer);
@@ -919,7 +947,7 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   if ((_case->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE)
     process_base(ctx, _case->declarator, _case->type_spec);
   else if ((_case->type_spec->mask & IDL_STRUCT) == IDL_STRUCT)
-    process_instance(ctx, _case->declarator);
+    process_instance(ctx, _case->declarator, (idl_struct_t*)_case->type_spec);
   else if ((_case->type_spec->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
     process_template(ctx, _case->declarator, _case->type_spec);
   else

@@ -595,6 +595,42 @@ void generate_inheritance_funcs(idl_ostream_t* ostr)
   format_ostream_indented(0, ostr, "}\n\n");
 }
 
+void generate_bounded_sequence_funcs(idl_ostream_t* ostr)
+{
+  format_ostream_indented(0, ostr, "size_t write_struct(const s &obj, void *data, size_t position)\n");
+  format_ostream_indented(0, ostr, "{\n");
+  format_ostream_indented(0, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(0, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
+  format_ostream_indented(0, ostr, "  position += alignmentbytes;  //moving position indicator\n");
+  format_ostream_indented(0, ostr, "  uint32_t sequenceentries = obj.mem().size();  //number of entries in the sequence\n");
+  format_ostream_indented(0, ostr, "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing bytes for member: mem().size\n");
+  format_ostream_indented(0, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(0, ostr, "  if (sequenceentries > 20) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member mem in excess of maximum length 20\");\n");
+  format_ostream_indented(0, ostr, "  memcpy((char*)data+position,obj.mem().data(),sequenceentries*4);  //contents for mem\n");
+  format_ostream_indented(0, ostr, "  position += sequenceentries*4;  //moving position indicator\n");
+  format_ostream_indented(0, ostr, "  return position;\n");
+  format_ostream_indented(0, ostr, "}\n\n");
+
+  format_ostream_indented(0, ostr, "size_t write_size(const s &obj, size_t offset)\n");
+  format_ostream_indented(0, ostr, "{\n");
+  format_ostream_indented(0, ostr, "  size_t position = offset;\n");
+  format_ostream_indented(0, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(0, ostr, "  position += 4;  //bytes for member: mem().size\n");
+  format_ostream_indented(0, ostr, "  position += (obj.mem().size())*4;  //entries of sequence\n");
+  format_ostream_indented(0, ostr, "  return position-offset;\n");
+  format_ostream_indented(0, ostr, "}\n\n");
+
+  format_ostream_indented(0, ostr, "size_t read_struct(s &obj, void *data, size_t position)\n");
+  format_ostream_indented(0, ostr, "{\n");
+  format_ostream_indented(0, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(0, ostr, "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
+  format_ostream_indented(0, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(0, ostr, "  obj.mem().assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n");
+  format_ostream_indented(0, ostr, "  position += sequenceentries*4;  //moving position indicator\n");
+  format_ostream_indented(0, ostr, "  return position;\n");
+  format_ostream_indented(0, ostr, "}\n\n");
+}
+
 #define HNA "size_t write_struct(const s &obj, void *data, size_t position);\n\n"\
 "size_t write_size(const s &obj, size_t offset);\n\n"\
 "size_t read_struct(s &obj, void *data, size_t position);\n\n"
@@ -951,6 +987,26 @@ void test_struct_inheritance()
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
 }
 
+void test_bounded_sequence()
+{
+  const char* str =
+    "struct s {\n"\
+    "sequence<long,20> mem;\n"\
+    "};\n";
+
+  idl_tree_t* tree = NULL;
+  idl_parse_string(str, 0u, &tree);
+
+  idl_streamer_output_t* generated = create_idl_streamer_output();
+  idl_streamers_generate(tree, generated);
+
+  idl_ostream_t* impl = create_idl_ostream(NULL);
+  generate_bounded_sequence_funcs(impl);
+
+  CU_ASSERT_STRING_EQUAL(HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+}
+
 CU_Test(streamer_generator, base_types_namespace_absent)
 {
   for (size_t i = 0; i < sizeof(cxx_width) / sizeof(size_t); i++)
@@ -1038,4 +1094,9 @@ CU_Test(streamer_generator, array_instance_namespace_present)
 CU_Test(streamer_generator, struct_inheritance)
 {
   test_struct_inheritance();
+}
+
+CU_Test(streamer_generator, bounded_sequence)
+{
+  test_bounded_sequence();
 }
