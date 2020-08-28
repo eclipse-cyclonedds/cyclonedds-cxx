@@ -58,20 +58,20 @@ static const char* primitive_write_func_seq2_fmt = "  *((uint32_t*)((char*)data 
 static const char* incr_comment = "  //moving position indicator\n";
 static const char* align_comment = "  //alignment\n";
 static const char* padding_comment = "  //padding bytes\n";
-static const char* instance_write_func_fmt = "  position = write_struct(%s, data, position);\n";
-static const char* instance_write_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = write_struct(obj.%s()[_i], data, position);\n";
+static const char* instance_write_func_fmt = "  position = %swrite_struct(%s, data, position);\n";
+static const char* instance_write_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = %swrite_struct(obj.%s()[_i], data, position);\n";
 static const char* namespace_declaration_fmt = "namespace %s\n";
 static const char* namespace_closure_fmt = "} //end namespace %s\n\n";
 static const char* struct_write_size_func_fmt = "size_t write_size(const %s &obj, size_t offset)";
 static const char* primitive_incr_pos = "  position += %d;";
-static const char* instance_size_func_calc_fmt = "  position += write_size(%s, position);\n";
-static const char* instance_size_array_calc_fmt = "  for (size_t _i = 0; _i < %d; _i++) position += write_size(obj.%s()[_i], position);\n";
+static const char* instance_size_func_calc_fmt = "  position += %swrite_size(%s, position);\n";
+static const char* instance_size_array_calc_fmt = "  for (size_t _i = 0; _i < %d; _i++) position += %swrite_size(obj.%s()[_i], position);\n";
 static const char* struct_read_func_fmt = "size_t read_struct(%s &obj, void *data, size_t position)";
 static const char* primitive_read_func_read_fmt = "  obj.%s(*((%s*)((char*)data+position)));  //reading bytes for member: %s\n";
 static const char* primitive_read_func_array_fmt = "  memcpy(obj.%s().data(),(char*)data+position,%d);  //reading bytes for member: %s\n";
 static const char* primitive_read_func_seq_fmt = "sequenceentries = *((%s*)((char*)data+position));  //number of entries in the sequence\n";
-static const char* instance_read_func_fmt = "  position = read_struct(%s, data, position);\n";
-static const char* instance_read_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = read_struct(obj.%s()[_i], data, position);\n";
+static const char* instance_read_func_fmt = "  position = %sread_struct(%s, data, position);\n";
+static const char* instance_read_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = %sread_struct(obj.%s()[_i], data, position);\n";
 static const char* seq_size_fmt = "%s().size";
 static const char* seq_read_resize_fmt = "  obj.%s().resize(sequenceentries);\n";
 static const char* seq_structured_write_fmt = "  for (const auto &%s:obj.%s()) position = write_struct(%s,data,position);\n";
@@ -181,11 +181,12 @@ static idl_retcode_t process_module(context_t* ctx, idl_module_t* module);
 static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_case(context_t* ctx, idl_case_t* _case);
 static idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label);
-static idl_retcode_t write_instance_funcs(context_t* ctx, const char* name, uint64_t entries, bool inheritance);
+static idl_retcode_t write_instance_funcs(context_t* ctx, const char *ns, const char* name, uint64_t entries, bool inheritance);
 static context_t* create_context(idl_streamer_output_t* str, const char* name);
 static context_t* child_context(context_t* ctx, const char* name);
 static void flush_streams(context_t* ctx);
 static void close_context(context_t* ctx);
+static void resolve_namespace(idl_node_t* node, char** up);
 
 static char* generatealignment(int alignto)
 {
@@ -334,6 +335,32 @@ void close_context(context_t* ctx)
   free(ctx->context);
 }
 
+void resolve_namespace(idl_node_t* node, char** up)
+{
+  if (NULL == node)
+    return;
+
+  if (idl_is_module(node))
+  {
+    idl_module_t* mod = (idl_module_t*)node;
+    size_t currentlen = strlen(mod->identifier);
+    if (*up)
+    {
+      char *temp = calloc(strlen(*up) + currentlen + 3, 1);
+      sprintf(temp, "%s::%s", mod->identifier, *up);
+      free(*up);
+      *up = temp;
+    }
+    else
+    {
+      *up = calloc(currentlen + 1, 1);
+      sprintf(*up, "%s::", mod->identifier);
+    }
+  }
+
+  resolve_namespace(node->parent, up);
+}
+
 idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
 {
   if (idl_is_module(node))
@@ -408,8 +435,12 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struc
     ce = ce->next;
   }
 
-  write_instance_funcs(ctx, cpp11name, entries, false);
+  char* ns = _strdup("");
+  resolve_namespace((idl_node_t*)spec, &ns);
+
+  write_instance_funcs(ctx, ns, cpp11name, entries, false);
   free(cpp11name);
+  free(ns);
 
   if (((idl_node_t*)decl)->next)
     process_instance(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, spec);
@@ -417,28 +448,26 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struc
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t write_instance_funcs(context_t* ctx, const char* name, uint64_t entries, bool inheritance)
+idl_retcode_t write_instance_funcs(context_t* ctx, const char* ns, const char* name, uint64_t entries, bool inheritance)
 {
   if (entries)
   {
-    format_write_stream(1, ctx, instance_write_array_fmt, entries, name);
-    format_read_stream(1, ctx, instance_read_array_fmt, entries, name);
-    format_write_size_stream(1, ctx, instance_size_array_calc_fmt, entries, name);
+    format_write_stream(1, ctx, instance_write_array_fmt, entries, ns, name);
+    format_read_stream(1, ctx, instance_read_array_fmt, entries, ns, name);
+    format_write_size_stream(1, ctx, instance_size_array_calc_fmt, entries, ns, name);
   }
   else
   {
-    char* accessor = NULL;
     const char* fmt = member_access_fmt;
     if (inheritance)
       fmt = ref_cast_fmt;
 
-    int n = snprintf(accessor, 0, fmt, name);
-    accessor = calloc(1, n+1);
-    n = snprintf(accessor, n+1, fmt, name);
+    char* accessor = calloc(1, strlen(fmt) + strlen(name) - 1);
+    sprintf_s(accessor, n+1, fmt, name);
 
-    format_write_stream(1, ctx, instance_write_func_fmt, accessor);
-    format_read_stream(1, ctx, instance_read_func_fmt, accessor);
-    format_write_size_stream(1, ctx, instance_size_func_calc_fmt, accessor);
+    format_write_stream(1, ctx, instance_write_func_fmt, ns, accessor);
+    format_read_stream(1, ctx, instance_read_func_fmt, ns, accessor);
+    format_write_size_stream(1, ctx, instance_size_func_calc_fmt, ns, accessor);
 
     if (accessor)
       free(accessor);
@@ -825,6 +854,7 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
     format_header_stream(1, ctx, namespace_closure_fmt, cpp11name);
     format_read_stream(1, ctx, namespace_closure_fmt, cpp11name);
 
+    flush_streams(ctx);
 
     free(cpp11name);
   }
@@ -876,8 +906,12 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_struct_t* _struct = (idl_struct_t*)node;
       if (_struct->base_type)
       {
-        char *base_cpp11name = get_cpp_name(_struct->base_type->identifier);
-        write_instance_funcs(ctx, base_cpp11name, 0, true);
+        char* base_cpp11name = get_cpp_name(_struct->base_type->identifier);
+        char* ns = _strdup("");
+        resolve_namespace((idl_node_t*)_struct->base_type, &ns);
+        write_instance_funcs(ctx, ns, base_cpp11name, 0, true);
+        free(base_cpp11name);
+        free(ns);
       }
 
       if (_struct->members)
