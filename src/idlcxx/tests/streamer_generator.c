@@ -351,6 +351,12 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "      position += sequenceentries*1;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    default:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      *((float*)((char*)data+position)) = obj.f();  //writing bytes for member: f\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
@@ -379,6 +385,11 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    {\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //bytes for member: str().size\n");
   format_ostream_indented(ns * 2, ostr, "      position += (obj.str().size()+1)*1;  //entries of sequence\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    default:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //bytes for member: f\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
@@ -414,6 +425,12 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "      obj.str().assign((char*)((char*)data+position),(char*)((char*)data+position)+sequenceentries);  //putting data into container\n");
   format_ostream_indented(ns * 2, ostr, "      position += sequenceentries*1;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    default:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      obj.f(*((float*)((char*)data+position)));  //reading bytes for member: f\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
@@ -878,6 +895,7 @@ void test_union(bool ns)
       "case 3: long l;\n"\
       "case 4:\n"\
       "case 5: string str;\n"\
+      "default: float f;\n"\
       "};\n"\
       "};\n");
   }
@@ -891,6 +909,7 @@ void test_union(bool ns)
       "case 3: long l;\n"\
       "case 4:\n"\
       "case 5: string str;\n"\
+      "default: float f;\n"\
       "};\n");
   }
   idl_tree_t* tree = NULL;
@@ -901,17 +920,6 @@ void test_union(bool ns)
 
   idl_ostream_t* impl = create_idl_ostream(NULL);
   generate_union_funcs(impl, ns);
-
-  /*
-  printf("=========generated============\n%s\n============================\n", get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  printf("=========tested============\n%s\n============================\n", get_ostream_buffer(impl));
-  FILE* f1 = fopen("a.txt","w");
-  FILE* f2 = fopen("b.txt","w");
-  fprintf(f1, get_ostream_buffer(impl));
-  fprintf(f2, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  fclose(f1);
-  fclose(f2);
-  */
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));

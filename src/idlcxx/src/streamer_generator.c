@@ -43,6 +43,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->header_stream, str, ##__
 static const char* struct_write_func_fmt = "size_t write_struct(const %s &obj, void *data, size_t position)";
 static const char* union_switch_fmt = "  switch (obj._d())\n";
 static const char* union_case_fmt = "  case %s:\n";
+static const char* default_case_fmt = "  default:\n";
 static const char* union_case_ending = "  break;\n";
 static const char* union_clear_func = "  obj.clear();\n";
 static const char* primitive_calc_alignment_modulo_fmt = "(%d - position%%%d)%%%d;";
@@ -166,6 +167,7 @@ struct context
   context_t* parent;
 };
 
+static idl_retcode_t add_default_case(context_t* ctx);
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec);
 static idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec);
@@ -1009,38 +1011,55 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
 idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 {
   idl_const_expr_t* ce = label->const_expr;
-  char* buffer = NULL;
-  idl_literal_t* lit = (idl_literal_t*)ce;
-  if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
+  if (ce)
   {
-    int n = snprintf(buffer, 0, "%lu", lit->value.ullng);
-    if (n < 0)
-      return IDL_RETCODE_SYNTAX_ERROR;
-    buffer = calloc((size_t)n + 1,1);
-    snprintf(buffer, (size_t)n + 1, "%lu", lit->value.ullng);
-  }
-  else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
-  {
-    buffer = _strdup(lit->value.bln ? "true" : "false");
-  }
-  else if ((ce->mask & IDL_CHAR_LITERAL) == IDL_CHAR_LITERAL)
-  {
-    size_t len = strlen(lit->value.str)+3;
-    buffer = calloc(len,1);
-    snprintf(buffer, len, "\'%s\'", lit->value.str);
-  }
-  else 
-    return IDL_RETCODE_INVALID_PARSETREE;
+    char* buffer = NULL;
+    idl_literal_t* lit = (idl_literal_t*)ce;
+    if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
+    {
+      int n = snprintf(buffer, 0, "%lu", lit->value.ullng);
+      if (n < 0)
+        return IDL_RETCODE_SYNTAX_ERROR;
+      buffer = calloc((size_t)n + 1, 1);
+      snprintf(buffer, (size_t)n + 1, "%lu", lit->value.ullng);
+    }
+    else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
+    {
+      buffer = _strdup(lit->value.bln ? "true" : "false");
+    }
+    else if ((ce->mask & IDL_CHAR_LITERAL) == IDL_CHAR_LITERAL)
+    {
+      size_t len = strlen(lit->value.str) + 3;
+      buffer = calloc(len, 1);
+      snprintf(buffer, len, "\'%s\'", lit->value.str);
+    }
+    else
+      return IDL_RETCODE_INVALID_PARSETREE;
 
-  if (buffer)
+    if (buffer)
+    {
+      format_write_stream(1, ctx, union_case_fmt, buffer);
+      format_write_size_stream(1, ctx, union_case_fmt, buffer);
+      format_read_stream(1, ctx, union_case_fmt, buffer);
+      free(buffer);
+    }
+  }
+  else
   {
-    format_write_stream(1, ctx, union_case_fmt, buffer);
-    format_write_size_stream(1, ctx, union_case_fmt, buffer);
-    format_read_stream(1, ctx, union_case_fmt, buffer);
+    add_default_case(ctx);
   }
 
   if (label->node.next)
     process_case_label(ctx, (idl_case_label_t*)label->node.next);
+
+  return IDL_RETCODE_OK;
+}
+
+idl_retcode_t add_default_case(context_t* ctx)
+{
+  format_write_stream(1, ctx, default_case_fmt);
+  format_write_size_stream(1, ctx, default_case_fmt);
+  format_read_stream(1, ctx, default_case_fmt);
 
   return IDL_RETCODE_OK;
 }
