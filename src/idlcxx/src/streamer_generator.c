@@ -75,9 +75,9 @@ static const char* instance_read_func_fmt = "  position = %sread_struct(%s, data
 static const char* instance_read_array_fmt = "  for (size_t _i = 0; _i < %d; _i++) position = %sread_struct(obj.%s()[_i], data, position);\n";
 static const char* seq_size_fmt = "%s().size";
 static const char* seq_read_resize_fmt = "  obj.%s().resize(sequenceentries);\n";
-static const char* seq_structured_write_fmt = "  for (const auto &%s:obj.%s()) position = write_struct(%s,data,position);\n";
-static const char* seq_structured_write_size_fmt = "  for (const auto &%s:obj.%s()) position += write_size(%s, position);\n";
-static const char* seq_structured_read_copy_fmt = "  for (size_t %s = 0; %s < sequenceentries; %s++) position = read_struct(obj.%s()[%s], data, position);\n";
+static const char* seq_structured_write_fmt = "  for (const auto &_1:obj.%s()) position = %swrite_struct(_1,data,position);\n";
+static const char* seq_structured_write_size_fmt = "  for (const auto &_1:obj.%s()) position += %swrite_size(_1, position);\n";
+static const char* seq_structured_read_copy_fmt = "  for (size_t _1 = 0; _1 < sequenceentries; _1++) position = %sread_struct(obj.%s()[_1], data, position);\n";
 static const char* seq_primitive_write_fmt = "  memcpy((char*)data+position,obj.%s().data(),sequenceentries*%d);  //contents for %s\n";
 static const char* seq_primitive_read_fmt = "  obj.%s().assign((%s*)((char*)data+position),(%s*)((char*)data+position)+sequenceentries);  //putting data into container\n";
 static const char* seq_incr_fmt = "  position += sequenceentries*%d;";
@@ -85,6 +85,7 @@ static const char* seq_entries_fmt = "  position += (obj.%s().size()%s)*%d;  //e
 static const char* ref_cast_fmt = "dynamic_cast<%s&>(obj)";
 static const char* member_access_fmt = "obj.%s()";
 static const char* sequence_length_exception_fmt = "  if (sequenceentries > %zu) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %zu\");\n";
+static const char* array_for_loop = "  for (size_t _i = 0; _i < %d; _i++) {\n";
 
 static const char* char_cast = "char";
 static const char* bool_cast = "bool";
@@ -167,9 +168,15 @@ struct context
   context_t* parent;
 };
 
+static bool idl_is_template(idl_node_t* node);
+static bool idl_is_base_type(idl_node_t* node);
+static bool idl_is_sequence(idl_node_t* node);
+static bool idl_is_string(idl_node_t* node);
+static uint64_t array_entries(idl_declarator_t* decl);
 static idl_retcode_t add_default_case(context_t* ctx);
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
-static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec);
+static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec);
+static idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec);
 static idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec);
 static idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec);
 static idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t typespec, int sequence, const char *seqsizeappend);
@@ -178,7 +185,7 @@ static int determine_byte_width(idl_mask_t typespec);
 static const char* determine_cast(idl_mask_t mask);
 static idl_retcode_t add_alignment(context_t* ctx, int bytewidth);
 static idl_retcode_t add_null(context_t* ctx, int nbytes);
-static idl_retcode_t process_member(context_t* ctx, idl_member_t* member);
+static idl_retcode_t process_member(context_t* ctx, idl_member_t* mem);
 static idl_retcode_t process_module(context_t* ctx, idl_module_t* module);
 static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_case(context_t* ctx, idl_case_t* _case);
@@ -229,6 +236,9 @@ static char* generatealignment(int alignto)
 
 int determine_byte_width(idl_mask_t mask)
 {
+  if ((mask & IDL_ENUM) == IDL_ENUM)
+    mask = IDL_UINT32;
+
   switch (mask % (IDL_BASE_TYPE*2))
   {
   case IDL_INT8:
@@ -337,6 +347,30 @@ void close_context(context_t* ctx)
   free(ctx->context);
 }
 
+bool idl_is_base_type(idl_node_t* node)
+{
+  return (NULL != node) &&
+         ((node->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE);
+}
+
+bool idl_is_template(idl_node_t* node)
+{
+  return (NULL != node) &&
+         ((node->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE);
+}
+
+bool idl_is_sequence(idl_node_t* node)
+{
+  return (NULL != node) &&
+    ((node->mask & IDL_SEQUENCE) == IDL_SEQUENCE);
+}
+
+bool idl_is_string(idl_node_t* node)
+{
+  return (NULL != node) &&
+    ((node->mask & IDL_STRING) == IDL_STRING);
+}
+
 void resolve_namespace(idl_node_t* node, char** up)
 {
   if (NULL == node)
@@ -367,7 +401,7 @@ idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
 {
   if (idl_is_module(node))
     process_module(ctx, (idl_module_t*)node);
-  else if (idl_is_struct(node) || idl_is_union(node) || idl_is_enum(node))
+  else if (idl_is_struct(node) || idl_is_union(node))
     process_constructed(ctx, node);
 
   if (node->next)
@@ -376,33 +410,35 @@ idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_member(context_t* ctx, idl_member_t* member)
+idl_retcode_t process_member(context_t* ctx, idl_member_t* mem)
 {
-  if (NULL == ctx || NULL == member)
+  if (NULL == ctx || NULL == mem)
     return IDL_RETCODE_INVALID_PARSETREE;
-  if ((member->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE ||
-      (member->type_spec->mask & IDL_ENUM) == IDL_ENUM)
-    process_base(ctx, member->declarators, member->type_spec);
-  else if ((member->type_spec->mask & IDL_STRUCT) == IDL_STRUCT)
-    process_instance(ctx, member->declarators, (idl_struct_t*)member->type_spec);
-  else if ((member->type_spec->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
-    // FIXME: this probably needs to loop to find the correct declarator?
-    process_template(ctx, member->declarators, member->type_spec);
 
-  if (member->node.next)
-    process_member(ctx, (idl_member_t*)member->node.next);
+  process_instance(ctx, mem->declarators, mem->type_spec);
+
+  if (mem->node.next)
+    process_member(ctx, (idl_member_t*)(mem->node.next));
 
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec)
+idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec)
 {
-  if (NULL == ctx || NULL == decl)
+  if (idl_is_base_type(spec) ||
+    idl_is_enum(spec))
+    return process_base(ctx, decl, spec);
+  else if (idl_is_struct(spec))
+    return process_struct(ctx, decl, (idl_struct_t*)spec);
+  else if (idl_is_template(spec))
+    // FIXME: this probably needs to loop to find the correct declarator?
+    return process_template(ctx, decl, spec);
+  else
     return IDL_RETCODE_INVALID_PARSETREE;
-  char* cpp11name = get_cpp_name(decl->identifier);
-  if (NULL == cpp11name)
-    return IDL_RETCODE_INVALID_PARSETREE;
+}
 
+uint64_t array_entries(idl_declarator_t* decl)
+{
   idl_const_expr_t* ce = decl->const_expr;
   uint64_t entries = 0;
   while (ce)
@@ -436,6 +472,18 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struc
 
     ce = ce->next;
   }
+  return entries;
+}
+
+idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec)
+{
+  if (NULL == ctx || NULL == decl)
+    return IDL_RETCODE_INVALID_PARSETREE;
+  char* cpp11name = get_cpp_name(decl->identifier);
+  if (NULL == cpp11name)
+    return IDL_RETCODE_INVALID_PARSETREE;
+
+  uint64_t entries = array_entries(decl);
 
   char* ns = _strdup("");
   resolve_namespace((idl_node_t*)spec, &ns);
@@ -445,7 +493,7 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_struc
   free(ns);
 
   if (((idl_node_t*)decl)->next)
-    process_instance(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, spec);
+    process_struct(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, spec);
 
   return IDL_RETCODE_OK;
 }
@@ -497,7 +545,6 @@ idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
     {
       format_write_stream(1, ctx, "  alignmentbytes = ");
     }
-
 
     char* buffer = generatealignment(bytewidth);
     format_write_stream(0, ctx, buffer);
@@ -697,22 +744,34 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     return IDL_RETCODE_INVALID_PARSETREE;
 
   char* cpp11name = NULL;
-  idl_mask_t member_mask = tspec->mask;
+  uint64_t entries = array_entries(decl);
 
-  if ((member_mask & IDL_SEQUENCE) == IDL_SEQUENCE ||
-      (member_mask & IDL_STRING) == IDL_STRING)
+  int oldal = ctx->alignmentpresent;
+  int oldep = ctx->sequenceentriespresent;
+  if (entries)
+  {
+    format_write_size_stream(1,ctx, array_for_loop,entries);
+    format_write_stream(1, ctx, array_for_loop, entries);
+    format_read_stream(1, ctx, array_for_loop, entries);
+
+    ctx->depth++;
+  }
+
+  if (idl_is_sequence(tspec) ||
+      idl_is_string(tspec))
   {
     // FIXME: loop!?
     cpp11name = get_cpp_name(decl->identifier);
 
     idl_const_expr_t* ce = NULL;
-    if ((member_mask & IDL_SEQUENCE) == IDL_SEQUENCE)
+    idl_type_spec_t* ispec = tspec;
+    if (idl_is_sequence(tspec))
     {
       //change member_mask to the type of the sequence template
-      member_mask = ((idl_sequence_t*)tspec)->type_spec->mask;
       ce = ((idl_sequence_t*)tspec)->const_expr;
+      ispec = ((idl_sequence_t*)tspec)->type_spec;
     }
-    else if ((member_mask & IDL_STRING) == IDL_STRING)
+    else if (idl_is_string(tspec))
     {
       ce = ((idl_string_t*)tspec)->const_expr;
     }
@@ -732,7 +791,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
     char* buffer = calloc(bufsize,1);
     sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
-    process_known_width(ctx, buffer, IDL_UINT32, 1, (member_mask & IDL_STRING) == IDL_STRING ? "+1":"");
+    process_known_width(ctx, buffer, IDL_UINT32, 1, idl_is_string(ispec) ? "+1":"");
 
     if (bound)
     {
@@ -743,20 +802,20 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     if (buffer)
       free(buffer);
 
-    if (member_mask == IDL_WCHAR)
+    if (ispec->mask == IDL_WCHAR)
     {
-      return IDL_RETCODE_INVALID_PARSETREE;
+      fprintf(stderr, "wchar sequences are currently not supported\n");
     }
-    else if ((member_mask & IDL_BASE_TYPE) == IDL_BASE_TYPE ||
-             (member_mask & IDL_STRING) == IDL_STRING)
+    else if (idl_is_base_type(ispec) ||
+             idl_is_string(tspec))
     {
       int bytewidth = 1;
 
       const char* cast_fmt = char_cast;
-      if ((member_mask & IDL_BASE_TYPE) == IDL_BASE_TYPE)
+      if (idl_is_base_type(ispec))
       {
-        cast_fmt = determine_cast(member_mask);
-        bytewidth = determine_byte_width(member_mask);  //determine byte width of base type
+        cast_fmt = determine_cast(ispec->mask);
+        bytewidth = determine_byte_width(ispec->mask);  //determine byte width of base type
       }
       if (bytewidth > 4)
         add_alignment(ctx, bytewidth);
@@ -765,35 +824,31 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       format_read_stream(1, ctx, seq_primitive_read_fmt, cpp11name, cast_fmt, cast_fmt);
       format_write_stream(1, ctx, seq_incr_fmt, bytewidth);
       format_write_stream(0, ctx, incr_comment);
-      format_write_size_stream(1, ctx, seq_entries_fmt, cpp11name, (member_mask & IDL_STRING) == IDL_STRING ? "+1" : "", bytewidth);
+      format_write_size_stream(1, ctx, seq_entries_fmt, cpp11name, idl_is_string(tspec) ? "+1" : "", bytewidth);
       format_read_stream(1, ctx, seq_incr_fmt, bytewidth);
       format_read_stream(0, ctx, incr_comment);
     }
     else
     {
-      char* iterated_name = _strdup("_1");
-
-      if (0 == strcmp(cpp11name, iterated_name))
-        iterated_name = _strdup("_2");
-
-      format_write_stream(1, ctx, seq_structured_write_fmt, iterated_name, cpp11name, iterated_name);
-      format_write_size_stream(1, ctx, seq_structured_write_size_fmt, iterated_name, cpp11name, iterated_name);
+      char* ns = _strdup("");
+      resolve_namespace((idl_node_t*)ispec, &ns);
+      format_write_stream(1, ctx, seq_structured_write_fmt, cpp11name, ns);
+      format_write_size_stream(1, ctx, seq_structured_write_size_fmt, cpp11name, ns);
       format_read_stream(1, ctx, seq_read_resize_fmt, cpp11name);
-      format_read_stream(1, ctx, seq_structured_read_copy_fmt, iterated_name, iterated_name, iterated_name, cpp11name, iterated_name);
-
-      free(iterated_name);
+      format_read_stream(1, ctx, seq_structured_read_copy_fmt, ns, cpp11name);
     }
 
     ctx->accumulatedalignment = 0;
     ctx->currentalignment = -1;
   }
-  else if (member_mask == IDL_WSTRING)
+  else if (tspec->mask == IDL_WSTRING)
   {
-    return IDL_RETCODE_INVALID_PARSETREE;
+    fprintf(stderr, "wstring types are currently not supported\n");
   }
-#if 0
-  else if (member_mask == IDL_FIXED_PT_TYPE)
+  else if (tspec->mask == IDL_FIXED_PT)
   {
+    fprintf(stderr, "fixed point types are currently not supported\n");
+#if 0
     //fputs("fixed point type template classes not supported at this time", stderr);
 
     format_write_stream(1, ctx, "  {\n");
@@ -822,8 +877,20 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
 
     ctx->accumulatedalignment = 0;
     ctx->currentalignment = -1;
-  }
 #endif
+  }
+
+  if (entries)
+  {
+    ctx->depth--;
+
+    ctx->alignmentpresent = oldal;
+    ctx->sequenceentriespresent = oldep;
+
+    format_write_size_stream(1, ctx, "  }\n");
+    format_write_stream(1, ctx, "  }\n");
+    format_read_stream(1, ctx, "  }\n");
+  }
 
   if (cpp11name)
     free(cpp11name);
@@ -927,9 +994,9 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_mask_t disc_mask = st->mask;
       if ((disc_mask & IDL_FLOATING_PT_TYPE) == IDL_FLOATING_PT_TYPE)
         return IDL_RETCODE_INVALID_PARSETREE;
-      else if ((disc_mask & IDL_ENUMERATOR) == IDL_ENUMERATOR)
+      else if (idl_is_enumerator(st))
         disc_mask = IDL_ULONG;
-      else if ((disc_mask & IDL_BASE_TYPE) != IDL_BASE_TYPE)
+      else if (!idl_is_base_type(st))
         return IDL_RETCODE_INVALID_PARSETREE;
 
       format_read_stream(1, ctx, union_clear_func);
@@ -980,14 +1047,7 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   format_read_stream(1, ctx, "  {\n");
   ctx->depth++;
 
-  if ((_case->type_spec->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE)
-    process_base(ctx, _case->declarator, _case->type_spec);
-  else if ((_case->type_spec->mask & IDL_STRUCT) == IDL_STRUCT)
-    process_instance(ctx, _case->declarator, (idl_struct_t*)_case->type_spec);
-  else if ((_case->type_spec->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE)
-    process_template(ctx, _case->declarator, _case->type_spec);
-  else
-    return IDL_RETCODE_INVALID_PARSETREE;
+  process_instance(ctx, _case->declarator, _case->type_spec);
 
   ctx->depth--;
   format_write_stream(1, ctx, "  }\n");
@@ -1071,43 +1131,13 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
 
   char* cpp11name = get_cpp_name(decl->identifier);
 
-  idl_const_expr_t* ce = decl->const_expr;
-  uint64_t entries = 0;
-  while (ce)
-  {
-    if ((ce->mask & IDL_CONST) == IDL_CONST)
-    {
-      idl_variant_t* var = (idl_variant_t*)ce;
-      idl_mask_t mask = var->node.mask;
-      if ((mask & IDL_UINT8) == IDL_UINT8)
-      {
-        if (entries)
-          entries *= var->value.oct;
-        else
-          entries = var->value.oct;
-      }
-      else if ((mask & IDL_UINT32) == IDL_UINT32)
-      {
-        if (entries)
-          entries *= var->value.ulng;
-        else
-          entries = var->value.ulng;
-      }
-      else if ((mask & IDL_UINT64) == IDL_UINT64)
-      {
-        if (entries)
-          entries *= var->value.ullng;
-        else
-          entries = var->value.ullng;
-      }
-    }
+  uint64_t entries = array_entries(decl);
 
-    ce = ce->next;
-  }
   if (entries)
     process_known_width_array(ctx, cpp11name, entries, tspec->mask);
   else
     process_known_width(ctx, cpp11name, tspec->mask, 0, "");
+
   free(cpp11name);
 
   if (((idl_node_t*)decl)->next)
