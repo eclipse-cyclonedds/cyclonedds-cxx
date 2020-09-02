@@ -17,13 +17,7 @@
 #include "idlcxx/cpp11backend.h"
 #include "idl/tree.h"
 #include "idl/string.h"
-
-#ifndef _WIN32
-#define strcpy_s(ptr, len, str) strcpy(ptr, str)
-#define sprintf_s(ptr, len, str, ...) sprintf(ptr, str, __VA_ARGS__)
-#define strcat_s(ptr, len, str) strcat(ptr, str)
-#define _strdup(str) strdup(str)
-#endif
+#include "strdup.h"
 
 #define format_ostream_indented(depth,ostr,str,...) \
 if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
@@ -203,15 +197,11 @@ static char* generatealignment(int alignto)
   char* returnval = NULL;
   if (alignto < 2)
   {
-    size_t len = strlen("0;") + 1;
-    returnval = calloc(len,1);
-    strcpy_s(returnval, len, "0;");
+    returnval = idl_strdup("0;");
   }
   else if (alignto == 2)
   {
-    size_t len = strlen("position&0x1;") + 1;
-    returnval = calloc(len,1);
-    strcpy_s(returnval, len, "position&0x1;");
+    returnval = idl_strdup("position&0x1;");
   }
   else
   {
@@ -220,17 +210,13 @@ static char* generatealignment(int alignto)
     {
       if (alignto == mask + 1)
       {
-        size_t len = strlen(primitive_calc_alignment_shift_fmt) - 2 + 30 + 1;
-        returnval = calloc(len,1);
-        sprintf_s(returnval, len, primitive_calc_alignment_shift_fmt, alignto, mask, mask);
+        (void)idl_asprintf(&returnval, primitive_calc_alignment_shift_fmt, alignto, mask, mask);
         return returnval;
       }
       mask >>= 1;
     }
 
-    size_t len = strlen(primitive_calc_alignment_modulo_fmt) - 10 + 5 + 1;
-    returnval = calloc(len,1);
-    sprintf_s(returnval, len, primitive_calc_alignment_modulo_fmt, alignto, alignto, alignto);
+    (void)idl_asprintf(&returnval, primitive_calc_alignment_modulo_fmt, alignto, alignto, alignto);
   }
   return returnval;
 }
@@ -305,7 +291,7 @@ context_t* create_context(idl_streamer_output_t* str, const char* name)
   if (NULL != ptr)
   {
     ptr->str = str;
-    ptr->context = _strdup(name);
+    ptr->context = idl_strdup(name);
     ptr->currentalignment = -1;
     ptr->header_stream = create_idl_ostream(NULL);
     ptr->write_size_stream = create_idl_ostream(NULL);
@@ -374,24 +360,22 @@ bool idl_is_string(idl_node_t* node)
 
 void resolve_namespace(idl_node_t* node, char** up)
 {
-  if (NULL == node)
+  if (!node)
     return;
 
   if (idl_is_module(node))
   {
     idl_module_t* mod = (idl_module_t*)node;
-    size_t currentlen = strlen(mod->identifier);
     if (*up)
     {
-      char *temp = calloc(strlen(*up) + currentlen + 3, 1);
-      sprintf(temp, "%s::%s", mod->identifier, *up);
+      char *temp = NULL;
+      idl_asprintf(&temp, "%s::%s", mod->identifier, *up);
       free(*up);
       *up = temp;
     }
     else
     {
-      *up = calloc(currentlen + 1, 1);
-      sprintf(*up, "%s::", mod->identifier);
+      idl_asprintf(up, "%s::", mod->identifier);
     }
   }
 
@@ -484,7 +468,7 @@ idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_
 
   uint64_t entries = array_entries(decl);
 
-  char* ns = _strdup("");
+  char* ns = idl_strdup("");
   resolve_namespace((idl_node_t*)spec, &ns);
 
   write_instance_funcs(ctx, ns, cpp11name, entries, false);
@@ -511,8 +495,8 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* ns, const char* n
     if (inheritance)
       fmt = ref_cast_fmt;
 
-    char* accessor = calloc(1, strlen(fmt) + strlen(name) - 1);
-    sprintf_s(accessor, n+1, fmt, name);
+    char* accessor = NULL;
+    idl_asprintf(&accessor, fmt, name);
 
     format_write_stream(1, ctx, instance_write_func_fmt, ns, accessor);
     format_read_stream(1, ctx, instance_read_func_fmt, ns, accessor);
@@ -785,9 +769,8 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       ce = ce->next;
     }
 
-    size_t bufsize = strlen(cpp11name) + strlen(seq_size_fmt) - 2 + 1;
-    char* buffer = calloc(bufsize,1);
-    sprintf_s(buffer, bufsize, seq_size_fmt, cpp11name);
+    char* buffer;
+    idl_asprintf(&buffer, seq_size_fmt, cpp11name);
     process_known_width(ctx, buffer, IDL_UINT32, 1, idl_is_string(ispec) ? "+1":"");
 
     if (bound)
@@ -827,7 +810,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
     }
     else
     {
-      char* ns = _strdup("");
+      char* ns = idl_strdup("");
       resolve_namespace((idl_node_t*)ispec, &ns);
       format_write_stream(1, ctx, seq_structured_write_fmt, cpp11name, ns);
       format_write_size_stream(1, ctx, seq_structured_write_size_fmt, cpp11name, ns);
@@ -975,7 +958,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       if (_struct->base_type)
       {
         char* base_cpp11name = get_cpp_name(_struct->base_type->identifier);
-        char* ns = _strdup("");
+        char* ns = idl_strdup("");
         assert(base_cpp11name);
         resolve_namespace((idl_node_t*)_struct->base_type, &ns);
         write_instance_funcs(ctx, ns, base_cpp11name, 0, true);
@@ -1082,7 +1065,7 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
     }
     else if (idl_is_masked(ce, IDL_BOOLEAN_LITERAL))
     {
-      if (!(buffer = _strdup(lit->value.bln ? "true" : "false")))
+      if (!(buffer = idl_strdup(lit->value.bln ? "true" : "false")))
         return IDL_RETCODE_NO_MEMORY;
     }
     else if (idl_is_masked(ce, IDL_CHAR_LITERAL))

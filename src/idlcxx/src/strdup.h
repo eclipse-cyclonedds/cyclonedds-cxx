@@ -9,13 +9,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-#ifndef IDL_VERSION_H
-#define IDL_VERSION_H
+#ifndef IDL_STRDUP_H
+#define IDL_STRDUP_H
 
-#define IDL_VERSION "@CycloneDDS_VERSION@"
-#define IDL_VERSION_MAJOR @CycloneDDS_VERSION_MAJOR@
-#define IDL_VERSION_MINOR @CycloneDDS_VERSION_MINOR@
-#define IDL_VERSION_PATCH @CycloneDDS_VERSION_PATCH@
-#define IDL_VERSION_TWEAK @CycloneDDS_VERSION_TWEAK@
+#include <string.h>
 
-#endif /* IDL_VERSION_H */
+#if _WIN32
+# define idl_strdup(s) _strdup(s)
+#else
+# define idl_strdup(s) strdup(s)
+#endif
+
+#endif /* IDL_STRDUP_H */

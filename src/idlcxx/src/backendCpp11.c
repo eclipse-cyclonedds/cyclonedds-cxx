@@ -14,6 +14,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "strdup.h"
+
 /* Specify a list of all C++11 keywords */
 static const char* cpp11_keywords[] =
 {
@@ -54,6 +56,6 @@ get_cpp_name(const char* name)
     }
   }
   /* No match with a keyword is found, thus return the identifier itself */
-  cpp11Name = strdup(name);
+  cpp11Name = idl_strdup(name);
   return cpp11Name;
 }
