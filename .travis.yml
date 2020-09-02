@@ -180,7 +180,7 @@ before_script:
   - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
 build_cyclonedds: &build_cyclonedds
-  - eval "export CYCLONEDDS_BRANCH=master"
+  - eval "export CYCLONEDDS_BRANCH=idlcxx"
   - eval "export CYCLONEDDS_REPOSITORY=https://github.com/eclipse-cyclonedds/cyclonedds.git"
   - git clone --single-branch --branch ${CYCLONEDDS_BRANCH} ${CYCLONEDDS_REPOSITORY} cyclonedds
   - mkdir cyclonedds/build
