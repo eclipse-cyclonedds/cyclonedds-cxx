@@ -13,11 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#define sprintf_s(ptr, len, str, ...) sprintf(ptr, str __VA_OPT__(,) __VA_ARGS__)
-#endif
 
 #include "idlcxx/streamer_generator.h"
 #include "idl/processor.h"
@@ -737,7 +732,7 @@ void test_base(size_t n, bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "struct s {\n"\
       "%s mem;\n"\
@@ -747,7 +742,7 @@ void test_base(size_t n, bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "struct s {\n"\
       "%s mem;\n"\
       "};\n",
@@ -776,7 +771,7 @@ void test_instance(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "struct I {\n"\
       "long l;\n"
@@ -788,7 +783,7 @@ void test_instance(bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "struct I {\n"\
       "long l;\n"
       "};\n"
@@ -816,7 +811,7 @@ void test_sequence(size_t n, bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "struct s {\n"\
       "sequence<%s> mem;\n"\
@@ -826,7 +821,7 @@ void test_sequence(size_t n, bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "struct s {\n"\
       "sequence<%s> mem;\n"\
       "};\n",
@@ -852,7 +847,7 @@ void test_string(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "struct s {\n"\
       "string str;\n"\
@@ -861,7 +856,7 @@ void test_string(bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "struct s {\n"\
       "string str;\n"\
       "};\n");
@@ -886,7 +881,7 @@ void test_union(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "union s switch (long) {\n"\
       "case 0:\n"\
@@ -901,7 +896,7 @@ void test_union(bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "union s switch (long) {\n"\
       "case 0:\n"\
       "case 1: octet o;\n"\
@@ -930,7 +925,7 @@ void test_enum(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "enum E {e_0, e_1, e_2, e_3};\n"\
       "struct s {\n"\
@@ -940,7 +935,7 @@ void test_enum(bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "enum E {e_0, e_1, e_2, e_3};\n"\
       "struct s {\n"\
       "E mem;\n"\
@@ -964,7 +959,7 @@ void test_array_base(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "struct s {\n"\
       "float mem[3][2], mem2;\n"\
@@ -973,7 +968,7 @@ void test_array_base(bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "struct s {\n"\
       "float mem[3][2], mem2;\n"\
       "};\n");
@@ -997,7 +992,7 @@ void test_array_instance(bool ns)
   char buffer[1024];
   if (ns)
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "module N {\n"\
       "struct I {\n"\
       "long l;\n"\
@@ -1009,7 +1004,7 @@ void test_array_instance(bool ns)
   }
   else
   {
-    sprintf_s(buffer, 1024,
+    snprintf(buffer, sizeof(buffer),
       "struct I {\n"\
       "long l;\n"\
       "};\n"\
