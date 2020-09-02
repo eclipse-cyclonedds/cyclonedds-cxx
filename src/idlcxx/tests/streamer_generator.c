@@ -762,8 +762,8 @@ void test_base(size_t n, bool ns)
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
 
   destruct_idl_ostream(impl);
-
   destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_instance(bool ns)
@@ -802,8 +802,11 @@ void test_instance(bool ns)
   create_funcs_instance(impl, "mem", ns);
 
   CU_ASSERT_STRING_EQUAL(ns ? HNPI : HNAI, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
-
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_sequence(size_t n, bool ns)
@@ -838,8 +841,11 @@ void test_sequence(size_t n, bool ns)
   create_funcs_sequence(impl, "mem", n, ns);
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
-
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_string(bool ns)
@@ -872,8 +878,11 @@ void test_string(bool ns)
   create_funcs_string(impl, "str", ns);
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
-
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_union(bool ns)
@@ -918,6 +927,10 @@ void test_union(bool ns)
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_enum(bool ns)
@@ -952,6 +965,10 @@ void test_enum(bool ns)
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_array_base(bool ns)
@@ -985,6 +1002,10 @@ void test_array_base(bool ns)
 
   CU_ASSERT_STRING_EQUAL(ns ? HNP : HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_array_instance(bool ns)
@@ -1024,6 +1045,10 @@ void test_array_instance(bool ns)
 
   CU_ASSERT_STRING_EQUAL(ns ? HNPI : HNAI, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_ostream(impl);
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_namespace_cross_call()
@@ -1039,6 +1064,9 @@ void test_namespace_cross_call()
 
   CU_ASSERT_STRING_EQUAL(CCFH, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(CCFI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_struct_inheritance()
@@ -1058,6 +1086,9 @@ void test_struct_inheritance()
 
   CU_ASSERT_STRING_EQUAL(HNAI, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(IFI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 void test_bounded_sequence()
@@ -1075,6 +1106,9 @@ void test_bounded_sequence()
 
   CU_ASSERT_STRING_EQUAL(HNA, get_ostream_buffer(get_idl_streamer_header_buf(generated)));
   CU_ASSERT_STRING_EQUAL(BSI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
 }
 
 CU_Test(streamer_generator, base_types_namespace_absent)

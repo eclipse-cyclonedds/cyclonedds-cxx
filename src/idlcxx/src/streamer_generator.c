@@ -332,6 +332,7 @@ void close_context(context_t* ctx)
   destruct_idl_ostream(ctx->read_stream);
 
   free(ctx->context);
+  free(ctx);
 }
 
 bool idl_is_base_type(idl_node_t* node)
@@ -899,7 +900,6 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
     process_node(newctx, (idl_node_t*)module->definitions);
 
     close_context(newctx);
-    free(newctx);
 
     format_header_stream(1, ctx, namespace_closure_fmt, cpp11name);
     format_read_stream(1, ctx, namespace_closure_fmt, cpp11name);
