@@ -1056,7 +1056,7 @@ void test_struct_inheritance()
   "};\n";
 
   idl_tree_t* tree = NULL;
-  idl_parse_string(str, 0u, &tree);
+  idl_parse_string(str, IDL_FLAG_EXTENDED_DATA_TYPES, &tree);
 
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
