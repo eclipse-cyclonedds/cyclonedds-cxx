@@ -9,13 +9,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "idlcxx/streamer_generator.h"
 #include "idlcxx/cpp11backend.h"
 #include "idl/tree.h"
+#include "idl/string.h"
 
 #ifndef _WIN32
 #define strcpy_s(ptr, len, str) strcpy(ptr, str)
@@ -412,8 +413,8 @@ idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
 
 idl_retcode_t process_member(context_t* ctx, idl_member_t* mem)
 {
-  if (NULL == ctx || NULL == mem)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(mem);
 
   process_instance(ctx, mem->declarators, mem->type_spec);
 
@@ -425,16 +426,15 @@ idl_retcode_t process_member(context_t* ctx, idl_member_t* mem)
 
 idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec)
 {
-  if (idl_is_base_type(spec) ||
-    idl_is_enum(spec))
+  if (idl_is_base_type(spec) || idl_is_enum(spec)) {
     return process_base(ctx, decl, spec);
-  else if (idl_is_struct(spec))
+  } else if (idl_is_struct(spec)) {
     return process_struct(ctx, decl, (idl_struct_t*)spec);
-  else if (idl_is_template(spec))
+  } else {
+    assert(idl_is_template(spec));
     // FIXME: this probably needs to loop to find the correct declarator?
     return process_template(ctx, decl, spec);
-  else
-    return IDL_RETCODE_INVALID_PARSETREE;
+  }
 }
 
 uint64_t array_entries(idl_declarator_t* decl)
@@ -445,7 +445,7 @@ uint64_t array_entries(idl_declarator_t* decl)
   {
     if ((ce->mask & IDL_CONST) == IDL_CONST)
     {
-      idl_variant_t* var = (idl_variant_t*)ce;
+      idl_constval_t* var = (idl_constval_t*)ce;
       idl_mask_t mask = var->node.mask;
       if ((mask & IDL_UINT8) == IDL_UINT8)
       {
@@ -477,11 +477,10 @@ uint64_t array_entries(idl_declarator_t* decl)
 
 idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec)
 {
-  if (NULL == ctx || NULL == decl)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(decl);
   char* cpp11name = get_cpp_name(decl->identifier);
-  if (NULL == cpp11name)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(cpp11name);
 
   uint64_t entries = array_entries(decl);
 
@@ -531,8 +530,7 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* ns, const char* n
 
 idl_retcode_t add_alignment(context_t* ctx, int bytewidth)
 {
-  if (NULL == ctx)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
 
   if ((0 > ctx->currentalignment || bytewidth > ctx->currentalignment) && bytewidth != 1)
   {
@@ -649,20 +647,17 @@ const char* determine_cast(idl_mask_t mask)
 
 idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t mask, int sequence, const char *seqsizeappend)
 {
-  if (NULL == ctx || NULL == name)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(name);
 
   if ((mask & IDL_ENUM) == IDL_ENUM)
     mask = IDL_UINT32;
 
   const char* cast_fmt = determine_cast(mask);
-
-  if (NULL == cast_fmt)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(cast_fmt);
 
   int bytewidth = determine_byte_width(mask);
-  if (-1 == bytewidth)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(bytewidth != -1);
 
   if (ctx->currentalignment != bytewidth)
     add_alignment(ctx, bytewidth);
@@ -705,15 +700,13 @@ idl_retcode_t process_known_width(context_t* ctx, const char* name, idl_mask_t m
 
 idl_retcode_t process_known_width_array(context_t* ctx, const char *name, uint64_t entries, idl_mask_t mask)
 {
-  if (NULL == ctx)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
 
   if ((mask & IDL_ENUM) == IDL_ENUM)
     mask = IDL_UINT32;
 
   int bytewidth = determine_byte_width(mask);
-  if (0 > bytewidth)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(bytewidth != -1);
 
   unsigned int bw = (unsigned int)bytewidth;
 
@@ -742,8 +735,9 @@ idl_retcode_t process_known_width_array(context_t* ctx, const char *name, uint64
 
 idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec)
 {
-  if (NULL == ctx || NULL == decl || NULL == tspec)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(decl);
+  assert(tspec);
 
   char* cpp11name = NULL;
   uint64_t entries = array_entries(decl);
@@ -764,6 +758,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
   {
     // FIXME: loop!?
     cpp11name = get_cpp_name(decl->identifier);
+    assert(cpp11name);
 
     idl_const_expr_t* ce = NULL;
     idl_type_spec_t* ispec = tspec;
@@ -901,12 +896,13 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
 
 idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
 {
-  if (NULL == ctx || NULL == module)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(module);
 
   if (module->definitions)
   {
     char* cpp11name = get_cpp_name(module->identifier);
+    assert(cpp11name);
 
     context_t* newctx = child_context(ctx, cpp11name);
 
@@ -935,8 +931,8 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
 
 idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
 {
-  if (NULL == ctx || NULL == node)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(node);
 
   char* cpp11name = NULL;
 
@@ -947,6 +943,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       cpp11name = get_cpp_name(((idl_struct_t*)node)->identifier);
     else if (idl_is_union(node))
       cpp11name = get_cpp_name(((idl_union_t*)node)->identifier);
+    assert(cpp11name);
 
     format_header_stream(1, ctx, struct_write_func_fmt, cpp11name);
     format_header_stream(0, ctx, ";\n\n");
@@ -979,6 +976,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       {
         char* base_cpp11name = get_cpp_name(_struct->base_type->identifier);
         char* ns = _strdup("");
+        assert(base_cpp11name);
         resolve_namespace((idl_node_t*)_struct->base_type, &ns);
         write_instance_funcs(ctx, ns, base_cpp11name, 0, true);
         free(base_cpp11name);
@@ -994,12 +992,11 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_switch_type_spec_t* st = _union->switch_type_spec;
 
       idl_mask_t disc_mask = st->mask;
-      if ((disc_mask & IDL_FLOATING_PT_TYPE) == IDL_FLOATING_PT_TYPE)
-        return IDL_RETCODE_INVALID_PARSETREE;
-      else if (idl_is_enumerator(st))
+      if (idl_is_enumerator(st)) {
         disc_mask = IDL_ULONG;
-      else if (!idl_is_base_type(st))
-        return IDL_RETCODE_INVALID_PARSETREE;
+      } else {
+        assert(idl_is_masked(st, IDL_BASE_TYPE));
+      }
 
       format_read_stream(1, ctx, union_clear_func);
       process_known_width(ctx, "_d", disc_mask, 0, "");
@@ -1077,26 +1074,22 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
   {
     char* buffer = NULL;
     idl_literal_t* lit = (idl_literal_t*)ce;
-    if ((ce->mask & IDL_INTEGER_LITERAL) == IDL_INTEGER_LITERAL)
+    if (idl_is_masked(ce, IDL_INTEGER_LITERAL))
     {
-      int n = snprintf(buffer, 0, "%lu", lit->value.ullng);
-      if (n < 0)
-        return IDL_RETCODE_SYNTAX_ERROR;
-      buffer = calloc((size_t)n + 1, 1);
-      snprintf(buffer, (size_t)n + 1, "%lu", lit->value.ullng);
+      assert(idl_is_masked(ce, IDL_INTEGER_LITERAL));
+      if (idl_asprintf(&buffer, "%lu", lit->value.ullng) == -1)
+        return IDL_RETCODE_NO_MEMORY;
     }
-    else if ((ce->mask & IDL_BOOLEAN_LITERAL) == IDL_BOOLEAN_LITERAL)
+    else if (idl_is_masked(ce, IDL_BOOLEAN_LITERAL))
     {
-      buffer = _strdup(lit->value.bln ? "true" : "false");
+      if (!(buffer = _strdup(lit->value.bln ? "true" : "false")))
+        return IDL_RETCODE_NO_MEMORY;
     }
-    else if ((ce->mask & IDL_CHAR_LITERAL) == IDL_CHAR_LITERAL)
+    else if (idl_is_masked(ce, IDL_CHAR_LITERAL))
     {
-      size_t len = strlen(lit->value.str) + 3;
-      buffer = calloc(len, 1);
-      snprintf(buffer, len, "\'%s\'", lit->value.str);
+      if (idl_asprintf(&buffer, "\'%s\'", lit->value.str) == -1)
+        return IDL_RETCODE_NO_MEMORY;
     }
-    else
-      return IDL_RETCODE_INVALID_PARSETREE;
 
     if (buffer)
     {
@@ -1128,10 +1121,12 @@ idl_retcode_t add_default_case(context_t* ctx)
 
 idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* tspec)
 {
-  if (NULL == ctx || NULL == decl || NULL == tspec)
-    return IDL_RETCODE_INVALID_PARSETREE;
+  assert(ctx);
+  assert(decl);
+  assert(tspec);
 
   char* cpp11name = get_cpp_name(decl->identifier);
+  assert(cpp11name);
 
   uint64_t entries = array_entries(decl);
 
