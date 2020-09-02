@@ -199,12 +199,15 @@ script:
   - *build_cyclonedds
   - mkdir build
   - cd build
+  - conan install -b missing -s arch=${ARCH} -s build_type=${BUILD_TYPE} ../${CONANFILE:-conanfile.txt}
   - ${SCAN_BUILD} cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install
           -DCMAKE_PREFIX_PATH=${TRAVIS_BUILD_DIR}/cyclonedds/build/install
           -DUSE_SANITIZER=${SANITIZER}
+          -DBUILD_TESTING=on
           -G "${GENERATOR}" ..
   - cmake --build . --config ${BUILD_TYPE} --target install -- ${BUILD_TOOL_OPTIONS}
+  - ctest -j 4 --output-on-failure -T test -C ${BUILD_TYPE}
 
 after_success:
   - *submit_to_coverity_scan
