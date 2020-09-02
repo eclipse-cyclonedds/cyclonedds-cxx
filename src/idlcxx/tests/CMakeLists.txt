@@ -12,7 +12,8 @@
 include(CUnit)
 
 set(idlcxx_test_sources
-    "streamer_generator.c")
+    "streamer_generator.c"
+    "idl_ostream.c")
 
 add_cunit_executable(cunit_idlcxx ${idlcxx_test_sources})
 target_link_libraries(cunit_idlcxx PRIVATE idlcxx)
