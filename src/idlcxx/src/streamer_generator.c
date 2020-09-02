@@ -715,12 +715,14 @@ idl_retcode_t process_known_width_array(context_t* ctx, const char *name, uint64
   if (0 > bytewidth)
     return IDL_RETCODE_INVALID_PARSETREE;
 
-  size_t bytesinarray = bytewidth * entries;
+  unsigned int bw = (unsigned int)bytewidth;
+
+  size_t bytesinarray = bw * entries;
 
   if (ctx->currentalignment != bytewidth)
     add_alignment(ctx, bytewidth);
 
-  ctx->accumulatedalignment += bytewidth*entries;
+  ctx->accumulatedalignment += (int)(bw*entries);
   format_write_stream(1, ctx, primitive_write_func_array_fmt, name, bytesinarray, name);
   format_read_stream(1, ctx, primitive_read_func_array_fmt, name, bytesinarray, name);
 

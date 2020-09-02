@@ -17,7 +17,7 @@
 
 #include "idl/tree.h"
 #include "idl/retcode.h"
-#include "idl/idl_ostream.h"
+#include "idlcxx/idl_ostream.h"
 #include "idlcxx/export.h"
 
 typedef struct idl_streamer_output idl_streamer_output_t;
