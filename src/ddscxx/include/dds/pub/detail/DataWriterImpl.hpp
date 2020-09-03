@@ -397,8 +397,6 @@ dds::pub::detail::DataWriter<T>::DataWriter(
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_writer, "Could not create DataWriter.");
     topic_.delegate()->incrNrDependents();
 
-    this->setCopyIn(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyIn());
-    this->setCopyOut(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyOut());
     this->setSampleSize(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
 
     this->set_ddsc_entity(ddsc_writer);
