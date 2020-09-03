@@ -89,22 +89,17 @@ AnyDataWriterDelegate::write(
     const dds::core::Time& timestamp)
 {
     dds_return_t ret;
-    void *c_sample;
 
     /* Ignore the handle until ddsc supports writes with instance handles. */
     (void)handle;
 
-    c_sample = dds_alloc(this->sampleSize);
-    (*(this->copyIn))(data, c_sample);
-
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
-        ret = dds_write_ts(writer, c_sample, ddsc_time);
+        ret = dds_write_ts(writer, data, ddsc_time);
     } else {
-        ret = dds_write(writer, c_sample);
+        ret = dds_write(writer, data);
     }
 
-    dds_free (c_sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write failed.");
 }
 

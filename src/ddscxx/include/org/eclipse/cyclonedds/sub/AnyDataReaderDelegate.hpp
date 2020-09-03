@@ -242,8 +242,6 @@ public:
     void close();
 
 private:
-    virtual const dds_topic_descriptor_t* getDescriptor() = 0;
-
     bool init_samples_buffers(
             const uint32_t      requested_max_samples,
             uint32_t&           samples_to_read_cnt,
