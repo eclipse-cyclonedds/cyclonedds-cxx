@@ -503,8 +503,6 @@ dds::sub::detail::DataReader<T>::common_constructor(
 
     this->AnyDataReaderDelegate::td_.delegate()->incrNrDependents();
 
-    this->AnyDataReaderDelegate::setCopyOut(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyOut());
-    this->AnyDataReaderDelegate::setCopyIn(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyIn());
     this->AnyDataReaderDelegate::setSampleSize(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
     this->AnyDataReaderDelegate::setSample(&this->typed_sample_);
     this->set_ddsc_entity(ddsc_reader);
@@ -584,13 +582,6 @@ dds::sub::detail::DataReader<T>::init(ObjectDelegate::weak_ref_type weak_ref)
     }
 
     this->enable();
-}
-
-template <typename T>
-const dds_topic_descriptor_t*
-dds::sub::detail::DataReader<T>::getDescriptor()
-{
-    return org::eclipse::cyclonedds::topic::TopicTraits<T>::getDescriptor();
 }
 
 template <typename T>

@@ -31,7 +31,7 @@ int main() {
         dds::domain::DomainParticipant participant(domain::default_id());
 
         /* To subscribe to something, a topic is needed. */
-        dds::topic::Topic<HelloWorldData::Msg> topic(participant, "ddscxx_helloworld_example");
+        dds::topic::Topic<HelloWorldData::Msg> topic(participant, "HelloWorldData_Msg");
 
         /* A reader also needs a subscriber. */
         dds::sub::Subscriber subscriber(participant);

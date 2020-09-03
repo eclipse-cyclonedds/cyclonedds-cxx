@@ -220,12 +220,14 @@ void AnyDataReaderDelegate::fini_samples_buffers(
                     dds_sample_info_t*& c_sample_infos,
                     size_t c_sample_pointers_size)
 {
+#if 0
     for(size_t i = 0; i < c_sample_pointers_size; i++)
     {
         dds_sample_free(c_sample_pointers[i], this->getDescriptor(), DDS_FREE_ALL);
     }
     delete [] c_sample_infos;
     delete [] c_sample_pointers;
+#endif
 }
 
 

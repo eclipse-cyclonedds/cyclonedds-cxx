@@ -12,15 +12,15 @@
 project(helloworld LANGUAGES C CXX)
 cmake_minimum_required(VERSION 3.5)
 
-find_package(Idlpp-cxx REQUIRED)
 if (NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-# Convenience function, provided by the Idlpp-cxx that generates a CMake
-# target for the given IDL file. The function calls Idlcpp-cxx to generate
-# source files and compiles them into a library.
-idl_ddscxx_generate(ddscxxHelloWorldData_lib "HelloWorldData.idl")
+set(sources HelloWorldData.cpp datatopic.cpp)
+set(headers HelloWorldData.h HelloWorldData_DCPS.hpp datatopic.hpp)
+
+add_library(ddscxxHelloWorldData_lib OBJECT ${sources} ${headers})
+target_link_libraries(ddscxxHelloWorldData_lib PUBLIC  CycloneDDS-CXX::ddscxx)
 
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)

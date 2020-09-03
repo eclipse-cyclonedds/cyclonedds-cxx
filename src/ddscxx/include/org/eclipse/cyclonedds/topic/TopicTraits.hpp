@@ -67,17 +67,7 @@ public:
         return "ExampleName";
     }
 
-    static const dds_topic_descriptor_t *getDescriptor()
-    {
-        return  NULL;
-    }
-
-    static copyInFunction getCopyIn()
-    {
-        return NULL;
-    }
-
-    static copyOutFunction getCopyOut()
+    static ddsi_sertopic *getSerTopic(const std::string& topic_name)
     {
         return NULL;
     }

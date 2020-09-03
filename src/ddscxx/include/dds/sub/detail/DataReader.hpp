@@ -63,8 +63,6 @@ public:
 
     void init(ObjectDelegate::weak_ref_type weak_ref);
 
-    virtual const dds_topic_descriptor_t* getDescriptor();
-
     dds::sub::status::DataState default_filter_state();
     void default_filter_state(const dds::sub::status::DataState& state);
 
