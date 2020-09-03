@@ -17,6 +17,8 @@
 #include <inttypes.h>
 #include "idlcxx/backendCpp11Utils.h"
 
+#include "strdup.h"
+
 /* Specify a list of all C++11 keywords */
 static const char* cpp11_keywords[] =
 {
@@ -57,7 +59,7 @@ get_cpp11_name(const char* name)
     }
   }
   /* No match with a keyword is found, thus return the identifier itself */
-  cpp11Name = strdup(name);
+  cpp11Name = idl_strdup(name);
   return cpp11Name;
 }
 
@@ -72,16 +74,16 @@ get_cpp11_base_type(const idl_node_t *node)
     switch(node->mask & IDL_INTEGER_MASK_IGNORE_SIGN)
     {
     case IDL_INT8:
-      cpp11Type = strdup("int8_t");
+      cpp11Type = idl_strdup("int8_t");
       break;
     case IDL_INT16:
-      cpp11Type = strdup("int16_t");
+      cpp11Type = idl_strdup("int16_t");
       break;
     case IDL_INT32:
-      cpp11Type = strdup("int32_t");
+      cpp11Type = idl_strdup("int32_t");
       break;
     case IDL_INT64:
-      cpp11Type = strdup("int64_t");
+      cpp11Type = idl_strdup("int64_t");
       break;
     default:
       assert(0);
@@ -103,13 +105,13 @@ get_cpp11_base_type(const idl_node_t *node)
     switch(node->mask & IDL_FLOAT_MASK)
     {
     case IDL_FLOAT:
-      cpp11Type = strdup("float");
+      cpp11Type = idl_strdup("float");
       break;
     case IDL_DOUBLE:
-      cpp11Type = strdup("double");
+      cpp11Type = idl_strdup("double");
       break;
     case IDL_LDOUBLE:
-      cpp11Type = strdup("long double");
+      cpp11Type = idl_strdup("long double");
       break;
     default:
       assert(0);
@@ -120,16 +122,16 @@ get_cpp11_base_type(const idl_node_t *node)
     switch(node->mask & IDL_BASE_OTHERS_MASK)
     {
     case IDL_CHAR:
-      cpp11Type = strdup("char");
+      cpp11Type = idl_strdup("char");
       break;
     case IDL_WCHAR:
-      cpp11Type = strdup("wchar");
+      cpp11Type = idl_strdup("wchar");
       break;
     case IDL_BOOL:
-      cpp11Type = strdup("bool");
+      cpp11Type = idl_strdup("bool");
       break;
     case IDL_OCTET:
-      cpp11Type = strdup("uint8_t");
+      cpp11Type = idl_strdup("uint8_t");
       break;
     default:
       assert(0);
@@ -159,10 +161,10 @@ get_cpp11_templ_type(const idl_node_t *node)
     free(vector_element);
     break;
   case IDL_STRING:
-    cpp11Type = strdup("std::string");
+    cpp11Type = idl_strdup("std::string");
     break;
   case IDL_WSTRING:
-    cpp11Type = strdup("std::wstring");
+    cpp11Type = idl_strdup("std::wstring");
     break;
   case IDL_FIXED_PT:
     assert(0);
@@ -258,7 +260,7 @@ char *
 get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
 {
   char *def_value = NULL;
-
+  (void)ctx;
   switch (node->mask & (IDL_BASE_TYPE | IDL_CONSTR_TYPE))
   {
   case IDL_BASE_TYPE:
@@ -271,7 +273,7 @@ get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
       case IDL_INT16:
       case IDL_INT32:
       case IDL_INT64:
-        def_value = strdup("0");
+        def_value = idl_strdup("0");
         break;
       default:
         assert(0);
@@ -282,11 +284,11 @@ get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
       switch(node->mask & IDL_FLOAT_MASK)
       {
       case IDL_FLOAT:
-        def_value = strdup("0.0f");
+        def_value = idl_strdup("0.0f");
         break;
       case IDL_DOUBLE:
       case IDL_LDOUBLE:
-        def_value = strdup("0.0");
+        def_value = idl_strdup("0.0");
         break;
       default:
         assert(0);
@@ -299,10 +301,10 @@ get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
       case IDL_CHAR:
       case IDL_WCHAR:
       case IDL_OCTET:
-        def_value = strdup("0");
+        def_value = idl_strdup("0");
         break;
       case IDL_BOOL:
-        def_value = strdup("false");
+        def_value = idl_strdup("false");
         break;
       default:
         assert(0);
@@ -401,7 +403,7 @@ get_cpp11_templ_type_const_value(const idl_constval_t *variant)
   switch (variant->node.mask & IDL_TEMPL_TYPE_MASK)
   {
   case IDL_STRING:
-    const_value_str = strdup(variant->value.str);
+    const_value_str = idl_strdup(variant->value.str);
     break;
   default:
     assert(0);

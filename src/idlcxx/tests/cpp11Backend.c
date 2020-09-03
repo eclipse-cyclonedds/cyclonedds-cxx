@@ -13,70 +13,80 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <Windows.h>
 
 #include "idl/processor.h"
+#include "idl/tree.h"
 #include "idlcxx/backend.h"
 #include "idlcxx/backendCpp11Type.h"
 
 #include "CUnit/Theory.h"
 
 #define IDL_INPUT_STRUCT(struct_name,member_type,member_name) ""\
-"struct "##struct_name##" {\n"\
-"    "##member_type##" "##member_name";"\
+"struct " struct_name " {\n" \
+"    " member_type " " member_name ";" \
 "};"
 
-#define IDL_INPUT_ENUM(enum_name,label1,label2,label3) ""\
-"enum "##enum_name##" {\n"\
-"  "##label1##",\n"\
-"  "##label2##",\n"\
-"  "##label3##"\n"\
+#define IDL_INPUT_ENUM(enum_name,label1,label2,label3) "" \
+"enum " enum_name " {\n" \
+"  " label1 ",\n" \
+"  " label2 ",\n" \
+"  " label3 "\n" \
 "};"
 
-#define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) ""\
-"class "##struct_name##" {\n"\
-"private:\n"\
-"  "##member_type##" "##member_name##"_;\n"\
-"\n"\
-"public:\n"\
-"  "##struct_name##"() :\n"\
-"      "##member_name##"_("##default_value##") {}\n"\
-"\n"\
-"  explicit "##struct_name##"(\n"\
-"      "member_type##" "##member_name##") :\n"\
-"          "##member_name##"_("##member_name##") {}\n"\
-"\n"\
-"  "##member_type##" "##member_name##"() const { return this->"##member_name##"_; }\n"\
-"  "##member_type##"& "##member_name##"() { return this->"##member_name##"_; }\n"\
-"  void "##member_name##"("##member_type##" _val_) { this->"##member_name##"_ = _val_; }\n"\
+#define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) "" \
+"class " struct_name " {\n" \
+"private:\n" \
+"  " member_type " " member_name "_;\n" \
+"\n" \
+"public:\n" \
+"  " struct_name "() :\n" \
+"      " member_name "_(" default_value ") {}\n" \
+"\n" \
+"  explicit " struct_name "(\n" \
+"      " member_type " " member_name ") :\n" \
+"          " member_name "_(" member_name ") {}\n" \
+"\n" \
+"  " member_type " " member_name "() const { return this->" member_name "_; }\n" \
+"  " member_type "& " member_name "() { return this->" member_name "_; }\n" \
+"  void " member_name "(" member_type " _val_) { this->" member_name "_ = _val_; }\n" \
 "};\n"
 
-#define IDL_OUTPUT_STRUCT_NO_PRIM(struct_name,member_type,member_name) ""\
-"class "##struct_name##" {\n"\
-"private:\n"\
-"  "##member_type##" "##member_name##"_;\n"\
+#define IDL_OUTPUT_STRUCT_NO_PRIM(struct_name,member_type,member_name) "" \
+"class " struct_name " {\n" \
+"private:\n" \
+"  " member_type " " member_name "_;\n" \
+"\n" \
+"public:\n" \
+"  " struct_name "() {}\n" \
 "\n"\
-"public:\n"\
-"  "##struct_name##"() {}\n"\
-"\n"\
-"  explicit "##struct_name##"(\n"\
-"      "member_type##" "##member_name##") :\n"\
-"          "##member_name##"_("##member_name##") {}\n"\
-"\n"\
-"  const "##member_type##"& "##member_name##"() const { return this->"##member_name##"_; }\n"\
-"  "##member_type##"& "##member_name##"() { return this->"##member_name##"_; }\n"\
-"  void "##member_name##"(const "##member_type##"& _val_) { this->"##member_name##"_ = _val_; }\n"\
-"  void "##member_name##"("##member_type##"&& _val_) { this->"##member_name##"_ = _val_; }\n"\
+"  explicit " struct_name "(\n" \
+"      " member_type " " member_name ") :\n" \
+"          " member_name "_(" member_name ") {}\n" \
+"\n" \
+"  const " member_type "& " member_name "() const { return this->" member_name "_; }\n" \
+"  " member_type "& " member_name "() { return this->" member_name "_; }\n" \
+"  void " member_name "(const " member_type "& _val_) { this->" member_name "_ = _val_; }\n" \
+"  void " member_name "(" member_type "&& _val_) { this->" member_name "_ = _val_; }\n" \
 "};\n"
 
-#define IDL_OUTPUT_ENUM(enum_name,label1,label2,label3) ""\
-"enum class "##enum_name##" {\n"\
-"  "##label1##",\n"\
-"  "##label2##",\n"\
-"  "##label3##",\n"\
+#define IDL_OUTPUT_ENUM(enum_name,label1,label2,label3) "" \
+"enum class " enum_name " {\n" \
+"  " label1 ",\n" \
+"  " label2 ",\n" \
+"  " label3 ",\n" \
 "};"
 
+#define INITIAL_RUN 0
+#if INITIAL_RUN
+#if _WIN32
+#include <Windows.h>
+#define wait_a_bit(seconds) Sleep((seconds) * 1000);
+#else
+#include <unistd.h>
+#define wait_a_bit(seconds) sleep(seconds)
+#endif
 static bool initial_run = true;
+#endif
 
 static void
 test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *output)
@@ -114,6 +124,7 @@ test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *o
   }
   CU_ASSERT(expected_output);
   idl_backend_context_free(ctx);
+  idl_delete_tree(tree);
 }
 
 CU_TheoryDataPoints(cpp11Backend, Struct) =
@@ -127,7 +138,7 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","unsigned long long","_ull"),
                               IDL_INPUT_STRUCT("AttrHolder","octet","o_"),
                               IDL_INPUT_STRUCT("AttrHolder","char","c"),
-                              IDL_INPUT_STRUCT("AttrHolder","wchar","w_c"),
+                              /* IDL_INPUT_STRUCT("AttrHolder","wchar","w_c"), */
                               IDL_INPUT_STRUCT("try","float","f"),
                               IDL_INPUT_STRUCT("AttrHolder","double","d"),
                               IDL_INPUT_STRUCT("AttrHolder","string","catch"),
@@ -139,7 +150,8 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","sequence<sequence<string>>","strSeqSeq"),
                               IDL_INPUT_STRUCT("AttrHolder","float","coordinate[3]"),
                               IDL_INPUT_STRUCT("AttrHolder","float","LineCoordinates[2][3]"),
-                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue")),
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue")
+                              ),
   /* Series of corresponding C++ output */
   CU_DataPoints(const char *, IDL_OUTPUT_STRUCT_PRIM("AttrHolder","int16_t","0","s"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","int32_t","0","l"),
@@ -149,7 +161,7 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","uint64_t","0","ull"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","uint8_t","0","o_"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","char","0","c"),
-                              IDL_OUTPUT_STRUCT_PRIM("AttrHolder","wchar","0","w_c"),
+                              /* IDL_OUTPUT_STRUCT_PRIM("AttrHolder","wchar","0","w_c"), */
                               IDL_OUTPUT_STRUCT_PRIM("_cxx_try","float","0.0f","f"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","double","0.0","d"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::string","_cxx_catch"),
@@ -161,15 +173,17 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::vector<std::string>>","strSeqSeq"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<float, 3>","coordinate"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue"))
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue")
+                              )
 };
 
 CU_Theory((const char *input, const char *output), cpp11Backend, Struct, .timeout = 30)
 {
-#if 0
+#if INITIAL_RUN
   if (initial_run) {
-    printf("Sleeping for 8 seconds. Please attach debugger...\n");
-    Sleep(8000);
+    unsigned int secs = 8;
+    wait_a_bit(8);
+    printf("Sleeping for %u seconds. Please attach debugger...\n", secs);
     initial_run = false;
   }
 #endif
