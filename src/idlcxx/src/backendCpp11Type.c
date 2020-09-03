@@ -41,6 +41,7 @@ static idl_retcode_t
 count_declarators(idl_backend_ctx ctx, const idl_node_t *node)
 {
   uint32_t *nr_members = (uint32_t *) idl_get_custom_context(ctx);
+  (void)node;
   ++(*nr_members);
   return IDL_RETCODE_OK;
 }
@@ -152,8 +153,9 @@ struct_generate_constructors_and_operators(idl_backend_ctx ctx)
         idl_file_out_printf_no_indent(ctx, ",\n");
       }
       idl_file_out_printf(ctx, "%s_(%s)", struct_ctx->members[i].name, defValue);
-      free(defValue);
     }
+    if (defValue)
+      free(defValue);
   }
   idl_file_out_printf_no_indent(ctx, " {}\n\n");
   idl_indent_double_decr(ctx);
@@ -295,6 +297,7 @@ static idl_retcode_t
 count_labels(idl_backend_ctx ctx, const idl_node_t *node)
 {
   uint32_t *nr_labels = (uint32_t *) idl_get_custom_context(ctx);
+  (void)node;
   ++(*nr_labels);
   return IDL_RETCODE_OK;
 }
@@ -303,6 +306,7 @@ static idl_retcode_t
 count_cases(idl_backend_ctx ctx, const idl_node_t *node)
 {
   uint32_t *nr_cases = (uint32_t *) idl_get_custom_context(ctx);
+  (void)node;
   ++(*nr_cases);
   return IDL_RETCODE_OK;
 }
@@ -476,6 +480,7 @@ get_min_value(const idl_node_t *node)
       assert(0);
       break;
     }
+    break;
   default:
     assert(0);
     break;
@@ -510,6 +515,7 @@ variant_incr_value(idl_constval_t *variant)
       assert(0);
       break;
     }
+    break;
   default:
     assert(0);
     break;
@@ -553,6 +559,7 @@ compare_elements(const idl_constval_t *element1, const idl_constval_t *element2)
       assert(0);
       break;
     }
+    break;
   default:
     assert(0);
     break;
