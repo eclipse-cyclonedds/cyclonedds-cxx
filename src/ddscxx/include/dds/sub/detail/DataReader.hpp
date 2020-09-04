@@ -61,6 +61,12 @@ public:
 
     virtual ~DataReader();
 
+    void copy_samples(
+      dds::sub::detail::SamplesHolder& samples,
+      void**& c_sample_pointers,
+      dds_sample_info_t*& c_sample_infos,
+      int num_read);
+
     void init(ObjectDelegate::weak_ref_type weak_ref);
 
     dds::sub::status::DataState default_filter_state();
