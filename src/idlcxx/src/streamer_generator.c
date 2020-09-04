@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include "idlcxx/streamer_generator.h"
-#include "idlcxx/cpp11backend.h"
+#include "idlcxx/backendCpp11Utils.h"
 #include "idl/tree.h"
 #include "idl/string.h"
 #include "strdup.h"
@@ -464,7 +464,7 @@ idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_
 {
   assert(ctx);
   assert(decl);
-  char* cpp11name = get_cpp_name(decl->identifier);
+  char* cpp11name = get_cpp11_name(decl->identifier);
   assert(cpp11name);
 
   uint64_t entries = array_entries(decl);
@@ -742,7 +742,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       idl_is_string(tspec))
   {
     // FIXME: loop!?
-    cpp11name = get_cpp_name(decl->identifier);
+    cpp11name = get_cpp11_name(decl->identifier);
     assert(cpp11name);
 
     idl_const_expr_t* ce = NULL;
@@ -885,7 +885,7 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
 
   if (module->definitions)
   {
-    char* cpp11name = get_cpp_name(module->identifier);
+    char* cpp11name = get_cpp11_name(module->identifier);
     assert(cpp11name);
 
     context_t* newctx = child_context(ctx, cpp11name);
@@ -923,9 +923,9 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_is_union(node))
   {
     if (idl_is_struct(node))
-      cpp11name = get_cpp_name(((idl_struct_t*)node)->identifier);
+      cpp11name = get_cpp11_name(((idl_struct_t*)node)->identifier);
     else if (idl_is_union(node))
-      cpp11name = get_cpp_name(((idl_union_t*)node)->identifier);
+      cpp11name = get_cpp11_name(((idl_union_t*)node)->identifier);
     assert(cpp11name);
 
     format_header_stream(1, ctx, struct_write_func_fmt, cpp11name);
@@ -957,7 +957,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_struct_t* _struct = (idl_struct_t*)node;
       if (_struct->base_type)
       {
-        char* base_cpp11name = get_cpp_name(_struct->base_type->identifier);
+        char* base_cpp11name = get_cpp11_name(_struct->base_type->identifier);
         char* ns = idl_strdup("");
         assert(base_cpp11name);
         resolve_namespace((idl_node_t*)_struct->base_type, &ns);
@@ -1108,7 +1108,7 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
   assert(decl);
   assert(tspec);
 
-  char* cpp11name = get_cpp_name(decl->identifier);
+  char* cpp11name = get_cpp11_name(decl->identifier);
   assert(cpp11name);
 
   uint64_t entries = array_entries(decl);

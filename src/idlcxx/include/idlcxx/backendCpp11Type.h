@@ -10,10 +10,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 
-#ifndef IDL_CPP11BACKEND_H
-#define IDL_CPP11BACKEND_H
+#include "idlcxx/backend.h"
+#include "idlcxx/export.h"
 
-char *get_cpp_name(
-  const char* name);
-
-#endif /* IDL_CPP11BACKEND_H */
+idl_retcode_t
+IDLCXX_EXPORT idl_backendGenerate(idl_backend_ctx ctx, const idl_tree_t *parse_tree);

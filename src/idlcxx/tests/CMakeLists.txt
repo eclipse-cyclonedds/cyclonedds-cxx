@@ -12,8 +12,9 @@
 include(CUnit)
 
 set(idlcxx_test_sources
-    "streamer_generator.c"
-    "idl_ostream.c")
+    "cpp11Backend.c"
+    "idl_ostream.c"
+    "streamer_generator.c")
 
 add_cunit_executable(cunit_idlcxx ${idlcxx_test_sources})
 target_link_libraries(cunit_idlcxx PRIVATE idlcxx)

@@ -12,7 +12,9 @@
 
 add_library(
   idlcxx SHARED
-    src/backendCpp11.c
+    src/backend.c
+    src/backendCpp11Utils.c
+    src/backendCpp11Type.c
     src/streamer_generator.c
     src/idl_ostream.c)
 
