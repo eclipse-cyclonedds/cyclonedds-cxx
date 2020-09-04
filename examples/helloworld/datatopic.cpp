@@ -10,12 +10,7 @@ bool helloworld_serdata::helloworld_serdata_eqkey(const struct ddsi_serdata* a, 
 
 uint32_t helloworld_serdata::helloworld_serdata_size(const struct ddsi_serdata* dcmn)
 {
-//  const helloworld_serdata* ptr = static_cast<const helloworld_serdata*>(dcmn);
-//  size_t size = HelloWorldData::write_size(ptr->data(),0);
-//  uint32_t size_u32 = static_cast<uint32_t>(size);
-//  assert(size == size_u32);
-//  return size_u32;
-  return 0u;
+  return static_cast<const helloworld_serdata*>(dcmn)->size();
 }
 
 struct ddsi_serdata* helloworld_serdata::helloworld_serdata_from_ser(
@@ -24,16 +19,14 @@ struct ddsi_serdata* helloworld_serdata::helloworld_serdata_from_ser(
   const struct nn_rdata* fragchain, size_t size)
 {
   auto d = std::make_unique<helloworld_serdata>(topic, kind);
-  (void)fragchain;
-  (void)size;
-#if 0
+
   uint32_t off = 0;
   assert(fragchain->min == 0);
   assert(fragchain->maxp1 >= off);    //CDR header must be in first fragment
 
-  std::vector<char> buffer(size);
+  d->resize(size);
 
-  auto cursor = buffer.data();
+  auto cursor = (unsigned char*)d->data();
   while (fragchain) {
     if (fragchain->maxp1 > off) {
       //only copy if this fragment adds data
@@ -49,8 +42,6 @@ struct ddsi_serdata* helloworld_serdata::helloworld_serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
-  HelloWorldData::read_struct(d->data(),buffer.data(),0);
-#endif
   return d.release();
 }
 
@@ -113,16 +104,24 @@ struct ddsi_serdata* helloworld_serdata::helloworld_serdata_from_sample(
     }
     else /*if (!topic->is_request_header)*/ {
       const HelloWorldData::Msg *msg = static_cast<const HelloWorldData::Msg*>(sample);
-      //HelloWorldData::read_struct(d->data(), sample, 0);
-      //
-      // I'm thinking reading is wrong. The "const void *" is the sample
-      // passed to write...
-      //
+
       size_t sz = HelloWorldData::write_size(*msg, 0);
       fprintf(stderr, "sz is: %zu\n", sz);
-      d->resize(sz);
+      d->resize(sz+4);  //4 bytes extra to also include the header
       fprintf(stderr, "message in serdata_from_sample is: %s\n", msg->message().c_str());
-      HelloWorldData::write_struct(*msg, d->data(), 0);
+      unsigned char* ptr = (unsigned char*)d->data();
+      memset(ptr, 0x0, 4);
+      if (native_endian() == endian::little)
+        *(ptr+1) = 0x1;
+
+      HelloWorldData::write_struct(*msg, byte_offset(d->data(), 4), 0);
+
+      fprintf(stderr, "raw message contents:\n");
+      for (size_t s = 0; s < sz+4; s++)
+      {
+        fprintf(stderr, "%02x ", ptr[s]);
+      }
+      fprintf(stderr, "\n");
     }
     //else {
       ///* inject the service invocation header data into the CDR stream --
@@ -143,7 +142,7 @@ struct ddsi_serdata* helloworld_serdata::helloworld_serdata_from_sample(
 void helloworld_serdata::helloworld_serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
 {
   auto d = static_cast<const helloworld_serdata*>(dcmn);
-  memcpy(buf, d->data(), sz);
+  memcpy(buf, byte_offset(d->data(), off), sz);
 }
 
 struct ddsi_serdata* helloworld_serdata::helloworld_serdata_to_ser_ref(
@@ -155,7 +154,7 @@ struct ddsi_serdata* helloworld_serdata::helloworld_serdata_to_ser_ref(
   a = (uintptr_t)d->data();
   b = (uintptr_t)byte_offset(d->data(), off);
   fprintf(stderr, "%llx - %llx = %llx\n", a, b, b - a);
-  ref->iov_base = d->data();//byte_offset(d->data(), off);
+  ref->iov_base = byte_offset(d->data(), off);
   ref->iov_len = (ddsrt_iov_len_t)sz;
   return ddsi_serdata_ref(d);
 }
@@ -170,11 +169,11 @@ bool helloworld_serdata::helloworld_serdata_to_sample(
   const struct ddsi_serdata* dcmn, void* sample, void** bufptr,
   void* buflim)
 {
-  (void)dcmn;
-  (void)sample;
   (void)bufptr;
   (void)buflim;
-  assert(0);
+  const helloworld_serdata* ptr = static_cast<const helloworld_serdata*>(dcmn);
+  HelloWorldData::read_struct(*(static_cast<HelloWorldData::Msg*>(sample)), (char*)ptr->data() + 4, 0);
+
   return false;
 }
 
@@ -285,10 +284,6 @@ helloworld_sertopic* helloworld_sertopic::create_sertopic(
     &helloworld_serdata::helloworld_serdata_ops,
     true);
 
-  //st->type_support.typesupport_identifier_ = type_support_identifier;
-  //st->type_support.type_support_ = type_support;
-  //st->is_request_header = is_request_header;  //???
-  //st->cdr_writer = rmw_cyclonedds_cpp::make_cdr_writer(std::move(message_type)); //???
   return st;
 }
 
@@ -307,19 +302,19 @@ void helloworld_sertopic::helloworld_sertopic_zero_samples(const struct ddsi_ser
   (void)d;
   (void)samples;
   (void)count;
-  assert(0);
 }
 
 void helloworld_sertopic::helloworld_sertopic_realloc_samples(
   void** ptrs, const struct ddsi_sertopic* d, void* old,
   size_t oldcount, size_t count)
 {
-  (void)ptrs;
   (void)d;
-  (void)old;
   (void)oldcount;
-  (void)count;
-  assert(0);
+  auto msgs = static_cast<std::vector<HelloWorldData::Msg> * >(old);
+  msgs->resize(count);
+  size_t i = 0;
+  for (auto & msg : *msgs)
+    ptrs[i++] = &msg;
 }
 
 void helloworld_sertopic::helloworld_sertopic_free_samples(
@@ -341,7 +336,6 @@ bool helloworld_sertopic::helloworld_sertopic_equal(
    the same type support identifier as well */
   (void)acmn;
   (void)bcmn;
-  assert(0);
   return true;
 }
 

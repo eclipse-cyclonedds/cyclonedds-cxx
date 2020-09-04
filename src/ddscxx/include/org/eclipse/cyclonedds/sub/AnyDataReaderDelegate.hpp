@@ -102,6 +102,14 @@ public:
                           const dds::topic::TopicDescription& td);
     virtual ~AnyDataReaderDelegate();
 
+
+    virtual void copy_samples(
+      dds::sub::detail::SamplesHolder& samples,
+      void**& c_sample_pointers,
+      dds_sample_info_t*& c_sample_infos,
+      int num_read) {
+      assert(1);
+    }
 public:
     /* DDS API mirror. */
     dds::sub::qos::DataReaderQos qos() const;
@@ -249,22 +257,17 @@ private:
             void**&             c_sample_pointers,
             dds_sample_info_t*& c_sample_infos);
 
-    void copy_samples(
-            dds::sub::detail::SamplesHolder& samples,
-            void**& c_sample_pointers,
-            dds_sample_info_t*& c_sample_infos,
-            int num_read);
-
     void fini_samples_buffers(
             void**& c_sample_pointers,
             dds_sample_info_t*& c_sample_infos,
             size_t c_sample_pointers_size);
 
-    static void copy_sample_info(
-            dds_sample_info_t &from,
-            dds::sub::SampleInfo *to);
-
 protected:
+
+  static void copy_sample_info(
+    dds_sample_info_t& from,
+    dds::sub::SampleInfo* to);
+
     org::eclipse::cyclonedds::topic::copyInFunction  copyIn;
     org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
     size_t sampleSize;

@@ -194,27 +194,6 @@ bool AnyDataReaderDelegate::init_samples_buffers(
     return (c_sample_pointers_size > 0);
 }
 
-
-void AnyDataReaderDelegate::copy_samples(
-                    dds::sub::detail::SamplesHolder& samples,
-                    void**& c_sample_pointers,
-                    dds_sample_info_t*& c_sample_infos,
-                    int num_read)
-{
-    if (num_read > 0) {
-        samples.set_length((uint32_t)num_read);
-        for(int i = 0; i < num_read; i++)
-        {
-            copyOut(c_sample_pointers[i], samples.data());
-            copy_sample_info(c_sample_infos[i], samples.info());
-            samples++;
-        }
-    } else {
-        samples.set_length(0);
-    }
-}
-
-
 void AnyDataReaderDelegate::fini_samples_buffers(
                     void**& c_sample_pointers,
                     dds_sample_info_t*& c_sample_infos,
