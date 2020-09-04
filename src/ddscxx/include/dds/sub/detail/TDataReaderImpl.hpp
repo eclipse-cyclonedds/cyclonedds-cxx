@@ -510,6 +510,27 @@ dds::sub::detail::DataReader<T>::common_constructor(
 }
 
 template <typename T>
+void dds::sub::detail::DataReader<T>::copy_samples(
+  dds::sub::detail::SamplesHolder& samples,
+  void**& c_sample_pointers,
+  dds_sample_info_t*& c_sample_infos,
+  int num_read)
+{
+  if (num_read > 0) {
+    samples.set_length((uint32_t)num_read);
+    for (int i = 0; i < num_read; i++)
+    {
+      *(T*)samples.data() = *((T*)c_sample_pointers[i]);
+      copy_sample_info(c_sample_infos[i], samples.info());
+      samples++;
+    }
+  }
+  else {
+    samples.set_length(0);
+  }
+}
+
+template <typename T>
 dds::sub::detail::DataReader<T>::~DataReader()
 {
     if (!this->closed) {

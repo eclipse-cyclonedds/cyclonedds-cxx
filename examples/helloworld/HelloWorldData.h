@@ -7,7 +7,7 @@ namespace HelloWorldData
 {
     class Msg OSPL_DDS_FINAL
     {
-    public:
+    private:
         int32_t userID_;
         std::string message_;
 
