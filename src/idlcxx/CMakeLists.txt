@@ -16,7 +16,8 @@ add_library(
     src/backendCpp11Utils.c
     src/backendCpp11Type.c
     src/streamer_generator.c
-    src/idl_ostream.c)
+    src/idl_ostream.c
+    src/generator.c)
 
 target_include_directories(
   idlcxx
