@@ -1125,7 +1125,7 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
   return IDL_RETCODE_OK;
 }
 
-void idl_streamers_generate(idl_tree_t* tree, idl_streamer_output_t* str)
+void idl_streamers_generate(const idl_tree_t* tree, idl_streamer_output_t* str)
 {
   context_t* ctx = create_context(str, "");
   process_node(ctx, tree->root);
