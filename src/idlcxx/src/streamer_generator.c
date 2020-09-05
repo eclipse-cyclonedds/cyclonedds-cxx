@@ -17,7 +17,6 @@
 #include "idlcxx/backendCpp11Utils.h"
 #include "idl/tree.h"
 #include "idl/string.h"
-#include "strdup.h"
 
 #define format_ostream_indented(depth,ostr,str,...) \
 if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
