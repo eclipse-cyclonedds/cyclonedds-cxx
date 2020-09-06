@@ -162,10 +162,6 @@ struct context
   context_t* parent;
 };
 
-static bool idl_is_template(idl_node_t* node);
-static bool idl_is_base_type(idl_node_t* node);
-static bool idl_is_sequence(idl_node_t* node);
-static bool idl_is_string(idl_node_t* node);
 static uint64_t array_entries(idl_declarator_t* decl);
 static idl_retcode_t add_default_case(context_t* ctx);
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
@@ -334,30 +330,6 @@ void close_context(context_t* ctx)
   free(ctx);
 }
 
-bool idl_is_base_type(idl_node_t* node)
-{
-  return (NULL != node) &&
-         ((node->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE);
-}
-
-bool idl_is_template(idl_node_t* node)
-{
-  return (NULL != node) &&
-         ((node->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE);
-}
-
-bool idl_is_sequence(idl_node_t* node)
-{
-  return (NULL != node) &&
-    ((node->mask & IDL_SEQUENCE) == IDL_SEQUENCE);
-}
-
-bool idl_is_string(idl_node_t* node)
-{
-  return (NULL != node) &&
-    ((node->mask & IDL_STRING) == IDL_STRING);
-}
-
 void resolve_namespace(idl_node_t* node, char** up)
 {
   if (!node)
@@ -415,7 +387,7 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_type_
   } else if (idl_is_struct(spec)) {
     return process_struct(ctx, decl, (idl_struct_t*)spec);
   } else {
-    assert(idl_is_template(spec));
+    assert(idl_is_templ_type(spec));
     // FIXME: this probably needs to loop to find the correct declarator?
     return process_template(ctx, decl, spec);
   }
