@@ -70,7 +70,7 @@ public:
     virtual bool trigger_value() const = 0;
 
     template <typename FUN>
-    void set_handler(FUN& functor)
+    void set_handler(FUN functor)
     {
         org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
 

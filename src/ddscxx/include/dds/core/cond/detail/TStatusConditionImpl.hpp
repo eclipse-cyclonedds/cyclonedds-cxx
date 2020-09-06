@@ -41,7 +41,7 @@ TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e)
 
 template <typename DELEGATE>
 template <typename FUN>
-TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e, FUN& functor)
+TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e, FUN functor)
 {
     dds::core::Reference<DELEGATE>::impl_=
             OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::core::cond::StatusConditionDelegate>(
