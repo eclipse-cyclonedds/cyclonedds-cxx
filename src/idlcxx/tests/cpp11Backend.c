@@ -21,20 +21,38 @@
 
 #include "CUnit/Theory.h"
 
+#define INITIAL_RUN 0
+#if INITIAL_RUN
+#if _WIN32
+#include <Windows.h>
+#define wait_a_bit(seconds) Sleep((seconds) * 1000);
+#else
+#include <unistd.h>
+#define wait_a_bit(seconds) sleep(seconds)
+#endif
+static bool initial_run = true;
+#endif
+
 #define IDL_INPUT_STRUCT(struct_name,member_type,member_name) ""\
-"struct " struct_name " {\n" \
+"struct " struct_name "\n{\n" \
 "    " member_type " " member_name ";" \
 "};"
 
 #define IDL_INPUT_ENUM(enum_name,label1,label2,label3) "" \
-"enum " enum_name " {\n" \
+"enum " enum_name "\n{\n" \
 "  " label1 ",\n" \
 "  " label2 ",\n" \
 "  " label3 "\n" \
 "};"
 
+#define IDL_INPUT_UNION_1_BRANCH(union_name,discr_type,label1,case_type1,case_name1) ""\
+"union " union_name " switch (" discr_type ")\n{\n"\
+"case " label1 ":\n" \
+"  " case_type1 " " case_name1 ";\n"\
+"};"
+
 #define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) "" \
-"class " struct_name " {\n" \
+"class " struct_name "\n{\n" \
 "private:\n" \
 "  " member_type " " member_name "_;\n" \
 "\n" \
@@ -52,7 +70,7 @@
 "};\n"
 
 #define IDL_OUTPUT_STRUCT_NO_PRIM(struct_name,member_type,member_name) "" \
-"class " struct_name " {\n" \
+"class " struct_name "\n{\n" \
 "private:\n" \
 "  " member_type " " member_name "_;\n" \
 "\n" \
@@ -70,23 +88,87 @@
 "};\n"
 
 #define IDL_OUTPUT_ENUM(enum_name,label1,label2,label3) "" \
-"enum class " enum_name " {\n" \
+"enum class " enum_name "\n{\n" \
 "  " label1 ",\n" \
 "  " label2 ",\n" \
 "  " label3 ",\n" \
 "};"
 
-#define INITIAL_RUN 0
-#if INITIAL_RUN
-#if _WIN32
-#include <Windows.h>
-#define wait_a_bit(seconds) Sleep((seconds) * 1000);
-#else
-#include <unistd.h>
-#define wait_a_bit(seconds) sleep(seconds)
-#endif
-static bool initial_run = true;
-#endif
+#define IDL_OUTPUT_UNION_1_BRANCH(union_name,discr_type,default_discr_val,label1,case_type1,case_name1) ""\
+"class " union_name "\n{\n"\
+"private:\n"\
+"  " discr_type " m__d;\n"\
+"  std::variant<\n"\
+"      " case_type1 "\n"\
+"  > " case_name1 ";\n"\
+"\n"\
+"public:\n"\
+"  " union_name "() :\n"\
+"      m__d(" default_discr_val ") {}\n"\
+"\n"\
+"  " discr_type " _d() const\n"\
+"  {\n"\
+"    return m__d;\n"\
+"  }\n"\
+"\n"\
+"  void _d(" discr_type " val)\n"\
+"  {\n"\
+"    bool valid = true;\n"\
+"    switch (val) {\n"\
+"    case " label1 ":\n"\
+"      if (m__d != " label1 ") {\n"\
+"        valid = false;\n"\
+"      }\n"\
+"      break;\n"\
+"    default:\n"\
+"      if (m__d == " label1 ") {\n"\
+"        valid = false;\n"\
+"      }\n"\
+"      break;\n"\
+"    }\n"\
+"\n"\
+"    if (!valid) {\n"\
+"      throw dds::core::InvalidArgumentError(\"New discriminator value does not match current discriminator\");\n"\
+"    }\n"\
+"\n"\
+"    m__d = val;\n"\
+"  }\n"\
+"\n"\
+"  const " case_type1 "& " case_name1 "() const\n"\
+"  {\n"\
+"    if (m__d == " label1 ") {\n"\
+"      return std::get<" case_type1 ">(" case_name1 ");\n"\
+"    } else {\n"\
+"      throw dds::core::InvalidArgumentError(\"Requested branch does not match current discriminator\");\n"\
+"    }\n"\
+"  }\n"\
+"\n"\
+"  " case_type1 "& " case_name1 "()\n"\
+"  {\n"\
+"    if (m__d == " label1 ") {\n"\
+"      return std::get<" case_type1 ">(" case_name1 ");\n"\
+"    } else {\n"\
+"      throw dds::core::InvalidArgumentError(\"Requested branch does not match current discriminator\");\n"\
+"    }\n"\
+"  }\n"\
+"\n"\
+"  void " case_name1 "(const " case_type1 "& val)\n"\
+"  {\n"\
+"    m__d = " label1 ";\n"\
+"    " case_name1 " = val;\n"\
+"  }\n"\
+"\n"\
+"  void " case_name1 "(" case_type1 "&& val)\n"\
+"  {\n"\
+"    m__d = " label1 ";\n"\
+"    " case_name1 " = val;\n"\
+"  }\n"\
+"\n"\
+"  void _default(" discr_type " _d = " default_discr_val ")\n"\
+"  {\n"\
+"    m__d = _d;\n"\
+"  }\n"\
+"};"
 
 static void
 test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *output)
@@ -138,11 +220,11 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","unsigned long long","_ull"),
                               IDL_INPUT_STRUCT("AttrHolder","octet","o_"),
                               IDL_INPUT_STRUCT("AttrHolder","char","c"),
-                              /* IDL_INPUT_STRUCT("AttrHolder","wchar","w_c"), */
+                              IDL_INPUT_STRUCT("AttrHolder","wchar","w_c"),
                               IDL_INPUT_STRUCT("try","float","f"),
                               IDL_INPUT_STRUCT("AttrHolder","double","d"),
                               IDL_INPUT_STRUCT("AttrHolder","string","catch"),
-                              /* IDL_INPUT("AttrHolder","wstring","_wname"), */
+                              /*IDL_INPUT_STRUCT("AttrHolder","wstring","_wname"),*/
                               IDL_INPUT_STRUCT("AttrHolder","sequence<octet>","payload"),
                               IDL_INPUT_STRUCT("AttrHolder","sequence<octet, 100>","b_payload"),
                               IDL_INPUT_STRUCT("AttrHolder","sequence<string<8>>","listBStr"),
@@ -150,7 +232,9 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","sequence<sequence<string>>","strSeqSeq"),
                               IDL_INPUT_STRUCT("AttrHolder","float","coordinate[3]"),
                               IDL_INPUT_STRUCT("AttrHolder","float","LineCoordinates[2][3]"),
-                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue")
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue"),
+                              IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
+                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module")
                               ),
   /* Series of corresponding C++ output */
   CU_DataPoints(const char *, IDL_OUTPUT_STRUCT_PRIM("AttrHolder","int16_t","0","s"),
@@ -161,11 +245,11 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","uint64_t","0","ull"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","uint8_t","0","o_"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","char","0","c"),
-                              /* IDL_OUTPUT_STRUCT_PRIM("AttrHolder","wchar","0","w_c"), */
+                              IDL_OUTPUT_STRUCT_PRIM("AttrHolder","wchar","0","w_c"),
                               IDL_OUTPUT_STRUCT_PRIM("_cxx_try","float","0.0f","f"),
                               IDL_OUTPUT_STRUCT_PRIM("AttrHolder","double","0.0","d"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::string","_cxx_catch"),
-                              /* IDL_OUTPUT_NO_PRIM("AttrHolder","std::wstring","wname"), */
+                              /*IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::wstring","wname"),*/
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<uint8_t>","payload"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<uint8_t>","b_payload"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::string>","listBStr"),
@@ -173,7 +257,9 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::vector<std::string>>","strSeqSeq"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<float, 3>","coordinate"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue")
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue"),
+                              IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
+                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module")
                               )
 };
 

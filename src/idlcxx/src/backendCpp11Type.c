@@ -15,9 +15,10 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <limits.h>
+
 #include "idlcxx/backendCpp11Utils.h"
 #include "idlcxx/backendCpp11Type.h"
-
+#include "idl/string.h"
 
 typedef struct cpp11_member_state_s
 {
@@ -31,7 +32,8 @@ typedef struct cpp11_struct_context_s
 {
   cpp11_member_state *members;
   uint32_t member_count;
-  const char *name;
+  char *name;
+  char *base_type;
 } cpp11_struct_context;
 
 static idl_retcode_t
@@ -65,7 +67,7 @@ get_cpp11_declarator_array_expr(idl_backend_ctx ctx, const idl_node_t *node, con
   if (next_const_expr) {
     element_expr = get_cpp11_declarator_array_expr(ctx, next_const_expr, member_type);
   } else {
-    element_expr = strdup(member_type);
+    element_expr = idl_strdup(member_type);
   }
   const_expr = get_cpp11_const_value((const idl_constval_t *)node);
   array_expr_len = strlen(array_expr_tmplt) + strlen(element_expr) + strlen(const_expr) + 1;
@@ -224,48 +226,59 @@ static idl_retcode_t
 struct_generate_body(idl_backend_ctx ctx, const idl_struct_t *struct_node)
 {
   idl_retcode_t result = IDL_RETCODE_OK;
-  char *cpp11Name = get_cpp11_name(struct_node->identifier);
-  bool forward_decl = (struct_node->node.mask & IDL_FORWARD);
 
-  idl_file_out_printf(ctx, "class %s%s\n", cpp11Name, forward_decl ? ";\n" : " {");
+  uint32_t nr_members = 0;
+  cpp11_struct_context struct_ctx;
+  const idl_node_t *members = (const idl_node_t *) struct_node->members;
+  result = idl_set_custom_context(ctx, &nr_members);
+  if (result) return result;
+  idl_walk_node_list(ctx, members, count_members, IDL_MEMBER);
+  idl_reset_custom_context(ctx);
 
-  if (!forward_decl)
+  struct_ctx.members = malloc(sizeof(cpp11_member_state) * nr_members);
+  struct_ctx.member_count = 0;
+  struct_ctx.name = get_cpp11_name(struct_node->identifier);
+  if (struct_node->base_type)
   {
-    uint32_t nr_members = 0;
-    cpp11_struct_context struct_ctx;
-    const idl_node_t *members = (const idl_node_t *) struct_node->members;
-    result = idl_set_custom_context(ctx, &nr_members);
-    if (result) return result;
-    idl_walk_node_list(ctx, members, count_members, IDL_MEMBER);
-    idl_reset_custom_context(ctx);
-
-    struct_ctx.members = malloc(sizeof(cpp11_member_state) * nr_members);
-    struct_ctx.member_count = 0;
-    struct_ctx.name = cpp11Name;
-    result = idl_set_custom_context(ctx, &struct_ctx);
-    if (result) return result;
-    idl_walk_node_list(ctx, members, get_cpp11_member_data, IDL_MEMBER);
-
-    /* Create (private) struct attributes. */
-    struct_generate_attributes(ctx);
-
-    /* Create constructors and operators. */
-    struct_generate_constructors_and_operators(ctx);
-
-    /* Create the getters and setters. */
-    struct_generate_getters_setters(ctx);
-
-    idl_file_out_printf(ctx, "};\n\n");
-
-    idl_reset_custom_context(ctx);
-    for (uint32_t i = 0; i < nr_members; ++i)
-    {
-      free(struct_ctx.members[i].name);
-      free(struct_ctx.members[i].type_name);
-    }
-    free(struct_ctx.members);
+    const idl_node_t *base_node = (const idl_node_t *) struct_node->base_type;
+    struct_ctx.base_type = get_cpp11_fully_scoped_name(base_node);
   }
-  free(cpp11Name);
+  else
+  {
+    struct_ctx.base_type = NULL;
+  }
+  result = idl_set_custom_context(ctx, &struct_ctx);
+  if (result) return result;
+  idl_walk_node_list(ctx, members, get_cpp11_member_data, IDL_MEMBER);
+
+  /* Create class declaration. */
+  if (struct_ctx.base_type) {
+    idl_file_out_printf(ctx, "class %s : %s\n", struct_ctx.name, struct_ctx.base_type);
+  } else {
+    idl_file_out_printf(ctx, "class %s\n", struct_ctx.name);
+  }
+  idl_file_out_printf(ctx, "{\n");
+
+  /* Create (private) struct attributes. */
+  struct_generate_attributes(ctx);
+
+  /* Create constructors and operators. */
+  struct_generate_constructors_and_operators(ctx);
+
+  /* Create the getters and setters. */
+  struct_generate_getters_setters(ctx);
+
+  idl_file_out_printf(ctx, "};\n\n");
+
+  idl_reset_custom_context(ctx);
+  for (uint32_t i = 0; i < nr_members; ++i)
+  {
+    free(struct_ctx.members[i].name);
+    free(struct_ctx.members[i].type_name);
+  }
+  free(struct_ctx.members);
+  if (struct_ctx.base_type) free(struct_ctx.base_type);
+  free(struct_ctx.name);
 
   return result;
 }
@@ -284,7 +297,7 @@ typedef struct cpp11_union_context_s
 {
   cpp11_case_state *cases;
   uint32_t case_count;
-  uint64_t total_label_count;
+  uint64_t total_label_count, nr_unused_discr_values;
   const idl_node_t *discr_node;
   char *discr_type;
   const char *name;
@@ -317,10 +330,18 @@ get_cpp11_labels(idl_backend_ctx ctx, const idl_node_t *node)
   cpp11_union_context *union_ctx = (cpp11_union_context *) idl_get_custom_context(ctx);
   const idl_case_label_t *label = (const idl_case_label_t *) node;
   cpp11_case_state *case_data = &union_ctx->cases[union_ctx->case_count];
-  const idl_constval_t *variant = (const idl_constval_t *) label->const_expr;
+#if CONSTVAL_FIX
+  const idl_constval_t *constval = (const idl_constval_t *) label->const_expr;
+#else
+  const idl_literal_t *constval = (const idl_literal_t *) label->const_expr;
+#endif
   /* Check if there is a label: if not it represents the default case. */
-  if (variant) {
-    case_data->labels[case_data->label_count] = get_cpp11_const_value(variant);
+  if (constval) {
+#if CONSTVAL_FIX
+    case_data->labels[case_data->label_count] = get_cpp11_const_value(constval);
+#else
+    case_data->labels[case_data->label_count] = get_cpp11_literal_value(constval);
+#endif
   } else {
     /* Assert that there can only be one default case */
     assert(union_ctx->default_case == NULL);
@@ -341,11 +362,14 @@ get_cpp11_case_data(idl_backend_ctx ctx, const idl_node_t *node)
   const idl_node_t *case_labels = (const idl_node_t *) case_node->case_labels;
   uint32_t label_count = 0;
 
+  idl_reset_custom_context(ctx);
   result = idl_set_custom_context(ctx, &label_count);
   if (result) return result;
   idl_walk_node_list(ctx, case_labels, count_labels, IDL_CASE_LABEL);
   union_ctx->total_label_count += label_count;
   idl_reset_custom_context(ctx);
+  result = idl_set_custom_context(ctx, union_ctx);
+  if (result) return result;
 
   case_data->typespec_node = case_node->type_spec;
   case_data->declarator_node = case_node->declarator;
@@ -386,16 +410,16 @@ get_potential_nr_discr_values(const idl_union_t *union_node)
       switch(node->mask & IDL_INTEGER_MASK_IGNORE_SIGN)
       {
       case IDL_INT8:
-        nr_discr_values = 0xff;
+        nr_discr_values = UCHAR_MAX;
         break;
       case IDL_INT16:
-        nr_discr_values = 0xffff;
+        nr_discr_values = USHRT_MAX;
         break;
       case IDL_INT32:
-        nr_discr_values = 0xffffffffU;
+        nr_discr_values = UINT_MAX;
         break;
       case IDL_INT64:
-        nr_discr_values = 0xffffffffffffffffULL;
+        nr_discr_values = ULONG_MAX;
         break;
       default:
         assert(0);
@@ -407,10 +431,10 @@ get_potential_nr_discr_values(const idl_union_t *union_node)
       {
       case IDL_CHAR:
       case IDL_OCTET:
-        nr_discr_values = 0xff;
+        nr_discr_values = UCHAR_MAX;
         break;
       case IDL_WCHAR:
-        nr_discr_values = 0xffff;
+        nr_discr_values = USHRT_MAX;
         break;
       case IDL_BOOL:
         nr_discr_values = 2;
@@ -450,6 +474,7 @@ get_potential_nr_discr_values(const idl_union_t *union_node)
   return nr_discr_values;
 }
 
+#if CONSTVAL_FIX
 static idl_constval_t
 get_min_value(const idl_node_t *node)
 {
@@ -463,6 +488,12 @@ get_min_value(const idl_node_t *node)
     {
     case IDL_UINT8:
       result.value.oct = 0;
+      break;
+    case IDL_INT16:
+      result.value.lng = SHRT_MIN;
+      break;
+    case IDL_UINT16:
+      result.value.ulng = 0;
       break;
     case IDL_INT32:
       result.value.lng = INT_MIN;
@@ -487,78 +518,46 @@ get_min_value(const idl_node_t *node)
   }
   return result;
 }
-
-static void
-variant_incr_value(idl_constval_t *variant)
+#else
+static idl_literal_t
+get_min_value(const idl_node_t *node)
 {
-  switch (variant->node.mask & IDL_BASE_TYPE_MASK)
+  idl_literal_t result;
+
+  result.node.mask = IDL_UINT64;
+  switch (node->mask & IDL_BASE_TYPE_MASK)
   {
   case IDL_INTEGER_TYPE:
-    switch(variant->node.mask & IDL_INTEGER_MASK)
+    switch(node->mask & IDL_INTEGER_MASK)
     {
     case IDL_UINT8:
-      variant->value.oct++;
+      result.value.ullng = 0;
+      break;
+    case IDL_INT16:
+      result.value.ullng = 0;
+      break;
+    case IDL_UINT16:
+      result.value.ullng = 0;
       break;
     case IDL_INT32:
-      variant->value.lng++;
+      result.value.ullng = 0;
       break;
     case IDL_UINT32:
-      variant->value.ulng++;
+      result.value.ullng = 0;
       break;
     case IDL_INT64:
-      variant->value.llng++;
+      result.value.ullng = 0ULL;
       break;
     case IDL_UINT64:
-      variant->value.lng++;
+      result.value.ullng = 0ULL;
       break;
     default:
       assert(0);
       break;
     }
     break;
-  default:
-    assert(0);
-    break;
-  }
-}
-
-typedef enum { IDL_LT, IDL_EQ, IDL_GT} idl_equality_t;
-
-static idl_equality_t
-compare_elements(const idl_constval_t *element1, const idl_constval_t *element2)
-{
-  idl_equality_t result = IDL_EQ;
-
-  assert(element1->node.mask == element2->node.mask);
-  switch (element1->node.mask & IDL_BASE_TYPE_MASK)
-  {
-  case IDL_INTEGER_TYPE:
-    switch(element1->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-      if (element1->value.oct < element2->value.oct) result = IDL_LT;
-      if (element1->value.oct > element2->value.oct) result = IDL_GT;
-      break;
-    case IDL_INT32:
-      if (element1->value.lng < element2->value.lng) result = IDL_LT;
-      if (element1->value.lng > element2->value.lng) result = IDL_GT;
-      break;
-    case IDL_UINT32:
-      if (element1->value.ulng < element2->value.ulng) result = IDL_LT;
-      if (element1->value.ulng > element2->value.ulng) result = IDL_GT;
-      break;
-    case IDL_INT64:
-      if (element1->value.llng < element2->value.llng) result = IDL_LT;
-      if (element1->value.llng > element2->value.llng) result = IDL_GT;
-      break;
-    case IDL_UINT64:
-      if (element1->value.ullng < element2->value.ullng) result = IDL_LT;
-      if (element1->value.ullng > element2->value.ullng) result = IDL_GT;
-      break;
-    default:
-      assert(0);
-      break;
-    }
+  case IDL_BOOLEAN_LITERAL:
+    result.value.bln = false;
     break;
   default:
     assert(0);
@@ -566,20 +565,188 @@ compare_elements(const idl_constval_t *element1, const idl_constval_t *element2)
   }
   return result;
 }
+#endif
+
+static void *
+enumerator_incr_value(void *val)
+{
+  const idl_enumerator_t *enum_val = (const idl_enumerator_t *) val;
+  return enum_val->node.next;
+}
+
+static void *
+constval_incr_value(void *val)
+{
+#if CONSTVAL_FIX
+  idl_constval_t *const_val = (idl_constval_t *) val;
+  switch (const_val->node.mask & IDL_BASE_TYPE_MASK)
+  {
+  case IDL_INTEGER_TYPE:
+    switch(const_val->node.mask & IDL_INTEGER_MASK)
+    {
+    case IDL_UINT8:
+      const_val->value.oct++;
+      break;
+    case IDL_INT32:
+      const_val->value.lng++;
+      break;
+    case IDL_UINT32:
+      const_val->value.ulng++;
+      break;
+    case IDL_INT64:
+      const_val->value.llng++;
+      break;
+    case IDL_UINT64:
+      const_val->value.ullng++;
+      break;
+    default:
+      assert(0);
+      break;
+    }
+    break;
+  default:
+    assert(0);
+    break;
+  }
+#else
+  idl_literal_t *const_val = (idl_literal_t *) val;
+  switch (const_val->node.mask & IDL_BASE_TYPE_MASK)
+  {
+  case IDL_INTEGER_TYPE:
+    switch(const_val->node.mask & IDL_INTEGER_MASK)
+    {
+    case IDL_UINT8:
+    case IDL_INT32:
+    case IDL_UINT32:
+    case IDL_INT64:
+    case IDL_UINT64:
+      const_val->value.ullng++;
+      break;
+    default:
+      assert(0);
+      break;
+    }
+    break;
+  case IDL_BOOLEAN_LITERAL:
+    const_val->value.bln = true;
+    break;
+  default:
+    assert(0);
+    break;
+  }
+#endif
+  return const_val;
+}
+
+typedef enum { IDL_LT, IDL_EQ, IDL_GT} idl_equality_t;
+typedef idl_equality_t (*idl_comparison_fn) (const void *element1, const void *element2);
+typedef void *(*idl_incr_element_fn) (void *element1);
+
+static idl_equality_t
+compare_enum_elements(const void *element1, const void *element2)
+{
+  const idl_enumerator_t *enumerator1 = (const idl_enumerator_t *) element1;
+  const idl_enumerator_t *enumerator2 = (const idl_enumerator_t *) element2;
+  idl_equality_t result = IDL_EQ;
+
+  if (enumerator1->value < enumerator2->value) result = IDL_LT;
+  if (enumerator1->value > enumerator2->value) result = IDL_GT;
+  return result;
+}
+
+static idl_equality_t
+compare_const_elements(const void *element1, const void *element2)
+{
+#if CONSTVAL_FIX
+  const idl_constval_t *constval1 = (const idl_constval_t *) element1;
+  const idl_constval_t *constval2 = (const idl_constval_t *) element2;
+  idl_equality_t result = IDL_EQ;
+
+  assert(constval1->node.mask == constval2->node.mask);
+  switch (constval1->node.mask & IDL_BASE_TYPE_MASK)
+  {
+  case IDL_INTEGER_TYPE:
+    switch(constval1->node.mask & IDL_INTEGER_MASK)
+    {
+    case IDL_UINT8:
+      if (constval1->value.oct < constval2->value.oct) result = IDL_LT;
+      if (constval1->value.oct > constval2->value.oct) result = IDL_GT;
+      break;
+    case IDL_INT32:
+      if (constval1->value.lng < constval2->value.lng) result = IDL_LT;
+      if (constval1->value.lng > constval2->value.lng) result = IDL_GT;
+      break;
+    case IDL_UINT32:
+      if (constval1->value.ulng < constval2->value.ulng) result = IDL_LT;
+      if (constval1->value.ulng > constval2->value.ulng) result = IDL_GT;
+      break;
+    case IDL_INT64:
+      if (constval1->value.llng < constval2->value.llng) result = IDL_LT;
+      if (constval1->value.llng > constval2->value.llng) result = IDL_GT;
+      break;
+    case IDL_UINT64:
+      if (constval1->value.ullng < constval2->value.ullng) result = IDL_LT;
+      if (constval1->value.ullng > constval2->value.ullng) result = IDL_GT;
+      break;
+    default:
+      assert(0);
+      break;
+    }
+    break;
+  default:
+    assert(0);
+    break;
+  }
+#else
+  const idl_literal_t *constval1 = (const idl_literal_t *) element1;
+  const idl_literal_t *constval2 = (const idl_literal_t *) element2;
+  idl_equality_t result = IDL_EQ;
+
+  switch (constval1->node.mask & IDL_BASE_TYPE_MASK)
+  {
+  case IDL_INTEGER_TYPE:
+    switch(constval1->node.mask & IDL_INTEGER_MASK)
+    {
+    case IDL_UINT8:
+    case IDL_INT16:
+    case IDL_UINT16:
+    case IDL_INT32:
+    case IDL_UINT32:
+    case IDL_INT64:
+    case IDL_UINT64:
+      if (constval1->value.ullng < constval2->value.ullng) result = IDL_LT;
+      if (constval1->value.ullng > constval2->value.ullng) result = IDL_GT;
+      break;
+    default:
+      assert(0);
+      break;
+    }
+    break;
+  case IDL_BOOLEAN_LITERAL:
+    if (constval1->value.bln < constval2->value.bln) result = IDL_LT;
+    if (constval1->value.bln > constval2->value.bln) result = IDL_GT;
+    break;
+  default:
+    assert(0);
+    break;
+  }
+#endif
+  return result;
+}
 
 static void
-swap(idl_constval_t *element1, idl_constval_t *element2)
+swap(void **element1, void **element2)
 {
-  idl_constval_t tmp = *element1;
+  void *tmp = *element1;
   *element1 = *element2;
   *element2 = tmp;
 }
 
 static uint64_t
-manage_pivot (idl_constval_t *array, uint64_t low, uint64_t high)
+manage_pivot (void **array, uint64_t low, uint64_t high, idl_comparison_fn compare_elements)
 {
   uint64_t i = low;
-  idl_constval_t pivot = array[high];
+  void *pivot = array[high];
 
   for (uint64_t j = low; j <= high- 1; j++)
   {
@@ -592,33 +759,46 @@ manage_pivot (idl_constval_t *array, uint64_t low, uint64_t high)
   return (i + 1);
 }
 
-static void quick_sort(idl_constval_t *array, uint64_t low, uint64_t high)
+static void quick_sort(void **array, uint64_t low, uint64_t high, idl_comparison_fn compare_elements)
 {
   uint64_t pivot_index;
 
   if (low < high)
   {
-    pivot_index = manage_pivot(array, low, high);
-    quick_sort(array, low, pivot_index - 1);
-    quick_sort(array, pivot_index + 1, high);
+    pivot_index = manage_pivot(array, low, high, compare_elements);
+    quick_sort(array, low, pivot_index - 1, compare_elements);
+    quick_sort(array, pivot_index + 1, high, compare_elements);
   }
 }
 
-
 static char *
-get_first_unused_discr_value(idl_constval_t *array, uint64_t max_index, const idl_node_t *node)
+get_first_unused_discr_value(
+    void **array,
+    void *min_value,
+    void *max_value,
+    idl_comparison_fn compare_elements,
+    idl_incr_element_fn incr_element)
 {
-  /* in Enums worden const_expressions gemapped op enumerators, voor de rest op een variant. */
-  idl_constval_t min_value = get_min_value(node);
-  for (uint64_t i = 0; i < max_index; ++i)
+
+  uint32_t i = 0;
+  do
   {
-    if (compare_elements(&min_value, &array[i]) == IDL_LT)
+    if (compare_elements(min_value, array[i]) == IDL_LT)
     {
-      return get_cpp11_const_value(&min_value);
+#if CONSTVAL_FIX
+      return get_cpp11_const_value(min_value);
+#else
+      return get_cpp11_literal_value(min_value);
+#endif
     }
-    variant_incr_value(&min_value);
-  }
-  return get_cpp11_const_value(&min_value);
+    min_value = incr_element(min_value);
+    if (array[i] != max_value) ++i;
+  } while (compare_elements(min_value, array[i]) != IDL_GT);
+#if CONSTVAL_FIX
+      return get_cpp11_const_value(min_value);
+#else
+      return get_cpp11_literal_value(min_value);
+#endif
 }
 
 static char *
@@ -626,11 +806,20 @@ get_default_discr_value(idl_backend_ctx ctx, const idl_union_t *union_node)
 {
   cpp11_union_context *union_ctx = (cpp11_union_context *) idl_get_custom_context(ctx);
   char *def_value = NULL;
-  uint64_t nr_unused_discr_values = get_potential_nr_discr_values(union_node) - union_ctx->total_label_count;
+  union_ctx->nr_unused_discr_values =
+      get_potential_nr_discr_values(union_node) - union_ctx->total_label_count;
+#if CONSTVAL_FIX
+  idl_constval_t min_const_value;
+#else
+  idl_literal_t min_const_value;
+#endif
+  void *min_value;
+  idl_comparison_fn compare_elements;
+  idl_incr_element_fn incr_element;
 
-  if (nr_unused_discr_values) {
+  if (union_ctx->nr_unused_discr_values) {
     /* find the smallest available unused discr_value. */
-    idl_constval_t *all_labels = malloc(sizeof(idl_constval_t) * union_ctx->total_label_count);
+    void **all_labels = malloc(sizeof(void *) * union_ctx->total_label_count);
     uint32_t i = 0;
     const idl_case_t *case_data = union_node->cases;
     while (case_data)
@@ -638,14 +827,29 @@ get_default_discr_value(idl_backend_ctx ctx, const idl_union_t *union_node)
       const idl_case_label_t *label = case_data->case_labels;
       while (label)
       {
-        all_labels[i++] = *((const idl_constval_t *) label->const_expr);
+        all_labels[i++] = label->const_expr;
         label = (const idl_case_label_t *) label->node.next;
       }
       case_data = (const idl_case_t *) case_data->node.next;
     }
-    quick_sort(all_labels, 0, union_ctx->total_label_count - 1);
-    def_value = get_first_unused_discr_value(all_labels, union_ctx->total_label_count, union_node->switch_type_spec);
-    if (!union_ctx->default_label) union_ctx->has_impl_default = true;
+    if (union_node->switch_type_spec->mask & IDL_ENUM) {
+      compare_elements = compare_enum_elements;
+      incr_element = enumerator_incr_value;
+      min_value = ((const idl_enum_t *)union_ctx->discr_node)->enumerators;
+    } else {
+      compare_elements = compare_const_elements;
+      incr_element = constval_incr_value;
+      min_const_value = get_min_value(union_node->switch_type_spec);
+      min_value = &min_const_value;
+    }
+    quick_sort(all_labels, 0, union_ctx->total_label_count - 1, compare_elements);
+    def_value = get_first_unused_discr_value(
+        all_labels,
+        min_value,
+        all_labels[union_ctx->total_label_count - 1],
+        compare_elements,
+        incr_element);
+    if (!union_ctx->default_case) union_ctx->has_impl_default = true;
     free(all_labels);
   } else {
     /* Pick the first available literal value from the first available case. */
@@ -671,7 +875,11 @@ union_generate_attributes(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "std::variant<\n");
   idl_indent_double_incr(ctx);
   for (uint32_t i = 0; i < union_ctx->case_count; ++i) {
-    idl_file_out_printf(ctx, "%s,\n", union_ctx->cases[i].type_name);
+    idl_file_out_printf(
+        ctx,
+        "%s%s\n",
+        union_ctx->cases[i].type_name,
+        i == (union_ctx->case_count - 1) ? "" : ",");
   }
   idl_indent_double_decr(ctx);
   idl_file_out_printf(ctx, ">");
@@ -682,7 +890,7 @@ union_generate_attributes(idl_backend_ctx ctx)
         union_ctx->cases[i].name,
         (i ==  (union_ctx->case_count - 1)) ? ";" : ",");
   }
-  idl_file_out_printf(ctx, "\n\n");
+  idl_file_out_printf_no_indent(ctx, "\n\n");
   idl_indent_decr(ctx);
 }
 
@@ -703,7 +911,7 @@ union_generate_constructor(idl_backend_ctx ctx)
     idl_file_out_printf_no_indent(ctx, ",\n");
     idl_file_out_printf(ctx, "%s()", union_ctx->default_case->name);
   }
-  idl_file_out_printf(ctx, " {}\n\n");
+  idl_file_out_printf_no_indent(ctx, " {}\n\n");
   idl_indent_double_decr(ctx);
   idl_indent_decr(ctx);
 }
@@ -726,7 +934,7 @@ union_generate_discr_getter_setter(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "{\n");
   idl_indent_incr(ctx);
 
-  if (union_ctx->discr_node->mask & IDL_BOOL) {
+  if ((union_ctx->discr_node->mask & IDL_BOOL) == IDL_BOOL) {
     idl_file_out_printf(ctx, "bool valid = (val == m__d);\n");
   } else {
     idl_file_out_printf(ctx, "bool valid = true;\n");
@@ -781,7 +989,6 @@ union_generate_discr_getter_setter(idl_backend_ctx ctx)
       idl_file_out_printf(ctx, "valid = false;\n");
       idl_indent_decr(ctx);
       idl_file_out_printf(ctx, "}\n");
-      idl_indent_decr(ctx);
       idl_file_out_printf(ctx, "break;\n");
     }
 
@@ -798,6 +1005,7 @@ union_generate_discr_getter_setter(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "m__d = val;\n");
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "}\n\n");
+  idl_indent_decr(ctx);
 }
 
 static void
@@ -833,7 +1041,8 @@ union_generate_getter_body(idl_backend_ctx ctx, uint32_t i)
     idl_file_out_printf_no_indent(ctx, ") {\n");
     idl_indent_decr(ctx);
   }
-  idl_file_out_printf(ctx, "return std::get<%s>(%s);", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
+  idl_indent_decr(ctx);
+  idl_file_out_printf(ctx, "return std::get<%s>(%s);\n", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "} else {\n");
   idl_indent_incr(ctx);
@@ -852,10 +1061,22 @@ union_generate_setter_body(idl_backend_ctx ctx, uint32_t i)
 
   idl_file_out_printf(ctx, "{\n");
   idl_indent_incr(ctx);
-  if (&union_ctx->cases[i] != union_ctx->default_case) {
-    new_discr_value = union_ctx->cases[i].labels[0];
-  } else {
-    new_discr_value = union_ctx->default_label;
+  /* Check if a setter with optional discriminant value is present (when more than 1 label). */
+  if (union_ctx->cases[i].label_count < 2)
+  {
+    /* If not, check whether the current case is the default case. */
+    if (&union_ctx->cases[i] != union_ctx->default_case) {
+      /* If not the default case, pick the first available value. */
+      new_discr_value = union_ctx->cases[i].labels[0];
+    } else {
+      /* If it is the default case, pick the default label. */
+      new_discr_value = union_ctx->default_label;
+    }
+  }
+  else
+  {
+    /* In case the discriminant is explicitly passed, take that value. */
+    new_discr_value = "_d";
   }
   idl_file_out_printf(ctx, "m__d = %s;\n", new_discr_value);
   idl_file_out_printf(ctx, "%s = val;\n", union_ctx->cases[i].name);
@@ -869,6 +1090,7 @@ union_generate_branch_getters_setters(idl_backend_ctx ctx)
   cpp11_union_context *union_ctx = (cpp11_union_context *) idl_get_custom_context(ctx);
 
   /* Start building the getter/setter methods for each attribute. */
+  idl_indent_incr(ctx);
   for (uint32_t i = 0; i < union_ctx->case_count; ++i) {
     bool is_primitive = idl_declarator_is_primitive(union_ctx->cases[i].declarator_node);
     const cpp11_case_state *case_state = &union_ctx->cases[i];
@@ -887,37 +1109,78 @@ union_generate_branch_getters_setters(idl_backend_ctx ctx)
     union_generate_getter_body(ctx, i);
 
     /* Build setter. */
-    idl_file_out_printf(ctx, "void %s(%s%s%s val)\n",
-        case_state->name,
-        is_primitive ? "": "const ",
-        case_state->type_name,
-        is_primitive ? "" : "&");
+    if (case_state->label_count < 2)
+    {
+      /* No need for optional discriminant parameter if there is only one applicable label. */
+      idl_file_out_printf(ctx, "void %s(%s%s%s val)\n",
+          case_state->name,
+          is_primitive ? "": "const ",
+          case_state->type_name,
+          is_primitive ? "" : "&");
+    }
+    else
+    {
+      /* Use optional discriminant parameter if there is more than one applicable label. */
+      idl_file_out_printf(ctx, "void %s(%s%s%s val, %s _d = %s)\n",
+          case_state->name,
+          is_primitive ? "": "const ",
+          case_state->type_name,
+          is_primitive ? "" : "&",
+          union_ctx->discr_type,
+          case_state->labels[0]);
+    }
     union_generate_setter_body(ctx, i);
 
     /* When appropriate, build setter with move semantics. */
     if (!is_primitive) {
-      idl_file_out_printf(ctx, "void %s(%s&& _val_)\n",
-          case_state->name,
-          case_state->type_name);
+      if (case_state->label_count < 2)
+      {
+        idl_file_out_printf(ctx, "void %s(%s&& val)\n",
+            case_state->name,
+            case_state->type_name);
+      }
+      else
+      {
+        idl_file_out_printf(ctx, "void %s(%s&& val, %s _d = %s)\n",
+            case_state->name,
+            case_state->type_name,
+            union_ctx->discr_type,
+            case_state->labels[0]);
+      }
       union_generate_setter_body(ctx, i);
     }
   }
+  idl_indent_decr(ctx);
 }
 
 static void
 union_generate_implicit_default_setter(idl_backend_ctx ctx)
 {
   cpp11_union_context *union_ctx = (cpp11_union_context *) idl_get_custom_context(ctx);
+  const char *discr_value;
 
   /* Check if all possible discriminant values are covered. */
   if (union_ctx->has_impl_default)
   {
-    idl_file_out_printf(ctx, "void _default()\n");
+    idl_indent_incr(ctx);
+    if (union_ctx->nr_unused_discr_values < 2)
+    {
+      idl_file_out_printf(ctx, "void _default()\n");
+      discr_value = union_ctx->default_label;
+    }
+    else
+    {
+      idl_file_out_printf(ctx, "void _default(%s _d = %s)\n",
+          union_ctx->discr_type,
+          discr_value = union_ctx->default_label);
+      discr_value = "_d";
+    }
     idl_file_out_printf(ctx, "{\n");
     idl_indent_incr(ctx);
-    idl_file_out_printf(ctx, "m__d = %s;\n", union_ctx->default_label);
+    idl_file_out_printf(ctx, "m__d = %s;\n", discr_value);
     idl_indent_decr(ctx);
     idl_file_out_printf(ctx, "}\n");
+    idl_indent_decr(ctx);
   }
 }
 
@@ -926,57 +1189,54 @@ union_generate_body(idl_backend_ctx ctx, const idl_union_t *union_node)
 {
   idl_retcode_t result = IDL_RETCODE_OK;
   char *cpp11Name = get_cpp11_name(union_node->identifier);
-  bool forward_decl = (union_node->node.mask | IDL_FORWARD);
 
-  idl_file_out_printf(ctx, "class %s%s\n", cpp11Name, forward_decl ? ";\n" : " {");
+  idl_file_out_printf(ctx, "class %s\n", cpp11Name);
+  idl_file_out_printf(ctx, "{\n");
 
-  if (!forward_decl)
+  uint32_t nr_cases = 0;
+  const idl_node_t *cases = (const idl_node_t *) union_node->cases;
+  cpp11_union_context union_ctx;
+  result = idl_set_custom_context(ctx, &nr_cases);
+  if (result) return result;
+  idl_walk_node_list(ctx, cases, count_cases, IDL_CASE);
+  idl_reset_custom_context(ctx);
+
+  union_ctx.cases = malloc(sizeof(cpp11_case_state) * nr_cases);
+  union_ctx.case_count = 0;
+  union_ctx.discr_node = union_node->switch_type_spec;
+  union_ctx.discr_type = get_cpp11_type(union_node->switch_type_spec);
+  union_ctx.name = cpp11Name;
+  union_ctx.default_case = NULL;
+  union_ctx.has_impl_default = false;
+  union_ctx.total_label_count = 0;
+  result = idl_set_custom_context(ctx, &union_ctx);
+  if (result) return result;
+  idl_walk_node_list(ctx, cases, get_cpp11_case_data, IDL_CASE);
+  union_ctx.default_label = get_default_discr_value(ctx, union_node);
+
+  /* Generate the union content. */
+  union_generate_attributes(ctx);
+  union_generate_constructor(ctx);
+  union_generate_discr_getter_setter(ctx);
+  union_generate_branch_getters_setters(ctx);
+  union_generate_implicit_default_setter(ctx);
+
+  idl_file_out_printf(ctx, "};\n\n");
+  idl_reset_custom_context(ctx);
+
+  for (uint32_t i = 0; i < nr_cases; ++i)
   {
-    uint32_t nr_cases = 0;
-    const idl_node_t *cases = (const idl_node_t *) union_node->cases;
-    cpp11_union_context union_ctx;
-    result = idl_set_custom_context(ctx, &nr_cases);
-    if (result) return result;
-    idl_walk_node_list(ctx, cases, count_cases, IDL_CASE);
-    idl_reset_custom_context(ctx);
-
-    union_ctx.cases = malloc(sizeof(cpp11_case_state) * nr_cases);
-    union_ctx.case_count = 0;
-    union_ctx.discr_node = union_node->switch_type_spec;
-    union_ctx.discr_type = get_cpp11_type(union_node->switch_type_spec);
-    union_ctx.name = cpp11Name;
-    union_ctx.default_case = NULL;
-    union_ctx.has_impl_default = false;
-    union_ctx.total_label_count = 0;
-    result = idl_set_custom_context(ctx, &union_ctx);
-    if (result) return result;
-    idl_walk_node_list(ctx, cases, get_cpp11_case_data, IDL_CASE);
-    union_ctx.default_label = get_default_discr_value(ctx, union_node);
-
-    /* Generate the union content. */
-    union_generate_attributes(ctx);
-    union_generate_constructor(ctx);
-    union_generate_discr_getter_setter(ctx);
-    union_generate_branch_getters_setters(ctx);
-    union_generate_implicit_default_setter(ctx);
-
-    idl_file_out_printf(ctx, "};\n\n");
-    idl_reset_custom_context(ctx);
-
-    for (uint32_t i = 0; i < nr_cases; ++i)
+    free(union_ctx.cases[i].name);
+    free(union_ctx.cases[i].type_name);
+    for (uint32_t j = 0; j < union_ctx.cases[i].label_count; ++j)
     {
-      free(union_ctx.cases[i].name);
-      free(union_ctx.cases[i].type_name);
-      for (uint32_t j = 0; j < union_ctx.cases[i].label_count; ++i)
-      {
-        free(union_ctx.cases[i].labels[j]);
-      }
-      free(union_ctx.cases[i].labels);
+      free(union_ctx.cases[i].labels[j]);
     }
-    free(union_ctx.cases);
-    free(union_ctx.discr_type);
-    free(union_ctx.default_label);
+    free(union_ctx.cases[i].labels);
   }
+  free(union_ctx.cases);
+  free(union_ctx.discr_type);
+  free(union_ctx.default_label);
   free(cpp11Name);
 
   return result;
@@ -999,7 +1259,8 @@ enum_generate_body(idl_backend_ctx ctx, const idl_enum_t *enum_node)
   char *cpp11Name = get_cpp11_name(enum_node->identifier);
   const idl_node_t *enumerators = (const idl_node_t *) enum_node->enumerators;
 
-  idl_file_out_printf(ctx, "enum class %s {\n", cpp11Name);
+  idl_file_out_printf(ctx, "enum class %s\n", cpp11Name);
+  idl_file_out_printf(ctx, "{\n", cpp11Name);
   idl_indent_incr(ctx);
   result = idl_walk_node_list(ctx, enumerators, enumerator_generate_identifier, IDL_ENUMERATOR);
   idl_indent_decr(ctx);
@@ -1027,7 +1288,8 @@ module_generate_body(idl_backend_ctx ctx, const idl_module_t *module_node)
   idl_retcode_t result;
   char *cpp11Name = get_cpp11_name(module_node->identifier);
 
-  idl_file_out_printf(ctx, "namespace %s {\n", cpp11Name);
+  idl_file_out_printf(ctx, "namespace %s\n", cpp11Name);
+  idl_file_out_printf(ctx, "{\n", cpp11Name);
   idl_indent_incr(ctx);
   result = idl_walk_node_list(ctx, module_node->definitions, cpp11_scope_walk, IDL_MASK_ALL);
   idl_indent_decr(ctx);
@@ -1113,12 +1375,7 @@ cpp11_scope_walk(idl_backend_ctx ctx, const idl_node_t *node)
 idl_retcode_t
 idl_backendGenerate(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
 {
-  idl_retcode_t result;
-
-  result = idl_walk_node_list(ctx, parse_tree->root, cpp11_scope_walk, IDL_MASK_ALL);
-
-
-  return result;
+  return idl_walk_node_list(ctx, parse_tree->root, cpp11_scope_walk, IDL_MASK_ALL);
 }
 
 

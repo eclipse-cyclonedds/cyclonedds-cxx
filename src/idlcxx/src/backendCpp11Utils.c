@@ -335,33 +335,33 @@ get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
 }
 
 static char *
-get_cpp11_base_type_const_value(const idl_constval_t *variant)
+get_cpp11_base_type_const_value(const idl_constval_t *constval)
 {
   size_t const_value_len;
   char *const_value_str = NULL;
 
-  switch (variant->node.mask & IDL_BASE_TYPE_MASK)
+  switch (constval->node.mask & IDL_BASE_TYPE_MASK)
   {
   case IDL_INTEGER_TYPE:
     const_value_len = 24; /* Big enough for largest uint64_t */
     const_value_str = malloc(const_value_len);
 
-    switch(variant->node.mask & IDL_INTEGER_MASK)
+    switch(constval->node.mask & IDL_INTEGER_MASK)
     {
     case IDL_UINT8:
-      snprintf(const_value_str, const_value_len, "%hd", variant->value.oct);
+      snprintf(const_value_str, const_value_len, "%hd", constval->value.oct);
       break;
     case IDL_INT32:
-      snprintf(const_value_str, const_value_len, "%dL", variant->value.lng);
+      snprintf(const_value_str, const_value_len, "%dL", constval->value.lng);
       break;
     case IDL_UINT32:
-      snprintf(const_value_str, const_value_len, "%ulL", variant->value.ulng);
+      snprintf(const_value_str, const_value_len, "%ulL", constval->value.ulng);
       break;
     case IDL_INT64:
-      snprintf(const_value_str, const_value_len, "%" PRId64, variant->value.llng);
+      snprintf(const_value_str, const_value_len, "%" PRId64, constval->value.llng);
       break;
     case IDL_UINT64:
-      snprintf(const_value_str, const_value_len, "%" PRIu64, variant->value.ullng);
+      snprintf(const_value_str, const_value_len, "%" PRIu64, constval->value.ullng);
       break;
     default:
       assert(0);
@@ -369,17 +369,17 @@ get_cpp11_base_type_const_value(const idl_constval_t *variant)
     }
     break;
   case IDL_FLOATING_PT_TYPE:
-    switch(variant->node.mask & IDL_FLOAT_MASK)
+    switch(constval->node.mask & IDL_FLOAT_MASK)
     {
     case IDL_DOUBLE:
       const_value_len = 64; /* Big enough for largest double */
       const_value_str = malloc(const_value_len);
-      snprintf(const_value_str, const_value_len, "%f", variant->value.dbl);
+      snprintf(const_value_str, const_value_len, "%f", constval->value.dbl);
       break;
     case IDL_LDOUBLE:
       const_value_len = 128; /* Big enough for largest double */
       const_value_str = malloc(const_value_len);
-      snprintf(const_value_str, const_value_len, "%Lf", variant->value.ldbl);
+      snprintf(const_value_str, const_value_len, "%Lf", constval->value.ldbl);
       break;
     default:
       assert(0);
@@ -395,14 +395,14 @@ get_cpp11_base_type_const_value(const idl_constval_t *variant)
 }
 
 static char *
-get_cpp11_templ_type_const_value(const idl_constval_t *variant)
+get_cpp11_templ_type_const_value(const idl_constval_t *constval)
 {
   char *const_value_str = NULL;
 
-  switch (variant->node.mask & IDL_TEMPL_TYPE_MASK)
+  switch (constval->node.mask & IDL_TEMPL_TYPE_MASK)
   {
   case IDL_STRING:
-    const_value_str = idl_strdup(variant->value.str);
+    const_value_str = idl_strdup(constval->value.str);
     break;
   default:
     assert(0);
@@ -413,22 +413,63 @@ get_cpp11_templ_type_const_value(const idl_constval_t *variant)
 }
 
 char *
-get_cpp11_const_value(const idl_constval_t *variant)
+get_cpp11_const_value(const idl_constval_t *constval)
 {
   char *const_value_str = NULL;
 
-  assert(variant->node.mask & IDL_CONST);
+  assert(constval->node.mask & (IDL_CONST | IDL_LITERAL));
 
-  switch (variant->node.mask & IDL_CATEGORY_MASK) {
+  switch (constval->node.mask & IDL_CATEGORY_MASK) {
   case IDL_BASE_TYPE:
-    const_value_str = get_cpp11_base_type_const_value(variant);
+    const_value_str = get_cpp11_base_type_const_value(constval);
     break;
   case IDL_TEMPL_TYPE:
-    const_value_str = get_cpp11_templ_type_const_value(variant);
+    const_value_str = get_cpp11_templ_type_const_value(constval);
     break;
   default:
     assert(0);
     break;
   }
+  return const_value_str;
+}
+
+char *
+get_cpp11_literal_value(const idl_literal_t *literal)
+{
+  size_t const_value_len;
+  char *const_value_str = NULL;
+
+  switch (literal->node.mask & IDL_BASE_TYPE_MASK)
+  {
+  case IDL_INTEGER_TYPE:
+    const_value_len = 24; /* Big enough for largest uint64_t */
+    const_value_str = malloc(const_value_len);
+
+    switch(literal->node.mask & IDL_INTEGER_MASK)
+    {
+    case IDL_UINT8:
+    case IDL_INT32:
+    case IDL_UINT32:
+    case IDL_INT64:
+    case IDL_UINT64:
+      snprintf(const_value_str, const_value_len, "%" PRIu64, literal->value.ullng);
+      break;
+    default:
+      assert(0);
+      break;
+    }
+    break;
+  case IDL_BOOLEAN_LITERAL:
+    if (literal->value.bln) {
+      const_value_str = idl_strdup("true");
+    } else {
+      const_value_str = idl_strdup("false");
+    }
+    break;
+  default:
+    assert(0);
+    break;
+  }
+
   return const_value_str;
 }
