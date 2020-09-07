@@ -4,9 +4,7 @@
 #include "dds/dds.hpp"
 
 #include "datatopic.hpp"
-
 #include "HelloWorldData.h"
-//#include "HelloWorldDataSplDcps.h"
 
 #include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 #include "org/eclipse/cyclonedds/topic/DataRepresentation.hpp"
@@ -48,9 +46,8 @@ public:
 
     static ddsi_sertopic *getSerTopic(const std::string& topic_name)
     {
-        helloworld_sertopic *st = helloworld_sertopic::create_sertopic(
-          topic_name, getTypeName());
-        return st;
+        auto *st = new ddscxx_sertopic<HelloWorldData::Msg>(topic_name.c_str(), getTypeName());
+        return static_cast<ddsi_sertopic*>(st);
     }
 
 #if 0
