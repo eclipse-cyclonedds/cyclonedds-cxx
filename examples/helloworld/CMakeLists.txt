@@ -16,8 +16,8 @@ if (NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-set(sources HelloWorldData.cpp datatopic.cpp)
-set(headers HelloWorldData.h HelloWorldData_DCPS.hpp datatopic.hpp)
+set(sources HelloWorldData.cpp)
+set(headers HelloWorldData.h HelloWorldData_DCPS.hpp)
 
 add_library(ddscxxHelloWorldData_lib OBJECT ${sources} ${headers})
 target_link_libraries(ddscxxHelloWorldData_lib PUBLIC  CycloneDDS-CXX::ddscxx)

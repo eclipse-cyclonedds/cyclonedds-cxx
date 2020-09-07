@@ -69,13 +69,10 @@ namespace HelloWorldData
 #ifdef OSPL_DDS_CXX11
         void message(std::string&& _val_) { this->message_ = _val_; }
 #endif
-
+        size_t write_struct(void* data, size_t position) const;
+        size_t write_size(size_t offset) const;
+        size_t read_struct(const void* data, size_t position);
     };
-
-    size_t write_struct(const Msg& obj, void* data, size_t position);
-    size_t write_size(const Msg& obj, size_t offset);
-    size_t read_struct(Msg& obj, const void* data, size_t position);
-
 }
 
 #endif /* _HELLOWORLDDATA_H_ */
