@@ -11,119 +11,404 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef IDLDATA_HPP_
-#define IDLDATA_HPP_
+#ifndef DDSCXXDATATOPIC_HPP_
+#define DDSCXXDATATOPIC_HPP_
 
 #include <memory>
 #include <string>
+#include <cstring>
+#include <vector>
 
-//include statements for generated streamers here?
-
+#include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "dds/ddsi/ddsi_sertopic.h"
-#include "HelloWorldData.h"
 #include "bytewise.hpp"
 
-/*
-template <typename T> size_t write_struct(const T&, void* ptr, size_t offset);
-template <typename T> size_t write_size(const T&, size_t offset);
-template <typename T> size_t read_struct(T&, void* ptr, size_t offset);
-*/
-
-class helloworld_sertopic : public ddsi_sertopic {
+template <typename T>
+class ddscxx_sertopic : public ddsi_sertopic {
 public:
-#if !DDSI_SERTOPIC_HAS_TOPICKIND_NO_KEY
-  std::string cpp_name;
-  std::string cpp_type_name;
-  std::string cpp_name_type_name;
-#endif
-
-  static const struct ddsi_sertopic_ops helloworld_sertopic_ops;
-
-  static helloworld_sertopic* create_sertopic(
-    const std::string &topic_name, const char *tn);
-  static void helloworld_sertopic_free(struct ddsi_sertopic* tpcmn);
-  static void helloworld_sertopic_zero_samples(const struct ddsi_sertopic* d, void* samples, size_t count);
-  static void helloworld_sertopic_realloc_samples(
-    void** ptrs, const struct ddsi_sertopic* d, void* old,
-    size_t oldcount, size_t count);
-  static void helloworld_sertopic_free_samples(
-    const struct ddsi_sertopic* d, void** ptrs, size_t count,
-    dds_free_op_t op);
-
-#if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH
-  static bool helloworld_sertopic_equal(
-    const struct ddsi_sertopic* acmn, const struct ddsi_sertopic* bcmn);
-  static uint32_t helloworld_sertopic_hash(const struct ddsi_sertopic* tpcmn);
-#endif
+  static const struct ddsi_sertopic_ops ddscxx_sertopic_ops;
+  ddscxx_sertopic(const char* topic_name, const char* type_name);
 };
 
-class helloworld_serdata : public ddsi_serdata
-{
-  size_t m_size {0};
-  std::unique_ptr<byte[]> m_data {nullptr};
-  //HelloWorldData::Msg m_data;
-  //size_t m_offset;
-
-//  mutable std::vector<char>* const m_raw;
+template <typename T>
+class ddscxx_serdata : public ddsi_serdata {
+  size_t m_size{ 0 };
+  std::unique_ptr<byte[]> m_data{ nullptr };
 
 public:
-  static const struct ddsi_serdata_ops helloworld_serdata_ops;
-  helloworld_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
+  static const struct ddsi_serdata_ops ddscxx_serdata_ops;
+  ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
 
   void resize(size_t requested_size);
-  size_t size() const {return m_size;}
-  void * data() const {return m_data.get();}
+  size_t size() const { return m_size; }
+  void* data() const { return m_data.get(); }
+};
 
-  //const HelloWorldData::Msg& data() const { return m_data; }
-  //HelloWorldData::Msg& data() { return m_data; }
-  //const size_t& offset() const { return m_offset; }
-  //size_t& offset() { return m_offset; }
-  //std::vector<char>& raw() const;
+template <typename T>
+bool serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b)
+{
+  (void)a;
+  (void)b;
+  return true;
+}
 
-  static bool helloworld_serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b);
-  static uint32_t helloworld_serdata_size(const struct ddsi_serdata* dcmn);
-  static struct ddsi_serdata* helloworld_serdata_from_ser(
-    const struct ddsi_sertopic* topic,
-    enum ddsi_serdata_kind kind,
-    const struct nn_rdata* fragchain, size_t size);
+template <typename T>
+uint32_t serdata_size(const struct ddsi_serdata* dcmn)
+{
+  return static_cast<const ddscxx_serdata<T>*>(dcmn)->size();
+}
+
+template <typename T>
+struct ddsi_serdata* serdata_from_ser(
+  const struct ddsi_sertopic* topic,
+  enum ddsi_serdata_kind kind,
+  const struct nn_rdata* fragchain, size_t size)
+{
+  auto d = new ddscxx_serdata<T>(topic, kind);
+
+  uint32_t off = 0;
+  assert(fragchain->min == 0);
+  assert(fragchain->maxp1 >= off);    //CDR header must be in first fragment
+
+  d->resize(size);
+
+  auto cursor = (unsigned char*)d->data();
+  while (fragchain) {
+    if (fragchain->maxp1 > off) {
+      //only copy if this fragment adds data
+      const unsigned char* payload =
+        NN_RMSG_PAYLOADOFF(fragchain->rmsg, NN_RDATA_PAYLOAD_OFF(fragchain));
+      auto src = payload + off - fragchain->min;
+      auto n_bytes = fragchain->maxp1 - off;
+      memcpy(cursor, src, n_bytes);
+      cursor += n_bytes;
+      off = fragchain->maxp1;
+      assert(off <= size);
+    }
+    fragchain = fragchain->nextfrag;
+  }
+
+  return d;
+}
+
 #if DDSI_SERDATA_HAS_FROM_SER_IOV
-  static struct ddsi_serdata* helloworld_serdata_from_ser_iov(
-    const struct ddsi_sertopic* topic,
-    enum ddsi_serdata_kind kind,
-    ddsrt_msg_iovlen_t niov, const ddsrt_iovec_t* iov,
-    size_t size);
+template <typename T>
+struct ddsi_serdata* serdata_from_ser_iov(
+  const struct ddsi_sertopic* topic,
+  enum ddsi_serdata_kind kind,
+  ddsrt_msg_iovlen_t niov,
+  const ddsrt_iovec_t* iov,
+  size_t size)
+{
+  (void)topic;
+  (void)kind;
+  (void)niov;
+  (void)iov;
+  (void)size;
+  assert(0);
+  return NULL;
+}
 #endif
-  static struct ddsi_serdata* helloworld_serdata_from_keyhash(
-    const struct ddsi_sertopic* topic,
-    const struct ddsi_keyhash* keyhash);
-  static struct ddsi_serdata* helloworld_serdata_from_sample(
-    const struct ddsi_sertopic* topiccmn,
-    enum ddsi_serdata_kind kind,
-    const void* sample);
-  static void helloworld_serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf);
-  static struct ddsi_serdata* helloworld_serdata_to_ser_ref(
-    const struct ddsi_serdata* dcmn, size_t off,
-    size_t sz, ddsrt_iovec_t* ref);
-  static void helloworld_serdata_to_ser_unref(struct ddsi_serdata* dcmn, const ddsrt_iovec_t* ref);
-  static bool helloworld_serdata_to_sample(
-    const struct ddsi_serdata* dcmn, void* sample, void** bufptr,
-    void* buflim);
-  static struct ddsi_serdata* helloworld_serdata_to_topicless(const struct ddsi_serdata* dcmn);
-  static bool helloworld_serdata_topicless_to_sample(
-    const struct ddsi_sertopic* topic,
-    const struct ddsi_serdata* dcmn, void* sample,
-    void** bufptr, void* buflim);
-  static void helloworld_serdata_free(struct ddsi_serdata* dcmn);
+
+template <typename T>
+struct ddsi_serdata* serdata_from_keyhash(
+  const struct ddsi_sertopic* topic,
+  const struct ddsi_keyhash* keyhash)
+{
+  (void)keyhash;
+  /* there is no key field, so from_keyhash is trivial */
+  return new ddscxx_serdata<T>(topic, SDK_KEY);
+}
+
+template <typename T>
+void ddscxx_serdata<T>::resize(size_t requested_size)
+{
+  if (!requested_size) {
+    m_size = 0;
+    m_data.reset();
+    return;
+  }
+
+  /* FIXME: CDR padding in DDSI makes me do this to avoid reading beyond the bounds
+  when copying data to network.  Should fix Cyclone to handle that more elegantly.  */
+  size_t n_pad_bytes = (0 - requested_size) % 4;
+  m_data.reset(new byte[requested_size + n_pad_bytes]);
+  m_size = requested_size + n_pad_bytes;
+
+  // zero the very end. The caller isn't necessarily going to overwrite it.
+  std::memset(byte_offset(m_data.get(), requested_size), '\0', n_pad_bytes);
+}
+
+template <typename T>
+struct ddsi_serdata* serdata_from_sample(
+  const struct ddsi_sertopic* topiccmn,
+  enum ddsi_serdata_kind kind,
+  const void* sample)
+{
+  try {
+    auto topic = static_cast<const ddscxx_sertopic<T>*>(topiccmn);
+    auto d = new ddscxx_serdata<T>(topic, kind);
+
+    if (kind != SDK_DATA) {
+      //???
+    }
+    else /*if (!topic->is_request_header)*/ {
+      auto msg = static_cast<const T*>(sample);
+
+      size_t sz = msg->write_size(0);
+      //fprintf(stderr, "sz is: %zu\n", sz);
+      d->resize(sz + 4);  //4 bytes extra to also include the header
+      unsigned char* ptr = (unsigned char*)d->data();
+      memset(ptr, 0x0, 4);
+      if (native_endian() == endian::little)
+        *(ptr + 1) = 0x1;
+
+      msg->write_struct(byte_offset(d->data(), 4), 0);
+
+      /*fprintf(stderr, "raw message contents:\n");
+      for (size_t s = 0; s < sz + 4; s++)
+      {
+        fprintf(stderr, "%02x ", ptr[s]);
+      }
+      fprintf(stderr, "\n");*/
+    }
+    //else {
+      ///* inject the service invocation header data into the CDR stream --
+      // * I haven't checked how it is done in the official RMW implementations, so it is
+      // * probably incompatible. */
+      //auto wrap = *static_cast<const cdds_request_wrapper_t*>(sample);
+      //HelloWorldData::read_struct(d->data(), wrap, 0);
+    //}
+
+    return d;
+  }
+  catch (std::exception& e) {
+    return nullptr;
+  }
+}
+
+template <typename T>
+void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
+{
+  auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  memcpy(buf, byte_offset(d->data(), off), sz);
+}
+
+template <typename T>
+struct ddsi_serdata* serdata_to_ser_ref(
+  const struct ddsi_serdata* dcmn, size_t off,
+  size_t sz, ddsrt_iovec_t* ref)
+{
+  auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  uintptr_t a, b;
+  a = (uintptr_t)d->data();
+  b = (uintptr_t)byte_offset(d->data(), off);
+  ref->iov_base = byte_offset(d->data(), off);
+  ref->iov_len = (ddsrt_iov_len_t)sz;
+  return ddsi_serdata_ref(d);
+}
+
+template <typename T>
+void serdata_to_ser_unref(struct ddsi_serdata* dcmn, const ddsrt_iovec_t* ref)
+{
+  static_cast<void>(ref);    // unused
+  ddsi_serdata_unref(static_cast<ddscxx_serdata<T>*>(dcmn));
+}
+
+template <typename T>
+bool serdata_to_sample(
+  const struct ddsi_serdata* dcmn, void* sample, void** bufptr,
+  void* buflim)
+{
+  (void)bufptr;
+  (void)buflim;
+  auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  (static_cast<T*>(sample))->read_struct((char*)ptr->data() + 4, 0);
+
+  return false;
+}
+
+template <typename T>
+struct ddsi_serdata* serdata_to_topicless(const struct ddsi_serdata* dcmn)
+{
+  auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  auto d1 = new ddscxx_serdata<T>(d->topic, SDK_KEY);
+  d1->topic = nullptr;
+  return d1;
+}
+
+template <typename T>
+bool serdata_topicless_to_sample(
+  const struct ddsi_sertopic* topic,
+  const struct ddsi_serdata* dcmn, void* sample,
+  void** bufptr, void* buflim)
+{
+  (void)topic;
+  (void)dcmn;
+  (void)sample;
+  (void)bufptr;
+  (void)buflim;
+  assert(0);
+  /* ROS 2 doesn't do keys in a meaningful way yet */
+  return true;
+}
+
+template <typename T>
+void serdata_free(struct ddsi_serdata* dcmn)
+{
+  auto* d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  delete d;
+}
+
 #if DDSI_SERDATA_HAS_PRINT
-  static size_t helloworld_serdata_print(
-    const struct ddsi_sertopic* tpcmn, const struct ddsi_serdata* dcmn, char* buf, size_t bufsize);
+template <typename T>
+size_t serdata_print(
+  const struct ddsi_sertopic* tpcmn, const struct ddsi_serdata* dcmn, char* buf, size_t bufsize)
+{
+  (void)tpcmn;
+  (void)dcmn;
+  (void)buf;
+  (void)bufsize;
+  assert(0);
+  return 0;
+}
+#endif
+
+#if DDSI_SERDATA_HAS_GET_KEYHASH
+template <typename T>
+void serdata_get_keyhash(
+  const struct ddsi_serdata* d, struct ddsi_keyhash* buf,
+  bool force_md5)
+{
+  (void)d;
+  (void)buf;
+  (void)force_md5;
+  assert(0);
+}
+#endif
+
+template <typename T>
+const struct ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
+  &serdata_eqkey<T>,
+  &serdata_size<T>,
+  &serdata_from_ser<T>,
+#if DDSI_SERDATA_HAS_FROM_SER_IOV
+  &serdata_from_ser_iov<T>,
+#endif
+  &serdata_from_keyhash<T>,
+  &serdata_from_sample<T>,
+  &serdata_to_ser<T>,
+  &serdata_to_ser_ref<T>,
+  &serdata_to_ser_unref<T>,
+  &serdata_to_sample<T>,
+  &serdata_to_topicless<T>,
+  &serdata_topicless_to_sample<T>,
+  &serdata_free<T>
+#if DDSI_SERDATA_HAS_PRINT
+  , &serdata_print<T>
 #endif
 #if DDSI_SERDATA_HAS_GET_KEYHASH
-  static void helloworld_serdata_get_keyhash(
-    const struct ddsi_serdata* d, struct ddsi_keyhash* buf,
-    bool force_md5);
+  , &serdata_get_keyhash<T>
 #endif
 };
 
-#endif  // IDLDATA_HPP_
+template <typename T>
+ddscxx_serdata<T>::ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind)
+  : ddsi_serdata{}
+{
+  ddsi_serdata_init(this, topic, kind);
+}
+
+template <typename T>
+ddscxx_sertopic<T>::ddscxx_sertopic(
+  const char* topic_name, const char* type_name) : ddsi_sertopic{}
+{
+  ddsi_sertopic_init(
+    static_cast<struct ddsi_sertopic*>(this),
+    topic_name,
+    type_name,
+    &ddscxx_sertopic<T>::ddscxx_sertopic_ops,
+    &ddscxx_serdata<T>::ddscxx_serdata_ops,
+    true);
+}
+
+template <typename T>
+void sertopic_free(struct ddsi_sertopic* tpcmn)
+{
+  auto tp = static_cast<ddscxx_sertopic<T>*>(tpcmn);
+#if DDSI_SERTOPIC_HAS_TOPICKIND_NO_KEY
+  ddsi_sertopic_fini(tpcmn);
+#endif
+
+  delete tp;
+}
+
+template <typename T>
+void sertopic_zero_samples(const struct ddsi_sertopic* d, void* samples, size_t count)
+{
+  (void)d;
+  (void)samples;
+  (void)count;
+}
+
+template <typename T>
+void sertopic_realloc_samples(
+  void** ptrs, const struct ddsi_sertopic* d, void* old,
+  size_t oldcount, size_t count)
+{
+  (void)d;
+  (void)oldcount;
+  auto msgs = static_cast<std::vector<T>*>(old);
+  msgs->resize(count);
+  size_t i = 0;
+  for (auto& msg : *msgs)
+    ptrs[i++] = &msg;
+}
+
+template <typename T>
+void sertopic_free_samples(
+  const struct ddsi_sertopic* d, void** ptrs, size_t count,
+  dds_free_op_t op)
+{
+  (void)d;
+  (void)ptrs;
+  (void)count;
+  (void)op;
+  assert(0);
+}
+
+#if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH
+template <typename T>
+bool sertopic_equal(
+  const struct ddsi_sertopic* acmn, const struct ddsi_sertopic* bcmn)
+{
+  /* A bit of a guess: topics with the same name & type name are really the same if they have
+   the same type support identifier as well */
+  (void)acmn;
+  (void)bcmn;
+  return true;
+}
+
+template <typename T>
+uint32_t sertopic_hash(const struct ddsi_sertopic* tpcmn)
+{
+  (void)tpcmn;
+  return 0x0;
+}
+
+template <typename T>
+const struct ddsi_sertopic_ops ddscxx_sertopic<T>::ddscxx_sertopic_ops = {
+  &sertopic_free<T>,
+  &sertopic_zero_samples<T>,
+  &sertopic_realloc_samples<T>,
+  &sertopic_free_samples<T>
+#if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH
+  , &sertopic_equal<T>,
+  &sertopic_hash<T>
+#endif
+};
+
+#endif
+
+#endif  // DDSCXXDATATOPIC_HPP_
