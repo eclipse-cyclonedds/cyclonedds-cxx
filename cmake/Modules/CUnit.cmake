@@ -283,10 +283,12 @@ function(add_cunit_executable TARGET)
             PROPERTY ENVIRONMENT
               "DYLD_LIBRARY_PATH=${CUNIT_LIBRARY_DIR}:${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:$ENV{DYLD_LIBRARY_PATH}")
         elseif(WIN32 AND ${CUNIT_LIBRARY_TYPE} STREQUAL "SHARED_LIBRARY")
+          file(TO_NATIVE_PATH "${CUNIT_LIBRARY_DIR}" cunit_path)
+          string(REPLACE ";" "\\;" paths "${cunit_path};$ENV{PATH}")
           set_property(
             TEST ${ctest}
-            PROPERTY ENVIRONMENT
-              "PATH=${CUNIT_LIBRARY_DIR};$ENV{PATH}")
+            APPEND PROPERTY ENVIRONMENT
+              "PATH=${paths}")
         else()
           set_property(
             TEST ${ctest}
