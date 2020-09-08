@@ -38,15 +38,16 @@ CU_Test(idl_ostream, creation_destruction)
   destruct_idl_ostream(ostr);
 }
 
-#if 0
-CU__Test(idl_ostream, write_transfer_buffer)
+CU_Test(idl_ostream, write_transfer_buffer)
 {
   idl_ostream_t* ostr = create_idl_ostream(NULL),
                * ostr2 = create_idl_ostream(NULL);
 
-  char buffer[IDL_OSTREAM_BUFFER_INCR + 1];
+  const size_t buffergrowsby = (IDL_OSTREAM_BUFFER_INCR + 1);
+  char buffer[buffergrowsby];
   for (int i = 0; i < IDL_OSTREAM_BUFFER_INCR; i++)
-    snprintf(buffer + i, IDL_OSTREAM_BUFFER_INCR + 1, "%d", i % 10);
+    snprintf(buffer + i, buffergrowsby, "%d", i % 10);
+
 
   const int iterations = 5;
   const int transfers = 5;
@@ -62,11 +63,18 @@ CU__Test(idl_ostream, write_transfer_buffer)
 
       if (transfer == 0)
       {
-        CU_ASSERT_EQUAL(get_ostream_buffer_size(ostr), (iteration + 2) * IDL_OSTREAM_BUFFER_INCR);
+        if (iteration == 0)
+        {
+          CU_ASSERT_EQUAL(get_ostream_buffer_size(ostr), 2 * buffergrowsby - 1);
+        }
+        else
+        {
+          CU_ASSERT_EQUAL(get_ostream_buffer_size(ostr), (iteration + 1) * buffergrowsby - 1);
+        }
       }
       else
       {
-        CU_ASSERT_EQUAL(get_ostream_buffer_size(ostr), (iterations + 1) * IDL_OSTREAM_BUFFER_INCR);
+        CU_ASSERT_EQUAL(get_ostream_buffer_size(ostr), iterations * buffergrowsby - 1);
       }
 
       for (int i = 0; i <= iteration; i++)
@@ -83,4 +91,3 @@ CU__Test(idl_ostream, write_transfer_buffer)
   destruct_idl_ostream(ostr);
   destruct_idl_ostream(ostr2);
 }
-#endif
