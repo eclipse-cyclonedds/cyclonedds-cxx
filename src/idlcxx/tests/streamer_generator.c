@@ -701,7 +701,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    position += 4;  //bytes for member: obj.size()\n"\
 "    position += (obj.size())*4;  //entries of sequence\n"\
 "  }\n\n"\
-"  read_typedef_td_6(td_6 &obj, void* data, size_t position)\n"\
+"  size_t read_typedef_td_6(td_6 &obj, void* data, size_t position)\n"\
 "  {\n"\
 "    position += (4 - position&0x3)&0x3;  //alignment\n"\
 "    uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
@@ -745,6 +745,16 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    for (size_t _1 = 0; _1 < sequenceentries; _1++) position = M::read_typedef_td_6(mem()[_1], data, position);\n"\
 "    return position;\n"\
 "  }\n\n"\
+"} //end namespace N\n\n"
+
+#define TDH "namespace M\n"\
+"{\n\n"\
+"  size_t write_typedef_td_6(const td_6 &obj, void* data, size_t position);\n\n"\
+"  size_t typedef_size_td_6(const td_6 &obj, size_t offset);\n\n"\
+"  size_t read_typedef_td_6(td_6 &obj, void* data, size_t position);\n\n"\
+"} //end namespace M\n\n"\
+"namespace N\n"\
+"{\n\n"\
 "} //end namespace N\n\n"
 
 void test_base(size_t n, bool ns)
@@ -1146,6 +1156,7 @@ void test_typedef_resolution()
   idl_streamers_generate(tree, generated);
 
   CU_ASSERT_STRING_EQUAL(TDI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(TDH, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 }
 
 CU_Test(streamer_generator, base_types_namespace_absent)

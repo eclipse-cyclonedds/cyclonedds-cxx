@@ -18,18 +18,21 @@
 #include "idl/tree.h"
 #include "idl/string.h"
 
-#define format_ostream_indented(depth,ostr,str,...) \
+#define format_ostream_indented(depth,ostr,_str,...) \
 if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
-format_ostream(ostr, str, ##__VA_ARGS__);
+format_ostream(ostr, _str, ##__VA_ARGS__);
 
-#define format_write_stream(indent,ctx,str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_stream, str, ##__VA_ARGS__);
+#define format_write_stream(indent,ctx,_str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_stream, _str, ##__VA_ARGS__);
 
-#define format_write_size_stream(indent,ctx,str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_size_stream, str, ##__VA_ARGS__);
+#define format_write_size_stream(indent,ctx,_str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_size_stream, _str, ##__VA_ARGS__);
 
-#define format_read_stream(indent,ctx,str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, str, ##__VA_ARGS__);
+#define format_read_stream(indent,ctx,_str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__VA_ARGS__);
+
+#define format_header_stream(indent,ctx,_str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->str->head_stream, _str, ##__VA_ARGS__);
 
 static const char* struct_write_func_fmt = "size_t %s::write_struct(void *data, size_t position) const";
 static const char* union_switch_fmt = "  switch (_d())\n";
@@ -80,6 +83,9 @@ static const char* ref_cast_fmt = "dynamic_cast<%s%s&>(*this)";
 static const char* member_access_fmt = "%s()";
 static const char* sequence_length_exception_fmt = "  if (sequenceentries > %zu) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %zu\");\n";
 static const char* array_for_loop = "  for (size_t _i = 0; _i < %d; _i++) {\n";
+static const char* typedef_write_func_fmt = "size_t write_typedef_%s(const %s &obj, void* data, size_t position)";
+static const char* typedef_write_size_func_fmt = "size_t typedef_size_%s(const %s &obj, size_t offset)";
+static const char* typedef_read_func_fmt = "size_t read_typedef_%s(%s &obj, void* data, size_t position)";
 
 static const char* char_cast = "char";
 static const char* bool_cast = "bool";
@@ -141,6 +147,7 @@ struct idl_streamer_output
 {
   size_t indent;
   idl_ostream_t* impl_stream;
+  idl_ostream_t* head_stream;
 };
 
 typedef struct context context_t;
@@ -253,7 +260,10 @@ idl_streamer_output_t* create_idl_streamer_output()
 {
   idl_streamer_output_t* ptr = calloc(sizeof(idl_streamer_output_t),1);
   if (NULL != ptr)
+  {
     ptr->impl_stream = create_idl_ostream(NULL);
+    ptr->head_stream = create_idl_ostream(NULL);
+  }
   return ptr;
 }
 
@@ -263,13 +273,21 @@ void destruct_idl_streamer_output(idl_streamer_output_t* str)
     return;
 
   if (str->impl_stream != NULL)
+  {
     destruct_idl_ostream(str->impl_stream);
+    destruct_idl_ostream(str->head_stream);
+  }
   free(str);
 }
 
 idl_ostream_t* get_idl_streamer_impl_buf(const idl_streamer_output_t* str)
 {
   return str->impl_stream;
+}
+
+idl_ostream_t* get_idl_streamer_head_buf(const idl_streamer_output_t* str)
+{
+  return str->head_stream;
 }
 
 context_t* create_context(idl_streamer_output_t* str, const char* name)
@@ -892,12 +910,16 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
     format_write_stream(1, ctx, namespace_declaration_fmt, cpp11name);
     format_write_stream(1, ctx, "{\n\n");
 
+    format_header_stream(1, ctx, namespace_declaration_fmt, cpp11name);
+    format_header_stream(1, ctx, "{\n\n");
+
     flush_streams(ctx);
 
     process_node(newctx, (idl_node_t*)module->definitions);
 
     close_context(newctx);
     format_read_stream(1, ctx, namespace_closure_fmt, cpp11name);
+    format_header_stream(1, ctx, namespace_closure_fmt, cpp11name);
 
     flush_streams(ctx);
 
@@ -1061,12 +1083,23 @@ idl_retcode_t process_typedef_definition(context_t* ctx, idl_typedef_t* node)
   else
   {
     const char* tsname = node->declarators->identifier;
-    format_write_stream(1, ctx, "size_t write_typedef_%s(const %s &obj, void* data, size_t position)\n", tsname, tsname);
+
+    format_write_stream(1, ctx, typedef_write_func_fmt, tsname, tsname);
+    format_write_stream(0, ctx, "\n");
     format_write_stream(1, ctx, "{\n");
-    format_write_size_stream(1, ctx, "size_t typedef_size_%s(const %s &obj, size_t offset)\n", tsname, tsname);
+    format_write_size_stream(1, ctx, typedef_write_size_func_fmt, tsname, tsname);
+    format_write_size_stream(0, ctx, "\n");
     format_write_size_stream(1, ctx, "{\n");
-    format_read_stream(1, ctx, "read_typedef_%s(%s &obj, void* data, size_t position)\n", tsname, tsname);
+    format_read_stream(1, ctx, typedef_read_func_fmt, tsname, tsname);
+    format_read_stream(0, ctx, "\n");
     format_read_stream(1, ctx, "{\n");
+
+    format_header_stream(1, ctx, typedef_write_func_fmt, tsname, tsname);
+    format_header_stream(0, ctx, ";\n\n");
+    format_header_stream(1, ctx, typedef_write_size_func_fmt, tsname, tsname);
+    format_header_stream(0, ctx, ";\n\n");
+    format_header_stream(1, ctx, typedef_read_func_fmt, tsname, tsname);
+    format_header_stream(0, ctx, ";\n\n");
 
     process_instance(ctx, NULL, spec);
 
