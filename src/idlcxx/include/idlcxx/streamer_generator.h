@@ -26,6 +26,8 @@ IDLCXX_EXPORT idl_streamer_output_t* create_idl_streamer_output(void);
 
 IDLCXX_EXPORT idl_ostream_t* get_idl_streamer_impl_buf(const idl_streamer_output_t* str);
 
+IDLCXX_EXPORT idl_ostream_t* get_idl_streamer_head_buf(const idl_streamer_output_t* str);
+
 IDLCXX_EXPORT void destruct_idl_streamer_output(idl_streamer_output_t* str);
 
 IDLCXX_EXPORT void idl_streamers_generate(const idl_tree_t* tree, idl_streamer_output_t* str);
