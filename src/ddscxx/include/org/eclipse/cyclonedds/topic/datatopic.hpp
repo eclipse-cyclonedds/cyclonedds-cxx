@@ -19,10 +19,28 @@
 #include <cstring>
 #include <vector>
 
+#include "dds/ddsrt/endian.h"
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "dds/ddsi/ddsi_sertopic.h"
-#include "bytewise.hpp"
+
+enum class endianness
+{
+  little_endian = DDSRT_LITTLE_ENDIAN,
+  big_endian = DDSRT_BIG_ENDIAN
+};
+
+constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
+
+static inline void* calc_offset(void* ptr, ptrdiff_t n)
+{
+  return static_cast<void*>(static_cast<unsigned char*>(ptr) + n);
+}
+
+static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
+{
+  return static_cast<const void*>(static_cast<const unsigned char*>(ptr) + n);
+}
 
 template <typename T>
 class ddscxx_sertopic : public ddsi_sertopic {
@@ -34,7 +52,7 @@ public:
 template <typename T>
 class ddscxx_serdata : public ddsi_serdata {
   size_t m_size{ 0 };
-  std::unique_ptr<byte[]> m_data{ nullptr };
+  std::unique_ptr<unsigned char[]> m_data{ nullptr };
 
 public:
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
@@ -133,11 +151,11 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
   /* FIXME: CDR padding in DDSI makes me do this to avoid reading beyond the bounds
   when copying data to network.  Should fix Cyclone to handle that more elegantly.  */
   size_t n_pad_bytes = (0 - requested_size) % 4;
-  m_data.reset(new byte[requested_size + n_pad_bytes]);
+  m_data.reset(new unsigned char[requested_size + n_pad_bytes]);
   m_size = requested_size + n_pad_bytes;
 
   // zero the very end. The caller isn't necessarily going to overwrite it.
-  std::memset(byte_offset(m_data.get(), requested_size), '\0', n_pad_bytes);
+  std::memset(calc_offset(m_data.get(), requested_size), '\0', n_pad_bytes);
 }
 
 template <typename T>
@@ -161,10 +179,10 @@ struct ddsi_serdata* serdata_from_sample(
       d->resize(sz + 4);  //4 bytes extra to also include the header
       unsigned char* ptr = (unsigned char*)d->data();
       memset(ptr, 0x0, 4);
-      if (native_endian() == endian::little)
+      if (native_endianness() == endianness::little_endian)
         *(ptr + 1) = 0x1;
 
-      msg->write_struct(byte_offset(d->data(), 4), 0);
+      msg->write_struct(calc_offset(d->data(), 4), 0);
 
       /*fprintf(stderr, "raw message contents:\n");
       for (size_t s = 0; s < sz + 4; s++)
@@ -192,7 +210,7 @@ template <typename T>
 void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  memcpy(buf, byte_offset(d->data(), off), sz);
+  memcpy(buf, calc_offset(d->data(), off), sz);
 }
 
 template <typename T>
@@ -203,8 +221,8 @@ struct ddsi_serdata* serdata_to_ser_ref(
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
   uintptr_t a, b;
   a = (uintptr_t)d->data();
-  b = (uintptr_t)byte_offset(d->data(), off);
-  ref->iov_base = byte_offset(d->data(), off);
+  b = (uintptr_t)calc_offset(d->data(), off);
+  ref->iov_base = calc_offset(d->data(), off);
   ref->iov_len = (ddsrt_iov_len_t)sz;
   return ddsi_serdata_ref(d);
 }
