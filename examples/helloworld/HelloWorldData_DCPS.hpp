@@ -3,11 +3,11 @@
 
 #include "dds/dds.hpp"
 
-#include "datatopic.hpp"
 #include "HelloWorldData.h"
 
 #include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 #include "org/eclipse/cyclonedds/topic/DataRepresentation.hpp"
+#include "org/eclipse/cyclonedds/topic/datatopic.hpp"
 
 namespace org { namespace eclipse { namespace cyclonedds { namespace topic {
 template <>
