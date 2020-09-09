@@ -17,7 +17,6 @@
 #include "idlcxx/backendCpp11Utils.h"
 #include "idl/tree.h"
 #include "idl/string.h"
-#include "strdup.h"
 
 #define format_ostream_indented(depth,ostr,str,...) \
 if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
@@ -162,9 +161,6 @@ struct context
 };
 
 static bool idl_is_template(idl_node_t* node);
-static bool idl_is_base_type(idl_node_t* node);
-static bool idl_is_sequence(idl_node_t* node);
-static bool idl_is_string(idl_node_t* node);
 static uint64_t array_entries(idl_declarator_t* decl);
 static idl_retcode_t add_default_case(context_t* ctx);
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
@@ -323,28 +319,10 @@ void close_context(context_t* ctx)
   free(ctx);
 }
 
-bool idl_is_base_type(idl_node_t* node)
-{
-  return (NULL != node) &&
-         (((node->mask & IDL_BASE_TYPE) == IDL_BASE_TYPE) || idl_is_enum(node));
-}
-
 bool idl_is_template(idl_node_t* node)
 {
   return (NULL != node) &&
          ((node->mask & IDL_TEMPL_TYPE) == IDL_TEMPL_TYPE);
-}
-
-bool idl_is_sequence(idl_node_t* node)
-{
-  return (NULL != node) &&
-    ((node->mask & IDL_SEQUENCE) == IDL_SEQUENCE);
-}
-
-bool idl_is_string(idl_node_t* node)
-{
-  return (NULL != node) &&
-    ((node->mask & IDL_STRING) == IDL_STRING);
 }
 
 void resolve_namespace(idl_node_t* node, char** up)
@@ -1200,7 +1178,7 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
   return IDL_RETCODE_OK;
 }
 
-void idl_streamers_generate(idl_tree_t* tree, idl_streamer_output_t* str)
+void idl_streamers_generate(const idl_tree_t* tree, idl_streamer_output_t* str)
 {
   context_t* ctx = create_context(str, "");
   process_node(ctx, tree->root);

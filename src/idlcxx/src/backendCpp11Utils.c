@@ -18,8 +18,6 @@
 #include "idl/string.h"
 #include "idlcxx/backendCpp11Utils.h"
 
-#include "strdup.h"
-
 /* Specify a list of all C++11 keywords */
 static const char* cpp11_keywords[] =
 {
