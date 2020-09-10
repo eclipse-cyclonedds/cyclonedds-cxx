@@ -21,7 +21,7 @@
 
 #include "CUnit/Theory.h"
 
-#define INITIAL_RUN 0
+#define INITIAL_RUN 1
 #if INITIAL_RUN
 #if _WIN32
 #include <Windows.h>
@@ -51,6 +51,16 @@ static bool initial_run = true;
 "  " case_type1 " " case_name1 ";\n"\
 "};"
 
+#define IDL_INPUT_TYPEDEF(module_name,typedef_type,typedef_name) ""\
+"module " module_name "{\n"\
+"  typedef " typedef_type " " typedef_name ";\n"\
+"};\n\n"
+
+#define IDL_OUTPUT_STREAMER_INTERFACES ""\
+"  size_t write_struct(void* data, size_t position) const;\n"\
+"  size_t write_size(size_t offset) const;\n"\
+"  size_t read_struct(const void* data, size_t position);\n"
+
 #define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) "" \
 "class " struct_name "\n{\n" \
 "private:\n" \
@@ -67,6 +77,8 @@ static bool initial_run = true;
 "  " member_type " " member_name "() const { return this->" member_name "_; }\n" \
 "  " member_type "& " member_name "() { return this->" member_name "_; }\n" \
 "  void " member_name "(" member_type " _val_) { this->" member_name "_ = _val_; }\n" \
+"\n" \
+IDL_OUTPUT_STREAMER_INTERFACES\
 "};\n"
 
 #define IDL_OUTPUT_STRUCT_NO_PRIM(struct_name,member_type,member_name) "" \
@@ -85,6 +97,8 @@ static bool initial_run = true;
 "  " member_type "& " member_name "() { return this->" member_name "_; }\n" \
 "  void " member_name "(const " member_type "& _val_) { this->" member_name "_ = _val_; }\n" \
 "  void " member_name "(" member_type "&& _val_) { this->" member_name "_ = _val_; }\n" \
+"\n" \
+IDL_OUTPUT_STREAMER_INTERFACES\
 "};\n"
 
 #define IDL_OUTPUT_ENUM(enum_name,label1,label2,label3) "" \
@@ -168,7 +182,15 @@ static bool initial_run = true;
 "  {\n"\
 "    m__d = _d;\n"\
 "  }\n"\
+"\n" \
+IDL_OUTPUT_STREAMER_INTERFACES\
 "};"
+
+#define IDL_OUTPUT_TYPEDEF(module_name,typedef_type,typedef_name) ""\
+"namespace " module_name "\n"\
+"{\n"\
+"  typedef " typedef_type " " typedef_name ";\n\n"\
+"};\n\n"
 
 static void
 test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *output)
@@ -234,7 +256,9 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","float","LineCoordinates[2][3]"),
                               IDL_INPUT_ENUM("Color","Red","Yellow","Blue"),
                               IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
-                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module")
+                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
+                              IDL_INPUT_TYPEDEF("m","sequence<long>","sl") IDL_INPUT_STRUCT("s","::m::sl","l"),
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder","Color","Red","string","name")
                               ),
   /* Series of corresponding C++ output */
   CU_DataPoints(const char *, IDL_OUTPUT_STRUCT_PRIM("AttrHolder","int16_t","0","s"),
@@ -259,7 +283,9 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
                               IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue"),
                               IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
-                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module")
+                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module"),
+                              IDL_OUTPUT_TYPEDEF("m","std::vector<int32_t>","sl") IDL_OUTPUT_STRUCT_NO_PRIM("s","::m::sl","l"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","Color","::Color::Yellow","::Color::Red","std::string","name")
                               )
 };
 
