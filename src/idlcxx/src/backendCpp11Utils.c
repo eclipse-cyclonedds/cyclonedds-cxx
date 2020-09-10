@@ -188,7 +188,9 @@ get_cpp11_type(const idl_node_t *node)
   case IDL_TEMPL_TYPE:
     cpp11Type = get_cpp11_templ_type(node);
     break;
-  case IDL_CONSTR_TYPE:
+  case IDL_STRUCT:
+  case IDL_UNION:
+  case IDL_ENUM:
   case IDL_TYPEDEF:
     cpp11Type = get_cpp11_fully_scoped_name(node);
     break;
@@ -217,7 +219,7 @@ get_cpp11_fully_scoped_name(const idl_node_t *node)
   current_node = node;
   for (uint32_t i = 0; i < nr_scopes; ++i)
   {
-    scope_type = current_node->mask & (IDL_ENUMERATOR | IDL_ENUM | IDL_STRUCT | IDL_UNION | IDL_TYPEDEF);
+    scope_type = current_node->mask & (IDL_MODULE | IDL_ENUMERATOR | IDL_ENUM | IDL_STRUCT | IDL_UNION | IDL_TYPEDEF);
     assert(scope_type);
     switch (scope_type)
     {
@@ -228,16 +230,16 @@ get_cpp11_fully_scoped_name(const idl_node_t *node)
       scope_names[i] = get_cpp11_name(((const idl_enum_t *) current_node)->identifier);
       break;
     case IDL_MODULE:
-      scope_names[i] = get_cpp11_name(((const idl_module_t *) node)->identifier);
+      scope_names[i] = get_cpp11_name(((const idl_module_t *) current_node)->identifier);
       break;
     case IDL_STRUCT:
-      scope_names[i] = get_cpp11_name(((const idl_struct_t *) node)->identifier);
+      scope_names[i] = get_cpp11_name(((const idl_struct_t *) current_node)->identifier);
       break;
     case IDL_UNION:
-      scope_names[i] = get_cpp11_name(((const idl_union_t *) node)->identifier);
+      scope_names[i] = get_cpp11_name(((const idl_union_t *) current_node)->identifier);
       break;
     case IDL_TYPEDEF:
-      scope_names[i] = get_cpp11_name(((const idl_typedef_t *) node)->declarators->identifier);
+      scope_names[i] = get_cpp11_name(((const idl_typedef_t *) current_node)->declarators->identifier);
       break;
     }
     scoped_enumerator_len += (strlen(scope_names[i]) + 2); /* scope + "::" */
@@ -259,8 +261,10 @@ char *
 get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
 {
   char *def_value = NULL;
+  const idl_enum_t *enumeration;
   (void)ctx;
-  switch (node->mask & (IDL_BASE_TYPE | IDL_CONSTR_TYPE))
+
+  switch (node->mask & (IDL_BASE_TYPE | IDL_ENUM))
   {
   case IDL_BASE_TYPE:
     switch (node->mask & IDL_BASE_TYPE_MASK)
@@ -312,20 +316,10 @@ get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
       break;
     }
     break;
-  case IDL_CONSTR_TYPE:
-    switch (node->mask & IDL_CONSTR_TYPE_MASK)
-    {
-    case IDL_ENUM:
-    {
-      /* Pick the first of the available enumerators. */
-      const idl_enum_t *enumeration = (const idl_enum_t *) node;
-      def_value = get_cpp11_fully_scoped_name((const idl_node_t *) enumeration->enumerators);
-      break;
-    }
-    default:
-      /* Other constructed types determine their default value in their constructor. */
-      break;
-    }
+  case IDL_ENUM:
+    /* Pick the first of the available enumerators. */
+    enumeration = (const idl_enum_t *) node;
+    def_value = get_cpp11_fully_scoped_name((const idl_node_t *) enumeration->enumerators);
     break;
   default:
     /* Other types determine their default value in their constructor. */
