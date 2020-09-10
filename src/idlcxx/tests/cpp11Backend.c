@@ -21,7 +21,7 @@
 
 #include "CUnit/Theory.h"
 
-#define INITIAL_RUN 1
+#define INITIAL_RUN 0
 #if INITIAL_RUN
 #if _WIN32
 #include <Windows.h>
@@ -30,7 +30,6 @@
 #include <unistd.h>
 #define wait_a_bit(seconds) sleep(seconds)
 #endif
-static bool initial_run = true;
 #endif
 
 #define IDL_INPUT_STRUCT(struct_name,member_type,member_name) ""\
@@ -192,6 +191,20 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "  typedef " typedef_type " " typedef_name ";\n\n"\
 "};\n\n"
 
+static void init()
+{
+#if INITIAL_RUN
+  static bool initial_run = true;
+
+  if (initial_run) {
+    unsigned int secs = 8;
+    wait_a_bit(8);
+    printf("Sleeping for %u seconds. Please attach debugger...\n", secs);
+    initial_run = false;
+  }
+#endif
+}
+
 static void
 test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *output)
 {
@@ -254,11 +267,6 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","sequence<sequence<string>>","strSeqSeq"),
                               IDL_INPUT_STRUCT("AttrHolder","float","coordinate[3]"),
                               IDL_INPUT_STRUCT("AttrHolder","float","LineCoordinates[2][3]"),
-                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue"),
-                              IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
-                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
-                              IDL_INPUT_TYPEDEF("m","sequence<long>","sl") IDL_INPUT_STRUCT("s","::m::sl","l"),
-                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder","Color","Red","string","name")
                               ),
   /* Series of corresponding C++ output */
   CU_DataPoints(const char *, IDL_OUTPUT_STRUCT_PRIM("AttrHolder","int16_t","0","s"),
@@ -281,23 +289,66 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::vector<std::string>>","strSeqSeq"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<float, 3>","coordinate"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue"),
-                              IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
-                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module"),
-                              IDL_OUTPUT_TYPEDEF("m","std::vector<int32_t>","sl") IDL_OUTPUT_STRUCT_NO_PRIM("s","::m::sl","l"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","Color","::Color::Yellow","::Color::Red","std::string","name")
                               )
 };
 
 CU_Theory((const char *input, const char *output), cpp11Backend, Struct, .timeout = 30)
 {
-#if INITIAL_RUN
-  if (initial_run) {
-    unsigned int secs = 8;
-    wait_a_bit(8);
-    printf("Sleeping for %u seconds. Please attach debugger...\n", secs);
-    initial_run = false;
-  }
-#endif
+  init();
   test_base_type(input, 0u, IDL_RETCODE_OK, output);
 }
+
+CU_TheoryDataPoints(cpp11Backend, Enum) =
+{
+  /* Series of IDL input */
+  CU_DataPoints(const char *, IDL_INPUT_ENUM("Color","Red","Yellow","Blue")
+                              ),
+  /* Series of corresponding C++ output */
+  CU_DataPoints(const char *, IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue"),
+                              )
+};
+
+CU_Theory((const char *input, const char *output), cpp11Backend, Enum, .timeout = 30)
+{
+  init();
+  test_base_type(input, 0u, IDL_RETCODE_OK, output);
+}
+
+CU_TheoryDataPoints(cpp11Backend, Typedef) =
+{
+  /* Series of IDL input */
+  CU_DataPoints(const char *, IDL_INPUT_TYPEDEF("m","sequence<long>","sl")
+                                  IDL_INPUT_STRUCT("s","::m::sl","l")
+                             ),
+  /* Series of corresponding C++ output */
+  CU_DataPoints(const char *, IDL_OUTPUT_TYPEDEF("m","std::vector<int32_t>","sl")
+                                  IDL_OUTPUT_STRUCT_NO_PRIM("s","::m::sl","l")
+                              )
+};
+
+CU_Theory((const char *input, const char *output), cpp11Backend, Typedef, .timeout = 30)
+{
+  init();
+  test_base_type(input, 0u, IDL_RETCODE_OK, output);
+}
+
+CU_TheoryDataPoints(cpp11Backend, Union) =
+{
+  /* Series of IDL input */
+  CU_DataPoints(const char *, IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
+                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder","Color","Red","string","name")
+                              ),
+  /* Series of corresponding C++ output */
+  CU_DataPoints(const char *, IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
+                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","Color","::Color::Yellow","::Color::Red","std::string","name")
+                              )
+};
+
+CU_Theory((const char *input, const char *output), cpp11Backend, Union, .disabled = true)
+{
+  init();
+  test_base_type(input, 0u, IDL_RETCODE_OK, output);
+}
+
