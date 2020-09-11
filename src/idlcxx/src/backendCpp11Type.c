@@ -501,7 +501,7 @@ get_min_value(const idl_node_t *node)
 
   result.node = *node;
   result.node.mask &= mask;
-  switch (node->mask)
+  switch (node->mask & mask)
   {
   case IDL_BOOL:
     result.value.bln = false;
@@ -832,7 +832,7 @@ union_generate_discr_getter_setter(idl_backend_ctx ctx)
   idl_indent_incr(ctx);
 
   if ((union_ctx->discr_node->mask & IDL_BOOL) == IDL_BOOL) {
-    idl_file_out_printf(ctx, "bool valid = (val == m__d);\n");
+    idl_file_out_printf(ctx, "bool valid = (val == m__d);\n\n");
   } else {
     idl_file_out_printf(ctx, "bool valid = true;\n");
     idl_file_out_printf(ctx, "switch (val) {\n");
@@ -891,14 +891,13 @@ union_generate_discr_getter_setter(idl_backend_ctx ctx)
 
     idl_indent_decr(ctx);
     idl_file_out_printf(ctx, "}\n\n");
-
-    idl_file_out_printf(ctx, "if (!valid) {\n");
-    idl_indent_incr(ctx);
-    idl_file_out_printf(ctx, "throw dds::core::InvalidArgumentError(\"New discriminator value does not match current discriminator\");\n");
-    idl_indent_decr(ctx);
-    idl_file_out_printf(ctx, "}\n\n");
   }
 
+  idl_file_out_printf(ctx, "if (!valid) {\n");
+  idl_indent_incr(ctx);
+  idl_file_out_printf(ctx, "throw dds::core::InvalidArgumentError(\"New discriminator value does not match current discriminator\");\n");
+  idl_indent_decr(ctx);
+  idl_file_out_printf(ctx, "}\n\n");
   idl_file_out_printf(ctx, "m__d = val;\n");
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "}\n\n");

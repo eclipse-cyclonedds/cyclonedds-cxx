@@ -307,7 +307,7 @@ get_cpp11_templ_type_const_value(const idl_constval_t *constval)
 char *
 get_cpp11_const_value(const idl_constval_t *constval)
 {
-  static const idl_mask_t mask = IDL_BASE_TYPE|IDL_STRING|IDL_ENUMERATOR;
+  static const idl_mask_t mask = IDL_CATEGORY_MASK | IDL_ENUMERATOR;
 
   switch (constval->node.mask & mask) {
   case IDL_BASE_TYPE:

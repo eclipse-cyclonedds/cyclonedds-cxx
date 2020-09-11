@@ -105,9 +105,39 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "  " label1 ",\n" \
 "  " label2 ",\n" \
 "  " label3 ",\n" \
-"};"
+"};\n\n"
 
-#define IDL_OUTPUT_UNION_1_BRANCH(union_name,discr_type,default_discr_val,label1,case_type1,case_name1) ""\
+#define DEFAULT_DISCR_TP(label1) ""\
+"    bool valid = true;\n"\
+"    switch (val) {\n"\
+"    case " label1 ":\n"\
+"      if (m__d != " label1 ") {\n"\
+"        valid = false;\n"\
+"      }\n"\
+"      break;\n"\
+"    default:\n"\
+"      if (m__d == " label1 ") {\n"\
+"        valid = false;\n"\
+"      }\n"\
+"      break;\n"\
+"    }\n"
+
+#define BOOL_DISCR_TP(label1) ""\
+"    bool valid = (val == m__d);\n"
+
+#define SINGLE_DEFAULT(discr_type,default_discr_val) ""\
+"  void _default()\n"\
+"  {\n"\
+"    m__d = " default_discr_val ";\n"\
+"  }\n"
+
+#define MULTI_DEFAULT(discr_type,default_discr_val) ""\
+"  void _default(" discr_type " _d = " default_discr_val ")\n"\
+"  {\n"\
+"    m__d = _d;\n"\
+"  }\n"
+
+#define IDL_OUTPUT_UNION_1_BRANCH(union_name,discr_type,default_discr_val,discr_setter_tp,default_case_tp,label1,case_type1,case_name1) ""\
 "class " union_name "\n{\n"\
 "private:\n"\
 "  " discr_type " m__d;\n"\
@@ -126,19 +156,7 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "\n"\
 "  void _d(" discr_type " val)\n"\
 "  {\n"\
-"    bool valid = true;\n"\
-"    switch (val) {\n"\
-"    case " label1 ":\n"\
-"      if (m__d != " label1 ") {\n"\
-"        valid = false;\n"\
-"      }\n"\
-"      break;\n"\
-"    default:\n"\
-"      if (m__d == " label1 ") {\n"\
-"        valid = false;\n"\
-"      }\n"\
-"      break;\n"\
-"    }\n"\
+discr_setter_tp(label1)\
 "\n"\
 "    if (!valid) {\n"\
 "      throw dds::core::InvalidArgumentError(\"New discriminator value does not match current discriminator\");\n"\
@@ -177,10 +195,7 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "    " case_name1 " = val;\n"\
 "  }\n"\
 "\n"\
-"  void _default(" discr_type " _d = " default_discr_val ")\n"\
-"  {\n"\
-"    m__d = _d;\n"\
-"  }\n"\
+default_case_tp(discr_type,default_discr_val)\
 "\n" \
 IDL_OUTPUT_STREAMER_INTERFACES\
 "};"
@@ -335,14 +350,16 @@ CU_Theory((const char *input, const char *output), cpp11Backend, Typedef, .timeo
 CU_TheoryDataPoints(cpp11Backend, Union) =
 {
   /* Series of IDL input */
-  CU_DataPoints(const char *, //IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
-                              //IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
+  CU_DataPoints(const char *, IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
+                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
+                              IDL_INPUT_UNION_1_BRANCH("CaseHolder","boolean","TRUE","string","name"),
                               IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder","Color","Red","string","name")
                               ),
   /* Series of corresponding C++ output */
-  CU_DataPoints(const char *, //IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
-                              //IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") "\n\n" IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","::Color","::Color::Yellow","::Color::Red","std::string","name")
+  CU_DataPoints(const char *, IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","-2147483648",DEFAULT_DISCR_TP,MULTI_DEFAULT,"1","std::string","name"),
+                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","-32768",DEFAULT_DISCR_TP,MULTI_DEFAULT,"0","std::string","module"),
+                              IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","bool","false",BOOL_DISCR_TP,SINGLE_DEFAULT,"true","std::string","name"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","::Color","::Color::Yellow",DEFAULT_DISCR_TP,MULTI_DEFAULT,"::Color::Red","std::string","name")
                               )
 };
 
