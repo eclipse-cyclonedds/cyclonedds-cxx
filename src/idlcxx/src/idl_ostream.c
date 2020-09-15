@@ -76,11 +76,15 @@ void format_ostream(idl_ostream_t* ostr, const char* fmt, ...)
 
 void format_ostream_va_args(idl_ostream_t* ostr, const char* fmt, va_list args)
 {
+  va_list aq;
   size_t space = ostr->_buf.size - ostr->_buf.used;
+  va_copy(aq, args);
   int wb = vsnprintf(ostr->_buf.data + ostr->_buf.used,
                       space,
                       fmt,
-                      args);
+                      aq);
+  va_end(aq);
+
   if (wb < 0)
   {
     fprintf(stderr, "a formatting error occurred during format_ostream\n");
