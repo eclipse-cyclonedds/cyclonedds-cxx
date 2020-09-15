@@ -341,13 +341,13 @@ void resolve_namespace(idl_node_t* node, char** up)
     if (*up)
     {
       char *temp = NULL;
-      idl_asprintf(&temp, "%s::%s", mod->identifier, *up);
+      idl_asprintf(&temp, "%s::%s", idl_identifier(mod), *up);
       free(*up);
       *up = temp;
     }
     else
     {
-      idl_asprintf(up, "%s::", mod->identifier);
+      idl_asprintf(up, "%s::", idl_identifier(mod));
     }
   }
 
@@ -435,7 +435,7 @@ idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_
 {
   assert(ctx);
   assert(decl);
-  char* cpp11name = get_cpp11_name(decl->identifier);
+  char* cpp11name = get_cpp11_name(idl_identifier(decl));
   assert(cpp11name);
 
   uint64_t entries = array_entries(decl);
@@ -713,32 +713,20 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       idl_is_string(tspec))
   {
     // FIXME: loop!?
-    cpp11name = get_cpp11_name(decl->identifier);
+    cpp11name = get_cpp11_name(idl_identifier(decl));
     assert(cpp11name);
 
-    idl_const_expr_t* ce = NULL;
+    size_t bound;
     idl_type_spec_t* ispec = tspec;
     if (idl_is_sequence(tspec))
     {
       //change member_mask to the type of the sequence template
-      ce = ((idl_sequence_t*)tspec)->const_expr;
+      bound = ((idl_sequence_t*)tspec)->maximum;
       ispec = ((idl_sequence_t*)tspec)->type_spec;
     }
     else if (idl_is_string(tspec))
     {
-      ce = ((idl_string_t*)tspec)->const_expr;
-    }
-
-    size_t bound = 0;
-    while (ce)
-    {
-      if ((ce->mask & IDL_CONST) == IDL_CONST &&
-          (ce->mask & IDL_INTEGER_TYPE) == IDL_INTEGER_TYPE)
-      {
-        bound = ((idl_literal_t*)ce)->value.ullng;
-        break;
-      }
-      ce = ce->next;
+      bound = ((idl_string_t*)tspec)->maximum;
     }
 
     char* buffer;
@@ -856,7 +844,7 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
 
   if (module->definitions)
   {
-    char* cpp11name = get_cpp11_name(module->identifier);
+    char* cpp11name = get_cpp11_name(idl_identifier(module));
     assert(cpp11name);
 
     context_t* newctx = child_context(ctx, cpp11name);
@@ -894,9 +882,9 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_is_union(node))
   {
     if (idl_is_struct(node))
-      cpp11name = get_cpp11_name(((idl_struct_t*)node)->identifier);
+      cpp11name = get_cpp11_name(idl_identifier((idl_struct_t*)node));
     else if (idl_is_union(node))
-      cpp11name = get_cpp11_name(((idl_union_t*)node)->identifier);
+      cpp11name = get_cpp11_name(idl_identifier((idl_union_t*)node));
     assert(cpp11name);
 
     format_header_stream(1, ctx, struct_write_func_fmt, cpp11name);
@@ -928,7 +916,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_struct_t* _struct = (idl_struct_t*)node;
       if (_struct->base_type)
       {
-        char* base_cpp11name = get_cpp11_name(_struct->base_type->identifier);
+        char* base_cpp11name = get_cpp11_name(idl_identifier(_struct->base_type));
         char* ns = idl_strdup("");
         assert(base_cpp11name);
         resolve_namespace((idl_node_t*)_struct->base_type, &ns);
@@ -1079,7 +1067,7 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
   assert(decl);
   assert(tspec);
 
-  char* cpp11name = get_cpp11_name(decl->identifier);
+  char* cpp11name = get_cpp11_name(idl_identifier(decl));
   assert(cpp11name);
 
   uint64_t entries = array_entries(decl);

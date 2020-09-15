@@ -87,7 +87,7 @@ get_cpp11_declarator_data(idl_backend_ctx ctx, const idl_node_t *node)
 
   member_data->member_type_node = ((const idl_member_t *) node->parent)->type_spec;
   member_data->declarator_node = declarator;
-  member_data->name = get_cpp11_name(declarator->identifier);
+  member_data->name = get_cpp11_name(idl_identifier(declarator));
   member_data->type_name = get_cpp11_type(member_data->member_type_node);
   /* Check if the declarator contains also an array expression... */
   if (idl_declarator_is_array(declarator))
@@ -249,7 +249,7 @@ struct_generate_body(idl_backend_ctx ctx, const idl_struct_t *struct_node)
 
   struct_ctx.members = malloc(sizeof(cpp11_member_state) * nr_members);
   struct_ctx.member_count = 0;
-  struct_ctx.name = get_cpp11_name(struct_node->identifier);
+  struct_ctx.name = get_cpp11_name(idl_identifier(struct_node));
   if (struct_node->base_type)
   {
     const idl_node_t *base_node = (const idl_node_t *) struct_node->base_type;
@@ -396,7 +396,7 @@ get_cpp11_case_data(idl_backend_ctx ctx, const idl_node_t *node)
 
   case_data->typespec_node = case_node->type_spec;
   case_data->declarator_node = case_node->declarator;
-  case_data->name = get_cpp11_name(case_node->declarator->identifier);
+  case_data->name = get_cpp11_name(idl_identifier(case_node->declarator));
   case_data->label_count = 0;
   if (label_count > 0) {
     case_data->labels = malloc(sizeof(char *) * label_count);
@@ -1211,7 +1211,7 @@ static idl_retcode_t
 union_generate_body(idl_backend_ctx ctx, const idl_union_t *union_node)
 {
   idl_retcode_t result = IDL_RETCODE_OK;
-  char *cpp11Name = get_cpp11_name(union_node->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(union_node));
 
   idl_file_out_printf(ctx, "class %s\n", cpp11Name);
   idl_file_out_printf(ctx, "{\n");
@@ -1270,7 +1270,7 @@ static idl_retcode_t
 enumerator_generate_identifier(idl_backend_ctx ctx, const idl_node_t *enumerator_node)
 {
   const idl_enumerator_t *enumerator = (const idl_enumerator_t *) enumerator_node;
-  char *cpp11Name = get_cpp11_name(enumerator->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(enumerator));
   idl_file_out_printf(ctx, "%s,\n", cpp11Name);
   free(cpp11Name);
   return IDL_RETCODE_OK;
@@ -1280,7 +1280,7 @@ static idl_retcode_t
 enum_generate_body(idl_backend_ctx ctx, const idl_enum_t *enum_node)
 {
   idl_retcode_t result;
-  char *cpp11Name = get_cpp11_name(enum_node->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(enum_node));
   const idl_node_t *enumerators = (const idl_node_t *) enum_node->enumerators;
 
   idl_file_out_printf(ctx, "enum class %s\n", cpp11Name);
@@ -1296,7 +1296,7 @@ enum_generate_body(idl_backend_ctx ctx, const idl_enum_t *enum_node)
 static idl_retcode_t
 typedef_generate_body(idl_backend_ctx ctx, const idl_typedef_t *typedef_node)
 {
-  char *cpp11Name = get_cpp11_name(typedef_node->declarators->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(typedef_node->declarators));
   char *cpp11Type = get_cpp11_type(typedef_node->type_spec);
 
   idl_file_out_printf(ctx, "typedef %s %s;\n\n", cpp11Type, cpp11Name);
@@ -1310,7 +1310,7 @@ static idl_retcode_t
 module_generate_body(idl_backend_ctx ctx, const idl_module_t *module_node)
 {
   idl_retcode_t result;
-  char *cpp11Name = get_cpp11_name(module_node->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(module_node));
 
   idl_file_out_printf(ctx, "namespace %s\n", cpp11Name);
   idl_file_out_printf(ctx, "{\n", cpp11Name);
@@ -1327,7 +1327,7 @@ module_generate_body(idl_backend_ctx ctx, const idl_module_t *module_node)
 static idl_retcode_t
 forward_decl_generate_body(idl_backend_ctx ctx, const idl_forward_t *forward_node)
 {
-  char *cpp11Name = get_cpp11_name(forward_node->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(forward_node));
   assert(forward_node->node.mask & (IDL_STRUCT | IDL_UNION));
   idl_file_out_printf(
       ctx,
@@ -1341,7 +1341,7 @@ forward_decl_generate_body(idl_backend_ctx ctx, const idl_forward_t *forward_nod
 static idl_retcode_t
 const_generate_body(idl_backend_ctx ctx, const idl_const_t *const_node)
 {
-  char *cpp11Name = get_cpp11_name(const_node->identifier);
+  char *cpp11Name = get_cpp11_name(idl_identifier(const_node));
   char *cpp11Type = get_cpp11_type(const_node->type_spec);
   char *cpp11Value = get_cpp11_const_value((const idl_constval_t *) const_node->const_expr);
   idl_file_out_printf(
