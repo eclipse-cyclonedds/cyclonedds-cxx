@@ -128,7 +128,7 @@ size_t transfer_ostream_buffer(idl_ostream_t* from, idl_ostream_t* to)
   if (from == NULL || to == NULL)
     return 0;
 
-  format_ostream(to, from->_buf.data);
+  format_ostream(to, "%s", from->_buf.data);
 
   size_t returnval = from->_buf.used;
   from->_buf.data[0] = 0x0;
