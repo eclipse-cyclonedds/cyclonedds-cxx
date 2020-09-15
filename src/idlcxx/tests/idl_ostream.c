@@ -44,18 +44,18 @@ CU_Test(idl_ostream, write_transfer_buffer)
                * ostr2 = create_idl_ostream(NULL);
 
   const size_t buffergrowsby = (IDL_OSTREAM_BUFFER_INCR + 1);
-  char buffer[buffergrowsby];
+  char* buffer = malloc(buffergrowsby);
   for (int i = 0; i < IDL_OSTREAM_BUFFER_INCR; i++)
     snprintf(buffer + i, buffergrowsby, "%d", i % 10);
 
 
-  const int iterations = 5;
-  const int transfers = 5;
-  for (int transfer = 0; transfer < transfers; transfer++)
+  const size_t iterations = 5;
+  const size_t transfers = 5;
+  for (size_t transfer = 0; transfer < transfers; transfer++)
   {
-    for (int iteration = 0; iteration < iterations; iteration++)
+    for (size_t iteration = 0; iteration < iterations; iteration++)
     {
-      for (int i = 0; i < IDL_OSTREAM_BUFFER_INCR; i++)
+      for (size_t i = 0; i < IDL_OSTREAM_BUFFER_INCR; i++)
       {
         format_ostream(ostr, "%d", i % 10);
         CU_ASSERT_EQUAL(get_ostream_buffer_position(ostr), iteration* IDL_OSTREAM_BUFFER_INCR+i+1);
@@ -77,17 +77,18 @@ CU_Test(idl_ostream, write_transfer_buffer)
         CU_ASSERT_EQUAL(get_ostream_buffer_size(ostr), iterations * buffergrowsby - 1);
       }
 
-      for (int i = 0; i <= iteration; i++)
+      for (size_t i = 0; i <= iteration; i++)
         CU_ASSERT_EQUAL(0, memcmp(get_ostream_buffer(ostr) + IDL_OSTREAM_BUFFER_INCR * i, buffer, IDL_OSTREAM_BUFFER_INCR));
     }
 
     transfer_ostream_buffer(ostr, ostr2);
     CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(ostr));
 
-    for (int i = 0; i < transfer * iterations; i++)
+    for (size_t i = 0; i < transfer * iterations; i++)
       CU_ASSERT_EQUAL(0, memcmp(get_ostream_buffer(ostr2) + i * IDL_OSTREAM_BUFFER_INCR, buffer, IDL_OSTREAM_BUFFER_INCR));
   }
 
   destruct_idl_ostream(ostr);
   destruct_idl_ostream(ostr2);
+  free(buffer);
 }
