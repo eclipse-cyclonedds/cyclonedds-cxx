@@ -1310,7 +1310,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_key_stream(1, ctx, key_calc_define "\n", cpp11name);
     format_key_stream(1, ctx, "{\n");
     format_key_stream(1, ctx, "  size_t sz = key_size(0);\n");
-    format_key_stream(1, ctx, "  size_t padding = 16 - sz%16;\n");
+    format_key_stream(1, ctx, "  size_t padding = 16 - sz%%16;\n");
     format_key_stream(1, ctx, "  if (sz != 0 && padding == 16) padding = 0;\n");
     format_key_stream(1, ctx, "  std::vector<unsigned char> buffer(sz+padding);\n");
     format_key_stream(1, ctx, "  memset(buffer.data()+sz,0x0,padding);\n");

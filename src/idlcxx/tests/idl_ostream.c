@@ -44,7 +44,7 @@ CU_Test(idl_ostream, write_transfer_buffer)
                * ostr2 = create_idl_ostream(NULL);
 
   const size_t buffergrowsby = (IDL_OSTREAM_BUFFER_INCR + 1);
-  char buffer[buffergrowsby];
+  char* buffer = malloc(buffergrowsby);
   for (int i = 0; i < IDL_OSTREAM_BUFFER_INCR; i++)
     snprintf(buffer + i, buffergrowsby, "%d", i % 10);
 
@@ -90,4 +90,5 @@ CU_Test(idl_ostream, write_transfer_buffer)
 
   destruct_idl_ostream(ostr);
   destruct_idl_ostream(ostr2);
+  free(buffer);
 }
