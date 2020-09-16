@@ -1469,21 +1469,21 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
   if (ce)
   {
     char* buffer = NULL;
-    idl_literal_t* lit = (idl_literal_t*)ce;
-    if (idl_is_masked(ce, IDL_INTEGER_LITERAL))
+    idl_constval_t* cv = (idl_constval_t*)ce;
+
+    if (idl_is_masked(ce, IDL_INTEGER_TYPE))
     {
-      assert(idl_is_masked(ce, IDL_INTEGER_LITERAL));
-      if (idl_asprintf(&buffer, "%lu", lit->value.ullng) == -1)
+      if (idl_asprintf(&buffer, "%lu", cv->value.ullng) == -1)
         return IDL_RETCODE_NO_MEMORY;
     }
-    else if (idl_is_masked(ce, IDL_BOOLEAN_LITERAL))
+    else if (idl_is_masked(ce, IDL_BOOL))
     {
-      if (!(buffer = idl_strdup(lit->value.bln ? "true" : "false")))
+      if (!(buffer = idl_strdup(cv->value.bln ? "true" : "false")))
         return IDL_RETCODE_NO_MEMORY;
     }
-    else if (idl_is_masked(ce, IDL_CHAR_LITERAL))
+    else if (idl_is_masked(ce, IDL_CHAR))
     {
-      if (idl_asprintf(&buffer, "\'%s\'", lit->value.str) == -1)
+      if (idl_asprintf(&buffer, "\'%s\'", cv->value.str) == -1)
         return IDL_RETCODE_NO_MEMORY;
     }
 
