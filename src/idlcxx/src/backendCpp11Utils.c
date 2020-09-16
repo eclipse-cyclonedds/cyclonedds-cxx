@@ -65,80 +65,44 @@ get_cpp11_name(const char* name)
 static char *
 get_cpp11_base_type(const idl_node_t *node)
 {
-  char *cpp11Type = NULL;
+  static const idl_mask_t mask = (IDL_BASE_TYPE|(IDL_BASE_TYPE-1));
 
-  switch (node->mask & IDL_BASE_TYPE_MASK)
+  switch (node->mask & mask)
   {
-  case IDL_INTEGER_TYPE:
-    switch(node->mask & IDL_INTEGER_MASK_IGNORE_SIGN)
-    {
-    case IDL_INT8:
-      cpp11Type = idl_strdup("int8_t");
-      break;
-    case IDL_INT16:
-      cpp11Type = idl_strdup("int16_t");
-      break;
-    case IDL_INT32:
-      cpp11Type = idl_strdup("int32_t");
-      break;
-    case IDL_INT64:
-      cpp11Type = idl_strdup("int64_t");
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    if (node->mask & IDL_UNSIGNED)
-    {
-      char *signedCpp11Type = cpp11Type;
-      size_t unsignedCpp11TypeSize;
-
-      assert(node->mask & (IDL_INT8 | IDL_INT16 | IDL_INT32 | IDL_INT64));
-      unsignedCpp11TypeSize = strlen(signedCpp11Type) + 1 + 1;
-      cpp11Type = malloc(unsignedCpp11TypeSize);
-      snprintf(cpp11Type, unsignedCpp11TypeSize, "u%s", signedCpp11Type);
-      free(signedCpp11Type);
-    }
-    break;
-  case IDL_FLOATING_PT_TYPE:
-    switch(node->mask & IDL_FLOAT_MASK)
-    {
-    case IDL_FLOAT:
-      cpp11Type = idl_strdup("float");
-      break;
-    case IDL_DOUBLE:
-      cpp11Type = idl_strdup("double");
-      break;
-    case IDL_LDOUBLE:
-      cpp11Type = idl_strdup("long double");
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
+  case IDL_CHAR:
+    return idl_strdup("char");
+  case IDL_WCHAR:
+    return idl_strdup("wchar");
+  case IDL_BOOL:
+    return idl_strdup("bool");
+  case IDL_INT8:
+    return idl_strdup("int8_t");
+  case IDL_UINT8:
+  case IDL_OCTET:
+    return idl_strdup("uint8_t");
+  case IDL_INT16:
+    return idl_strdup("int16_t");
+  case IDL_UINT16:
+    return idl_strdup("uint16_t");
+  case IDL_INT32:
+    return idl_strdup("int32_t");
+  case IDL_UINT32:
+    return idl_strdup("uint32_t");
+  case IDL_INT64:
+    return idl_strdup("int64_t");
+  case IDL_UINT64:
+    return idl_strdup("uint64_t");
+  case IDL_FLOAT:
+    return idl_strdup("float");
+  case IDL_DOUBLE:
+    return idl_strdup("double");
+  case IDL_LDOUBLE:
+    return idl_strdup("long double");
   default:
-    switch(node->mask & IDL_BASE_OTHERS_MASK)
-    {
-    case IDL_CHAR:
-      cpp11Type = idl_strdup("char");
-      break;
-    case IDL_WCHAR:
-      cpp11Type = idl_strdup("wchar");
-      break;
-    case IDL_BOOL:
-      cpp11Type = idl_strdup("bool");
-      break;
-    case IDL_OCTET:
-      cpp11Type = idl_strdup("uint8_t");
-      break;
-    default:
-      assert(0);
-      break;
-    }
+    assert(0);
     break;
   }
-  return cpp11Type;
+  return NULL;
 }
 
 static char *
@@ -247,210 +211,114 @@ get_cpp11_fully_scoped_name(const idl_node_t *node)
 char *
 get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
 {
-  char *def_value = NULL;
-  const idl_enum_t *enumeration;
+  static const idl_mask_t mask = (IDL_BASE_TYPE|(IDL_BASE_TYPE-1));
   (void)ctx;
 
-  switch (node->mask & (IDL_BASE_TYPE | IDL_ENUM))
+  if (idl_is_enum(node))
+    return get_cpp11_fully_scoped_name((idl_node_t*)((idl_enum_t*)node)->enumerators);
+
+  switch (node->mask & mask)
   {
-  case IDL_BASE_TYPE:
-    switch (node->mask & IDL_BASE_TYPE_MASK)
-    {
-    case IDL_INTEGER_TYPE:
-      switch(node->mask & IDL_INTEGER_MASK_IGNORE_SIGN)
-      {
-      case IDL_INT8:
-      case IDL_INT16:
-      case IDL_INT32:
-      case IDL_INT64:
-        def_value = idl_strdup("0");
-        break;
-      default:
-        assert(0);
-        break;
-      }
-      break;
-    case IDL_FLOATING_PT_TYPE:
-      switch(node->mask & IDL_FLOAT_MASK)
-      {
-      case IDL_FLOAT:
-        def_value = idl_strdup("0.0f");
-        break;
-      case IDL_DOUBLE:
-      case IDL_LDOUBLE:
-        def_value = idl_strdup("0.0");
-        break;
-      default:
-        assert(0);
-        break;
-      }
-      break;
-    default:
-      switch(node->mask & IDL_BASE_OTHERS_MASK)
-      {
-      case IDL_CHAR:
-      case IDL_WCHAR:
-      case IDL_OCTET:
-        def_value = idl_strdup("0");
-        break;
-      case IDL_BOOL:
-        def_value = idl_strdup("false");
-        break;
-      default:
-        assert(0);
-        break;
-      }
-      break;
-    }
-    break;
-  case IDL_ENUM:
-    /* Pick the first of the available enumerators. */
-    enumeration = (const idl_enum_t *) node;
-    def_value = get_cpp11_fully_scoped_name((const idl_node_t *) enumeration->enumerators);
-    break;
+  case IDL_BOOL:
+    return idl_strdup("false");
+  case IDL_CHAR:
+  case IDL_WCHAR:
+  case IDL_OCTET:
+    return idl_strdup("0");
+  case IDL_FLOAT:
+    return idl_strdup("0.0f");
+  case IDL_DOUBLE:
+  case IDL_LDOUBLE:
+    return idl_strdup("0.0");
+  case IDL_INT8:
+  case IDL_UINT8:
+  case IDL_INT16:
+  case IDL_UINT16:
+  case IDL_INT32:
+  case IDL_UINT32:
+  case IDL_INT64:
+  case IDL_UINT64:
+    return idl_strdup("0");
   default:
-    /* Other types determine their default value in their constructor. */
-    break;
+    return NULL;
   }
-  return def_value;
 }
 
 static char *
 get_cpp11_base_type_const_value(const idl_constval_t *constval)
 {
-  size_t const_value_len;
-  char *const_value_str = NULL;
+  int cnt;
+  char *str = NULL;
+  static const idl_mask_t mask = (IDL_BASE_TYPE_MASK|(IDL_BASE_TYPE_MASK-1));
 
-  switch (constval->node.mask & IDL_BASE_TYPE_MASK)
+  switch (constval->node.mask & mask)
   {
-  case IDL_INTEGER_TYPE:
-    const_value_len = 24; /* Big enough for largest uint64_t */
-    const_value_str = malloc(const_value_len);
-
-    switch(constval->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-      snprintf(const_value_str, const_value_len, "%hd", constval->value.oct);
-      break;
-    case IDL_INT32:
-      snprintf(const_value_str, const_value_len, "%dL", constval->value.lng);
-      break;
-    case IDL_UINT32:
-      snprintf(const_value_str, const_value_len, "%ulL", constval->value.ulng);
-      break;
-    case IDL_INT64:
-      snprintf(const_value_str, const_value_len, "%" PRId64, constval->value.llng);
-      break;
-    case IDL_UINT64:
-      snprintf(const_value_str, const_value_len, "%" PRIu64, constval->value.ullng);
-      break;
-    default:
-      assert(0);
-      break;
-    }
+  case IDL_BOOL:
+    return idl_strdup(constval->value.bln ? "true" : "false");
+  case IDL_INT8:
+    cnt = idl_asprintf(&str, "%" PRId8, constval->value.int8);
     break;
-  case IDL_FLOATING_PT_TYPE:
-    switch(constval->node.mask & IDL_FLOAT_MASK)
-    {
-    case IDL_DOUBLE:
-      const_value_len = 64; /* Big enough for largest double */
-      const_value_str = malloc(const_value_len);
-      snprintf(const_value_str, const_value_len, "%f", constval->value.dbl);
-      break;
-    case IDL_LDOUBLE:
-      const_value_len = 128; /* Big enough for largest double */
-      const_value_str = malloc(const_value_len);
-      snprintf(const_value_str, const_value_len, "%Lf", constval->value.ldbl);
-      break;
-    default:
-      assert(0);
-      break;
-    }
+  case IDL_UINT8:
+    cnt = idl_asprintf(&str, "%" PRIu8, constval->value.uint8);
+    break;
+  case IDL_INT16:
+    cnt = idl_asprintf(&str, "%" PRId16, constval->value.int16);
+    break;
+  case IDL_UINT16:
+    cnt = idl_asprintf(&str, "%" PRIu16, constval->value.uint16);
+    break;
+  case IDL_INT32:
+    cnt = idl_asprintf(&str, "%" PRId32, constval->value.int32);
+    break;
+  case IDL_UINT32:
+    cnt = idl_asprintf(&str, "%" PRIu32, constval->value.uint32);
+    break;
+  case IDL_INT64:
+    cnt = idl_asprintf(&str, "%" PRId64, constval->value.int64);
+    break;
+  case IDL_UINT64:
+    cnt = idl_asprintf(&str, "%" PRIu64, constval->value.uint64);
+    break;
+  case IDL_FLOAT:
+    cnt = idl_asprintf(&str, "%.6f", constval->value.flt);
+    break;
+  case IDL_DOUBLE:
+    cnt = idl_asprintf(&str, "%f", constval->value.dbl);
+    break;
+  case IDL_LDOUBLE:
+    cnt = idl_asprintf(&str, "%Lf", constval->value.ldbl);
     break;
   default:
     assert(0);
     break;
   }
 
-  return const_value_str;
+  return cnt >= 0 ? str : NULL;
 }
 
 static char *
 get_cpp11_templ_type_const_value(const idl_constval_t *constval)
 {
-  char *const_value_str = NULL;
-
-  switch (constval->node.mask & IDL_TEMPL_TYPE_MASK)
-  {
-  case IDL_STRING:
-    const_value_str = idl_strdup(constval->value.str);
-    break;
-  default:
-    assert(0);
-    break;
-  }
-
-  return const_value_str;
+  if (idl_is_masked(constval, IDL_STRING))
+    return idl_strdup(constval->value.str);
+  return NULL;
 }
 
 char *
 get_cpp11_const_value(const idl_constval_t *constval)
 {
-  char *const_value_str = NULL;
+  static const idl_mask_t mask = IDL_BASE_TYPE|IDL_STRING|IDL_ENUMERATOR;
 
-  assert(constval->node.mask & (IDL_CONST | IDL_LITERAL));
-
-  switch (constval->node.mask & IDL_CATEGORY_MASK) {
+  switch (constval->node.mask & mask) {
   case IDL_BASE_TYPE:
-    const_value_str = get_cpp11_base_type_const_value(constval);
-    break;
+    return get_cpp11_base_type_const_value(constval);
   case IDL_TEMPL_TYPE:
-    const_value_str = get_cpp11_templ_type_const_value(constval);
-    break;
+    return get_cpp11_templ_type_const_value(constval);
+  case IDL_ENUMERATOR:
+    return get_cpp11_fully_scoped_name((const idl_node_t *)constval);
   default:
     assert(0);
     break;
   }
-  return const_value_str;
-}
-
-char *
-get_cpp11_literal_value(const idl_literal_t *literal)
-{
-  size_t const_value_len;
-  char *const_value_str = NULL;
-
-  switch (literal->node.mask & IDL_BASE_TYPE_MASK)
-  {
-  case IDL_INTEGER_TYPE:
-    const_value_len = 24; /* Big enough for largest uint64_t */
-    const_value_str = malloc(const_value_len);
-
-    switch(literal->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-    case IDL_INT32:
-    case IDL_UINT32:
-    case IDL_INT64:
-    case IDL_UINT64:
-      snprintf(const_value_str, const_value_len, "%" PRIu64, literal->value.ullng);
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
-  case IDL_BOOLEAN_LITERAL:
-    if (literal->value.bln) {
-      const_value_str = idl_strdup("true");
-    } else {
-      const_value_str = idl_strdup("false");
-    }
-    break;
-  default:
-    assert(0);
-    break;
-  }
-
-  return const_value_str;
+  return NULL;
 }

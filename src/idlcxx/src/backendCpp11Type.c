@@ -347,11 +347,7 @@ get_label_value(const idl_case_label_t *label)
   if (label->const_expr->mask & IDL_ENUMERATOR) {
     label_value = get_cpp11_fully_scoped_name(label->const_expr);
   } else {
-#ifdef CONSTVAL_FIX
     label_value = get_cpp11_const_value((const idl_constval_t *) label->const_expr);
-#else
-    label_value = get_cpp11_literal_value((const idl_literal_t *) label->const_expr);
-#endif
   }
   return label_value;
 }
@@ -470,7 +466,7 @@ get_potential_nr_discr_values(const idl_union_t *union_node)
     }
     break;
   case IDL_CONSTR_TYPE:
-    switch (node->mask & IDL_CONSTR_TYPE_MASK)
+    switch (node->mask & IDL_ENUM)
     {
     case IDL_ENUM:
     {
@@ -497,98 +493,53 @@ get_potential_nr_discr_values(const idl_union_t *union_node)
   return nr_discr_values;
 }
 
-#ifdef CONSTVAL_FIX
 static idl_constval_t
 get_min_value(const idl_node_t *node)
 {
   idl_constval_t result;
+  static const idl_mask_t mask = (IDL_BASE_TYPE|(IDL_BASE_TYPE-1));
 
   result.node = *node;
-  switch (node->mask & IDL_BASE_TYPE_MASK)
+  result.node.mask &= mask;
+  switch (node->mask)
   {
-  case IDL_INTEGER_TYPE:
-    switch(node->mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-      result.value.oct = 0;
-      break;
-    case IDL_INT16:
-      result.value.lng = INT16_MIN;
-      break;
-    case IDL_UINT16:
-      result.value.ulng = 0;
-      break;
-    case IDL_INT32:
-      result.value.lng = INT32_MIN;
-      break;
-    case IDL_UINT32:
-      result.value.ulng = 0;
-      break;
-    case IDL_INT64:
-      result.value.llng = INT64_MIN;
-      break;
-    case IDL_UINT64:
-      result.value.lng = 0ULL;
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
-  default:
-    assert(0);
-    break;
-  }
-  return result;
-}
-#else
-static idl_literal_t
-get_min_value(const idl_node_t *node)
-{
-  idl_literal_t result;
-
-  result.node.mask = IDL_UINT64;
-  switch (node->mask & IDL_BASE_TYPE_MASK)
-  {
-  case IDL_INTEGER_TYPE:
-    switch(node->mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-      result.value.ullng = 0;
-      break;
-    case IDL_INT16:
-      result.value.ullng = 0;
-      break;
-    case IDL_UINT16:
-      result.value.ullng = 0;
-      break;
-    case IDL_INT32:
-      result.value.ullng = 0;
-      break;
-    case IDL_UINT32:
-      result.value.ullng = 0;
-      break;
-    case IDL_INT64:
-      result.value.ullng = 0ULL;
-      break;
-    case IDL_UINT64:
-      result.value.ullng = 0ULL;
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
-  case IDL_BOOLEAN_LITERAL:
+  case IDL_BOOL:
     result.value.bln = false;
     break;
+  case IDL_OCTET:
+    result.value.oct = 0;
+    break;
+  case IDL_INT8:
+    result.value.int8 = INT8_MIN;
+    break;
+  case IDL_UINT8:
+    result.value.uint8 = 0;
+    break;
+  case IDL_INT16:
+    result.value.int16 = INT16_MIN;
+    break;
+  case IDL_UINT16:
+    result.value.uint16 = 0;
+    break;
+  case IDL_INT32:
+    result.value.int32 = INT32_MIN;
+    break;
+  case IDL_UINT32:
+    result.value.uint32 = 0;
+    break;
+  case IDL_INT64:
+    result.value.int64 = INT64_MIN;
+    break;
+  case IDL_UINT64:
+    result.value.uint64 = 0ULL;
+    break;
   default:
     assert(0);
     break;
   }
+  result.node.mask |= IDL_CONST;
   return result;
 }
-#endif
 
 static void *
 enumerator_incr_value(void *val)
@@ -600,65 +551,43 @@ enumerator_incr_value(void *val)
 static void *
 constval_incr_value(void *val)
 {
-#ifdef CONSTVAL_FIX
-  idl_constval_t *const_val = (idl_constval_t *) val;
-  switch (const_val->node.mask & IDL_BASE_TYPE_MASK)
+  idl_constval_t *cv = (idl_constval_t *)val;
+  static const idl_mask_t mask = (IDL_BASE_TYPE|(IDL_BASE_TYPE-1));
+
+  switch (cv->node.mask & mask)
   {
-  case IDL_INTEGER_TYPE:
-    switch(const_val->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-      const_val->value.oct++;
-      break;
-    case IDL_INT32:
-      const_val->value.lng++;
-      break;
-    case IDL_UINT32:
-      const_val->value.ulng++;
-      break;
-    case IDL_INT64:
-      const_val->value.llng++;
-      break;
-    case IDL_UINT64:
-      const_val->value.ullng++;
-      break;
-    default:
-      assert(0);
-      break;
-    }
+  case IDL_BOOL:
+    cv->value.bln = true;
+    break;
+  case IDL_INT8:
+    cv->value.int8++;
+    break;
+  case IDL_UINT8:
+    cv->value.uint8++;
+    break;
+  case IDL_INT16:
+    cv->value.int16++;
+    break;
+  case IDL_UINT16:
+    cv->value.uint16++;
+    break;
+  case IDL_INT32:
+    cv->value.int32++;
+    break;
+  case IDL_UINT32:
+    cv->value.uint32++;
+    break;
+  case IDL_INT64:
+    cv->value.int64++;
+    break;
+  case IDL_UINT64:
+    cv->value.uint64++;
     break;
   default:
     assert(0);
     break;
   }
-#else
-  idl_literal_t *const_val = (idl_literal_t *) val;
-  switch (const_val->node.mask & IDL_BASE_TYPE_MASK)
-  {
-  case IDL_INTEGER_TYPE:
-    switch(const_val->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-    case IDL_INT32:
-    case IDL_UINT32:
-    case IDL_INT64:
-    case IDL_UINT64:
-      const_val->value.ullng++;
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
-  case IDL_BOOLEAN_LITERAL:
-    const_val->value.bln = true;
-    break;
-  default:
-    assert(0);
-    break;
-  }
-#endif
-  return const_val;
+  return cv;
 }
 
 typedef enum { IDL_LT, IDL_EQ, IDL_GT} idl_equality_t;
@@ -680,81 +609,38 @@ compare_enum_elements(const void *element1, const void *element2)
 static idl_equality_t
 compare_const_elements(const void *element1, const void *element2)
 {
-#ifdef CONSTVAL_FIX
-  const idl_constval_t *constval1 = (const idl_constval_t *) element1;
-  const idl_constval_t *constval2 = (const idl_constval_t *) element2;
-  idl_equality_t result = IDL_EQ;
+#define EQ(a,b) ((a<b) ? IDL_LT : ((a>b) ? IDL_GT : IDL_EQ))
+  const idl_constval_t *cv1 = (const idl_constval_t *) element1;
+  const idl_constval_t *cv2 = (const idl_constval_t *) element2;
+  static const idl_mask_t mask = IDL_BASE_TYPE|(IDL_BASE_TYPE-1);
 
-  assert(constval1->node.mask == constval2->node.mask);
-  switch (constval1->node.mask & IDL_BASE_TYPE_MASK)
+  assert((cv1->node.mask & mask) == (cv2->node.mask & mask));
+  switch (cv1->node.mask & mask)
   {
-  case IDL_INTEGER_TYPE:
-    switch(constval1->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-      if (constval1->value.oct < constval2->value.oct) result = IDL_LT;
-      if (constval1->value.oct > constval2->value.oct) result = IDL_GT;
-      break;
-    case IDL_INT32:
-      if (constval1->value.lng < constval2->value.lng) result = IDL_LT;
-      if (constval1->value.lng > constval2->value.lng) result = IDL_GT;
-      break;
-    case IDL_UINT32:
-      if (constval1->value.ulng < constval2->value.ulng) result = IDL_LT;
-      if (constval1->value.ulng > constval2->value.ulng) result = IDL_GT;
-      break;
-    case IDL_INT64:
-      if (constval1->value.llng < constval2->value.llng) result = IDL_LT;
-      if (constval1->value.llng > constval2->value.llng) result = IDL_GT;
-      break;
-    case IDL_UINT64:
-      if (constval1->value.ullng < constval2->value.ullng) result = IDL_LT;
-      if (constval1->value.ullng > constval2->value.ullng) result = IDL_GT;
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
+  case IDL_BOOL:
+    return EQ(cv1->value.bln, cv2->value.bln);
+  case IDL_INT8:
+    return EQ(cv1->value.int8, cv2->value.int8);
+  case IDL_UINT8:
+    return EQ(cv1->value.uint8, cv2->value.uint8);
+  case IDL_INT16:
+    return EQ(cv1->value.int16, cv2->value.int16);
+  case IDL_UINT16:
+    return EQ(cv1->value.uint16, cv2->value.uint16);
+  case IDL_INT32:
+    return EQ(cv1->value.int32, cv2->value.int32);
+  case IDL_UINT32:
+    return EQ(cv1->value.uint32, cv2->value.uint32);
+  case IDL_INT64:
+    return EQ(cv1->value.int64, cv2->value.int64);
+  case IDL_UINT64:
+    return EQ(cv1->value.uint64, cv2->value.uint64);
   default:
     assert(0);
     break;
   }
-#else
-  const idl_literal_t *constval1 = (const idl_literal_t *) element1;
-  const idl_literal_t *constval2 = (const idl_literal_t *) element2;
-  idl_equality_t result = IDL_EQ;
-
-  switch (constval1->node.mask & IDL_BASE_TYPE_MASK)
-  {
-  case IDL_INTEGER_TYPE:
-    switch(constval1->node.mask & IDL_INTEGER_MASK)
-    {
-    case IDL_UINT8:
-    case IDL_INT16:
-    case IDL_UINT16:
-    case IDL_INT32:
-    case IDL_UINT32:
-    case IDL_INT64:
-    case IDL_UINT64:
-      if (constval1->value.ullng < constval2->value.ullng) result = IDL_LT;
-      if (constval1->value.ullng > constval2->value.ullng) result = IDL_GT;
-      break;
-    default:
-      assert(0);
-      break;
-    }
-    break;
-  case IDL_BOOLEAN_LITERAL:
-    if (constval1->value.bln < constval2->value.bln) result = IDL_LT;
-    if (constval1->value.bln > constval2->value.bln) result = IDL_GT;
-    break;
-  default:
-    assert(0);
-    break;
-  }
-#endif
-  return result;
+  return IDL_EQ;
+#undef EQ
 }
 
 static void
@@ -808,20 +694,12 @@ get_first_unused_discr_value(
   {
     if (compare_elements(min_value, array[i]) == IDL_LT)
     {
-#ifdef CONSTVAL_FIX
       return get_cpp11_const_value(min_value);
-#else
-      return get_cpp11_literal_value(min_value);
-#endif
     }
     min_value = incr_element(min_value);
     if (array[i] != max_value) ++i;
   } while (compare_elements(min_value, array[i]) != IDL_GT);
-#ifdef CONSTVAL_FIX
-      return get_cpp11_const_value(min_value);
-#else
-      return get_cpp11_literal_value(min_value);
-#endif
+  return get_cpp11_const_value(min_value);
 }
 
 static char *
@@ -831,11 +709,7 @@ get_default_discr_value(idl_backend_ctx ctx, const idl_union_t *union_node)
   char *def_value = NULL;
   union_ctx->nr_unused_discr_values =
       get_potential_nr_discr_values(union_node) - union_ctx->total_label_count;
-#ifdef CONSTVAL_FIX
   idl_constval_t min_const_value;
-#else
-  idl_literal_t min_const_value;
-#endif
   void *min_value;
   idl_comparison_fn compare_elements;
   idl_incr_element_fn incr_element;

@@ -335,18 +335,18 @@ CU_Theory((const char *input, const char *output), cpp11Backend, Typedef, .timeo
 CU_TheoryDataPoints(cpp11Backend, Union) =
 {
   /* Series of IDL input */
-  CU_DataPoints(const char *, IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
-                              IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
+  CU_DataPoints(const char *, //IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
+                              //IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
                               IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder","Color","Red","string","name")
                               ),
   /* Series of corresponding C++ output */
-  CU_DataPoints(const char *, IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
-                              IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","Color","::Color::Yellow","::Color::Red","std::string","name")
+  CU_DataPoints(const char *, //IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","0","1","std::string","name"),
+                              //IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","1","0","std::string","module"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") "\n\n" IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","::Color","::Color::Yellow","::Color::Red","std::string","name")
                               )
 };
 
-CU_Theory((const char *input, const char *output), cpp11Backend, Union, .disabled = true)
+CU_Theory((const char *input, const char *output), cpp11Backend, Union)
 {
   init();
   test_base_type(input, 0u, IDL_RETCODE_OK, output);
