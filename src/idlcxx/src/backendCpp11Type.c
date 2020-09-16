@@ -167,8 +167,11 @@ struct_generate_constructors_and_operators(idl_backend_ctx ctx)
   idl_indent_double_incr(ctx);
   for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
   {
-    idl_file_out_printf(ctx, "%s %s%s",
+    bool is_primitive = idl_declarator_is_primitive(struct_ctx->members[i].declarator_node);
+    idl_file_out_printf(ctx, "%s%s%s %s%s",
+        is_primitive ? "" : "const ",
         struct_ctx->members[i].type_name,
+        is_primitive ? "" : "&",
         struct_ctx->members[i].name,
         (i == (struct_ctx->member_count - 1) ? ") :\n" : ",\n"));
   }
@@ -1269,9 +1272,80 @@ cpp11_scope_walk(idl_backend_ctx ctx, const idl_node_t *node)
   return result;
 }
 
+static idl_retcode_t
+get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
+{
+  idl_mask_t *dependency_mask = (idl_mask_t *) idl_get_custom_context(ctx);
+  switch (node->mask & IDL_CATEGORY_MASK)
+  {
+  case IDL_UNION:
+    (*dependency_mask) |= IDL_UNION;
+    break;
+  case IDL_TEMPL_TYPE:
+    switch (node->mask & IDL_TEMPL_TYPE_MASK)
+    {
+    case IDL_SEQUENCE:
+      (*dependency_mask) |= IDL_SEQUENCE;
+      break;
+    case IDL_STRING:
+      (*dependency_mask) |= IDL_STRING;
+      break;
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
+  }
+  return IDL_RETCODE_OK;
+}
+
+static void
+idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
+{
+  idl_mask_t util_depencencies = 0;
+
+  /* First determine the list of files included by our IDL file itself. */
+  idl_file_t *tmp, *include_list = idl_get_include_list(ctx, parse_tree);
+  while (include_list) {
+    char *include_file = idl_strdup(include_list->name);
+    size_t i;
+    for (i = 0; i < strlen(include_file) && include_file[i] != '.'; ++i);
+    include_file[i] = '\0';
+    idl_file_out_printf(ctx, "#include \"%s.hpp\"\n", include_file);
+    tmp = include_list;
+    include_list = tmp->next;
+    free(tmp);
+  }
+  idl_file_out_printf(ctx, "\n");
+
+  /* Next determine if we need to include any utility libraries... */
+  idl_set_custom_context(ctx, &util_depencencies);
+  idl_walk_tree(ctx, parse_tree->root, get_util_dependencies, IDL_MASK_ALL);
+  idl_reset_custom_context(ctx);
+  if (util_depencencies) {
+    if (util_depencencies & IDL_TEMPL_TYPE_MASK) {
+      if ((util_depencencies & IDL_SEQUENCE) == IDL_SEQUENCE) {
+        idl_file_out_printf(ctx, "#include <vector>\n");
+      }
+      if ((util_depencencies & IDL_STRING) == IDL_STRING) {
+        idl_file_out_printf(ctx, "#include <string>\n");
+      }
+    }
+    if (util_depencencies & IDL_UNION) {
+      idl_file_out_printf(ctx, "#include <variant>\n");
+    }
+    idl_file_out_printf(ctx, "\n");
+  }
+}
+
 idl_retcode_t
 idl_backendGenerate(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
 {
+  /* If input comes from a file, generate appropriate include statements. */
+  if (parse_tree->files) idl_generate_include_statements(ctx, parse_tree);
+
+  /* Next, generate the C++ representation for all nodes in the list. */
   return idl_walk_node_list(ctx, parse_tree->root, cpp11_scope_walk, IDL_MASK_ALL);
 }
 
