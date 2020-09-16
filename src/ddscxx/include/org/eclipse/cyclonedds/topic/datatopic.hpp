@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "dds/ddsrt/endian.h"
+#include "dds/ddsrt/md5.h"
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "dds/ddsi/ddsi_sertopic.h"
@@ -53,6 +54,8 @@ template <typename T>
 class ddscxx_serdata : public ddsi_serdata {
   size_t m_size{ 0 };
   std::unique_ptr<unsigned char[]> m_data{ nullptr };
+  ddsi_keyhash_t m_key;
+  bool m_key_md5_hashed;
 
 public:
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
@@ -61,14 +64,19 @@ public:
   void resize(size_t requested_size);
   size_t size() const { return m_size; }
   void* data() const { return m_data.get(); }
+  ddsi_keyhash_t& key() { return m_key; }
+  const ddsi_keyhash_t& key() const { return m_key; }
+  bool& key_md5_hashed() { return m_key_md5_hashed; }
+  const bool& key_md5_hashed() const { return m_key_md5_hashed; }
 };
 
 template <typename T>
 bool serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b)
 {
-  (void)a;
-  (void)b;
-  return true;
+  auto s_a = static_cast<const ddscxx_serdata<T>*>(a);
+  auto s_b = static_cast<const ddscxx_serdata<T>*>(b);
+
+  return 0 == memcmp(s_a->key().value, s_b->key().value, 16);
 }
 
 template <typename T>
@@ -106,6 +114,10 @@ struct ddsi_serdata* serdata_from_ser(
     }
     fragchain = fragchain->nextfrag;
   }
+
+  T temp;
+  temp.read_struct(calc_offset(d->data(), 4), 0);
+  d->key_md5_hashed() = temp.key(d->key());
 
   return d;
 }
@@ -171,11 +183,10 @@ struct ddsi_serdata* serdata_from_sample(
     if (kind != SDK_DATA) {
       //???
     }
-    else /*if (!topic->is_request_header)*/ {
+    else  {
       auto msg = static_cast<const T*>(sample);
 
       size_t sz = msg->write_size(0);
-      //fprintf(stderr, "sz is: %zu\n", sz);
       d->resize(sz + 4);  //4 bytes extra to also include the header
       unsigned char* ptr = (unsigned char*)d->data();
       memset(ptr, 0x0, 4);
@@ -183,21 +194,8 @@ struct ddsi_serdata* serdata_from_sample(
         *(ptr + 1) = 0x1;
 
       msg->write_struct(calc_offset(d->data(), 4), 0);
-
-      /*fprintf(stderr, "raw message contents:\n");
-      for (size_t s = 0; s < sz + 4; s++)
-      {
-        fprintf(stderr, "%02x ", ptr[s]);
-      }
-      fprintf(stderr, "\n");*/
+      d->key_md5_hashed() = msg->key(d->key());
     }
-    //else {
-      ///* inject the service invocation header data into the CDR stream --
-      // * I haven't checked how it is done in the official RMW implementations, so it is
-      // * probably incompatible. */
-      //auto wrap = *static_cast<const cdds_request_wrapper_t*>(sample);
-      //HelloWorldData::read_struct(d->data(), wrap, 0);
-    //}
 
     return d;
   }
@@ -299,10 +297,19 @@ void serdata_get_keyhash(
   const struct ddsi_serdata* d, struct ddsi_keyhash* buf,
   bool force_md5)
 {
-  (void)d;
-  (void)buf;
-  (void)force_md5;
-  assert(0);
+  auto ptr = static_cast<const ddscxx_serdata<T>*>(d);
+  assert(buf);
+  if (force_md5 && !ptr->key_md5_hashed())
+  {
+    ddsrt_md5_state_t md5st;
+    ddsrt_md5_init(&md5st);
+    ddsrt_md5_append(&md5st, (ddsrt_md5_byte_t*)(ptr->key().value), 16);
+    ddsrt_md5_finish(&md5st, (ddsrt_md5_byte_t*)(buf->value));
+  }
+  else
+  {
+    memcpy(buf->value, ptr->key().value, 16);
+  }
 }
 #endif
 

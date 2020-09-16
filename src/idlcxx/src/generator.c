@@ -163,8 +163,7 @@ generate_streamers(
   stm = get_idl_streamer_impl_buf(generated);
   assert(stm);
   print_header(srcfh, idl, src);
-  fprintf(srcfh, "\n#include %s\n\n", hdr);
-  fputs("\n", srcfh);
+  fprintf(srcfh, "\n#include \"%s\"\n", hdr);
   len = get_ostream_buffer_position(stm);
   if (fwrite(get_ostream_buffer(stm), 1, len, srcfh) != len && ferror(srcfh)) {
     ret = IDL_RETCODE_CANNOT_OPEN_FILE;
