@@ -78,7 +78,7 @@
 "  void " member_name "(" member_type " _val_) { this->" member_name "_ = _val_; }\n" \
 "\n" \
 IDL_OUTPUT_STREAMER_INTERFACES\
-"};\n"
+"};\n\n"
 
 #define IDL_OUTPUT_STRUCT_NO_PRIM(struct_name,member_type,member_name) "" \
 "class " struct_name "\n{\n" \
@@ -89,7 +89,7 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "  " struct_name "() {}\n" \
 "\n"\
 "  explicit " struct_name "(\n" \
-"      " member_type " " member_name ") :\n" \
+"      const " member_type "& " member_name ") :\n" \
 "          " member_name "_(" member_name ") {}\n" \
 "\n" \
 "  const " member_type "& " member_name "() const { return this->" member_name "_; }\n" \
@@ -98,7 +98,7 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "  void " member_name "(" member_type "&& _val_) { this->" member_name "_ = _val_; }\n" \
 "\n" \
 IDL_OUTPUT_STREAMER_INTERFACES\
-"};\n"
+"};\n\n"
 
 #define IDL_OUTPUT_ENUM(enum_name,label1,label2,label3) "" \
 "enum class " enum_name "\n{\n" \
@@ -238,7 +238,7 @@ test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *o
   CU_ASSERT_PTR_NOT_NULL(node);
   if (!node)
     return;
-  ctx = idl_backend_context_new(2, NULL);
+  ctx = idl_backend_context_new(2, NULL, NULL);
   CU_ASSERT_PTR_NOT_NULL(ctx);
   ret = idl_backendGenerate(ctx, tree);
   CU_ASSERT(ret == IDL_RETCODE_OK);
@@ -282,6 +282,8 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_INPUT_STRUCT("AttrHolder","sequence<sequence<string>>","strSeqSeq"),
                               IDL_INPUT_STRUCT("AttrHolder","float","coordinate[3]"),
                               IDL_INPUT_STRUCT("AttrHolder","float","LineCoordinates[2][3]"),
+                              IDL_INPUT_STRUCT("EmbeddedStr","long","x") IDL_INPUT_STRUCT("AttrHolder","EmbeddedStr","emb_str"),
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_STRUCT("AttrHolder","::Color","col")
                               ),
   /* Series of corresponding C++ output */
   CU_DataPoints(const char *, IDL_OUTPUT_STRUCT_PRIM("AttrHolder","int16_t","0","s"),
@@ -304,6 +306,8 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::vector<std::string>>","strSeqSeq"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<float, 3>","coordinate"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
+                              IDL_OUTPUT_STRUCT_PRIM("EmbeddedStr","int32_t","0","x") IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","::EmbeddedStr","emb_str"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_STRUCT_PRIM("AttrHolder","::Color","::Color::Red","col")
                               )
 };
 

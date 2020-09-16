@@ -28,7 +28,8 @@
 
 #define IDL_TEMPL_TYPE_MASK (IDL_SEQUENCE | IDL_STRING | IDL_WSTRING | IDL_FIXED_PT)
 #define IDL_CONSTR_TYPE_MASK (IDL_CONSTR_TYPE | IDL_STRUCT | IDL_UNION | IDL_ENUM)
-#define IDL_CATEGORY_MASK (IDL_BASE_TYPE | IDL_TEMPL_TYPE | IDL_MODULE | IDL_STRUCT | IDL_UNION | IDL_ENUM | IDL_TYPEDEF)
+#define IDL_CATEGORY_MASK (IDL_BASE_TYPE | IDL_TEMPL_TYPE | IDL_MODULE | IDL_STRUCT |\
+            IDL_UNION | IDL_ENUM | IDL_TYPEDEF | IDL_CONST | IDL_MEMBER | IDL_CASE)
 
 typedef struct idl_file_out_s {
   FILE *file;
@@ -38,7 +39,7 @@ struct idl_backend_ctx_s;
 typedef struct idl_backend_ctx_s *idl_backend_ctx;
 
 idl_backend_ctx
-IDLCXX_EXPORT idl_backend_context_new(uint32_t indent_size, void *custom_context);
+IDLCXX_EXPORT idl_backend_context_new(uint32_t indent_size, const char *target_file, void *custom_context);
 
 idl_retcode_t
 IDLCXX_EXPORT idl_backend_context_free(idl_backend_ctx ctx);
@@ -105,7 +106,13 @@ typedef idl_retcode_t
 (idl_walkAction)(idl_backend_ctx ctx, const idl_node_t *node);
 
 idl_retcode_t
-IDLCXX_EXPORT idl_walk_node_list(idl_backend_ctx ctx, const idl_node_t *starting_node, idl_walkAction, uint32_t mask);
+IDLCXX_EXPORT idl_walk_node_list(idl_backend_ctx ctx, const idl_node_t *starting_node, idl_walkAction, idl_mask_t mask);
+
+idl_retcode_t
+IDLCXX_EXPORT idl_walk_tree(idl_backend_ctx ctx, const idl_node_t *starting_node, idl_walkAction, idl_mask_t mask);
+
+idl_file_t
+IDLCXX_EXPORT *idl_get_include_list(idl_backend_ctx ctx, const idl_tree_t *tree);
 
 #if 0
 idl_retcode_t

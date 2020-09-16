@@ -60,7 +60,7 @@ static idl_retcode_t
 print_guard(FILE* fh, const char* inc)
 {
   fprintf(fh, "#ifndef %s\n", inc);
-  fprintf(fh, "#define %s\n", inc);
+  fprintf(fh, "#define %s\n\n", inc);
   return IDL_RETCODE_OK;
 }
 
@@ -86,13 +86,13 @@ generate_types(
   idl_ostream_t *stm;
   size_t len;
 
-  if (idl_asprintf(&file, "%s%s%s.h", dir, sep, basename) == -1) {
+  if (idl_asprintf(&file, "%s%s%s.hpp", dir, sep, basename) == -1) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err;
   } else if (!(inc = figure_guard(file))) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_guard;
-  } else if (!(ctx = idl_backend_context_new(2, NULL))) {
+  } else if (!(ctx = idl_backend_context_new(2, tree->files->name, NULL))) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_context_new;
   } else if (!(fh = fopen(file, "w"))) {
@@ -103,7 +103,6 @@ generate_types(
 
   print_header(fh, idl, file);
   print_guard(fh, inc);
-  fprintf(fh, "\n#include <dds/core/ddscore.hpp>\n\n");
 
   stm = idl_get_output_stream(ctx);
   assert(stm);
@@ -112,6 +111,7 @@ generate_types(
     ret = IDL_RETCODE_CANNOT_OPEN_FILE;
   }
 
+  print_footer(fh, inc);
 
   fclose(fh);
 err_fopen:
@@ -196,6 +196,9 @@ err_src:
   return ret;
 }
 
+#if _WIN32
+__declspec(dllexport)
+#endif
 idl_retcode_t
 generate(const idl_tree_t *tree, const char *path)
 {
