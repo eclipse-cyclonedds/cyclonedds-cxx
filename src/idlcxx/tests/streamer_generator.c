@@ -19,23 +19,6 @@
 
 #include "CUnit/Theory.h"
 
-#define visual_string_cmp 1
-
-#define test_string_diff3(value_tested,value_tested_for) \
-{ \
-  if (strcmp(value_tested,value_tested_for)) { \
-    if (visual_string_cmp) { \
-      FILE* fa = fopen("/tmp/generated.txt","w"); \
-      FILE * fb = fopen("/tmp/tested.txt","w"); \
-      fprintf(fa,value_tested); \
-      fprintf(fb, value_tested_for); \
-      fclose(fa); \
-      fclose(fb); \
-      system("kdiff3 /tmp/generated.txt /tmp/tested.txt"); \
-    } \
-  } \
-}
-
 static const char* idl_type[] = {
   "char",
   "octet",
@@ -146,7 +129,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -154,7 +137,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -168,10 +151,10 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   if (width > 1)
   {
@@ -258,7 +241,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t I::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool I::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -266,7 +249,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -280,7 +263,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
@@ -288,7 +271,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -296,7 +279,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -310,10 +293,10 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n");
@@ -321,7 +304,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position = %s().read_struct(data, position);\n", in);
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -380,7 +363,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -388,7 +371,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -402,10 +385,10 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
@@ -479,7 +462,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -487,7 +470,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -501,10 +484,10 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
@@ -724,7 +707,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -732,7 +715,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -746,10 +729,10 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  clear();\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
@@ -845,7 +828,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -853,7 +836,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -867,10 +850,10 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memcpy(mem().data(),(char*)data+position,24);  //reading bytes for member: mem()\n");
@@ -952,7 +935,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t I::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool I::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -960,7 +943,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -974,7 +957,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
@@ -982,7 +965,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "ddsi_keyhash_t s::key() const\n");
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
   format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
@@ -990,7 +973,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
   format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
-  format_ostream_indented(ns * 2, ostr, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
   format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
@@ -1004,10 +987,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
-  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer);\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n");
@@ -1015,7 +998,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  for (size_t _i = 0; _i < 6; _i++)   position = mem()[_i].read_struct(data, position);\n");
   format_ostream_indented(ns * 2, ostr, "  position = mem2().read_struct(data, position);\n");
@@ -1060,7 +1043,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    {\n"\
 "      return position;\n"\
 "    }\n\n"\
-"    ddsi_keyhash_t s_1::key() const\n"\
+"    bool s_1::key(ddsi_keyhash_t &hash) const\n"\
 "    {\n"\
 "      size_t sz = key_size(0);\n"\
 "      size_t padding = 16 - sz%16;\n"\
@@ -1068,7 +1051,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      std::vector<unsigned char> buffer(sz+padding);\n"\
 "      memset(buffer.data()+sz,0x0,padding);\n"\
 "      key_stream(buffer.data(),0);\n"\
-"      static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+"      static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "      if (fptr == NULL)\n"\
 "      {\n"\
 "        if (key_max_size(0) <= 16)\n"\
@@ -1082,9 +1065,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "          fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
 "        }\n"\
 "      }\n"\
-"      return (*fptr)(buffer);\n"\
+"      return (*fptr)(buffer,hash);\n"\
 "    }\n\n"\
-"    size_t s_1::read_struct(void *data, size_t position)\n"\
+"    size_t s_1::read_struct(const void *data, size_t position)\n"\
 "    {\n"\
 "      position += (4 - position&0x3)&0x3;  //alignment\n"\
 "      m_1() = *((int32_t*)((char*)data+position));  //reading bytes for member: m_1()\n"\
@@ -1119,7 +1102,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    {\n"\
 "      return position;\n"\
 "    }\n\n"\
-"    ddsi_keyhash_t s_2::key() const\n"\
+"    bool s_2::key(ddsi_keyhash_t &hash) const\n"\
 "    {\n"\
 "      size_t sz = key_size(0);\n"\
 "      size_t padding = 16 - sz%16;\n"\
@@ -1127,7 +1110,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      std::vector<unsigned char> buffer(sz+padding);\n"\
 "      memset(buffer.data()+sz,0x0,padding);\n"\
 "      key_stream(buffer.data(),0);\n"\
-"      static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+"      static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "      if (fptr == NULL)\n"\
 "      {\n"\
 "        if (key_max_size(0) <= 16)\n"\
@@ -1141,9 +1124,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "          fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
 "        }\n"\
 "      }\n"\
-"      return (*fptr)(buffer);\n"\
+"      return (*fptr)(buffer,hash);\n"\
 "    }\n\n"\
-"    size_t s_2::read_struct(void *data, size_t position)\n"\
+"    size_t s_2::read_struct(const void *data, size_t position)\n"\
 "    {\n"\
 "      position = m_2().read_struct(data, position);\n"\
 "      return position;\n"\
@@ -1204,7 +1187,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "{\n"\
   "  return position;\n"\
   "}\n\n"\
-  "ddsi_keyhash_t I::key() const\n"\
+  "bool I::key(ddsi_keyhash_t &hash) const\n"\
   "{\n"\
   "  size_t sz = key_size(0);\n"\
   "  size_t padding = 16 - sz%16;\n"\
@@ -1212,7 +1195,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  std::vector<unsigned char> buffer(sz+padding);\n"\
   "  memset(buffer.data()+sz,0x0,padding);\n"\
   "  key_stream(buffer.data(),0);\n"\
-  "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+  "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
   "  if (fptr == NULL)\n"\
   "  {\n"\
   "    if (key_max_size(0) <= 16)\n"\
@@ -1226,13 +1209,13 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
   "    }\n"\
   "  }\n"\
-  "  return (*fptr)(buffer);\n"\
+  "  return (*fptr)(buffer,hash);\n"\
   "}\n\n"\
   "size_t s::key_stream(void *data, size_t position) const\n"\
   "{\n"\
   "  return position;\n"\
   "}\n\n"\
-  "ddsi_keyhash_t s::key() const\n"\
+  "bool s::key(ddsi_keyhash_t &hash) const\n"\
   "{\n"\
   "  size_t sz = key_size(0);\n"\
   "  size_t padding = 16 - sz%16;\n"\
@@ -1240,7 +1223,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  std::vector<unsigned char> buffer(sz+padding);\n"\
   "  memset(buffer.data()+sz,0x0,padding);\n"\
   "  key_stream(buffer.data(),0);\n"\
-  "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+  "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
   "  if (fptr == NULL)\n"\
   "  {\n"\
   "    if (key_max_size(0) <= 16)\n"\
@@ -1254,16 +1237,16 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
   "    }\n"\
   "  }\n"\
-  "  return (*fptr)(buffer);\n"\
+  "  return (*fptr)(buffer,hash);\n"\
   "}\n\n"\
-  "size_t I::read_struct(void *data, size_t position)\n"\
+  "size_t I::read_struct(const void *data, size_t position)\n"\
   "{\n"\
   "  position += (4 - position&0x3)&0x3;  //alignment\n"\
   "  inherited_member() = *((int32_t*)((char*)data+position));  //reading bytes for member: inherited_member()\n"\
   "  position += 4;  //moving position indicator\n"\
   "  return position;\n"\
   "}\n\n"\
-  "size_t s::read_struct(void *data, size_t position)\n"\
+  "size_t s::read_struct(const void *data, size_t position)\n"\
   "{\n"\
   "  position = dynamic_cast<I&>(*this).read_struct(data, position);\n"\
   "  position += (4 - position&0x3)&0x3;  //alignment\n"\
@@ -1305,7 +1288,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "{\n"\
   "  return position;\n"\
   "}\n\n"\
-  "ddsi_keyhash_t s::key() const\n"\
+  "bool s::key(ddsi_keyhash_t &hash) const\n"\
   "{\n"\
   "  size_t sz = key_size(0);\n"\
   "  size_t padding = 16 - sz%16;\n"\
@@ -1313,7 +1296,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  std::vector<unsigned char> buffer(sz+padding);\n"\
   "  memset(buffer.data()+sz,0x0,padding);\n"\
   "  key_stream(buffer.data(),0);\n"\
-  "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+  "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
   "  if (fptr == NULL)\n"\
   "  {\n"\
   "    if (key_max_size(0) <= 16)\n"\
@@ -1327,9 +1310,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
   "    }\n"\
   "  }\n"\
-  "  return (*fptr)(buffer);\n"\
+  "  return (*fptr)(buffer,hash);\n"\
   "}\n\n"\
-  "size_t s::read_struct(void *data, size_t position)\n"\
+  "size_t s::read_struct(const void *data, size_t position)\n"\
   "{\n"\
   "  position += (4 - position&0x3)&0x3;  //alignment\n"\
   "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
@@ -1432,7 +1415,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  {\n"\
 "    return position;\n"\
 "  }\n\n"\
-"  ddsi_keyhash_t s::key() const\n"\
+"  bool s::key(ddsi_keyhash_t &hash) const\n"\
 "  {\n"\
 "    size_t sz = key_size(0);\n"\
 "    size_t padding = 16 - sz%16;\n"\
@@ -1440,7 +1423,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    std::vector<unsigned char> buffer(sz+padding);\n"\
 "    memset(buffer.data()+sz,0x0,padding);\n"\
 "    key_stream(buffer.data(),0);\n"\
-"    static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+"    static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "    if (fptr == NULL)\n"\
 "    {\n"\
 "      if (key_max_size(0) <= 16)\n"\
@@ -1454,9 +1437,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "        fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
 "      }\n"\
 "    }\n"\
-"    return (*fptr)(buffer);\n"\
+"    return (*fptr)(buffer,hash);\n"\
 "  }\n\n"\
-"  size_t s::read_struct(void *data, size_t position)\n"\
+"  size_t s::read_struct(const void *data, size_t position)\n"\
 "  {\n"\
 "    position += (4 - position&0x3)&0x3;  //alignment\n"\
 "    mem_simple() = *((int32_t*)((char*)data+position));  //reading bytes for member: mem_simple()\n"\
@@ -1522,7 +1505,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
-"ddsi_keyhash_t s::key() const\n"\
+"bool s::key(ddsi_keyhash_t &hash) const\n"\
 "{\n"\
 "  size_t sz = key_size(0);\n"\
 "  size_t padding = 16 - sz%16;\n"\
@@ -1530,7 +1513,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
 "  key_stream(buffer.data(),0);\n"\
-"  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+"  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
 "    if (key_max_size(0) <= 16)\n"\
@@ -1544,9 +1527,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
 "    }\n"\
 "  }\n"\
-"  return (*fptr)(buffer);\n"\
+"  return (*fptr)(buffer,hash);\n"\
 "}\n\n"\
-"size_t s::read_struct(void *data, size_t position)\n"\
+"size_t s::read_struct(const void *data, size_t position)\n"\
 "{\n"\
 "  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
@@ -1630,7 +1613,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
-"ddsi_keyhash_t s::key() const\n"\
+"bool s::key(ddsi_keyhash_t &hash) const\n"\
 "{\n"\
 "  size_t sz = key_size(0);\n"\
 "  size_t padding = 16 - sz%16;\n"\
@@ -1638,7 +1621,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
 "  key_stream(buffer.data(),0);\n"\
-"  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+"  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
 "    if (key_max_size(0) <= 16)\n"\
@@ -1652,7 +1635,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
 "    }\n"\
 "  }\n"\
-"  return (*fptr)(buffer);\n"\
+"  return (*fptr)(buffer,hash);\n"\
 "}\n\n"\
 "size_t ss::key_stream(void *data, size_t position) const\n"\
 "{\n"\
@@ -1664,7 +1647,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
-"ddsi_keyhash_t ss::key() const\n"\
+"bool ss::key(ddsi_keyhash_t &hash) const\n"\
 "{\n"\
 "  size_t sz = key_size(0);\n"\
 "  size_t padding = 16 - sz%16;\n"\
@@ -1672,7 +1655,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
 "  key_stream(buffer.data(),0);\n"\
-"  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n"\
+"  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
 "    if (key_max_size(0) <= 16)\n"\
@@ -1686,9 +1669,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
 "    }\n"\
 "  }\n"\
-"  return (*fptr)(buffer);\n"\
+"  return (*fptr)(buffer,hash);\n"\
 "}\n\n"\
-"size_t s::read_struct(void *data, size_t position)\n"\
+"size_t s::read_struct(const void *data, size_t position)\n"\
 "{\n"\
 "  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
@@ -1697,7 +1680,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
-"size_t ss::read_struct(void *data, size_t position)\n"\
+"size_t ss::read_struct(const void *data, size_t position)\n"\
 "{\n"\
 "  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\

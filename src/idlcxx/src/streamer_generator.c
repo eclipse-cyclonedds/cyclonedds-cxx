@@ -123,11 +123,11 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define member_access "%s()"
 #define write_func_define "size_t %s::write_struct(void *data, size_t position) const"
 #define write_size_func_define "size_t %s::write_size(size_t position) const"
-#define read_func_define "size_t %s::read_struct(void *data, size_t position)"
+#define read_func_define "size_t %s::read_struct(const void *data, size_t position)"
 #define key_size_define "size_t %s::key_size(size_t position) const"
 #define key_max_size_define "size_t %s::key_max_size(size_t position) const"
 #define key_stream_define "size_t %s::key_stream(void *data, size_t position) const"
-#define key_calc_define "ddsi_keyhash_t %s::key() const"
+#define key_calc_define "bool %s::key(ddsi_keyhash_t &hash) const"
 #define typedef_write_define "size_t typedef_write_%s(const %s &obj, void* data, size_t position)"
 #define typedef_write_size_define "size_t typedef_write_size_%s(const %s &obj, size_t position)"
 #define typedef_read_define "size_t typedef_read_%s(%s &obj, void* data, size_t position)"
@@ -1315,7 +1315,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_key_stream(1, ctx, "  std::vector<unsigned char> buffer(sz+padding);\n");
     format_key_stream(1, ctx, "  memset(buffer.data()+sz,0x0,padding);\n");
     format_key_stream(1, ctx, "  key_stream(buffer.data(),0);\n");
-    format_key_stream(1, ctx, "  static ddsi_keyhash_t (*fptr)(const std::vector<unsigned char>&) = NULL;\n");
+    format_key_stream(1, ctx, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
     format_key_stream(1, ctx, "  if (fptr == NULL)\n");
     format_key_stream(1, ctx, "  {\n");
     format_key_stream(1, ctx, "    if (key_max_size(0) <= 16)\n");
@@ -1329,7 +1329,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_key_stream(1, ctx, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n")
     format_key_stream(1, ctx, "    }\n");
     format_key_stream(1, ctx, "  }\n");
-    format_key_stream(1, ctx, "  return (*fptr)(buffer);\n");
+    format_key_stream(1, ctx, "  return (*fptr)(buffer,hash);\n");
     format_key_stream(1, ctx, close_function);
   }
 

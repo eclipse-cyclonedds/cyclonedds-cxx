@@ -185,9 +185,6 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
 
     this->listener(listener, mask);
 
-#if 0
-    this->AnyTopicDelegate::set_copy_out(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyOut());
-#endif
     this->AnyTopicDelegate::set_sample(&this->sample_);
 }
 
