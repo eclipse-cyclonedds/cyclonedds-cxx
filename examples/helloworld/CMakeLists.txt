@@ -16,18 +16,12 @@ if (NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-set(sources HelloWorldData.cpp)
-set(headers HelloWorldData.h HelloWorldData_DCPS.hpp)
-
-add_library(ddscxxHelloWorldData_lib OBJECT ${sources} ${headers})
-target_link_libraries(ddscxxHelloWorldData_lib PUBLIC  CycloneDDS-CXX::ddscxx)
-
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
 
 # Link both executables to idl data type library and ddscxx.
-target_link_libraries(ddscxxHelloworldPublisher ddscxxHelloWorldData_lib CycloneDDS-CXX::ddscxx)
-target_link_libraries(ddscxxHelloworldSubscriber ddscxxHelloWorldData_lib CycloneDDS-CXX::ddscxx)
+target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx)
+target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx)
 
 set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD 11)
 set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD 11)

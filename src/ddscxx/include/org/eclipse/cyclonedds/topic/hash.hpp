@@ -19,9 +19,7 @@
 #define IDLCXX_HASH_HPP_
 
 #include "dds/ddsi/ddsi_keyhash.h"
-#include "dds/ddsrt/md5.h"
 #include <vector>
-#include <cstring>
 
 namespace org
 {
@@ -31,25 +29,9 @@ namespace org
     {
       namespace topic
       {
-        ddsi_keyhash_t simple_key(const std::vector<unsigned char> & in)
-        {
-          ddsi_keyhash_t returnval;
-          memcpy(&returnval.value, in.data(), in.size());
-          memset((&returnval.value) + in.size(), 0x0, 16 - in.size());
-          return returnval;
-        }
+        bool simple_key(const std::vector<unsigned char>& in, ddsi_keyhash_t& out);
 
-        ddsi_keyhash_t complex_key(const std::vector<unsigned char> & in)
-        {
-          ddsi_keyhash_t returnval;
-
-          ddsrt_md5_state_t md5st;
-          ddsrt_md5_init(&md5st);
-          ddsrt_md5_append(&md5st, in.data(), in.size());
-          ddsrt_md5_finish(&md5st, returnval.value);
-
-          return returnval;
-        }
+        bool complex_key(const std::vector<unsigned char>& in, ddsi_keyhash_t& out);
       }
     }
   }

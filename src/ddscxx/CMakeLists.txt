@@ -57,6 +57,7 @@ set(sources
     src/org/eclipse/cyclonedds/sub/cond/QueryConditionDelegate.cpp
     src/org/eclipse/cyclonedds/sub/qos/SubscriberQosDelegate.cpp
     src/org/eclipse/cyclonedds/topic/find.cpp
+    src/org/eclipse/cyclonedds/topic/hash.cpp
     src/org/eclipse/cyclonedds/topic/AnyTopicDelegate.cpp
     src/org/eclipse/cyclonedds/topic/FilterDelegate.cpp
     src/org/eclipse/cyclonedds/topic/TopicDescriptionDelegate.cpp
