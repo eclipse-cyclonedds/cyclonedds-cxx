@@ -138,8 +138,8 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define typedef_write_size_call position_set "%stypedef_write_size_%s(%s, position);\n"
 #define typedef_read_call position_set "%stypedef_read_%s(%s, data, position);\n"
 #define typedef_key_size_call position_set "%stypedef_key_size_%s(%s, position);\n"
-#define typedef_key_max_size_call position_set "%stypedef_key_max_size_%(%s, position);\n"
-#define typedef_key_stream_call position_set "%stypedef_key_stream_%(%s, *data, position);\n"
+#define typedef_key_max_size_call position_set "%stypedef_key_max_size_%s(%s, position);\n"
+#define typedef_key_stream_call position_set "%stypedef_key_stream_%s(%s, *data, position);\n"
 #define union_case_max_check "if (case_max != UINT_MAX) "
 #define union_case_max_incr union_case_max_check "case_max += "
 #define union_case_max_set "case_max = "
@@ -1437,19 +1437,19 @@ idl_retcode_t process_typedef_instance(context_t* ctx, idl_declarator_t* decl, i
     assert(accessor);
 
     format_write_stream(1, ctx, false, typedef_write_call, ns, tdname, accessor);
-    format_write_size_stream(1, ctx, false, typedef_write_size_call "\n", ns, tdname, accessor);
-    format_read_stream(1, ctx, typedef_read_call "\n", ns, tdname, accessor);
+    format_write_size_stream(1, ctx, false, typedef_write_size_call, ns, tdname, accessor);
+    format_read_stream(1, ctx, typedef_read_call, ns, tdname, accessor);
     if (is_key)
     {
-      format_key_stream(1, ctx, typedef_key_size_call "\n", ns, tdname, accessor);
-      format_key_size_stream(1, ctx, typedef_key_stream_call "\n", ns, tdname, accessor);
+      format_key_stream(1, ctx, typedef_key_stream_call, ns, tdname, accessor);
+      format_key_size_stream(1, ctx, typedef_key_size_call, ns, tdname, accessor);
       if (ctx->in_union)
       {
         format_key_max_size_stream(1, ctx, union_case_max_set "%stypedef_key_max_size_%(%s, position);\n", ns, tdname, accessor);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, typedef_key_max_size_call "\n", ns, tdname, accessor);
+        format_key_max_size_stream(1, ctx, typedef_key_max_size_call, ns, tdname, accessor);
       }
     }
     free(ns);
