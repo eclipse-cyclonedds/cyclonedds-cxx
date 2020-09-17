@@ -1691,6 +1691,128 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  return position;\n"\
 "}\n\n"
 
+#define TDKI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
+"size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position)\n"\
+"{\n"\
+"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
+"  position += alignmentbytes;  //moving position indicator\n"\
+"  uint32_t sequenceentries = obj.size();  //number of entries in the sequence\n"\
+"  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
+"  position += 4;  //moving position indicator\n"\
+"  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
+"  position += sequenceentries*4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::write_struct(void *data, size_t position) const\n"\
+"{\n"\
+"  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
+"  position += 1;  //moving position indicator\n"\
+"  position = typedef_write_td_1(t(), data, position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_write_size_td_1(const td_1 &obj, size_t position)\n"\
+"{\n"\
+"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += 4;  //bytes for sequence entries\n"\
+"  position += (obj.size())*4;  //entries of sequence\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::write_size(size_t position) const\n"\
+"{\n"\
+"  position += 1;  //bytes for member: o()\n"\
+"  position = typedef_write_size_td_1(t(), position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_key_size_td_1(const td_1 &obj, size_t position)\n"\
+"{\n"\
+"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += 4;  //bytes for sequence entries\n"\
+"  position += (obj.size())*4;  //entries of sequence\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::key_size(size_t position) const\n"\
+"{\n"\
+"  position = typedef_key_size_td_1(t(), position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position)\n"\
+"{\n"\
+"  if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  if (position != UINT_MAX)   position += 4;  //bytes for sequence entries\n"\
+"  position = UINT_MAX;\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::key_max_size(size_t position) const\n"\
+"{\n"\
+"  position = typedef_key_max_size_td_1(t(), position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position)\n"\
+"{\n"\
+"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
+"  position += alignmentbytes;  //moving position indicator\n"\
+"  uint32_t sequenceentries = obj.size();  //number of entries in the sequence\n"\
+"  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
+"  position += 4;  //moving position indicator\n"\
+"  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
+"  position += sequenceentries*4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::key_stream(void *data, size_t position) const\n"\
+"{\n"\
+"  position = typedef_key_stream_td_1(t(), *data, position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"bool s::key(ddsi_keyhash_t &hash) const\n"\
+"{\n"\
+"  size_t sz = key_size(0);\n"\
+"  size_t padding = 16 - sz%16;\n"\
+"  if (sz != 0 && padding == 16) padding = 0;\n"\
+"  std::vector<unsigned char> buffer(sz+padding);\n"\
+"  memset(buffer.data()+sz,0x0,padding);\n"\
+"  key_stream(buffer.data(),0);\n"\
+"  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
+"  if (fptr == NULL)\n"\
+"  {\n"\
+"    if (key_max_size(0) <= 16)\n"\
+"    {\n"\
+"      //bind to unmodified function which just copies buffer into the keyhash\n"\
+"      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n"\
+"    }\n"\
+"    else\n"\
+"    {\n"\
+"      //bind to MD5 hash function\n"\
+"      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
+"    }\n"\
+"  }\n"\
+"  return (*fptr)(buffer,hash);\n"\
+"}\n\n"\
+"size_t typedef_read_td_1(td_1 &obj, void* data, size_t position)\n"\
+"{\n"\
+"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
+"  position += 4;  //moving position indicator\n"\
+"  obj.assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n"\
+"  position += sequenceentries*4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::read_struct(const void *data, size_t position)\n"\
+"{\n"\
+"  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
+"  position += 1;  //moving position indicator\n"\
+"  position = typedef_read_td_1(t(), data, position);\n"\
+"  return position;\n"\
+"}\n\n"
+
+#define TDKH "size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position);\n\n"\
+"size_t typedef_write_size_td_1(const td_1 &obj, size_t position);\n\n"\
+"size_t typedef_read_td_1(td_1 &obj, void* data, size_t position);\n\n"\
+"size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position);\n\n"\
+"size_t typedef_key_size_td_1(const td_1 &obj, size_t position);\n\n"\
+"size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position);\n\n"
+
 #define NSE "namespace N\n" \
 "{\n\n" \
 "} //end namespace N\n\n"
@@ -2186,8 +2308,8 @@ void test_keys_typedef()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_impl_buf(generated)));  //not yet implemented
-  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));  //not yet implemented
+  CU_ASSERT_STRING_EQUAL(TDKI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(TDKH, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
   
   destruct_idl_streamer_output(generated);
   idl_delete_tree(tree);
@@ -2292,9 +2414,9 @@ CU_Test(streamer_generator, bounded_sequence)
   test_bounded_sequence();
 }
 
-CU_Test(streamer_generator, typedef_resolution)
+CU_Test(streamer_generator, typedef_resolution, .disabled =true)  //not working at the moment, therefore skipping
 {
-  //test_typedef_resolution();  //not working at the moment, therefore skipping
+  test_typedef_resolution();
 }
 
 CU_Test(streamer_generator, key_base)
@@ -2309,5 +2431,5 @@ CU_Test(streamer_generator, key_struct)
 
 CU_Test(streamer_generator, key_typedef)
 {
-  //test_keys_typedef();  //not working yet, therefore skipping
+  test_keys_typedef();
 }
