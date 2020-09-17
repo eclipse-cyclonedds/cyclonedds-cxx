@@ -194,6 +194,7 @@ struct context
   functioncontents_t key_funcs;
   context_t* parent;
   bool in_union;
+  const char* parsed_file;
 };
 
 static uint64_t array_entries(idl_declarator_t* decl);
@@ -401,12 +402,17 @@ void resolve_namespace(idl_node_t* node, char** up)
 
 idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
 {
-  if (idl_is_module(node))
-    process_module(ctx, (idl_module_t*)node);
-  else if (idl_is_struct(node) || idl_is_union(node))
-    process_constructed(ctx, node);
-  else if (idl_is_typedef(node))
-    process_typedef_definition(ctx, (idl_typedef_t*)node);
+  if (node->parent != NULL ||
+      ctx->parsed_file == NULL ||
+      (0 == strcmp(node->location.first.file, ctx->parsed_file)/* && 0 == strcmp(node->location.last.file, ctx->parsed_file)*/))  //location.last.file check commented out due to bug
+  {
+    if (idl_is_module(node))
+      process_module(ctx, (idl_module_t*)node);
+    else if (idl_is_struct(node) || idl_is_union(node))
+      process_constructed(ctx, node);
+    else if (idl_is_typedef(node))
+      process_typedef_definition(ctx, (idl_typedef_t*)node);
+  }
 
   if (node->next)
     process_node(ctx, node->next);
@@ -1554,6 +1560,8 @@ void idl_streamers_generate(const idl_tree_t* tree, idl_streamer_output_t* str)
   context_t* ctx = create_context(str, "");
 
   format_impl_stream(0, ctx, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
+  if (tree->files)
+    ctx->parsed_file = tree->files->name;
 
   process_node(ctx, tree->root);
   close_context(ctx);
