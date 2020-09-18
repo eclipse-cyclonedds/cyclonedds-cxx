@@ -204,7 +204,7 @@ IDL_OUTPUT_STREAMER_INTERFACES\
 "namespace " module_name "\n"\
 "{\n"\
 "  typedef " typedef_type " " typedef_name ";\n\n"\
-"};\n\n"
+"}\n\n"
 
 static void init()
 {
@@ -354,16 +354,20 @@ CU_Theory((const char *input, const char *output), cpp11Backend, Typedef, .timeo
 CU_TheoryDataPoints(cpp11Backend, Union) =
 {
   /* Series of IDL input */
-  CU_DataPoints(const char *, IDL_INPUT_UNION_1_BRANCH("CaseHolder","long","1","string","name"),
+  CU_DataPoints(const char *, IDL_INPUT_UNION_1_BRANCH("CaseHolder1","long","1","string","name"),
                               IDL_INPUT_UNION_1_BRANCH("try","short","0","string","_module"),
-                              IDL_INPUT_UNION_1_BRANCH("CaseHolder","boolean","TRUE","string","name"),
-                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder","Color","Red","string","name")
+                              IDL_INPUT_UNION_1_BRANCH("CaseHolder2","boolean","TRUE","string","name"),
+                              IDL_INPUT_UNION_1_BRANCH("CaseHolder3","boolean","FALSE","sequence<string>","names"),
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder4","Color","Red","string","name"),
+                              IDL_INPUT_ENUM("Color","Red","Yellow","Blue") IDL_INPUT_UNION_1_BRANCH("CaseHolder5","Color","Yellow","string","name")
                               ),
   /* Series of corresponding C++ output */
-  CU_DataPoints(const char *, IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","int32_t","-2147483648",DEFAULT_DISCR_TP,MULTI_DEFAULT,"1","std::string","name"),
+  CU_DataPoints(const char *, IDL_OUTPUT_UNION_1_BRANCH("CaseHolder1","int32_t","-2147483648",DEFAULT_DISCR_TP,MULTI_DEFAULT,"1","std::string","name"),
                               IDL_OUTPUT_UNION_1_BRANCH("_cxx_try","int16_t","-32768",DEFAULT_DISCR_TP,MULTI_DEFAULT,"0","std::string","module"),
-                              IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","bool","false",BOOL_DISCR_TP,SINGLE_DEFAULT,"true","std::string","name"),
-                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder","::Color","::Color::Yellow",DEFAULT_DISCR_TP,MULTI_DEFAULT,"::Color::Red","std::string","name")
+                              IDL_OUTPUT_UNION_1_BRANCH("CaseHolder2","bool","false",BOOL_DISCR_TP,SINGLE_DEFAULT,"true","std::string","name"),
+                              IDL_OUTPUT_UNION_1_BRANCH("CaseHolder3","bool","true",BOOL_DISCR_TP,SINGLE_DEFAULT,"false","std::vector<std::string>","names"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder4","::Color","::Color::Yellow",DEFAULT_DISCR_TP,MULTI_DEFAULT,"::Color::Red","std::string","name"),
+                              IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_UNION_1_BRANCH("CaseHolder5","::Color","::Color::Red",DEFAULT_DISCR_TP,MULTI_DEFAULT,"::Color::Yellow","std::string","name")
                               )
 };
 
