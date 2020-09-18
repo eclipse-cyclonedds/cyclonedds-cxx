@@ -855,7 +855,7 @@ union_generate_discr_getter_setter(idl_backend_ctx ctx)
             idl_file_out_printf(ctx, "if (m__d != %s", union_ctx->cases[i].labels[j]);
             idl_indent_double_incr(ctx);
           } else {
-            idl_file_out_printf_no_indent(ctx, "&&\n");
+            idl_file_out_printf_no_indent(ctx, " &&\n");
             idl_file_out_printf(ctx, "m__d != %s", union_ctx->cases[i].labels[j]);
           }
         }
@@ -920,7 +920,7 @@ union_generate_getter_body(idl_backend_ctx ctx, uint32_t i)
         idl_file_out_printf(ctx, "if (m__d == %s", union_ctx->cases[i].labels[j]);
         idl_indent_double_incr(ctx);
       } else {
-        idl_file_out_printf_no_indent(ctx, "|| \n");
+        idl_file_out_printf_no_indent(ctx, " || \n");
         idl_file_out_printf(ctx, "m__d == %s", union_ctx->cases[i].labels[j]);
       }
     }
@@ -932,7 +932,7 @@ union_generate_getter_body(idl_backend_ctx ctx, uint32_t i)
           idl_file_out_printf(ctx, "if (m__d != %s", union_ctx->cases[j].labels[k]);
           idl_indent_double_incr(ctx);
         } else {
-          idl_file_out_printf_no_indent(ctx, "&& \n");
+          idl_file_out_printf_no_indent(ctx, " && \n");
           idl_file_out_printf(ctx, "m__d != %s", union_ctx->cases[j].labels[k]);
         }
       }
@@ -956,13 +956,14 @@ static void
 union_generate_setter_body(idl_backend_ctx ctx, uint32_t i)
 {
   cpp11_union_context *union_ctx = (cpp11_union_context *) idl_get_custom_context(ctx);
-  const char *new_discr_value;
 
   idl_file_out_printf(ctx, "{\n");
   idl_indent_incr(ctx);
   /* Check if a setter with optional discriminant value is present (when more than 1 label). */
   if (union_ctx->cases[i].label_count < 2)
   {
+    const char *new_discr_value;
+
     /* If not, check whether the current case is the default case. */
     if (&union_ctx->cases[i] != union_ctx->default_case) {
       /* If not the default case, pick the first available value. */
@@ -971,13 +972,30 @@ union_generate_setter_body(idl_backend_ctx ctx, uint32_t i)
       /* If it is the default case, pick the default label. */
       new_discr_value = union_ctx->default_label;
     }
+    idl_file_out_printf(ctx, "m__d = %s;\n", new_discr_value);
   }
   else
   {
-    /* In case the discriminant is explicitly passed, take that value. */
-    new_discr_value = "_d";
+    /* In case the discriminant is explicitly passed, check its validity and then take that value. */
+    for (uint32_t j = 0; j < union_ctx->cases[i].label_count; ++j) {
+      if (j == 0) {
+        idl_file_out_printf(ctx, "if (m__d != %s", union_ctx->cases[i].labels[j]);
+        idl_indent_double_incr(ctx);
+      } else {
+        idl_file_out_printf_no_indent(ctx, " &&\n");
+        idl_file_out_printf(ctx, "m__d != %s", union_ctx->cases[i].labels[j]);
+      }
+    }
+    idl_indent_decr(ctx);
+    idl_file_out_printf_no_indent(ctx, ") {\n");
+    idl_file_out_printf(ctx, "throw dds::core::InvalidArgumentError(\"Provided discriminator does not match selected branch\");\n");
+    idl_indent_decr(ctx);
+    idl_file_out_printf(ctx, "} else {\n");
+    idl_indent_incr(ctx);
+    idl_file_out_printf(ctx, "m__d = _d;\n");
+    idl_indent_decr(ctx);
+    idl_file_out_printf(ctx, "}\n");
   }
-  idl_file_out_printf(ctx, "m__d = %s;\n", new_discr_value);
   idl_file_out_printf(ctx, "%s = val;\n", union_ctx->cases[i].name);
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "}\n\n");
@@ -1193,7 +1211,7 @@ module_generate_body(idl_backend_ctx ctx, const idl_module_t *module_node)
   idl_indent_incr(ctx);
   result = idl_walk_node_list(ctx, module_node->definitions, cpp11_scope_walk, IDL_MASK_ALL);
   idl_indent_decr(ctx);
-  idl_file_out_printf(ctx, "};\n\n");
+  idl_file_out_printf(ctx, "}\n\n");
 
   free(cpp11Name);
 
@@ -1272,26 +1290,40 @@ cpp11_scope_walk(idl_backend_ctx ctx, const idl_node_t *node)
   return result;
 }
 
+typedef enum
+{
+  idl_string_dep  = 0x01 << 0,
+  idl_array_dep   = 0x01 << 1,
+  idl_vector_dep  = 0x01 << 2,
+  idl_variant_dep = 0x01 << 3
+} idl_include_dep;
+
 static idl_retcode_t
 get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
 {
-  idl_mask_t *dependency_mask = (idl_mask_t *) idl_get_custom_context(ctx);
+  idl_include_dep *dependency_mask = (idl_include_dep *) idl_get_custom_context(ctx);
+
   switch (node->mask & IDL_CATEGORY_MASK)
   {
   case IDL_UNION:
-    (*dependency_mask) |= IDL_UNION;
+    (*dependency_mask) |= idl_variant_dep;
     break;
   case IDL_TEMPL_TYPE:
     switch (node->mask & IDL_TEMPL_TYPE_MASK)
     {
     case IDL_SEQUENCE:
-      (*dependency_mask) |= IDL_SEQUENCE;
+      (*dependency_mask) |= idl_vector_dep;
       break;
     case IDL_STRING:
-      (*dependency_mask) |= IDL_STRING;
+      (*dependency_mask) |= idl_string_dep;
       break;
     default:
       break;
+    }
+    break;
+  case IDL_DECLARATOR:
+    if (((const idl_declarator_t *)node)->const_expr) {
+      (*dependency_mask) |= idl_array_dep;
     }
     break;
   default:
@@ -1303,16 +1335,22 @@ get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
 static void
 idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
 {
-  idl_mask_t util_depencencies = 0;
+  idl_include_dep util_depencencies = 0;
 
   /* First determine the list of files included by our IDL file itself. */
   idl_file_t *tmp, *include_list = idl_get_include_list(ctx, parse_tree);
   while (include_list) {
     char *include_file = idl_strdup(include_list->name);
     size_t i;
-    for (i = 0; i < strlen(include_file) && include_file[i] != '.'; ++i);
-    include_file[i] = '\0';
+    for (i = strlen(include_file); i > 0 ; --i)
+    {
+      if (include_file[i] == '.') {
+        include_file[i] = '\0';
+        break;
+      }
+    }
     idl_file_out_printf(ctx, "#include \"%s.hpp\"\n", include_file);
+    free(include_file);
     tmp = include_list;
     include_list = tmp->next;
     free(tmp);
@@ -1324,16 +1362,17 @@ idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tre
   idl_walk_tree(ctx, parse_tree->root, get_util_dependencies, IDL_MASK_ALL);
   idl_reset_custom_context(ctx);
   if (util_depencencies) {
-    if (util_depencencies & IDL_TEMPL_TYPE_MASK) {
-      if ((util_depencencies & IDL_SEQUENCE) == IDL_SEQUENCE) {
-        idl_file_out_printf(ctx, "#include <vector>\n");
-      }
-      if ((util_depencencies & IDL_STRING) == IDL_STRING) {
-        idl_file_out_printf(ctx, "#include <string>\n");
-      }
+    if (util_depencencies & idl_vector_dep) {
+      idl_file_out_printf(ctx, "#include <vector>\n");
     }
-    if (util_depencencies & IDL_UNION) {
+    if (util_depencencies & idl_string_dep) {
+      idl_file_out_printf(ctx, "#include <string>\n");
+    }
+    if (util_depencencies & idl_variant_dep) {
       idl_file_out_printf(ctx, "#include <variant>\n");
+    }
+    if (util_depencencies & idl_array_dep) {
+      idl_file_out_printf(ctx, "#include <array>\n");
     }
     idl_file_out_printf(ctx, "\n");
   }

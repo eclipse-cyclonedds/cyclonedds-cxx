@@ -299,10 +299,20 @@ idl_walk_tree(
         sub_nodes = ((const idl_const_t *) target_node)->type_spec;
         break;
       case IDL_MEMBER:
-        sub_nodes = ((const idl_member_t *) target_node)->type_spec;
+        result = action(ctx, ((const idl_member_t *) target_node)->type_spec);
+        if (result == IDL_RETCODE_OK) {
+          sub_nodes = (const idl_node_t *)(((const idl_member_t *) target_node)->declarators);
+        } else {
+          return result;
+        }
         break;
       case IDL_CASE:
-        sub_nodes = ((const idl_case_t *) target_node)->type_spec;
+        result = action(ctx, ((const idl_case_t *) target_node)->type_spec);
+        if (result == IDL_RETCODE_OK) {
+          sub_nodes = (const idl_node_t *)(((const idl_case_t *) target_node)->declarator);
+        } else {
+          return result;
+        }
         break;
       default:
         sub_nodes = NULL;
