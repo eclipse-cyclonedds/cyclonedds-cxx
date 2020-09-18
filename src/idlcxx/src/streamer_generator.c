@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include "idlcxx/streamer_generator.h"
 #include "idlcxx/backendCpp11Utils.h"
@@ -90,7 +91,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define seq_primitive_read "  %s.assign((%s*)((char*)data+position),(%s*)((char*)data+position)+sequenceentries);  //putting data into container\n"
 #define seq_primitive_read_nocast "  %s.assign((char*)data+position,(char*)data+position+sequenceentries);  //putting data into container\n"
 #define seq_read_resize "  %s.resize(sequenceentries);\n"
-#define seq_length_exception "  if (sequenceentries > %zu) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %zu\");\n"
+#define seq_length_exception "  if (sequenceentries > %"PRIu64") throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %"PRIu64"\");\n"
 #define seq_typedef_write sequence_iterate position_set "%stypedef_write_%s(%s[_i],data,position);\n"
 #define seq_typedef_write_size sequence_iterate position_set "%stypedef_write_size_%s(%s[_i], position);\n"
 #define seq_typedef_read_copy sequence_iterate position_set "%stypedef_read_%s(%s[_i], data, position);\n"
@@ -105,7 +106,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define seq_struct_key_max_size sequence_iterate_checked position_set "%s[_i].key_max_size(position);"
 #define seq_incr position_incr "sequenceentries*%d;"
 #define seq_entries position_incr "(%s.size()%s)*%d;  //entries of sequence\n"
-#define array_iterate "  for (size_t _i = 0; _i < %d; _i++) "
+#define array_iterate "  for (size_t _i = 0; _i < %"PRIu64"; _i++) "
 #define arr_struct_write array_iterate position_set "%s[_i].write_struct(data, position);\n"
 #define arr_struct_write_size array_iterate position_set "%s[_i].write_size(position);\n"
 #define arr_struct_read array_iterate position_set "%s[_i].read_struct(data, position);\n"
@@ -501,7 +502,6 @@ idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_
   if (decl)
   {
     char* cpp11name = get_cpp11_name(idl_identifier(decl));
-
     idl_asprintf(&accessor, member_access, cpp11name);
     free(cpp11name);
   }
@@ -810,6 +810,7 @@ idl_retcode_t process_known_width_sequence(context_t* ctx, const char* accessor,
   idl_mask_t mask = idl_is_string(tspec) ? IDL_CHAR : tspec->mask;
   int bytewidth = determine_byte_width(mask); 
   const char* cast = determine_cast(mask);
+  assert(bytewidth > 0);
 
   format_write_stream(1, ctx, is_key, seq_primitive_write, accessor, bytewidth, accessor);
   format_write_stream(1, ctx, is_key, seq_incr incr_comment, bytewidth);
@@ -851,9 +852,9 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
   }
   format_write_stream(0, ctx, is_key, primitive_write_func_seq, accessor, plusone ? "+1" : "");
   format_write_stream(1, ctx, is_key, primitive_write_func_seq2, accessor);
-  format_write_stream(1, ctx, is_key, primitive_incr_pos incr_comment, 4);
+  format_write_stream(1, ctx, is_key, primitive_incr_pos incr_comment, (int)4);
 
-  format_write_size_stream(1, ctx, is_key, primitive_incr_pos bytes_for_seq_entries_comment, 4);
+  format_write_size_stream(1, ctx, is_key, primitive_incr_pos bytes_for_seq_entries_comment, (int)4);
 
   if (is_key)
   {
@@ -863,12 +864,12 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
     }
     else
     {
-      format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_seq_entries_comment, 4);
+      format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_seq_entries_comment, (int)4);
     }
   }
 
   format_read_stream(0, ctx, primitive_read_func_seq);
-  format_read_stream(1, ctx, primitive_incr_pos incr_comment, 4);
+  format_read_stream(1, ctx, primitive_incr_pos incr_comment, (int)4);
 
   return IDL_RETCODE_OK;
 }
@@ -881,11 +882,10 @@ idl_retcode_t process_known_width_array(context_t* ctx, const char *accessor, ui
     mask = IDL_UINT32;
 
   int bytewidth = determine_byte_width(mask);
-  assert(bytewidth != -1);
+  assert(bytewidth > 0);
 
-  unsigned int bw = (unsigned int)bytewidth;
-
-  size_t bytesinarray = bw * entries;
+  //check whether the result fits in int?
+  int bytesinarray = bytewidth * (int)entries;
 
   check_alignment(ctx, bytewidth, is_key);
   ctx->streamer_funcs.accumulatedalignment += (int)bytesinarray;
@@ -949,7 +949,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
   if (idl_is_sequence(tspec) ||
       idl_is_string(tspec))
   {
-    size_t bound = 0;
+    uint64_t bound = 0;
     idl_type_spec_t* ispec = tspec;
     if (idl_is_sequence(tspec))
     {
@@ -989,7 +989,6 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       if (idl_is_base_type(ispec) ||
           idl_is_enum(ispec))
         bytewidth = determine_byte_width(ispec->mask);  //determine byte width of base type
-      assert(bytewidth != -1);
       assert(bytewidth > 0);
 
       if (bytewidth > 4)
@@ -1002,13 +1001,14 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
         if (bound)
         {
           //bounded sequences have a fixed max key size
+          int bytes = ((int)bound + (idl_is_string(tspec) ? 1 : 0)) * bytewidth;
           if (ctx->in_union)
           {
-            format_key_max_size_stream(1, ctx, union_case_max_incr "%d;\n", (bound + (idl_is_string(tspec))) * (size_t)bytewidth);
+            format_key_max_size_stream(1, ctx, union_case_max_incr "%d;\n", bytes);
           }
           else
           {
-            format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, (bound + (idl_is_string(tspec))) * (size_t)bytewidth, accessor);
+            format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytes, accessor);
           }
         }
         else
