@@ -111,8 +111,15 @@ IDLCXX_EXPORT idl_walk_node_list(idl_backend_ctx ctx, const idl_node_t *starting
 idl_retcode_t
 IDLCXX_EXPORT idl_walk_tree(idl_backend_ctx ctx, const idl_node_t *starting_node, idl_walkAction, idl_mask_t mask);
 
-idl_file_t
-IDLCXX_EXPORT *idl_get_include_list(idl_backend_ctx ctx, const idl_tree_t *tree);
+typedef struct idl_include idl_include_t;
+struct idl_include {
+  idl_include_t *next;
+  bool indirect;
+  idl_file_t *file;
+};
+
+IDLCXX_EXPORT idl_include_t *
+idl_get_include_list(idl_backend_ctx ctx, const idl_tree_t *tree);
 
 #if 0
 idl_retcode_t

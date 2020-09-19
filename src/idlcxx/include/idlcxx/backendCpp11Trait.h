@@ -14,4 +14,4 @@
 #include "idlcxx/export.h"
 
 idl_retcode_t
-IDLCXX_EXPORT idl_backendGenerateType(idl_backend_ctx ctx, const idl_tree_t *parse_tree);
+IDLCXX_EXPORT idl_backendGenerateTrait(idl_backend_ctx ctx, const idl_tree_t *parse_tree);

@@ -58,7 +58,11 @@
 #define IDL_OUTPUT_STREAMER_INTERFACES ""\
 "  size_t write_struct(void* data, size_t position) const;\n"\
 "  size_t write_size(size_t offset) const;\n"\
-"  size_t read_struct(const void* data, size_t position);\n"
+"  size_t read_struct(const void* data, size_t position);\n"\
+"  size_t key_size(size_t position) const;\n"\
+"  size_t key_max_size(size_t position) const;\n"\
+"  size_t key_stream(void* data, size_t position) const;\n"\
+"  bool key(ddsi_keyhash_t& hash) const;\n"
 
 #define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) "" \
 "class " struct_name "\n{\n" \
@@ -240,7 +244,7 @@ test_base_type(const char *input, uint32_t flags, int32_t retcode, const char *o
     return;
   ctx = idl_backend_context_new(2, NULL, NULL);
   CU_ASSERT_PTR_NOT_NULL(ctx);
-  ret = idl_backendGenerate(ctx, tree);
+  ret = idl_backendGenerateType(ctx, tree);
   CU_ASSERT(ret == IDL_RETCODE_OK);
   mem_buf = get_ostream_buffer(idl_get_output_stream(ctx));
   expected_output = (strncmp(mem_buf, output, strlen(output)) == 0);
