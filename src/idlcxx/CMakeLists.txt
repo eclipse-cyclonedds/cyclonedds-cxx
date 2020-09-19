@@ -15,6 +15,7 @@ add_library(
     src/backend.c
     src/backendCpp11Utils.c
     src/backendCpp11Type.c
+    src/backendCpp11Trait.c
     src/streamer_generator.c
     src/idl_ostream.c
     src/generator.c)

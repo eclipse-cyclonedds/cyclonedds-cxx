@@ -233,6 +233,10 @@ generate_streamer_interfaces(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "size_t write_struct(void* data, size_t position) const;\n");
   idl_file_out_printf(ctx, "size_t write_size(size_t offset) const;\n");
   idl_file_out_printf(ctx, "size_t read_struct(const void* data, size_t position);\n");
+  idl_file_out_printf(ctx, "size_t key_size(size_t position) const;\n");
+  idl_file_out_printf(ctx, "size_t key_max_size(size_t position) const;\n");
+  idl_file_out_printf(ctx, "size_t key_stream(void* data, size_t position) const;\n");
+  idl_file_out_printf(ctx, "bool key(ddsi_keyhash_t& hash) const;\n");
   idl_indent_decr(ctx);
   return IDL_RETCODE_OK;
 }
@@ -1336,24 +1340,23 @@ static void
 idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
 {
   idl_include_dep util_depencencies = 0;
+  uint32_t nr_includes = 0;
 
   /* First determine the list of files included by our IDL file itself. */
-  idl_file_t *tmp, *include_list = idl_get_include_list(ctx, parse_tree);
-  while (include_list) {
-    char *include_file = idl_strdup(include_list->name);
-    size_t i;
-    for (i = strlen(include_file); i > 0 ; --i)
-    {
-      if (include_file[i] == '.') {
-        include_file[i] = '\0';
-        break;
-      }
-    }
-    idl_file_out_printf(ctx, "#include \"%s.hpp\"\n", include_file);
-    free(include_file);
-    tmp = include_list;
-    include_list = tmp->next;
-    free(tmp);
+  idl_include_t *include, *next;
+  include = idl_get_include_list(ctx, parse_tree);
+  for (; include; include = next, ++nr_includes) {
+    char *file, *dot;
+    file = include->file->name;
+    dot = strrchr(file, '.');
+    if (!dot) dot = file + strlen(file);
+    if (!include->indirect)
+      idl_file_out_printf(ctx, "#include \"%.*s.hpp\"\n", dot - file, file);
+    next = include->next;
+    free(include);
+  }
+  if (nr_includes == 0) {
+    idl_file_out_printf(ctx, "#include \"dds/ddsi/ddsi_keyhash.h\"\n");
   }
   idl_file_out_printf(ctx, "\n");
 
@@ -1379,7 +1382,7 @@ idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tre
 }
 
 idl_retcode_t
-idl_backendGenerate(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
+idl_backendGenerateType(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
 {
   /* If input comes from a file, generate appropriate include statements. */
   if (parse_tree->files) idl_generate_include_statements(ctx, parse_tree);

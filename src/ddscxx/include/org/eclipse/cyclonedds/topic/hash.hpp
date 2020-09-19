@@ -18,20 +18,22 @@
 #ifndef IDLCXX_HASH_HPP_
 #define IDLCXX_HASH_HPP_
 
+#include "dds/core/macros.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include <vector>
 
 namespace org
 {
+
   namespace eclipse
   {
     namespace cyclonedds
     {
       namespace topic
       {
-        bool simple_key(const std::vector<unsigned char>& in, ddsi_keyhash_t& out);
+        bool OMG_DDS_API simple_key(const std::vector<unsigned char>& in, ddsi_keyhash_t& out);
 
-        bool complex_key(const std::vector<unsigned char>& in, ddsi_keyhash_t& out);
+        bool OMG_DDS_API complex_key(const std::vector<unsigned char>& in, ddsi_keyhash_t& out);
       }
     }
   }

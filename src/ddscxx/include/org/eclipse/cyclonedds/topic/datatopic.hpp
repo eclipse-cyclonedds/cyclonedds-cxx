@@ -82,11 +82,11 @@ bool serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b)
 template <typename T>
 uint32_t serdata_size(const struct ddsi_serdata* dcmn)
 {
-  return static_cast<const ddscxx_serdata<T>*>(dcmn)->size();
+  return static_cast<uint32_t>(static_cast<const ddscxx_serdata<T>*>(dcmn)->size());
 }
 
 template <typename T>
-struct ddsi_serdata* serdata_from_ser(
+ddsi_serdata_t *serdata_from_ser(
   const struct ddsi_sertopic* topic,
   enum ddsi_serdata_kind kind,
   const struct nn_rdata* fragchain, size_t size)
@@ -124,7 +124,7 @@ struct ddsi_serdata* serdata_from_ser(
 
 #if DDSI_SERDATA_HAS_FROM_SER_IOV
 template <typename T>
-struct ddsi_serdata* serdata_from_ser_iov(
+ddsi_serdata_t *serdata_from_ser_iov(
   const struct ddsi_sertopic* topic,
   enum ddsi_serdata_kind kind,
   ddsrt_msg_iovlen_t niov,
@@ -142,7 +142,7 @@ struct ddsi_serdata* serdata_from_ser_iov(
 #endif
 
 template <typename T>
-struct ddsi_serdata* serdata_from_keyhash(
+ddsi_serdata_t *serdata_from_keyhash(
   const struct ddsi_sertopic* topic,
   const struct ddsi_keyhash* keyhash)
 {
@@ -171,7 +171,7 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
 }
 
 template <typename T>
-struct ddsi_serdata* serdata_from_sample(
+ddsi_serdata_t *serdata_from_sample(
   const struct ddsi_sertopic* topiccmn,
   enum ddsi_serdata_kind kind,
   const void* sample)
@@ -199,7 +199,7 @@ struct ddsi_serdata* serdata_from_sample(
 
     return d;
   }
-  catch (std::exception& e) {
+  catch (std::exception&) {
     return nullptr;
   }
 }
@@ -212,7 +212,7 @@ void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void
 }
 
 template <typename T>
-struct ddsi_serdata* serdata_to_ser_ref(
+ddsi_serdata_t *serdata_to_ser_ref(
   const struct ddsi_serdata* dcmn, size_t off,
   size_t sz, ddsrt_iovec_t* ref)
 {
@@ -246,7 +246,7 @@ bool serdata_to_sample(
 }
 
 template <typename T>
-struct ddsi_serdata* serdata_to_topicless(const struct ddsi_serdata* dcmn)
+ddsi_serdata_t *serdata_to_topicless(const struct ddsi_serdata* dcmn)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
   auto d1 = new ddscxx_serdata<T>(d->topic, SDK_KEY);
@@ -314,7 +314,7 @@ void serdata_get_keyhash(
 #endif
 
 template <typename T>
-const struct ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
+const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
   &serdata_eqkey<T>,
   &serdata_size<T>,
   &serdata_from_ser<T>,
@@ -423,7 +423,7 @@ uint32_t sertopic_hash(const struct ddsi_sertopic* tpcmn)
 }
 
 template <typename T>
-const struct ddsi_sertopic_ops ddscxx_sertopic<T>::ddscxx_sertopic_ops = {
+const ddsi_sertopic_ops ddscxx_sertopic<T>::ddscxx_sertopic_ops = {
   &sertopic_free<T>,
   &sertopic_zero_samples<T>,
   &sertopic_realloc_samples<T>,

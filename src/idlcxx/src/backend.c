@@ -256,7 +256,7 @@ idl_walk_tree(
     idl_mask_t mask)
 {
   idl_retcode_t result = IDL_RETCODE_OK;
-  const idl_node_t *sub_nodes;
+  const idl_node_t *sub_node = NULL;
 
   while (target_node && result == IDL_RETCODE_OK) {
     bool matches_target_file;
@@ -270,56 +270,77 @@ idl_walk_tree(
       matches_target_file = true;
     }
 
-    if ((target_node->mask & mask) && matches_target_file)
+    if (matches_target_file)
     {
-      result = action(ctx, target_node);
+      if (target_node->mask & mask)
+      {
+        result = action(ctx, target_node);
+      }
       switch (target_node->mask & IDL_CATEGORY_MASK)
       {
       case IDL_MODULE:
-        sub_nodes = ((const idl_module_t *) target_node)->definitions;
+        sub_node = ((const idl_module_t *) target_node)->definitions;
         break;
       case IDL_STRUCT:
-        sub_nodes = (const idl_node_t *)(((const idl_struct_t *) target_node)->members);
+        sub_node = (const idl_node_t *)((const idl_struct_t *) target_node)->base_type;
+        if (sub_node && (sub_node->mask & mask)) {
+          result = action(ctx, sub_node);
+        }
+        if (result == IDL_RETCODE_OK) {
+          sub_node = (const idl_node_t *)(((const idl_struct_t *) target_node)->members);
+        }
         break;
       case IDL_UNION:
-        result = action(ctx, ((const idl_union_t *) target_node)->switch_type_spec);
+        sub_node = ((const idl_union_t *) target_node)->switch_type_spec;
+        if (sub_node->mask & mask) {
+          result = action(ctx, sub_node);
+        }
         if (result == IDL_RETCODE_OK) {
-          sub_nodes = (const idl_node_t *)(((const idl_union_t *) target_node)->cases);
-        } else {
-          return result;
+          sub_node = (const idl_node_t *)(((const idl_union_t *) target_node)->cases);
         }
         break;
       case IDL_ENUM:
-        sub_nodes = (const idl_node_t *)(((const idl_enum_t *) target_node)->enumerators);
+        sub_node = (const idl_node_t *)(((const idl_enum_t *) target_node)->enumerators);
         break;
       case IDL_TYPEDEF:
-        sub_nodes = ((const idl_typedef_t *) target_node)->type_spec;
+        sub_node = ((const idl_typedef_t *) target_node)->type_spec;
+        if (sub_node->mask & mask) {
+          result = action(ctx, sub_node);
+        }
+        /* To prevent potential infinite recursion, do not dive into the referred type. */
+        sub_node = NULL;
         break;
       case IDL_CONST:
-        sub_nodes = ((const idl_const_t *) target_node)->type_spec;
+        sub_node = ((const idl_const_t *) target_node)->type_spec;
+        if (sub_node->mask & mask) {
+          result = action(ctx, sub_node);
+        }
+        /* To prevent potential infinite recursion, do not dive into the referred type. */
+        sub_node = NULL;
         break;
       case IDL_MEMBER:
-        result = action(ctx, ((const idl_member_t *) target_node)->type_spec);
+        sub_node = ((const idl_member_t *) target_node)->type_spec;
+        if (sub_node->mask & mask) {
+          result = action(ctx, sub_node);
+        }
         if (result == IDL_RETCODE_OK) {
-          sub_nodes = (const idl_node_t *)(((const idl_member_t *) target_node)->declarators);
-        } else {
-          return result;
+          sub_node = (const idl_node_t *)(((const idl_member_t *) target_node)->declarators);
         }
         break;
       case IDL_CASE:
-        result = action(ctx, ((const idl_case_t *) target_node)->type_spec);
+        sub_node = ((const idl_case_t *) target_node)->type_spec;
+        if (sub_node->mask & mask) {
+          result = action(ctx, sub_node);
+        }
         if (result == IDL_RETCODE_OK) {
-          sub_nodes = (const idl_node_t *)(((const idl_case_t *) target_node)->declarator);
-        } else {
-          return result;
+          sub_node = (const idl_node_t *)(((const idl_case_t *) target_node)->declarator);
         }
         break;
       default:
-        sub_nodes = NULL;
         break;
       }
-      if (sub_nodes) {
-        result = idl_walk_tree(ctx, sub_nodes, action, IDL_MASK_ALL);
+      if (sub_node && result == IDL_RETCODE_OK) {
+        result = idl_walk_tree(ctx, sub_node, action, mask);
       }
     }
 
@@ -331,66 +352,52 @@ idl_walk_tree(
 static idl_retcode_t
 prune_include_list(idl_backend_ctx ctx, const idl_node_t *node)
 {
-  idl_retcode_t result = IDL_RETCODE_OK;
-
   /* If you find a dependency to another file than your own, prune it form the include list. */
-  if (strcmp(node->location.first.file, ctx->target_file) != 0)
+  if (node->location.first.file != ctx->target_file &&
+      strcmp(node->location.first.file, ctx->target_file) != 0)
   {
-    idl_file_t **cur_file = (idl_file_t **) ctx->custom_context;
-    while (*cur_file != NULL) {
-      if (strcmp((*cur_file)->name, node->location.first.file) == 0)
-      {
-        idl_file_t *tmp = *cur_file;
-        *cur_file = tmp->next;
-        free(tmp);
-        break;
-      }
-      cur_file = &(*cur_file)->next;
+    idl_include_t *include = ctx->custom_context;
+    for (; include; include = include->next) {
+      if (strcmp(include->file->name, node->location.first.file) == 0)
+        include->indirect = true;
     }
   }
 
-  return result;
+  return IDL_RETCODE_OK;
 }
 
-idl_file_t *
+idl_include_t *
 idl_get_include_list(idl_backend_ctx ctx, const idl_tree_t *tree)
 {
   const char *org_target_file = ctx->target_file;
 
-  /* Clone the list of included files. */
-  idl_file_t *include_list_head = malloc(sizeof(idl_file_t));
-  idl_file_t *include_list_tail = include_list_head;
-  idl_file_t **index;
+  idl_include_t *first, *last, *next;
 
+  /* Clone the list of included files. */
   /* Make shallow copy of each file, and append to list. */
-  const idl_file_t *cur_tree_file = tree->files;
-  include_list_tail->name = cur_tree_file->name;
-  include_list_tail->next = NULL;
-  cur_tree_file = cur_tree_file->next;
-  while (cur_tree_file) {
-    include_list_tail->next = malloc(sizeof(idl_file_t));
-    include_list_tail = include_list_tail->next;
-    include_list_tail->name = cur_tree_file->name;
-    include_list_tail->next = NULL;
-    cur_tree_file = cur_tree_file->next;
+  first = last = next = NULL;
+  for (idl_file_t *file = tree->files->next; file; file = file->next) {
+    next = calloc(1, sizeof(*next));
+    next->file = file;
+    next->indirect = false;
+    if (!first) {
+      first = last = next;
+    } else {
+      last->next = next;
+      last = next;
+    }
   }
 
   /* First prune the target file. */
-  index = &include_list_head->next;
-  ctx->custom_context = index;
-  while (*index) {
-    ctx->target_file = (*index)->name;
+  for (idl_include_t *current = first; current; current = current->next) {
+    ctx->custom_context = current;
+    ctx->target_file = current->file->name;
     idl_walk_tree(ctx, tree->root, prune_include_list, IDL_MASK_ALL);
-    index = &(*index)->next;
   }
 
   ctx->target_file = org_target_file;
   ctx->custom_context = NULL;
 
-  /* Remove the first element (current file) from the include list. */
-  include_list_tail = include_list_head->next;
-  free(include_list_head);
-
-  return include_list_tail;
+  return first;
 }
 

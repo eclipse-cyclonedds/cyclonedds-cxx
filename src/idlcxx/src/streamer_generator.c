@@ -494,7 +494,6 @@ uint64_t array_entries(idl_declarator_t* decl)
 idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec, bool is_key)
 {
   assert(ctx);
-  assert(decl);
 
   uint64_t entries = array_entries(decl);
 
