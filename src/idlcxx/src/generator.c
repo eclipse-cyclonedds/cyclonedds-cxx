@@ -18,6 +18,7 @@
 #include "idl/string.h"
 
 #include "idlcxx/backendCpp11Type.h"
+#include "idlcxx/backendCpp11Trait.h"
 #include "idlcxx/streamer_generator.h"
 
 #ifdef _WIN32
@@ -103,20 +104,23 @@ generate_types(
     goto err_fopen;
   }
 
-  ret = idl_backendGenerate(ctx, tree);
+  ret = idl_backendGenerateType(ctx, tree);
+  if (ret == IDL_RETCODE_OK)
+  {
+    ret = idl_backendGenerateTrait(ctx, tree);
+    if (ret == IDL_RETCODE_OK)
+    {
+      print_header(fh, idl, file);
+      print_guard(fh, inc);
 
-  print_header(fh, idl, file);
-  print_guard(fh, inc);
-
-  stm = idl_get_output_stream(ctx);
-  assert(stm);
-  len = get_ostream_buffer_position(stm);
-  if (fwrite(get_ostream_buffer(stm), 1, len, fh) != len && ferror(fh)) {
-    ret = IDL_RETCODE_CANNOT_OPEN_FILE;
+      stm = idl_get_output_stream(ctx);
+      assert(stm);
+      len = get_ostream_buffer_position(stm);
+      if (fwrite(get_ostream_buffer(stm), 1, len, fh) != len && ferror(fh)) {
+        ret = IDL_RETCODE_CANNOT_OPEN_FILE;
+      }
+    }
   }
-
-  print_footer(fh, inc);
-
   fclose(fh);
 err_fopen:
   idl_backend_context_free(ctx);
@@ -146,7 +150,7 @@ generate_streamers(
   if (idl_asprintf(&src, "%s%s%s.cpp", dir, sep, basename) == -1) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_src;
-  } else if (idl_asprintf(&hdr, "%s%s%s.h", dir, sep, basename) == -1) {
+  } else if (idl_asprintf(&hdr, "%s%s%s.hpp", dir, sep, basename) == -1) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_hdr;
   } else if (!(inc = figure_guard(hdr))) {
@@ -181,7 +185,9 @@ generate_streamers(
     ret = IDL_RETCODE_CANNOT_OPEN_FILE;
     goto err_write_head_buf;
   }
+
   print_footer(hdrfh, inc);
+
 
 err_write_head_buf:
 err_write_impl_buf:

@@ -33,7 +33,7 @@ namespace org
         {
           ddsrt_md5_state_t md5st;
           ddsrt_md5_init(&md5st);
-          ddsrt_md5_append(&md5st, (ddsrt_md5_byte_t*)in.data(), (unsigned int)in.size());
+          ddsrt_md5_append(&md5st, (ddsrt_md5_byte_t*)in.data(), static_cast<unsigned int>(in.size()));
           ddsrt_md5_finish(&md5st, (ddsrt_md5_byte_t*)out.value);
 
           return true;
