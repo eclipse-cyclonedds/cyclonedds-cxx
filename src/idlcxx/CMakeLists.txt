@@ -9,6 +9,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
+include(GenerateExportHeader)
 
 add_library(
   idlcxx SHARED
@@ -29,21 +30,28 @@ target_include_directories(
 
 target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
 
-include(GenerateExportHeader)
-
 generate_export_header(
   idlcxx
   BASE_NAME IDLCXX_EXPORT
   EXPORT_MACRO_NAME IDLCXX_EXPORT
   EXPORT_FILE_NAME "include/idlcxx/export.h")
 
+add_library(${PROJECT_NAME}::idlcxx ALIAS idlcxx)
+
 install(
   TARGETS idlcxx
   EXPORT "${CMAKE_PROJECT_NAME}"
-  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib)
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT idlcxx
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT idlcxx
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT idlcxx)
+
+install(
+  FILES Generate.cmake
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/idlcxx"
+  COMPONENT idlcxx)
 
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
+
+include(Generate.cmake)
