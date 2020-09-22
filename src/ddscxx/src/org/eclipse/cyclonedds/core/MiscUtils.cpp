@@ -18,6 +18,10 @@
 
 #include "dds/dds.h"
 
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#endif
+
 void
 org::eclipse::cyclonedds::core::convertByteSeq(
         const dds::core::ByteSeq &from,

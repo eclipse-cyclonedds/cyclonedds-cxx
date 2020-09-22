@@ -9,5 +9,10 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
+
+IF (WIN32)
+  add_compile_options(/wd4251 /wd4250)
+ENDIF()
+
 add_subdirectory(ddscxx)
 add_subdirectory(idlcxx)

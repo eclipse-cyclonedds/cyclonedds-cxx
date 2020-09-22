@@ -121,8 +121,8 @@ class NoOpDataReaderListener;
  *
  * @endcode
  *
- * @see @ref DCPS_Modules_Subscription_DataReader "Data Reader"
- * @see @ref DCPS_Modules_Infrastructure_Listener "Listener information"
+ * @see for more information: @ref DCPS_Modules_Subscription_DataReader "Data Reader"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
  */
 template <typename T>
 class dds::sub::DataReaderListener
@@ -297,7 +297,7 @@ public:
     /**
      * <b><i>
      * NOTE: This operation is not yet implemented. It is scheduled for a future release.
-     * </i><b>
+     * </i></b>
      *
      * @param reader the DataReader the Listener is applied to
      * @param status the SampleLostStatus status

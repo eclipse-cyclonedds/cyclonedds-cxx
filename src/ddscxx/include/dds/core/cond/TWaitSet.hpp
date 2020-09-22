@@ -104,7 +104,7 @@ class TWaitSet;
  * }
  * @endcode
  *
- * @see @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
  */
 template <typename DELEGATE>
 class dds::core::cond::TWaitSet : public dds::core::Reference<DELEGATE>
@@ -289,7 +289,6 @@ public:
      * Waits for at least one of the attached Conditions to trigger and then
      * dispatches the functor associated with the Condition.
      *
-     * @return void
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::NullReferenceError
@@ -309,7 +308,6 @@ public:
      *
      * @param timeout   The maximum amount of time for which the dispatch should
      *                  block while waiting for a Condition to be triggered.
-     * @return void
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::NullReferenceError

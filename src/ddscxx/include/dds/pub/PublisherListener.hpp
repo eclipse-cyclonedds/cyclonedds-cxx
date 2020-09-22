@@ -97,8 +97,8 @@ class NoOpPublisherListener;
  *
  * @endcode
  *
- * @see @ref DCPS_Modules_Publisher "Publisher"
- * @see @ref DCPS_Modules_Infrastructure_Listener "Listener information"
+ * @see for more information: @ref DCPS_Modules_Publisher "Publisher"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
  */
 class OMG_DDS_API dds::pub::PublisherListener : public virtual dds::pub::AnyDataWriterListener
 {

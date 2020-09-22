@@ -55,7 +55,7 @@ class TSampleInfo;
  * - The InstanceHandle of the associated data Sample.
  * - The InstanceHandle of the associated publication.
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 template <typename DELEGATE>
 class dds::sub::TSampleInfo : public dds::core::Value<DELEGATE>

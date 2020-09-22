@@ -69,7 +69,7 @@ class TopicListener;
  * dds::pub::DataWriter<Foo::Bar> writer(publisher, topic);
  * @endcode
  *
- * @see @ref DCPS_Modules_TopicDefinition "Topic Definition"
+ * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class dds::topic::Topic : public dds::topic::TAnyTopic< DELEGATE<T> >

@@ -70,6 +70,15 @@ public:
      */
     TUserData(const TUserData& other);
 
+    /**
+    * Copies a UserData QoS instance
+    *
+    * @param other the UserData QoS instance to copy
+    *
+    * @return Reference to the Userdata QoS instance that was copied to
+    */
+    TUserData& operator=(const TUserData& other) = default;
+
 public:
     /**
      * Sets the sequence
@@ -137,6 +146,15 @@ public:
      * @param other the GroupData QoS instance to copy
      */
     TGroupData(const TGroupData& other);
+
+    /**
+     * Copies a GroupData QoS instance
+     *
+     * @param other the GroupData QoS instance to copy
+     *
+     * @return Reference to the GroupData QoS instance that was copied to
+     */
+    TGroupData& operator=(const TGroupData& other) = default;
 
     /**
      * Creates a GroupData QoS instance
@@ -226,6 +244,15 @@ public:
      */
     TTopicData(const uint8_t* value_begin, const uint8_t* value_end);
 
+    /**
+     * Copies a TopicData QoS instance
+     *
+     * @param other the TopicData QoS instance to copy
+     *
+     * @return Reference to the TopicData QoS instance that was copied to
+     */
+    TTopicData& operator=(const TTopicData& other) = default;
+
 public:
     /**
      * Set the sequence
@@ -291,6 +318,15 @@ public:
      */
     TEntityFactory(const TEntityFactory& other);
 
+    /**
+     * Copies an EntityFactory QoS instance
+     *
+     * @param other the EntityFactory QoS instance to copy
+     *
+     * @return Reference to the EntityFactory QoS instance that was copied to
+     */
+    TEntityFactory& operator=(const TEntityFactory& other) = default;
+
 public:
     /**
      * Sets a boolean indicating whether created Entities should be
@@ -346,6 +382,15 @@ public:
      */
     TTransportPriority(const TTransportPriority& other);
 
+    /**
+     * Copies a TransportPriority QoS instance
+     *
+     * @param other the TransportPriority QoS instance to copy
+     *
+     * @return Reference to the TransportPriority QoS instance that was copied to
+     */
+    TTransportPriority& operator=(const TTransportPriority& other) = default;
+
 public:
     /**
      * Sets the priority value
@@ -384,6 +429,15 @@ public:
      * @param other the Lifespan QoS instance to copy
      */
     TLifespan(const TLifespan& other);
+
+    /**
+     * Copies a Lifespan QoS instance
+     *
+     * @param other the Lifespan QoS instance to copy
+     *
+     * @return Reference to the Lifespan QoS instance that was copied to
+     */
+    TLifespan& operator=(const TLifespan& other) = default;
 
 public:
     /**
@@ -424,6 +478,15 @@ public:
      */
     TDeadline(const TDeadline& other);
 
+    /**
+     * Copies a Deadline QoS instance
+     *
+     * @param other the Deadline QoS instance to copy
+     *
+     * @return reference to the Deadline QoS instance that was copied to
+     */
+    TDeadline& operator=(const TDeadline& other) = default;
+
 public:
     /**
      * Sets the deadline period
@@ -462,6 +525,15 @@ public:
      * @param other the LatencyBudget QoS instance to copy
      */
     TLatencyBudget(const TLatencyBudget& other);
+
+    /**
+     * Copies a LatencyBudget QoS instance
+     *
+     * @param other the LatencyBudget QoS instance to copy
+     *
+     * @return reference to the LatencyBudget QoS instance that was copied to
+     */
+    TLatencyBudget& operator=(const TLatencyBudget& other) = default;
 
 public:
     /**
@@ -502,6 +574,15 @@ public:
      * @param other the TimeBasedFilter QoS instance to copy
      */
     TTimeBasedFilter(const TTimeBasedFilter& other);
+
+    /**
+     * Copies a TimeBasedFilter QoS instance
+     *
+     * @param other the TimeBasedFilter QoS instance to copy
+     *
+     * @return reference to the TimeBasedFilter QoS instance that was copied to
+     */
+    TTimeBasedFilter& operator=(const TTimeBasedFilter& other) = default;
 
 public:
     /**
@@ -549,6 +630,15 @@ public:
      * @param other the Partition QoS instance to copy
      */
     TPartition(const TPartition& other);
+
+    /**
+     * Copies a Partition QoS instance
+     *
+     * @param other the Partition QoS instance to copy
+     *
+     * @return reference to the Partition QoS instance that was copied to
+     */
+    TPartition& operator=(const TPartition& other) = default;
 
 public:
     /**
@@ -601,18 +691,29 @@ public:
      */
     TOwnership(const TOwnership& other);
 
+    /**
+     * Copies an Ownership QoS instance
+     *
+     * @param other the Ownership QoS instance to copy
+     *
+     * @return reference to the Ownership QoS instance that was copied to
+     */
+    TOwnership& operator=(const TOwnership& other) = default;
+
 public:
     /**
      * Set the kind
      *
-     * @param kind the kind
+     * @param kind the kind to set
+     *
+     * @return the kind that was set
      */
     TOwnership& kind(dds::core::policy::OwnershipKind::Type kind);
 
     /**
      * Get the kind
      *
-     * @param kind the kind
+     * @return the kind
      */
     dds::core::policy::OwnershipKind::Type kind() const;
 
@@ -651,6 +752,15 @@ public:
      * @param other the OwnershipStrength QoS instance to copy
      */
     TOwnershipStrength(const TOwnershipStrength& other);
+
+    /**
+     * Copies an OwnershipStrength QoS instance
+     *
+     * @param other the OwnershipStrength QoS instance to copy
+     *
+     * @return reference to the OwnershipStrength QoS instance that was copied to
+     */
+    TOwnershipStrength& operator=(const TOwnershipStrength& other) = default;
 
 public:
     /**
@@ -692,6 +802,15 @@ public:
      * @param other the WriterDataLifecycle QoS instance to copy
      */
     TWriterDataLifecycle(const TWriterDataLifecycle& other);
+
+    /**
+     * Copies a WriterDataLifecycle QoS instance
+     *
+     * @param other the WriterDataLifecycle QoS instance to copy
+     *
+     * @return reference to the WriterDataLifecycle QoS instance that was copied to
+     */
+    TWriterDataLifecycle& operator=(const TWriterDataLifecycle& other) = default;
 
 public:
     /**
@@ -750,6 +869,15 @@ public:
      * @param other the ReaderDataLifecycle QoS instance to copy
      */
     TReaderDataLifecycle(const TReaderDataLifecycle& other);
+
+    /**
+     * Copies a ReaderDataLifecycle QoS instance
+     *
+     * @param other the ReaderDataLifecycle QoS instance to copy
+     *
+     * @return reference to the ReaderDataLifecycle QoS that was copied to
+     */
+    TReaderDataLifecycle& operator=(const TReaderDataLifecycle& other) = default;
 public:
     /**
      * Gets the autopurge nowriter samples delay
@@ -822,18 +950,29 @@ public:
      */
     TDurability(const TDurability& other);
 
+    /**
+     * Copies a Durability QoS instance
+     *
+     * @param other the Durability QoS instance to copy
+     *
+     * @return reference to the Durability QoS that was copied to
+     */
+    TDurability& operator=(const TDurability& other) = default;
+
 public:
     /**
     * Set the kind
-    *
-    * @param kind the kind
+     *
+     * @param kind the kind to set
+     *
+     * @return the kind that was set
     */
     TDurability& kind(dds::core::policy::DurabilityKind::Type kind);
 
     /**
      * Get the kind
      *
-     * @param kind the kind
+     * @return the kind
      */
     dds::core::policy::DurabilityKind::Type  kind() const;
 
@@ -887,6 +1026,15 @@ public:
      * @param other the Presentation QoS instance to copy
      */
     TPresentation(const TPresentation& other);
+
+    /**
+     * Copies a Presentation QoS instance
+     *
+     * @param other the Presentation QoS instance to copy
+     *
+     * @return reference to the Presentation QoS that was copied to
+     */
+    TPresentation& operator=(const TPresentation& other) = default;
 
 public:
     /**
@@ -986,6 +1134,15 @@ public:
      */
     TReliability(const TReliability& other);
 
+    /**
+     * Copies a Reliability QoS instance
+     *
+     * @param other the Reliability QoS instance to copy
+     *
+     * @return reference to the Reliability QoS that was copied to
+     */
+    TReliability& operator=(const TReliability& other) = default;
+
 public:
     /**
      * Sets the kind
@@ -1017,7 +1174,7 @@ public:
 
 public:
     /**
-     * @param the max_blocking_time
+     * @param max_blocking_time the max blocking time
      * @return a Reliability QoS instance with the kind set to RELIABLE and the max_blocking_time
      * set to the supplied value
      */
@@ -1051,9 +1208,18 @@ public:
     /**
      * Copies a DestinationOrder QoS instance
      *
-     * @param other the Reliability QoS instance to copy
+     * @param other the DestinationOrder QoS instance to copy
      */
     TDestinationOrder(const TDestinationOrder& other);
+
+    /**
+     * Copies a DestinationOrder QoS instance
+     *
+     * @param other the DestinationOrder QoS instance to copy
+     *
+     * @return reference to the DestinationOrder QoS that was copied to
+     */
+    TDestinationOrder& operator=(const TDestinationOrder& other) = default;
 
 public:
     /**
@@ -1107,6 +1273,15 @@ public:
      */
     THistory(const THistory& other);
 
+    /**
+     * Copies a History QoS instance
+     *
+     * @param other the History QoS instance to copy
+     *
+     * @return reference to the History QoS that was copied to
+     */
+    THistory& operator=(const THistory& other) = default;
+
 public:
     /**
      * Gets the kind
@@ -1132,7 +1307,9 @@ public:
     /**
      * Sets the history depth
      *
-     * @param the history depth
+     * @param depth the history depth to set
+     *
+     * @return the history depth that was set
      */
     THistory& depth(int32_t depth);
 
@@ -1176,6 +1353,15 @@ public:
      * @param other the ResourceLimits QoS instance to copy
      */
     TResourceLimits(const TResourceLimits& other);
+
+    /**
+     * Copies a ResourceLimits QoS instance
+     *
+     * @param other the ResourceLimits QoS instance to copy
+     *
+     * @return reference to the ResourceLimits QoS that was copied to
+     */
+    TResourceLimits& operator=(const TResourceLimits& other) = default;
 
 public:
     /**
@@ -1246,6 +1432,15 @@ public:
      * @param other the Liveliness QoS instance to copy
      */
     TLiveliness(const TLiveliness& other);
+
+    /**
+     * Copies a Liveliness QoS instance
+     *
+     * @param other the Liveliness QoS instance to copy
+     *
+     * @return reference to the Liveliness QoS that was copied to
+     */
+    TLiveliness& operator=(const TLiveliness& other) = default;
 
 public:
     /**
@@ -1331,6 +1526,13 @@ public:
      */
     TDurabilityService(const TDurabilityService& other);
 
+    /**
+     * Copies a DurabilityService QoS instance
+     *
+     * @param other the DurabilityService QoS instance to copy
+     */
+    TDurabilityService<D>& operator=(const TDurabilityService<D>& other) = default;
+
 public:
     /**
      * Sets the service_cleanup_delay value
@@ -1349,7 +1551,9 @@ public:
     /**
      * Sets the history_kind
      *
-     * @param the history_kind
+     * @param history_kind the history kind to set
+     *
+     * @return the history kind that was set
      */
     TDurabilityService& history_kind(dds::core::policy::HistoryKind::Type history_kind);
 

@@ -108,6 +108,10 @@ public:
       void**& c_sample_pointers,
       dds_sample_info_t*& c_sample_infos,
       int num_read) {
+      (void)samples;
+      (void)c_sample_pointers;
+      (void)c_sample_infos;
+      (void)num_read;
       assert(1);
     }
 public:
@@ -164,9 +168,9 @@ public:
     void add_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
     void remove_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
 
-    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction copyIn)
+    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction _copyIn)
     {
-        this->copyIn = copyIn;
+        this->copyIn = _copyIn;
     }
 
     inline org::eclipse::cyclonedds::topic::copyInFunction getCopyIn() const
@@ -174,9 +178,9 @@ public:
         return this->copyIn;
     }
 
-    inline void setSampleSize(size_t sampleSize)
+    inline void setSampleSize(size_t _sampleSize)
     {
-        this->sampleSize = sampleSize;
+        this->sampleSize = _sampleSize;
     }
 
     inline size_t getSampleSize() const
@@ -184,9 +188,9 @@ public:
         return this->sampleSize;
     }
 
-    void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction copyOut)
+    void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
     {
-        this->copyOut = copyOut;
+        this->copyOut = _copyOut;
     }
 
     inline org::eclipse::cyclonedds::topic::copyOutFunction getCopyOut() const

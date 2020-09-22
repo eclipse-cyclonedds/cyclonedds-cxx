@@ -71,7 +71,7 @@ class ContentFilteredTopic;
  * dds::sub::DataReader<Foo::Bar> reader(subscriber, cfTopic);
  * @endcode
  *
- * @see @ref DCPS_Modules_TopicDefinition "Topic Definition"
+ * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class dds::topic::ContentFilteredTopic : public dds::topic::TTopicDescription< DELEGATE<T> >
@@ -132,9 +132,8 @@ public:
      *
      * See @ref anchor_dds_topic_filter_expression "SQL expression info"
      *
-     * @tparam begin Iterator pointing to the beginning of the parameters to set
-     * @tparam end   Iterator pointing to the end of the parameters to set
-     * @return void
+     * @param begin Iterator pointing to the beginning of the parameters to set
+     * @param end   Iterator pointing to the end of the parameters to set
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::NullReferenceError

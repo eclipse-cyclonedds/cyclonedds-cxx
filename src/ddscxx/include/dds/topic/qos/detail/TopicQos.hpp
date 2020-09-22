@@ -62,7 +62,7 @@
  * specified either at Topic creation time or prior to calling the enable
  * operation on the Topic.
  *
- * @see @ref DCPS_QoS
+ * @see for more information: @ref DCPS_QoS
  */
 class dds::topic::qos::TopicQos : public ::dds::core::EntityQos<org::eclipse::cyclonedds::topic::qos::TopicQosDelegate>
 {

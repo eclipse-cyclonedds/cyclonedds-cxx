@@ -154,8 +154,8 @@ namespace domain
  *
  * @endcode
  *
- * @see @ref DCPS_Modules_DomainParticipant "Domain Participant"
- * @see @ref DCPS_Modules_Infrastructure_Listener "Listener information"
+ * @see for more information: @ref DCPS_Modules_DomainParticipant "Domain Participant"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
  */
 class OMG_DDS_API DomainParticipantListener :
     public virtual dds::pub::PublisherListener,

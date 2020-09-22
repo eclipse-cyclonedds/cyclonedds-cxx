@@ -35,7 +35,7 @@ namespace topic
 /**
  * <b><i>This operation is not yet implemented. It is scheduled for a future release.</i></b>
  *
- * @see @ref DCPS_Modules_TopicDefinition "Topic Definition"
+ * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class MultiTopic : public TTopicDescription< DELEGATE<T> >

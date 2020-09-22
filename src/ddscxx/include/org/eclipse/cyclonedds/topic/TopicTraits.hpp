@@ -69,6 +69,7 @@ public:
 
     static ddsi_sertopic *getSerTopic(const std::string& topic_name)
     {
+        (void)topic_name;
         return NULL;
     }
 

@@ -54,10 +54,10 @@ class TReadCondition;
  * with a WaitSet is the same.
  *
  * @see dds::core::cond::Condition
- * @see @ref DCPS_Modules_Infrastructure_Status  "Status concept"
- * @see @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
- * @see @ref DCPS_Modules_Infrastructure_Waitset "Subscription concept"
- * @see @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Status  "Status concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "Subscription concept"
+ * @see for more information: @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
  */
 template <typename DELEGATE>
 class dds::sub::cond::TReadCondition : public dds::core::cond::TCondition<DELEGATE>

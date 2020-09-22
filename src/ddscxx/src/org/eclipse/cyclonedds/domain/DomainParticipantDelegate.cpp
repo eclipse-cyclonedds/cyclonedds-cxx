@@ -422,7 +422,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topic(
 void
 org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topics(
         const std::string& type_name,
-        std::vector<dds_entity_t>& topics,
+        std::vector<dds_entity_t>& _topics,
         uint32_t max_size)
 {
     /*
@@ -430,7 +430,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topics(
      * AnyTopicDelegate::discover_topics(), which are used
      * by topic/discovery.hpp.
      */
-    (void)topics;
+    (void)_topics;
     (void)max_size;
     (void)type_name;
     /* Add support during Topic discovery implementation. */
