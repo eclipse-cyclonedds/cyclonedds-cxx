@@ -420,7 +420,7 @@ get_cpp11_case_data(idl_backend_ctx ctx, const idl_node_t *node)
 static uint64_t
 get_potential_nr_discr_values(const idl_union_t *union_node)
 {
-  uint64_t nr_discr_values;
+  uint64_t nr_discr_values = 0;
   const idl_node_t *node = union_node->switch_type_spec;
 
   switch (node->mask & (IDL_BASE_TYPE | IDL_CONSTR_TYPE))
@@ -719,7 +719,7 @@ get_default_discr_value(idl_backend_ctx ctx, const idl_union_t *union_node)
 
   if (union_ctx->nr_unused_discr_values) {
     /* find the smallest available unused discr_value. */
-    void **all_labels = malloc(sizeof(void *) * union_ctx->total_label_count);
+    void **all_labels = malloc(sizeof(void *) * (size_t)union_ctx->total_label_count);
     uint32_t i = 0;
     const idl_case_t *case_data = union_node->cases;
     while (case_data)

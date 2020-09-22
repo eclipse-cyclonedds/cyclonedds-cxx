@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include "idlcxx/backend.h"
 
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#endif
+
 struct idl_backend_ctx_s
 {
   idl_file_out    output;
@@ -317,7 +321,6 @@ idl_walk_tree(
 static idl_retcode_t
 prune_include_list(idl_backend_ctx ctx, const idl_node_t *node)
 {
-  const idl_node_t *sub_nodes = NULL;
   idl_retcode_t result = IDL_RETCODE_OK;
 
   /* If you find a dependency to another file than your own, prune it form the include list. */
