@@ -95,8 +95,8 @@ namespace pub
  *
  * @endcode
  *
- * @see @ref DCPS_Modules_Publication_DataWriter "Data Writer"
- * @see @ref DCPS_Modules_Infrastructure_Listener "Listener information"
+ * @see for more information: @ref DCPS_Modules_Publication_DataWriter "Data Writer"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
  */
 template <typename T>
 class DataWriterListener

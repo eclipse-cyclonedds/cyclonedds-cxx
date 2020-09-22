@@ -200,7 +200,7 @@ find(const dds::sub::Subscriber& sub,
  * an application should use to access data is fully described in dds::core::policy::Presentation.
  *
  * @param sub the Subscriber for which to find a DataReader
- * @param data_state the data_state to find
+ * @param rs the data_state to find
  * @param begin a back inserting iterator pointing to the start
  *        of a container in which to put the DataReaders
  * @return the total number of elements returned

@@ -105,9 +105,9 @@ protected:
                           const dds::topic::TopicDescription& td);
 
 
-    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction copyIn)
+    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction _copyIn)
     {
-        this->copyIn = copyIn;
+        this->copyIn = _copyIn;
     }
 
     inline org::eclipse::cyclonedds::topic::copyInFunction getCopyIn()
@@ -115,9 +115,9 @@ protected:
         return this->copyIn;
     }
 
-    inline void setSampleSize(size_t sampleSize)
+    inline void setSampleSize(size_t _sampleSize)
     {
-        this->sampleSize = sampleSize;
+        this->sampleSize = _sampleSize;
     }
 
     inline size_t getSampleSize()
@@ -125,9 +125,9 @@ protected:
         return this->sampleSize;
     }
 
-    inline void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction copyOut)
+    inline void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
     {
-        this->copyOut = copyOut;
+        this->copyOut = _copyOut;
     }
 
     inline org::eclipse::cyclonedds::topic::copyOutFunction getCopyOut()

@@ -63,7 +63,7 @@
  * specified either at DataWriter creation time or prior to calling the enable
  * operation on the DataWriter.
  *
- * @see @ref DCPS_QoS
+ * @see for more information: @ref DCPS_QoS
  */
 class dds::pub::qos::DataWriterQos : public ::dds::core::EntityQos<org::eclipse::cyclonedds::pub::qos::DataWriterQosDelegate>
 {

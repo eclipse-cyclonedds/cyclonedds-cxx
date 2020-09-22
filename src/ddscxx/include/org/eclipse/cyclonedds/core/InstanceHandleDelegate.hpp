@@ -46,6 +46,7 @@ public:
     InstanceHandleDelegate(const dds::core::null_type& src);
     InstanceHandleDelegate(const InstanceHandleDelegate& other);
 
+    InstanceHandleDelegate& operator=(const InstanceHandleDelegate& src) = default;
 
 public:
     bool operator==(const InstanceHandleDelegate& that) const;

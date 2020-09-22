@@ -55,7 +55,7 @@ class TQuery;
  * @see dds::sub::cond::QueryCondition
  * @see dds::sub::DataReader::Selector
  * @see dds::sub::DataReader::ManipulatorSelector
- * @see @ref DCPS_Modules_Infrastructure_Waitset "Subscription concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "Subscription concept"
  */
 template <typename DELEGATE>
 class dds::sub::TQuery: public virtual dds::core::Reference<DELEGATE> {
@@ -79,7 +79,7 @@ public:
    * Create a dds::sub::Query associated with an dds::sub::AnyDataReader.
    *
    * @param  dr The AnyDataReader to associate with the Query.
-   * @param  expression @ref anchor_dds_sub_query_expression "SQL expression"
+   * @param  expression an @ref anchor_dds_sub_query_expression "SQL expression"
    * @throw  dds::core::Exception
    */
   TQuery(const dds::sub::AnyDataReader& dr, const std::string& expression);
@@ -88,9 +88,9 @@ public:
    * Create a dds::sub::Query associated with an dds::sub::AnyDataReader.
    *
    * @param  dr The AnyDataReader to associate with the Query.
-   * @param  expression @ref anchor_dds_sub_query_expression "SQL expression"
-   * @tparam params_begin Iterator pointing to the beginning of the parameters to set
-   * @tparam params_end   Iterator pointing to the end of the parameters to set
+   * @param  expression an @ref anchor_dds_sub_query_expression "SQL expression"
+   * @param params_begin Iterator pointing to the beginning of the parameters to set
+   * @param params_end   Iterator pointing to the end of the parameters to set
    * @throw  dds::core::Exception
    */
   template<typename FWIterator>
@@ -101,8 +101,8 @@ public:
    * Create a dds::sub::Query associated with an dds::sub::AnyDataReader.
    *
    * @param  dr The AnyDataReader to associate with the Query.
-   * @param  expression @ref anchor_dds_sub_query_expression "SQL expression"
-   * @tparam params Vector containing SQL expression parameters
+   * @param  expression an @ref anchor_dds_sub_query_expression "SQL expression"
+   * @param params Vector containing SQL expression parameters
    * @throw  dds::core::Exception
    */
   TQuery(const dds::sub::AnyDataReader& dr, const std::string& expression,
@@ -119,7 +119,7 @@ public:
   /**
    * Set new expression.
    *
-   * @param  expr ref anchor_dds_sub_query_expression "SQL expression"
+   * @param  expr an ref anchor_dds_sub_query_expression "SQL expression"
    * @throw  dds::core::Exception
    */
   void expression(const std::string& expr);
@@ -173,8 +173,8 @@ public:
    *
    * See @ref anchor_dds_sub_query_expression "SQL expression info"
    *
-   * @tparam begin Iterator pointing to the beginning of the parameters to set
-   * @tparam end   Iterator pointing to the end of the parameters to set
+   * @param begin Iterator pointing to the beginning of the parameters to set
+   * @param end   Iterator pointing to the end of the parameters to set
    * @throw  dds::core::Exception
    */
   template<typename FWIterator>

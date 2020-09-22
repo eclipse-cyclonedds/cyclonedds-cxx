@@ -53,7 +53,7 @@
  * specified either at Publisher creation time or prior to calling the enable operation
  * on the Publisher.
  *
- * @see @ref DCPS_QoS
+ * @see for more information: @ref DCPS_QoS
  */
 class dds::pub::qos::PublisherQos : public ::dds::core::EntityQos<org::eclipse::cyclonedds::pub::qos::PublisherQosDelegate>
 {

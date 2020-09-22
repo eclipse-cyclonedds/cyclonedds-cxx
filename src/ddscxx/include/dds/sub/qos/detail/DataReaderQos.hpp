@@ -61,7 +61,7 @@
  * specified either at DataReader creation time or prior to calling the enable
  * operation on the DataReader.
  *
- * @see @ref DCPS_QoS
+ * @see for more information: @ref DCPS_QoS
  */
 class dds::sub::qos::DataReaderQos : public ::dds::core::EntityQos<org::eclipse::cyclonedds::sub::qos::DataReaderQosDelegate>
 {

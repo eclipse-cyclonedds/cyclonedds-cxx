@@ -74,8 +74,8 @@ class TSubscriptionBuiltinTopicData;
  * // dds::topic::ParticipantBuiltinTopicData samples.
  * @endcode
  *
- * @see @ref DCPS_Builtin_Topics
- * @see @ref DCPS_Builtin_Topics_ParticipantData
+ * @see for more information: @ref DCPS_Builtin_Topics
+ * @see for more information: @ref DCPS_Builtin_Topics_ParticipantData
  */
 template <typename D>
 class dds::topic::TParticipantBuiltinTopicData : public ::dds::core::Value<D>
@@ -125,8 +125,8 @@ public:
  * // dds::topic::TopicBuiltinTopicData samples.
  * @endcode
  *
- * @see @ref DCPS_Builtin_Topics
- * @see @ref DCPS_Builtin_Topics_TopicData
+ * @see for more information: @ref DCPS_Builtin_Topics
+ * @see for more information: @ref DCPS_Builtin_Topics_TopicData
  */
 template <typename D>
 class dds::topic::TTopicBuiltinTopicData : public ::dds::core::Value<D>
@@ -249,8 +249,8 @@ public:
  * // dds::topic::PublicationBuiltinTopicData samples.
  * @endcode
  *
- * @see @ref DCPS_Builtin_Topics
- * @see @ref DCPS_Builtin_Topics_PublicationData
+ * @see for more information: @ref DCPS_Builtin_Topics
+ * @see for more information: @ref DCPS_Builtin_Topics_PublicationData
  */
 template <typename D>
 class dds::topic::TPublicationBuiltinTopicData  : public ::dds::core::Value<D>
@@ -390,8 +390,8 @@ public:
  * // dds::topic::SubscriptionBuiltinTopicData samples.
  * @endcode
  *
- * @see @ref DCPS_Builtin_Topics
- * @see @ref DCPS_Builtin_Topics_SubscriptionData
+ * @see for more information: @ref DCPS_Builtin_Topics
+ * @see for more information: @ref DCPS_Builtin_Topics_SubscriptionData
  */
 template <typename D>
 class dds::topic::TSubscriptionBuiltinTopicData  : public ::dds::core::Value<D>

@@ -47,13 +47,13 @@ public:
 
     /**
      *  @internal Inserts a EntityDelegate into the set.
-     * @param entity The org::eclipse::cyclonedds::core::ObjectDelegate to store
+     * @param obj The org::eclipse::cyclonedds::core::ObjectDelegate to store
      */
     void insert(org::eclipse::cyclonedds::core::ObjectDelegate& obj);
 
     /**
      *  @internal Erases a EntityDelegate from the set.
-     * @param entity The org::eclipse::cyclonedds::core::ObjectDelegate to delete
+     * @param obj The org::eclipse::cyclonedds::core::ObjectDelegate to delete
      */
     void erase(org::eclipse::cyclonedds::core::ObjectDelegate& obj);
 

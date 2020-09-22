@@ -47,7 +47,7 @@ class SubscriberListener;
  * concerned DataReader objects through the operation get_datareaders and
  * then access the data available through operations on the DataReader.
  *
- * @see @ref DCPS_Modules_Subscriber "Subscriber"
+ * @see for more information: @ref DCPS_Modules_Subscriber "Subscriber"
  */
 template <typename DELEGATE>
 class dds::sub::TSubscriber : public dds::core::TEntity<DELEGATE>

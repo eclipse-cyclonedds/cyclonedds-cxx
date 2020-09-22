@@ -44,6 +44,8 @@ public:
           count_(other.count())
     { }
 
+    QosPolicyCountDelegate& operator=(const QosPolicyCountDelegate& other) = default;
+
 public:
     dds::core::policy::QosPolicyId policy_id() const
     {
