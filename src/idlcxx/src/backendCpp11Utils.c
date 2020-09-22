@@ -18,6 +18,10 @@
 #include "idl/string.h"
 #include "idlcxx/backendCpp11Utils.h"
 
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#endif
+
 /* Specify a list of all C++11 keywords */
 static const char* cpp11_keywords[] =
 {
@@ -247,7 +251,7 @@ get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
 static char *
 get_cpp11_base_type_const_value(const idl_constval_t *constval)
 {
-  int cnt;
+  int cnt = -1;
   char *str = NULL;
   static const idl_mask_t mask = (IDL_BASE_TYPE_MASK|(IDL_BASE_TYPE_MASK-1));
 

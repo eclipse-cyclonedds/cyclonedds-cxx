@@ -20,6 +20,10 @@
 #include "idlcxx/backendCpp11Type.h"
 #include "idlcxx/streamer_generator.h"
 
+#ifdef _WIN32
+#pragma warning(disable : 4996)
+#endif
+
 static char *
 figure_guard(const char *file)
 {
@@ -31,7 +35,7 @@ figure_guard(const char *file)
   /* replace any non-alphanumeric characters */
   for (char *ptr = inc; *ptr; ptr++) {
     if ((*ptr >= 'a' && *ptr <= 'z'))
-      *ptr = ('A' + (*ptr - 'a'));
+      *ptr = (char)('A' + (*ptr - 'a'));
     else if (!(*ptr >= 'A' && *ptr <= 'Z') && !(*ptr >= '0' && *ptr <= '9'))
       *ptr = '_';
   }
