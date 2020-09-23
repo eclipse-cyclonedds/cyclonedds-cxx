@@ -104,17 +104,6 @@ protected:
     AnyDataWriterDelegate(const dds::pub::qos::DataWriterQos& qos,
                           const dds::topic::TopicDescription& td);
 
-
-    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction _copyIn)
-    {
-        this->copyIn = _copyIn;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyInFunction getCopyIn()
-    {
-        return this->copyIn;
-    }
-
     inline void setSampleSize(size_t _sampleSize)
     {
         this->sampleSize = _sampleSize;
@@ -123,16 +112,6 @@ protected:
     inline size_t getSampleSize()
     {
         return this->sampleSize;
-    }
-
-    inline void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
-    {
-        this->copyOut = _copyOut;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyOutFunction getCopyOut()
-    {
-        return this->copyOut;
     }
 
     void

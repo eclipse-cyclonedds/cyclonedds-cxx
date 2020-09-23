@@ -168,16 +168,6 @@ public:
     void add_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
     void remove_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
 
-    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction _copyIn)
-    {
-        this->copyIn = _copyIn;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyInFunction getCopyIn() const
-    {
-        return this->copyIn;
-    }
-
     inline void setSampleSize(size_t _sampleSize)
     {
         this->sampleSize = _sampleSize;
@@ -186,16 +176,6 @@ public:
     inline size_t getSampleSize() const
     {
         return this->sampleSize;
-    }
-
-    void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
-    {
-        this->copyOut = _copyOut;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyOutFunction getCopyOut() const
-    {
-        return this->copyOut;
     }
 
     void setSample(void* sample);
