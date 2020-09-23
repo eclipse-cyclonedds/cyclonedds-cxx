@@ -2414,7 +2414,7 @@ CU_Test(streamer_generator, bounded_sequence)
   test_bounded_sequence();
 }
 
-CU_Test(streamer_generator, typedef_resolution, .disabled =true)  //not working at the moment, therefore skipping
+CU_Test(streamer_generator, typedef_resolution)
 {
   test_typedef_resolution();
 }
