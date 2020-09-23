@@ -91,9 +91,9 @@ ubuntu1804_clang10: &ubuntu1804_clang10
   install:
     - pip install conan --upgrade --user
 
-macos1015_xcode11_6: &macos1015_xcode11_6
+macos1015_xcode11_5: &macos1015_xcode11_5
   os: osx
-  osx_image: xcode11.6
+  osx_image: xcode11.5
   compiler: clang
   addons:
     homebrew:
@@ -166,9 +166,9 @@ jobs:
       env: [ ARCH=x86_64, BUILD_TYPE=Debug, SANITIZER=address ]
     - <<: *ubuntu1804_clang10
       env: [ ARCH=x86_64, BUILD_TYPE=Release ]
-    - <<: *macos1015_xcode11_6
+    - <<: *macos1015_xcode11_5
       env: [ ARCH=x86_64, BUILD_TYPE=Debug, SANITIZER=address ]
-    - <<: *macos1015_xcode11_6
+    - <<: *macos1015_xcode11_5
       env: [ ARCH=x86_64, BUILD_TYPE=Release ]
     - <<: *windows1809_vs2017
       env: [ ARCH=x86, BUILD_TYPE=Debug ]
