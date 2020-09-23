@@ -72,6 +72,9 @@ public:
     virtual SamplesHolder& operator++(int) = 0;
     virtual void *data() = 0;
     virtual detail::SampleInfo* info() = 0;
+    virtual void **cpp_sample_pointers() = 0;
+    virtual dds_sample_info_t *cpp_info_pointers() = 0;
+    virtual void set_sample_infos(dds_sample_info_t *info) = 0;
 };
 
 }
@@ -102,18 +105,10 @@ public:
                           const dds::topic::TopicDescription& td);
     virtual ~AnyDataReaderDelegate();
 
+    static void copy_sample_infos(
+        dds_sample_info_t &from,
+        dds::sub::SampleInfo &to);
 
-    virtual void copy_samples(
-      dds::sub::detail::SamplesHolder& samples,
-      void**& c_sample_pointers,
-      dds_sample_info_t*& c_sample_infos,
-      int num_read) {
-      (void)samples;
-      (void)c_sample_pointers;
-      (void)c_sample_infos;
-      (void)num_read;
-      assert(1);
-    }
 public:
     /* DDS API mirror. */
     dds::sub::qos::DataReaderQos qos() const;
@@ -235,22 +230,18 @@ public:
 
 private:
     bool init_samples_buffers(
-            const uint32_t      requested_max_samples,
-            uint32_t&           samples_to_read_cnt,
-            size_t&             c_sample_pointers_size,
-            void**&             c_sample_pointers,
-            dds_sample_info_t*& c_sample_infos);
+            const uint32_t                    requested_max_samples,
+            uint32_t&                         samples_to_read_cnt,
+            size_t&                           c_sample_pointers_size,
+            dds::sub::detail::SamplesHolder&  samples,
+            void**&                           c_sample_pointers,
+            dds_sample_info_t*&               c_sample_infos);
 
     void fini_samples_buffers(
             void**& c_sample_pointers,
-            dds_sample_info_t*& c_sample_infos,
-            size_t c_sample_pointers_size);
+            dds_sample_info_t*& c_sample_infos);
 
 protected:
-
-  static void copy_sample_info(
-    dds_sample_info_t& from,
-    dds::sub::SampleInfo* to);
 
     org::eclipse::cyclonedds::topic::copyInFunction  copyIn;
     org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
