@@ -17,6 +17,7 @@
  */
 
 #include <dds/sub/LoanedSamples.hpp>
+#include "org/eclipse/cyclonedds/sub/AnyDataReaderDelegate.hpp"
 
 namespace dds
 {
@@ -24,6 +25,7 @@ namespace sub
 {
 namespace detail
 {
+
 template <typename T>
 class LoanedSamplesHolder : public SamplesHolder
 {
@@ -54,6 +56,32 @@ public:
     detail::SampleInfo* info()
     {
         return (*this->samples_.delegate())[this->index].delegate().info_ptr();
+    }
+
+    void **cpp_sample_pointers()
+    {
+
+        uint32_t cpp_sample_size = this->samples_.delegate()->length();
+        void **c_sample_pointers = new void * [cpp_sample_size];
+        for (uint32_t i = 0; i < cpp_sample_size; ++i) {
+            c_sample_pointers[i] = (*samples_.delegate())[i].delegate().data_ptr();
+        }
+        return c_sample_pointers;
+    }
+
+    dds_sample_info_t *cpp_info_pointers()
+    {
+        uint32_t cpp_sample_size = this->samples_.delegate()->length();
+        dds_sample_info_t *c_info_pointers = new dds_sample_info_t[cpp_sample_size];
+        return c_info_pointers;
+    }
+
+    void set_sample_infos(dds_sample_info_t *info)
+    {
+        uint32_t cpp_sample_size = this->samples_.delegate()->length();
+        for (uint32_t i = 0; i < cpp_sample_size; ++i) {
+            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], (*samples_.delegate())[i].delegate().info());
+        }
     }
 
 private:
@@ -96,6 +124,30 @@ public:
         return (*iterator).delegate().info_ptr();
     }
 
+    void **cpp_sample_pointers()
+    {
+        void **c_sample_pointers = new void * [length];
+        SamplesFWIterator tmp_iterator = iterator;
+        for (uint32_t i = 0; i < length; ++i, ++tmp_iterator) {
+            c_sample_pointers[i] = (*tmp_iterator).delegate().data_ptr();
+        }
+        return c_sample_pointers;
+    }
+
+    dds_sample_info_t *cpp_info_pointers()
+    {
+      dds_sample_info_t *c_info_pointers = new dds_sample_info_t[length];
+      return c_info_pointers;
+    }
+
+    void set_sample_infos(dds_sample_info_t *info)
+    {
+        SamplesFWIterator tmp_iterator = iterator;
+        for (uint32_t i = 0; i < length; ++i, ++tmp_iterator) {
+            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], (tmp_iterator->delegate()).info());
+        }
+    }
+
 private:
     SamplesFWIterator& iterator;
     uint32_t length;
@@ -112,6 +164,7 @@ public:
 
     void set_length(uint32_t len) {
         this->length = len;
+        samples.resize(len);
     }
 
     uint32_t get_length() const {
@@ -120,24 +173,47 @@ public:
 
     SamplesHolder& operator++(int)
     {
-        *this->iterator = this->sample;
         ++this->iterator;
         return *this;
     }
 
     void *data()
     {
-        return this->sample.delegate().data_ptr();
+        return this->samples[0].delegate().data_ptr();
     }
 
     detail::SampleInfo* info()
     {
-        return this->sample.delegate().info_ptr();
+        return this->samples[0].delegate().info_ptr();
+    }
+
+    void **cpp_sample_pointers()
+    {
+        void **c_sample_pointers = new void*[length];
+        for (uint32_t i = 0; i < length; ++i) {
+          c_sample_pointers[i] = samples[i].delegate().data_ptr();
+        }
+        return c_sample_pointers;
+    }
+
+    dds_sample_info_t *cpp_info_pointers()
+    {
+        dds_sample_info_t *c_info_pointers = new dds_sample_info_t[length];
+        return c_info_pointers;
+    }
+
+    void set_sample_infos(dds_sample_info_t *info)
+    {
+        for (uint32_t i = 0; i < length; ++i) {
+            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], *(samples[i].delegate().info_ptr()));
+            this->iterator = std::move(samples[i]);
+            this->iterator++;
+        }
     }
 
 private:
     SamplesBIIterator& iterator;
-    dds::sub::Sample<T, dds::sub::detail::Sample> sample;
+    std::vector< dds::sub::Sample<T, dds::sub::detail::Sample> > samples;
     uint32_t length;
 
 };
