@@ -192,16 +192,6 @@ AnyTopicDelegate::discover_topics(
     ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Discovery of AnyTopics not implemented yet");
 }
 
-void AnyTopicDelegate::set_copy_out(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
-{
-    this->copyOut = _copyOut;
-}
-
-org::eclipse::cyclonedds::topic::copyOutFunction AnyTopicDelegate::get_copy_out()
-{
-    return this->copyOut;
-}
-
 void AnyTopicDelegate::set_sample(void* sample)
 {
     sample_ = sample;

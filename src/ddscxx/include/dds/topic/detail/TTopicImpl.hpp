@@ -200,7 +200,6 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
     this->set_ddsc_entity(ddsc_topic);
     this->listener(NULL, dds::core::status::StatusMask::none());
 
-    this->AnyTopicDelegate::set_copy_out(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyOut());
     this->AnyTopicDelegate::set_sample(&this->sample_);
 }
 

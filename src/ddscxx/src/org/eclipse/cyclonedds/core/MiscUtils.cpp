@@ -17,10 +17,7 @@
 #include <org/eclipse/cyclonedds/core/MiscUtils.hpp>
 
 #include "dds/dds.h"
-
-#ifdef _WIN32
-#pragma warning(disable : 4996)
-#endif
+#include "dds/ddsrt/string.h"
 
 void
 org::eclipse::cyclonedds::core::convertByteSeq(
@@ -69,7 +66,7 @@ org::eclipse::cyclonedds::core::convertStringSeq(
     {
         size_t len = from[i].length() + 1;
         to[i] = new char[len];
-        strncpy(to[i], from[i].c_str(), len);
+        ddsrt_strlcpy(to[i], from[i].c_str(), len);
     }
 }
 

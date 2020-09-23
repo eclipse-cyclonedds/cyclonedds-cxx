@@ -88,9 +88,6 @@ public:
                     std::vector<dds::topic::TAnyTopic<AnyTopicDelegate> >& topics,
                     uint32_t max_size);
 
-    void set_copy_out(org::eclipse::cyclonedds::topic::copyOutFunction copyOut);
-    org::eclipse::cyclonedds::topic::copyOutFunction get_copy_out();
-
     void set_sample(void* sample);
     void* get_sample();
 
