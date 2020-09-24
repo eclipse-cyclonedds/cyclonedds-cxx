@@ -169,7 +169,7 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
   m_size = requested_size + n_pad_bytes;
 
   // zero the very end. The caller isn't necessarily going to overwrite it.
-  std::memset(calc_offset(m_data.get(), requested_size), '\0', n_pad_bytes);
+  std::memset(calc_offset(m_data.get(), (ptrdiff_t)requested_size), '\0', n_pad_bytes);
 }
 
 template <typename T>
@@ -210,7 +210,7 @@ template <typename T>
 void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  memcpy(buf, calc_offset(d->data(), off), sz);
+  memcpy(buf, calc_offset(d->data(), (ptrdiff_t)off), sz);
 }
 
 template <typename T>
@@ -219,10 +219,7 @@ ddsi_serdata_t *serdata_to_ser_ref(
   size_t sz, ddsrt_iovec_t* ref)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  uintptr_t a, b;
-  a = (uintptr_t)d->data();
-  b = (uintptr_t)calc_offset(d->data(), off);
-  ref->iov_base = calc_offset(d->data(), off);
+  ref->iov_base = calc_offset(d->data(), (ptrdiff_t)off);
   ref->iov_len = (ddsrt_iov_len_t)sz;
   return ddsi_serdata_ref(d);
 }

@@ -121,6 +121,14 @@ public:
      */
     LoanedSamples(const LoanedSamples& other);
 
+    /**
+     * Copy-assigns a LoanedSamples instance to another.
+     *
+     * No actual data samples are copied.<br>
+     * Just references and reference counts are updated.
+     */
+    LoanedSamples& operator=(const LoanedSamples& other) = default;
+
 
 public:
     /**
