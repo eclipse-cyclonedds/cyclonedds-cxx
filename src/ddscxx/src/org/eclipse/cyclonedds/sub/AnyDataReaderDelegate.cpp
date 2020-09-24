@@ -28,7 +28,6 @@
 #include "dds/dds.h"
 #include "dds/ddsc/dds_internal_api.h"
 
-
 namespace org
 {
 namespace eclipse
@@ -128,11 +127,12 @@ AnyDataReaderDelegate::get_ddsc_state_mask(const dds::sub::status::DataState& st
 }
 
 bool AnyDataReaderDelegate::init_samples_buffers(
-                    const uint32_t            requested_max_samples,
-                          uint32_t&           samples_to_read_cnt,
-                          size_t&             c_sample_pointers_size,
-                          void**&             c_sample_pointers,
-                          dds_sample_info_t*& c_sample_infos)
+                    const uint32_t                          requested_max_samples,
+                          uint32_t&                         samples_to_read_cnt,
+                          size_t&                           c_sample_pointers_size,
+                          dds::sub::detail::SamplesHolder&  samples,
+                          void**&                           c_sample_pointers,
+                          dds_sample_info_t*&               c_sample_infos)
 {
     if(requested_max_samples == (uint32_t)dds::core::LENGTH_UNLIMITED)
     {
@@ -179,16 +179,14 @@ bool AnyDataReaderDelegate::init_samples_buffers(
     /* Prepare the buffers. */
     if (c_sample_pointers_size)
     {
-      c_sample_pointers = new void * [c_sample_pointers_size];
-      c_sample_infos = new dds_sample_info_t[c_sample_pointers_size];
       /*
        * Unfortunately, the kludge doesn't work properly with read/take with
        * loan. So, prepare sample memory up-front. This will cause performance
        * decrease due to an extra copy action. Oh, well.
        */
-      for (size_t i = 0; i < c_sample_pointers_size; i++) {
-          c_sample_pointers[i] = dds_alloc(this->getSampleSize());
-      }
+        samples.set_length((uint32_t) c_sample_pointers_size);
+        c_sample_pointers = samples.cpp_sample_pointers();
+        c_sample_infos = samples.cpp_info_pointers();
     }
 
     return (c_sample_pointers_size > 0);
@@ -196,20 +194,10 @@ bool AnyDataReaderDelegate::init_samples_buffers(
 
 void AnyDataReaderDelegate::fini_samples_buffers(
                     void**& c_sample_pointers,
-                    dds_sample_info_t*& c_sample_infos,
-                    size_t c_sample_pointers_size)
+                    dds_sample_info_t*& c_sample_infos)
 {
-  (void)c_sample_pointers;
-  (void)c_sample_infos;
-  (void)c_sample_pointers_size;
-#if 0
-    for(size_t i = 0; i < c_sample_pointers_size; i++)
-    {
-        dds_sample_free(c_sample_pointers[i], this->getDescriptor(), DDS_FREE_ALL);
-    }
     delete [] c_sample_infos;
     delete [] c_sample_pointers;
-#endif
 }
 
 
@@ -234,6 +222,7 @@ AnyDataReaderDelegate::read(
                                requested_max_samples,
                                samples_to_read_cnt,
                                c_sample_pointers_size,
+                               samples,
                                c_sample_pointers,
                                c_sample_infos);
 
@@ -248,8 +237,14 @@ AnyDataReaderDelegate::read(
                           samples_to_read_cnt,
                           ddsc_mask);
 
-      copy_samples(samples, c_sample_pointers, c_sample_infos, (int)ret);
-      fini_samples_buffers(c_sample_pointers, c_sample_infos, c_sample_pointers_size);
+      if (ret > 0) {
+        /* When > 0, ret represents the number of samples read. */
+          samples.set_length((uint32_t) ret);
+      } else {
+          samples.set_length(0);
+      }
+
+      fini_samples_buffers(c_sample_pointers, c_sample_infos);
       ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Getting sample failed.");
     }
 }
@@ -276,6 +271,7 @@ AnyDataReaderDelegate::take(
                                requested_max_samples,
                                samples_to_read_cnt,
                                c_sample_pointers_size,
+                               samples,
                                c_sample_pointers,
                                c_sample_infos);
 
@@ -290,8 +286,15 @@ AnyDataReaderDelegate::take(
                             samples_to_read_cnt,
                             ddsc_mask);
 
-        copy_samples(samples, c_sample_pointers, c_sample_infos, (int)ret);
-        fini_samples_buffers(c_sample_pointers, c_sample_infos, c_sample_pointers_size);
+        if (ret > 0) {
+          /* When > 0, ret represents the number of samples read. */
+            samples.set_length((uint32_t) ret);
+            samples.set_sample_infos(c_sample_infos);
+        } else {
+            samples.set_length(0);
+        }
+
+        fini_samples_buffers(c_sample_pointers, c_sample_infos);
         ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Getting sample failed.");
     }
 }
@@ -318,24 +321,32 @@ AnyDataReaderDelegate::read_instance(
                                requested_max_samples,
                                samples_to_read_cnt,
                                c_sample_pointers_size,
+                               samples,
                                c_sample_pointers,
                                c_sample_infos);
 
     if (expect_samples)
     {
-      dds_return_t ret;
-      /* The reader can also be a condition. */
-      ret = dds_read_instance_mask(reader,
-                                   c_sample_pointers,
-                                   c_sample_infos,
-                                   c_sample_pointers_size,
-                                   samples_to_read_cnt,
-                                   handle->handle(),
-                                   ddsc_mask );
+        dds_return_t ret;
+        /* The reader can also be a condition. */
+        ret = dds_read_instance_mask(reader,
+                                     c_sample_pointers,
+                                     c_sample_infos,
+                                     c_sample_pointers_size,
+                                     samples_to_read_cnt,
+                                     handle->handle(),
+                                     ddsc_mask );
 
-      copy_samples(samples, c_sample_pointers, c_sample_infos, (int)ret);
-      fini_samples_buffers(c_sample_pointers, c_sample_infos, c_sample_pointers_size);
-      ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Getting sample failed.");
+        if (ret > 0) {
+            /* When > 0, ret represents the number of samples read. */
+            samples.set_length((uint32_t) ret);
+            samples.set_sample_infos(c_sample_infos);
+        } else {
+            samples.set_length(0);
+        }
+
+        fini_samples_buffers(c_sample_pointers, c_sample_infos);
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Getting sample failed.");
     }
 }
 
@@ -361,6 +372,7 @@ AnyDataReaderDelegate::take_instance(
                                requested_max_samples,
                                samples_to_read_cnt,
                                c_sample_pointers_size,
+                               samples,
                                c_sample_pointers,
                                c_sample_infos);
 
@@ -376,9 +388,16 @@ AnyDataReaderDelegate::take_instance(
                                      handle->handle(),
                                      ddsc_mask );
 
-      copy_samples(samples, c_sample_pointers, c_sample_infos, (int)ret);
-      fini_samples_buffers(c_sample_pointers, c_sample_infos, c_sample_pointers_size);
-      ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Getting sample failed.");
+        if (ret > 0) {
+            /* When > 0, ret represents the number of samples read. */
+            samples.set_length((uint32_t) ret);
+            samples.set_sample_infos(c_sample_infos);
+        } else {
+            samples.set_length(0);
+        }
+
+        fini_samples_buffers(c_sample_pointers, c_sample_infos);
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Getting sample failed.");
     }
 }
 
@@ -438,18 +457,18 @@ AnyDataReaderDelegate::get_key_value(
 dds_instance_handle_t AnyDataReaderDelegate::lookup_instance
   (const dds_entity_t reader, const void *key) const
 {
-  dds_instance_handle_t handle;
-  void *cKey;
+    dds_instance_handle_t handle;
+    void *cKey;
 
-  org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-  this->check();
+    org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
+    this->check();
 
-  cKey = dds_alloc (sampleSize);
-  copyIn (key, cKey);
-  handle = dds_lookup_instance (reader, cKey);
-  dds_free (cKey);
+    cKey = dds_alloc (sampleSize);
+    copyIn (key, cKey);
+    handle = dds_lookup_instance (reader, cKey);
+    dds_free (cKey);
 
-  return handle;
+    return handle;
 }
 
 dds::core::status::LivelinessChangedStatus
@@ -588,11 +607,11 @@ AnyDataReaderDelegate::remove_query(
 }
 
 void
-AnyDataReaderDelegate::copy_sample_info(
+AnyDataReaderDelegate::copy_sample_infos(
     dds_sample_info_t &from,
-    dds::sub::SampleInfo *to)
+    dds::sub::SampleInfo &to)
 {
-    org::eclipse::cyclonedds::sub::SampleInfoImpl& info = to->delegate();
+    org::eclipse::cyclonedds::sub::SampleInfoImpl& info = to.delegate();
 
     info.timestamp(org::eclipse::cyclonedds::core::convertTime(from.source_timestamp));
 
@@ -662,12 +681,12 @@ AnyDataReaderDelegate::wrapper_to_any()
 
 void AnyDataReaderDelegate::setSample(void* sample)
 {
-  sample_ = sample;
+    sample_ = sample;
 }
 
 void* AnyDataReaderDelegate::getSample() const
 {
-  return sample_;
+    return sample_;
 }
 
 }
