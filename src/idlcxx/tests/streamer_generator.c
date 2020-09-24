@@ -87,7 +87,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
     }
     else
     {
-      format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (%d - position&%#x)&%#x;  //alignment\n",width,width-1,width-1);
+      format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (%d - (position&%#x))&%#x;  //alignment\n",width,width-1,width-1);
     }
     format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
     format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
@@ -107,7 +107,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
     }
     else
     {
-      format_ostream_indented(ns * 2, ostr, "  position += (%d - position&%#x)&%#x;  //alignment\n",width,width-1,width-1);
+      format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n",width,width-1,width-1);
     }
   }
   format_ostream_indented(ns * 2, ostr, "  position += %d;  //bytes for member: mem()\n", width);
@@ -164,7 +164,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
     }
     else
     {
-      format_ostream_indented(ns * 2, ostr, "  position += (%d - position&%#x)&%#x;  //alignment\n", width, width - 1, width - 1);
+      format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n", width, width - 1, width - 1);
     }
   }
   format_ostream_indented(ns * 2, ostr, "  mem() = *((%s*)((char*)data+position));  //reading bytes for member: mem()\n", tn);
@@ -189,7 +189,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n");
@@ -205,7 +205,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for member: l()\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
@@ -298,7 +298,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -329,10 +329,10 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
-  format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = %s().size()+1;  //number of entries in the sequence\n", in);
+  format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = (uint32_t) %s().size()+1;  //number of entries in the sequence\n", in);
   format_ostream_indented(ns * 2, ostr, "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: %s()\n", in);
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  memcpy((char*)data+position,%s().data(),sequenceentries*1);  //contents for %s()\n", in, in);
@@ -342,7 +342,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for sequence entries\n", in);
   format_ostream_indented(ns * 2, ostr, "  position += (%s().size()+1)*1;  //entries of sequence\n", in);
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -390,7 +390,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  %s().assign((char*)data+position,(char*)data+position+sequenceentries);  //putting data into container\n", in);
@@ -418,15 +418,15 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
-  format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = %s().size();  //number of entries in the sequence\n", seq_name);
+  format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = (uint32_t) %s().size();  //number of entries in the sequence\n", seq_name);
   format_ostream_indented(ns * 2, ostr, "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: %s()\n", seq_name);
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   if (width > 4)
   {
-    format_ostream_indented(ns * 2, ostr, "  alignmentbytes = (%d - position&%#x)&%#x;  //alignment\n", width, width-1, width-1);
+    format_ostream_indented(ns * 2, ostr, "  alignmentbytes = (%d - (position&%#x))&%#x;  //alignment\n", width, width-1, width-1);
     format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
     format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
   }
@@ -437,11 +437,11 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for sequence entries\n", seq_name);
   if (width > 4)
   {
-    format_ostream_indented(ns * 2, ostr, "  position += (%d - position&%#x)&%#x;  //alignment\n", width, width - 1, width - 1);
+    format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n", width, width - 1, width - 1);
   }
   format_ostream_indented(ns * 2, ostr, "  position += (%s().size())*%d;  //entries of sequence\n", seq_name, width);
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -489,12 +489,12 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   if (width > 4)
   {
-    format_ostream_indented(ns * 2, ostr, "  position += (%d - position&%#x)&%#x;  //alignment\n", width, width - 1, width - 1);
+    format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n", width, width - 1, width - 1);
   }
   if (width > 1)
   {
@@ -525,7 +525,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  *((int32_t*)((char*)data+position)) = _d();  //writing bytes for member: _d()\n");
@@ -549,7 +549,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 4:\n");
   format_ostream_indented(ns * 2, ostr, "    case 5:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
-  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = str().size()+1;  //number of entries in the sequence\n");
+  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = (uint32_t) str().size()+1;  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "      *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: str()\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "      memcpy((char*)data+position,str().data(),sequenceentries*1);  //contents for str()\n");
@@ -568,7 +568,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for member: _d()\n");
   format_ostream_indented(ns * 2, ostr, "  switch (_d())\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -602,7 +602,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for member: _d()\n");
   format_ostream_indented(ns * 2, ostr, "  switch (_d())\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -636,7 +636,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_max_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  if (position != UINT_MAX)   position += 4;  //bytes for member: _d()\n");
   format_ostream_indented(ns * 2, ostr, "  size_t union_max = position;\n");
   format_ostream_indented(ns * 2, ostr, "  {  //cases\n");
@@ -666,7 +666,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  *((int32_t*)((char*)data+position)) = _d();  //writing bytes for member: _d()\n");
@@ -690,7 +690,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 4:\n");
   format_ostream_indented(ns * 2, ostr, "    case 5:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
-  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = str().size()+1;  //number of entries in the sequence\n");
+  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = (uint32_t) str().size()+1;  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "      *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: str()\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "      memcpy((char*)data+position,str().data(),sequenceentries*1);  //contents for str()\n");
@@ -735,7 +735,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  clear();\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  _d() = *((int32_t*)((char*)data+position));  //reading bytes for member: _d()\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  switch (_d())\n");
@@ -795,7 +795,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  memcpy((char*)data+position,mem().data(),24);  //writing bytes for member: mem()\n");
@@ -807,7 +807,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 24;  //bytes for member: mem()\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for member: mem2()\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -855,7 +855,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memcpy(mem().data(),(char*)data+position,24);  //reading bytes for member: mem()\n");
   format_ostream_indented(ns * 2, ostr, "  position += 24;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  mem2() = *((float*)((char*)data+position));  //reading bytes for member: mem2()\n");
@@ -881,7 +881,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n");
@@ -898,7 +898,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for member: l()\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
@@ -992,7 +992,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
-  format_ostream_indented(ns * 2, ostr, "  position += (4 - position&0x3)&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -1018,7 +1018,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  {\n\n"\
 "    size_t s_1::write_struct(void *data, size_t position) const\n"\
 "    {\n"\
-"      size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"      size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "      memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "      position += alignmentbytes;  //moving position indicator\n"\
 "      *((int32_t*)((char*)data+position)) = m_1();  //writing bytes for member: m_1()\n"\
@@ -1027,7 +1027,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n\n"\
 "    size_t s_1::write_size(size_t position) const\n"\
 "    {\n"\
-"      position += (4 - position&0x3)&0x3;  //alignment\n"\
+"      position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "      position += 4;  //bytes for member: m_1()\n"\
 "      return position;\n"\
 "    }\n\n"\
@@ -1069,7 +1069,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n\n"\
 "    size_t s_1::read_struct(const void *data, size_t position)\n"\
 "    {\n"\
-"      position += (4 - position&0x3)&0x3;  //alignment\n"\
+"      position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "      m_1() = *((int32_t*)((char*)data+position));  //reading bytes for member: m_1()\n"\
 "      position += 4;  //moving position indicator\n"\
 "      return position;\n"\
@@ -1137,7 +1137,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 #define IFI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
   "size_t I::write_struct(void *data, size_t position) const\n"\
   "{\n"\
-  "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+  "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
   "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
   "  position += alignmentbytes;  //moving position indicator\n"\
   "  *((int32_t*)((char*)data+position)) = inherited_member();  //writing bytes for member: inherited_member()\n"\
@@ -1146,8 +1146,8 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::write_struct(void *data, size_t position) const\n"\
   "{\n"\
-  "  position = dynamic_cast<I&>(*this).write_struct(data, position);\n"\
-  "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position = dynamic_cast<const I&>(*this).write_struct(data, position);\n"\
+  "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
   "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
   "  position += alignmentbytes;  //moving position indicator\n"\
   "  *((int32_t*)((char*)data+position)) = new_member();  //writing bytes for member: new_member()\n"\
@@ -1156,14 +1156,14 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t I::write_size(size_t position) const\n"\
   "{\n"\
-  "  position += (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
   "  position += 4;  //bytes for member: inherited_member()\n"\
   "  return position;\n"\
   "}\n\n"\
   "size_t s::write_size(size_t position) const\n"\
   "{\n"\
-  "  position = dynamic_cast<I&>(*this).write_size(position);\n"\
-  "  position += (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position = dynamic_cast<const I&>(*this).write_size(position);\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
   "  position += 4;  //bytes for member: new_member()\n"\
   "  return position;\n"\
   "}\n\n"\
@@ -1173,6 +1173,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::key_size(size_t position) const\n"\
   "{\n"\
+  "  position = dynamic_cast<const I&>(*this).key_size(position);\n"\
   "  return position;\n"\
   "}\n\n"\
   "size_t I::key_max_size(size_t position) const\n"\
@@ -1181,6 +1182,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::key_max_size(size_t position) const\n"\
   "{\n"\
+  "  if (position != UINT_MAX)   position = dynamic_cast<const I&>(*this).key_max_size(position);\n"\
   "  return position;\n"\
   "}\n\n"\
   "size_t I::key_stream(void *data, size_t position) const\n"\
@@ -1213,6 +1215,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::key_stream(void *data, size_t position) const\n"\
   "{\n"\
+  "  position = dynamic_cast<const I&>(*this).key_stream(data, position);\n"\
   "  return position;\n"\
   "}\n\n"\
   "bool s::key(ddsi_keyhash_t &hash) const\n"\
@@ -1241,7 +1244,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t I::read_struct(const void *data, size_t position)\n"\
   "{\n"\
-  "  position += (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
   "  inherited_member() = *((int32_t*)((char*)data+position));  //reading bytes for member: inherited_member()\n"\
   "  position += 4;  //moving position indicator\n"\
   "  return position;\n"\
@@ -1249,7 +1252,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "size_t s::read_struct(const void *data, size_t position)\n"\
   "{\n"\
   "  position = dynamic_cast<I&>(*this).read_struct(data, position);\n"\
-  "  position += (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
   "  new_member() = *((int32_t*)((char*)data+position));  //reading bytes for member: new_member()\n"\
   "  position += 4;  //moving position indicator\n"\
   "  return position;\n"\
@@ -1258,10 +1261,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 #define BSI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
   "size_t s::write_struct(void *data, size_t position) const\n"\
   "{\n"\
-  "  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+  "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
   "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
   "  position += alignmentbytes;  //moving position indicator\n"\
-  "  uint32_t sequenceentries = mem().size();  //number of entries in the sequence\n"\
+  "  uint32_t sequenceentries = (uint32_t) mem().size();  //number of entries in the sequence\n"\
   "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: mem()\n"\
   "  position += 4;  //moving position indicator\n"\
   "  if (sequenceentries > 20) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member mem() in excess of maximum length 20\");\n"\
@@ -1271,7 +1274,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::write_size(size_t position) const\n"\
   "{\n"\
-  "  position += (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
   "  position += 4;  //bytes for sequence entries\n"\
   "  position += (mem().size())*4;  //entries of sequence\n"\
   "  return position;\n"\
@@ -1314,7 +1317,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::read_struct(const void *data, size_t position)\n"\
   "{\n"\
-  "  position += (4 - position&0x3)&0x3;  //alignment\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
   "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
   "  position += 4;  //moving position indicator\n"\
   "  mem().assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n"\
@@ -1327,10 +1330,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n\n"\
 "  size_t typedef_write_td_6(const td_6 &obj, void* data, size_t position)\n"\
 "  {\n"\
-"    size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"    size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "    memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "    position += alignmentbytes;  //moving position indicator\n"\
-"    uint32_t sequenceentries = obj.size();  //number of entries in the sequence\n"\
+"    uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "    *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
 "    position += 4;  //moving position indicator\n"\
 "    memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
@@ -1339,31 +1342,31 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n\n"\
 "  size_t typedef_write_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
-"    position += (4 - position&0x3)&0x3;  //alignment\n"\
+"    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    position += 4;  //bytes for sequence entries\n"\
 "    position += (obj.size())*4;  //entries of sequence\n"\
 "    return position;\n"\
 "  }\n\n"\
 "  size_t typedef_key_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
-"    position += (4 - position&0x3)&0x3;  //alignment\n"\
+"    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    position += 4;  //bytes for sequence entries\n"\
 "    position += (obj.size())*4;  //entries of sequence\n"\
 "    return position;\n"\
 "  }\n\n"\
 "  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
-"    if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n"\
+"    if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    if (position != UINT_MAX)   position += 4;  //bytes for sequence entries\n"\
 "    position = UINT_MAX;\n"\
 "    return position;\n"\
 "  }\n\n"\
 "  size_t typedef_key_stream_td_6(const td_6 &obj, void *data, size_t position)\n"\
 "  {\n"\
-"    size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"    size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "    memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "    position += alignmentbytes;  //moving position indicator\n"\
-"    uint32_t sequenceentries = obj.size();  //number of entries in the sequence\n"\
+"    uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "    *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
 "    position += 4;  //moving position indicator\n"\
 "    memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
@@ -1372,7 +1375,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n\n"\
 "  size_t typedef_read_td_6(td_6 &obj, void* data, size_t position)\n"\
 "  {\n"\
-"    position += (4 - position&0x3)&0x3;  //alignment\n"\
+"    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
 "    position += 4;  //moving position indicator\n"\
 "    obj.assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n"\
@@ -1384,12 +1387,12 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n\n"\
 "  size_t s::write_struct(void *data, size_t position) const\n"\
 "  {\n"\
-"    size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"    size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "    memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "    position += alignmentbytes;  //moving position indicator\n"\
 "    *((int32_t*)((char*)data+position)) = mem_simple();  //writing bytes for member: mem_simple()\n"\
 "    position += 4;  //moving position indicator\n"\
-"    uint32_t sequenceentries = mem().size();  //number of entries in the sequence\n"\
+"    uint32_t sequenceentries = (uint32_t) mem().size();  //number of entries in the sequence\n"\
 "    *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: mem()\n"\
 "    position += 4;  //moving position indicator\n"\
 "    for (size_t _i = 0; _i < sequenceentries; _i++)   position = M::typedef_write_td_6(mem()[_i],data,position);\n"\
@@ -1397,7 +1400,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n\n"\
 "  size_t s::write_size(size_t position) const\n"\
 "  {\n"\
-"    position += (4 - position&0x3)&0x3;  //alignment\n"\
+"    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    position += 4;  //bytes for member: mem_simple()\n"\
 "    position += 4;  //bytes for sequence entries\n"\
 "    for (size_t _i = 0; _i < sequenceentries; _i++)   position = M::typedef_write_size_td_6(mem()[_i], position);\n"\
@@ -1441,7 +1444,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n\n"\
 "  size_t s::read_struct(const void *data, size_t position)\n"\
 "  {\n"\
-"    position += (4 - position&0x3)&0x3;  //alignment\n"\
+"    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    mem_simple() = *((int32_t*)((char*)data+position));  //reading bytes for member: mem_simple()\n"\
 "    position += 4;  //moving position indicator\n"\
 "    uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
@@ -1470,7 +1473,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n"\
 "  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1480,25 +1483,25 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "size_t s::write_size(size_t position) const\n"\
 "{\n"\
 "  position += 1;  //bytes for member: o()\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_size(size_t position) const\n"\
 "{\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_max_size(size_t position) const\n"\
 "{\n"\
-"  if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_stream(void *data, size_t position) const\n"\
 "{\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1533,7 +1536,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n"\
 "  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
@@ -1544,7 +1547,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n"\
 "  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1556,7 +1559,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
 "  position = s_().write_struct(data, position);\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1566,7 +1569,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "size_t s::write_size(size_t position) const\n"\
 "{\n"\
 "  position += 1;  //bytes for member: o()\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
@@ -1574,39 +1577,39 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n"\
 "  position += 1;  //bytes for member: o()\n"\
 "  position = s_().write_size(position);\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_size(size_t position) const\n"\
 "{\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t ss::key_size(size_t position) const\n"\
 "{\n"\
 "  position = s_().key_size(position);\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_max_size(size_t position) const\n"\
 "{\n"\
-"  if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t ss::key_max_size(size_t position) const\n"\
 "{\n"\
 "  if (position != UINT_MAX)   position = s_().key_max_size(position);\n"\
-"  if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_stream(void *data, size_t position) const\n"\
 "{\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1640,7 +1643,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "size_t ss::key_stream(void *data, size_t position) const\n"\
 "{\n"\
 "  position = s_().key_stream(data, position);\n"\
-"  alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1675,7 +1678,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n"\
 "  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
@@ -1685,7 +1688,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
 "  position = s_().read_struct(data, position);\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
 "  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
@@ -1694,10 +1697,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 #define TDKI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
 "size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position)\n"\
 "{\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
-"  uint32_t sequenceentries = obj.size();  //number of entries in the sequence\n"\
+"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
 "  position += 4;  //moving position indicator\n"\
 "  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
@@ -1713,7 +1716,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t typedef_write_size_td_1(const td_1 &obj, size_t position)\n"\
 "{\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for sequence entries\n"\
 "  position += (obj.size())*4;  //entries of sequence\n"\
 "  return position;\n"\
@@ -1726,7 +1729,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t typedef_key_size_td_1(const td_1 &obj, size_t position)\n"\
 "{\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  position += 4;  //bytes for sequence entries\n"\
 "  position += (obj.size())*4;  //entries of sequence\n"\
 "  return position;\n"\
@@ -1738,7 +1741,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position)\n"\
 "{\n"\
-"  if (position != UINT_MAX)   position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  if (position != UINT_MAX)   position += 4;  //bytes for sequence entries\n"\
 "  position = UINT_MAX;\n"\
 "  return position;\n"\
@@ -1750,10 +1753,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position)\n"\
 "{\n"\
-"  size_t alignmentbytes = (4 - position&0x3)&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
-"  uint32_t sequenceentries = obj.size();  //number of entries in the sequence\n"\
+"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
 "  position += 4;  //moving position indicator\n"\
 "  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
@@ -1791,7 +1794,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t typedef_read_td_1(td_1 &obj, void* data, size_t position)\n"\
 "{\n"\
-"  position += (4 - position&0x3)&0x3;  //alignment\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
 "  position += 4;  //moving position indicator\n"\
 "  obj.assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n"\
