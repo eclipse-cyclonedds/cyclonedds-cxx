@@ -65,8 +65,8 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define open_block "{\n"
 #define close_block "}\n"
 #define close_function close_block "\n"
-#define primitive_calc_alignment_modulo "(%d - position%%%d)%%%d;"
-#define primitive_calc_alignment_shift "(%d - position&%#x)&%#x;"
+#define primitive_calc_alignment_modulo "(%d - (position%%%d))%%%d;"
+#define primitive_calc_alignment_shift "(%d - (position&%#x))&%#x;"
 #define position_incr "  position += "
 #define position_set "  position = "
 #define position_return "  return position;\n"
@@ -80,7 +80,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define primitive_write_func_alignment "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"
 #define primitive_write_func_write "  *((%s*)((char*)data+position)) = %s;  //writing bytes for member: %s\n"
 #define primitive_write_func_array "  memcpy((char*)data+position,%s.data(),%d);  //writing bytes for member: %s\n"
-#define primitive_write_func_seq "sequenceentries = %s.size()%s;  //number of entries in the sequence\n"
+#define primitive_write_func_seq "sequenceentries = (uint32_t) %s.size()%s;  //number of entries in the sequence\n"
 #define primitive_write_func_seq2 "  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: %s\n"
 #define primitive_read_func_read "  %s = *((%s*)((char*)data+position));  //reading bytes for member: %s\n"
 #define primitive_read_func_array "  memcpy(%s.data(),(char*)data+position,%d);  //reading bytes for member: %s\n"
@@ -120,6 +120,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define instance_key_max_size_func_calc key_max_size_check position_set "%s.key_max_size(position);\n"
 #define instance_key_max_size_union_func_calc "case_max = %s.key_max_size(case_max);\n"
 #define instance_read_func position_set "%s.read_struct(data, position);\n"
+#define const_ref_cast "dynamic_cast<const %s%s&>(*this)"
 #define ref_cast "dynamic_cast<%s%s&>(*this)"
 #define member_access "%s()"
 #define write_func_define "size_t %s::write_struct(void *data, size_t position) const"
@@ -221,7 +222,7 @@ static idl_retcode_t process_module(context_t* ctx, idl_module_t* module);
 static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_case(context_t* ctx, idl_case_t* _case);
 static idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label);
-static idl_retcode_t write_instance_funcs(context_t* ctx, const char* accessor, uint64_t entries, bool is_key);
+static idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, const char* read_accessor, uint64_t entries, bool is_key);
 static context_t* create_context(idl_streamer_output_t* str, const char* name);
 static context_t* child_context(context_t* ctx, const char* name);
 static void flush_streams(context_t* ctx);
@@ -497,20 +498,23 @@ idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_
 
   uint64_t entries = array_entries(decl);
 
-  char* accessor = NULL;
+  char* write_accessor = NULL, *read_accessor = NULL;
   if (decl)
   {
     char* cpp11name = get_cpp11_name(idl_identifier(decl));
-    idl_asprintf(&accessor, member_access, cpp11name);
+    idl_asprintf(&write_accessor, member_access, cpp11name);
+    idl_asprintf(&read_accessor, member_access, cpp11name);
     free(cpp11name);
   }
   else
   {
-    accessor = idl_strdup("obj");
+    write_accessor = idl_strdup("obj");
+    read_accessor = idl_strdup("obj");
   }
 
-  write_instance_funcs(ctx, accessor, entries, is_key);
-  free(accessor);
+  write_instance_funcs(ctx, write_accessor, read_accessor, entries, is_key);
+  free(write_accessor);
+  free(read_accessor);
 
   if (NULL != decl &&
       ((idl_node_t*)decl)->next)
@@ -519,45 +523,45 @@ idl_retcode_t process_struct(context_t* ctx, idl_declarator_t* decl, idl_struct_
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t write_instance_funcs(context_t* ctx, const char* accessor, uint64_t entries, bool is_key)
+idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, const char* read_accessor, uint64_t entries, bool is_key)
 {
   if (entries)
   {
-    format_write_stream(1, ctx, false, arr_struct_write, entries, accessor);
-    format_write_size_stream(1, ctx, false, arr_struct_write_size, entries, accessor);
-    format_read_stream(1, ctx, arr_struct_read, entries, accessor);
+    format_write_stream(1, ctx, false, arr_struct_write, entries, write_accessor);
+    format_write_size_stream(1, ctx, false, arr_struct_write_size, entries, write_accessor);
+    format_read_stream(1, ctx, arr_struct_read, entries, read_accessor);
 
     if (is_key)
     {
-      format_key_stream(1, ctx, arr_struct_key, entries, accessor);
-      format_key_size_stream(1, ctx, arr_struct_key_size, entries, accessor);
+      format_key_stream(1, ctx, arr_struct_key, entries, write_accessor);
+      format_key_size_stream(1, ctx, arr_struct_key_size, entries, write_accessor);
       if (ctx->in_union)
       {
-        format_key_max_size_stream(1, ctx, arr_struct_key_max_size_union, entries, accessor);
+        format_key_max_size_stream(1, ctx, arr_struct_key_max_size_union, entries, write_accessor);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, arr_struct_key_max_size, entries, accessor);
+        format_key_max_size_stream(1, ctx, arr_struct_key_max_size, entries, write_accessor);
       }
     }
   }
   else
   {
-    format_write_stream(1, ctx, false , instance_write_func, accessor);
-    format_write_size_stream(1, ctx, false, instance_size_func_calc, accessor);
-    format_read_stream(1, ctx, instance_read_func, accessor);
+    format_write_stream(1, ctx, false , instance_write_func, write_accessor);
+    format_write_size_stream(1, ctx, false, instance_size_func_calc, write_accessor);
+    format_read_stream(1, ctx, instance_read_func, read_accessor);
 
     if (is_key)
     {
-      format_key_stream(1, ctx, instance_key_write_func, accessor);
-      format_key_size_stream(1, ctx, instance_key_size_func_calc, accessor);
+      format_key_stream(1, ctx, instance_key_write_func, write_accessor);
+      format_key_size_stream(1, ctx, instance_key_size_func_calc, write_accessor);
       if (ctx->in_union)
       {
-        format_key_max_size_stream(1, ctx, instance_key_max_size_union_func_calc, accessor);
+        format_key_max_size_stream(1, ctx, instance_key_max_size_union_func_calc, write_accessor);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, instance_key_max_size_func_calc, accessor);
+        format_key_max_size_stream(1, ctx, instance_key_max_size_func_calc, write_accessor);
       }
     }
   }
@@ -1190,6 +1194,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
   assert(node);
 
   char* cpp11name = NULL;
+  idl_retcode_t returnval = IDL_RETCODE_OK;
 
   if (idl_is_struct(node) ||
       idl_is_union(node))
@@ -1229,18 +1234,27 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
         char* base_cpp11name = get_cpp11_name(idl_identifier(_struct->base_type));
         char* ns = idl_strdup("");
         assert(base_cpp11name);
+        assert(ns);
         resolve_namespace((idl_node_t*)_struct->base_type, &ns);
-        char* accessor = NULL;
-        if (idl_asprintf(&accessor, ref_cast, ns, base_cpp11name) == -1)
-          return IDL_RETCODE_NO_MEMORY;
-        write_instance_funcs(ctx, accessor, 0,false);
+        char* write_accessor = NULL, *read_accessor = NULL;
+        if (idl_asprintf(&write_accessor, const_ref_cast, ns, base_cpp11name) != -1 &&
+            idl_asprintf(&read_accessor, ref_cast, ns, base_cpp11name) != -1)
+          returnval = write_instance_funcs(ctx, write_accessor, read_accessor, 0, true);
+        else
+          returnval = IDL_RETCODE_NO_MEMORY;
+
+        if (write_accessor)
+          free(write_accessor);
+        if (read_accessor)
+          free(read_accessor);
+
         free(base_cpp11name);
-        free(accessor);
         free(ns);
       }
 
-      if (_struct->members)
-        process_member(ctx, _struct->members);
+      if (_struct->members &&
+          returnval == IDL_RETCODE_OK)
+        returnval = process_member(ctx, _struct->members);
     }
     else if (idl_is_union(node))
     {
@@ -1321,7 +1335,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
 
   if (cpp11name)
     free(cpp11name);
-  return IDL_RETCODE_OK;
+  return returnval;
 }
 
 idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)

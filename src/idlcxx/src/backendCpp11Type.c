@@ -1300,6 +1300,7 @@ cpp11_scope_walk(idl_backend_ctx ctx, const idl_node_t *node)
 
 typedef enum
 {
+  idl_no_dep      = 0x0,
   idl_string_dep  = 0x01 << 0,
   idl_array_dep   = 0x01 << 1,
   idl_vector_dep  = 0x01 << 2,
@@ -1343,7 +1344,7 @@ get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
 static void
 idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
 {
-  idl_include_dep util_depencencies = 0;
+  idl_include_dep util_depencencies = idl_no_dep;
   uint32_t nr_includes = 0;
 
   /* First determine the list of files included by our IDL file itself. */
