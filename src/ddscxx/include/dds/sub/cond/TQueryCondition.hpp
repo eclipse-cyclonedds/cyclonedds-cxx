@@ -112,7 +112,7 @@ public:
      * @param query   The query to filter on the locally available data.
      * @param status  A mask, which selects only those samples with the desired
      *                sample/view/instance states.
-     * @tparam functor The functor to be called when the QueryCondition triggers.
+     * @param  functor The functor to be called when the QueryCondition triggers.
      * @throw  dds::core::Exception
      */
     template <typename FUN>
@@ -136,8 +136,8 @@ public:
      * See @ref anchor_dds_sub_cond_readcondition_state_mask "State mask info" in ReadCondition.
      *
      * @param dr         Query associated DataReader.
-     * @param expression @ref anchor_dds_sub_query_expression "Query expression"
-     * @param params     @ref anchor_dds_sub_query_expression "Query expression parameters"
+     * @param expression for more information: @ref anchor_dds_sub_query_expression "Query expression"
+     * @param params     for more information: @ref anchor_dds_sub_query_expression "Query expression parameters"
      * @param status     A mask, which selects only those samples with the desired
      *                   sample/view/instance states.
      * @throw dds::core::Exception
@@ -178,8 +178,8 @@ public:
      * See @ref anchor_dds_sub_cond_readcondition_state_mask "State mask info" in ReadCondition.
      *
      * @param dr         Query associated DataReader.
-     * @param expression @ref anchor_dds_sub_query_expression "Query expression"
-     * @param params     @ref anchor_dds_sub_query_expression "Query expression parameters"
+     * @param expression for more information: @ref anchor_dds_sub_query_expression "Query expression"
+     * @param params     for more information: @ref anchor_dds_sub_query_expression "Query expression parameters"
      * @param status     A mask, which selects only those samples with the desired
      *                   sample/view/instance states.
      * @throw dds::core::Exception
@@ -210,8 +210,7 @@ public:
     /**
      * Set the Query expression.
      *
-     * @param expr @ref anchor_dds_sub_query_expression "SQL expression"
-     * @return void
+     * @param expr for more information: @ref anchor_dds_sub_query_expression "SQL expression"
      * @throw  dds::core::Exception
      */
     void expression(const std::string& expr);
@@ -275,9 +274,8 @@ public:
      *
      * See @ref anchor_dds_sub_query_expression "SQL expression info"
      *
-     * @tparam begin Iterator pointing to the beginning of the parameters to set
-     * @tparam end   Iterator pointing to the end of the parameters to set
-     * @return void
+     * @param  begin Iterator pointing to the beginning of the parameters to set
+     * @param  end   Iterator pointing to the end of the parameters to set
      * @throw  dds::core::Exception
      */
     template<typename FWIterator>
@@ -289,7 +287,6 @@ public:
      * See @ref anchor_dds_sub_query_expression "SQL expression info"
      *
      * @param param The parameter to add
-     * @return void
      * @throw  dds::core::Exception
      */
     void add_parameter(const std::string& param);
