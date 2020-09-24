@@ -51,7 +51,7 @@ class TFilter;
  * Look @ref DCPS_Queries_and_Filters "here" for the specific query expression syntax.
  *
  * @see dds::topic::ContentFilteredTopic
- * @see @ref DCPS_Modules_TopicDefinition "Topic Definition"
+ * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename D>
 class dds::topic::TFilter: public dds::core::Value<D>
@@ -71,7 +71,7 @@ public:
     /**
      * Create a Filter based on a query expression.
      *
-     * @param  query_expression @ref anchor_dds_topic_filter_expression "SQL expression"
+     * @param  query_expression an @ref anchor_dds_topic_filter_expression "SQL expression"
      * @throw                   dds::core::Exception
      */
     TFilter(const std::string& query_expression);
@@ -79,9 +79,9 @@ public:
     /**
      * Create a Filter based on a query expression and an iterable parameter container.
      *
-     * @param  query_expression @ref anchor_dds_topic_filter_expression "SQL expression"
-     * @tparam params_begin     Iterator pointing to the beginning of the parameters to set
-     * @tparam params_end       Iterator pointing to the end of the parameters to set
+     * @param  query_expression an @ref anchor_dds_topic_filter_expression "SQL expression"
+     * @param params_begin     Iterator pointing to the beginning of the parameters to set
+     * @param params_end       Iterator pointing to the end of the parameters to set
      * @throw                   dds::core::Exception
      */
     template <typename FWIterator>
@@ -91,8 +91,8 @@ public:
     /**
      * Create a Filter based on a query expression and parameter vector.
      *
-     * @param  query_expression @ref anchor_dds_topic_filter_expression "SQL expression"
-     * @tparam params           Vector containing SQL expression parameters
+     * @param  query_expression an @ref anchor_dds_topic_filter_expression "SQL expression"
+     * @param params           Vector containing SQL expression parameters
      * @throw                   dds::core::Exception
      */
     TFilter(const std::string& query_expression,
@@ -155,8 +155,8 @@ public:
      *
      * See @ref anchor_dds_topic_filter_expression "SQL expression info"
      *
-     * @tparam begin Iterator pointing to the beginning of the parameters to set
-     * @tparam end   Iterator pointing to the end of the parameters to set
+     * @param begin Iterator pointing to the beginning of the parameters to set
+     * @param end   Iterator pointing to the end of the parameters to set
      * @throw        dds::core::Exception
      */
     template <typename FWIterator>

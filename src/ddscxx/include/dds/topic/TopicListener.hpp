@@ -71,8 +71,8 @@ namespace topic
  *
  * @endcode
  *
- * @see @ref DCPS_Modules_Topic "Topic"
- * @see @ref DCPS_Modules_Infrastructure_Listener "Listener information"
+ * @see for more information: @ref DCPS_Modules_Topic "Topic"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
  */
 template <typename T>
 class TopicListener

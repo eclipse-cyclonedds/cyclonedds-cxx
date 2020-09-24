@@ -53,6 +53,15 @@ public:
      */
     TQosPolicyCount(const TQosPolicyCount& other);
 
+    /**
+     * Copies a QosPolicyCount instance
+     *
+     * @param other the QosPolicyCount instance to copy
+     *
+     * @return a reference to the QosPolicyCount that was copied to
+     */
+    TQosPolicyCount& operator=(const TQosPolicyCount& other) = default;
+
 public:
     /**
      * Gets the policy_id

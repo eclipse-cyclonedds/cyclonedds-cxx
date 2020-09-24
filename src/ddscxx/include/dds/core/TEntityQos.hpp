@@ -58,6 +58,15 @@ public:
     TEntityQos(const TEntityQos& other);
 
     /**
+     * Copy to this QoS.
+     *
+     * @param other the QoS to copy.
+     *
+     * @return reference to the Qos which was copied to.
+     */
+    TEntityQos<DELEGATE>& operator=(const TEntityQos<DELEGATE>& other) = default;
+
+    /**
      * Create/copy QoS from different QoS type.
      *
      * @param qos the QoS to copy policies from.
@@ -123,7 +132,7 @@ public:
      * Available policies depend on the actual instantiation of the template
      * class, which might be DomainParticipantQos, TopicQos, PublisherQos, etc.
      *
-     * @param TEntityQos the TEntityQos to set
+     * @param other the TEntityQos to set
      */
     template <typename T>
     TEntityQos<DELEGATE>& operator = (const TEntityQos<T>& other);

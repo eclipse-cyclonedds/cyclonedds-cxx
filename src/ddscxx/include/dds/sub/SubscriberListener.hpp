@@ -118,8 +118,8 @@ namespace sub
  *
  * @endcode
  *
- * @see @ref DCPS_Modules_Subscriber "Subscriber"
- * @see @ref DCPS_Modules_Infrastructure_Listener "Listener information"
+ * @see for more information: @ref DCPS_Modules_Subscriber "Subscriber"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
  */
 class OMG_DDS_API SubscriberListener : public virtual AnyDataReaderListener
 {

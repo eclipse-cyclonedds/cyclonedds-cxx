@@ -59,7 +59,7 @@ class TSuspendedPublication;
  * - dds::pub::DataWriter.unregister_instance (and its overloaded counterparts).
  * - dds::pub::DataWriter.dispose_instance (and its overloaded counterparts).
  *
- * @see @ref DCPS_Modules_Publication "Publication"
+ * @see for more information: @ref DCPS_Modules_Publication "Publication"
  * @see dds::pub::Publisher
  */
 template <typename DELEGATE>

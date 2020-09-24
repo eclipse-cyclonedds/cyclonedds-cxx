@@ -58,6 +58,15 @@ public:
     OMG_DDS_REF_TYPE_PROTECTED_DC(TEntity, dds::core::Reference, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(TEntity)
 
+    /**
+    * Assign new Entity to this object.
+    *
+    * @param other the entity to copy.
+    *
+    * @return reference pointing to the entity that was assigned to.
+    */
+    TEntity& operator=(const TEntity& other) = default;
+
     /** @cond */
     virtual ~TEntity();
     /** @endcond */
@@ -118,7 +127,6 @@ public:
      * dr.enable();
      * @endcode
      *
-     * @return void
      * @throw  dds::core::PreconditionNotMetError
      *              Entities' factory is not enabled.
      */
@@ -207,8 +215,6 @@ public:
      * - Any object to which the application has a direct reference is still in use.
      * - Any object that has been explicitly retained is still in use
      * - The creator of any object that is still in use is itself still in use.
-     *
-     * @return void
      */
     void close();
 
@@ -219,8 +225,6 @@ public:
      * scope but that the application expects to look it up again later.
      * Therefore the Service must consider this object to be still in use
      * and may not close it automatically.
-     *
-     * @return void
      */
     void retain();
 };

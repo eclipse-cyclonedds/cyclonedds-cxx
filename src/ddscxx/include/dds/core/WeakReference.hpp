@@ -52,7 +52,7 @@ public:
     /**
      * Creates a weak reference for the reference type passed as argument.
      *
-     * @tparam t dds object the new weak reference will refer to
+     * @param t dds object the new weak reference will refer to
      */
     WeakReference(const T& t);
 

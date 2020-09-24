@@ -83,6 +83,8 @@ public:
     DeadlineDelegate(const DeadlineDelegate& other);
     explicit DeadlineDelegate(const dds::core::Duration& d);
 
+    DeadlineDelegate& operator=(const DeadlineDelegate& other) = default;
+
     void period(const dds::core::Duration& d);
     dds::core::Duration period() const;
 
@@ -107,6 +109,8 @@ public:
     DestinationOrderDelegate(const DestinationOrderDelegate& other);
     explicit DestinationOrderDelegate(dds::core::policy::DestinationOrderKind::Type kind);
 
+    DestinationOrderDelegate& operator=(const DestinationOrderDelegate& other) = default;
+
     void kind(dds::core::policy::DestinationOrderKind::Type kind);
     dds::core::policy::DestinationOrderKind::Type kind() const;
 
@@ -128,6 +132,8 @@ class OMG_DDS_API DurabilityDelegate
 public:
     DurabilityDelegate(const DurabilityDelegate& other);
     explicit DurabilityDelegate(dds::core::policy::DurabilityKind::Type kind);
+
+    DurabilityDelegate& operator=(const DurabilityDelegate& other) = default;
 
     void kind(dds::core::policy::DurabilityKind::Type kind);
     dds::core::policy::DurabilityKind::Type kind() const;
@@ -157,6 +163,8 @@ public:
                               int32_t max_samples,
                               int32_t max_instances,
                               int32_t max_samples_per_instance);
+
+    DurabilityServiceDelegate& operator=(const DurabilityServiceDelegate& other) = default;
 
     void service_cleanup_delay(const dds::core::Duration& d);
     const dds::core::Duration service_cleanup_delay() const;
@@ -222,6 +230,8 @@ public:
 
     bool operator ==(const EntityFactoryDelegate& other) const;
 
+    EntityFactoryDelegate& operator =(const EntityFactoryDelegate& other) = default;
+
     void check() const;
 
     void set_iso_policy(const dds_qos_t* qos);
@@ -259,6 +269,15 @@ public:
     GroupDataDelegate(const GroupDataDelegate& other);
 
     /**
+     *  @internal Copies a <code>GroupData</code> instance.
+     *
+     * @param other the group data to copy
+     *
+     * @return reference to the instance which was copied to
+     */
+    GroupDataDelegate& operator=(const GroupDataDelegate& other) = default;
+
+    /**
      *  @internal Create a <code>GroupData</code> instance.
      *
      * @param seq the group data value
@@ -283,15 +302,13 @@ public:
 
     /**
      *  @internal Check if policy is consistent.
-     *
-     * @return true if consistent
      */
     void check() const;
 
     /**
      *  @internal Set internals by the ddsc policy.
      *
-     * @param the ddsc policy
+     * @param qos the ddsc policy
      */
     void set_iso_policy(const dds_qos_t* qos);
     /**
@@ -304,7 +321,7 @@ public:
     /**
      *  @internal Get the ddsc policy representation.
      *
-     * @return the ddsc policy
+     * @param qos the ddsc policy
      */
     void set_c_policy(dds_qos_t* qos) const;
 
@@ -321,6 +338,8 @@ class OMG_DDS_API HistoryDelegate
 public:
     HistoryDelegate(const HistoryDelegate& other);
     HistoryDelegate(dds::core::policy::HistoryKind::Type kind, int32_t depth);
+
+    HistoryDelegate& operator=(const HistoryDelegate& other) = default;
 
     dds::core::policy::HistoryKind::Type kind() const;
     void kind(dds::core::policy::HistoryKind::Type kind);
@@ -348,6 +367,8 @@ class OMG_DDS_API LatencyBudgetDelegate
 public:
     LatencyBudgetDelegate(const LatencyBudgetDelegate& other);
     explicit LatencyBudgetDelegate(const dds::core::Duration& d);
+
+    LatencyBudgetDelegate& operator=(const LatencyBudgetDelegate& other) = default;
 
     void duration(const dds::core::Duration& d);
     const dds::core::Duration duration() const;
@@ -388,6 +409,7 @@ class OMG_DDS_API LifespanDelegate
 public:
     LifespanDelegate(const LifespanDelegate& other);
     explicit LifespanDelegate(const dds::core::Duration& d);
+    LifespanDelegate& operator=(const LifespanDelegate& other) = default;
 
     void duration(const dds::core::Duration& d);
     const dds::core::Duration duration() const;
@@ -412,6 +434,8 @@ public:
     LivelinessDelegate(const LivelinessDelegate& other);
     LivelinessDelegate(dds::core::policy::LivelinessKind::Type kind,
                        dds::core::Duration lease_duration);
+
+    LivelinessDelegate& operator=(const LivelinessDelegate& other) = default;
 
     void kind(dds::core::policy::LivelinessKind::Type kind);
     dds::core::policy::LivelinessKind::Type kind() const;
@@ -438,6 +462,7 @@ class OMG_DDS_API OwnershipDelegate
 public:
     OwnershipDelegate(const OwnershipDelegate& other);
     explicit OwnershipDelegate(dds::core::policy::OwnershipKind::Type kind);
+    OwnershipDelegate& operator=(const OwnershipDelegate& other) = default;
 
     void kind(dds::core::policy::OwnershipKind::Type kind);
     dds::core::policy::OwnershipKind::Type kind() const;
@@ -463,6 +488,8 @@ public:
     OwnershipStrengthDelegate(const OwnershipStrengthDelegate& other);
     explicit OwnershipStrengthDelegate(int32_t s);
 
+    OwnershipStrengthDelegate& operator=(const OwnershipStrengthDelegate& other) = default;
+
     int32_t strength() const;
     void strength(int32_t s);
 
@@ -487,6 +514,8 @@ public:
     PartitionDelegate(const PartitionDelegate& other);
     explicit PartitionDelegate(const std::string& partition);
     explicit PartitionDelegate(const dds::core::StringSeq& partitions);
+
+    PartitionDelegate& operator=(const PartitionDelegate& other) = default;
 
     void name(const std::string& partition);
     void name(const dds::core::StringSeq& partitions);
@@ -514,6 +543,7 @@ public:
     PresentationDelegate(dds::core::policy::PresentationAccessScopeKind::Type access_scope,
                          bool coherent_access,
                          bool ordered_access);
+    PresentationDelegate& operator=(const PresentationDelegate& other) = default;
 
     void access_scope(dds::core::policy::PresentationAccessScopeKind::Type as);
     dds::core::policy::PresentationAccessScopeKind::Type access_scope() const;
@@ -553,6 +583,8 @@ public:
     void autopurge_disposed_samples_delay(const dds::core::Duration& d);
 
     bool operator ==(const ReaderDataLifecycleDelegate& other) const;
+
+    ReaderDataLifecycleDelegate& operator =(const ReaderDataLifecycleDelegate& other) = default;
 
     void check() const;
 
@@ -601,6 +633,8 @@ public:
     ReliabilityDelegate(dds::core::policy::ReliabilityKind::Type kind,
                         const dds::core::Duration& max_blocking_time);
 
+    ReliabilityDelegate& operator=(const ReliabilityDelegate& other) = default;
+
     void kind(dds::core::policy::ReliabilityKind::Type kind);
     dds::core::policy::ReliabilityKind::Type kind() const;
 
@@ -628,6 +662,8 @@ public:
     ResourceLimitsDelegate(int32_t max_samples,
                            int32_t max_instances,
                            int32_t max_samples_per_instance);
+
+    ResourceLimitsDelegate& operator=(const ResourceLimitsDelegate& other) = default;
 
     void max_samples(int32_t samples);
     int32_t max_samples() const;
@@ -659,6 +695,7 @@ class OMG_DDS_API TimeBasedFilterDelegate
 public:
     TimeBasedFilterDelegate(const TimeBasedFilterDelegate& other);
     explicit TimeBasedFilterDelegate(const dds::core::Duration& min_separation);
+    TimeBasedFilterDelegate& operator=(const TimeBasedFilterDelegate& other) = default;
 
     void min_separation(const dds::core::Duration& ms);
     const dds::core::Duration min_separation() const;
@@ -691,6 +728,8 @@ public:
     TopicDataDelegate();
     TopicDataDelegate(const TopicDataDelegate& other);
     explicit TopicDataDelegate(const dds::core::ByteSeq& seq);
+
+    TopicDataDelegate& operator=(const TopicDataDelegate& other) = default;
 
     void value(const dds::core::ByteSeq& seq);
     const dds::core::ByteSeq& value() const;
@@ -731,6 +770,7 @@ class OMG_DDS_API TransportPriorityDelegate
 {
 public:
     TransportPriorityDelegate(const TransportPriorityDelegate& other);
+    TransportPriorityDelegate& operator=(const TransportPriorityDelegate& other) = default;
     explicit TransportPriorityDelegate(int32_t prio);
 
     void value(int32_t prio);
@@ -777,6 +817,15 @@ public:
     UserDataDelegate(const UserDataDelegate& other);
 
     /**
+     *  @internal Copies a <code>UserData</code> instance.
+     *
+     * @param other the user data to copy
+     *
+     * @return reference to the instance that was copied to
+     */
+    UserDataDelegate& operator=(const UserDataDelegate& other) = default;
+
+    /**
      *  @internal Create a <code>UserData</code> instance.
      *
      * @param seq the sequence of octet representing the user data
@@ -801,15 +850,13 @@ public:
 
     /**
      *  @internal Check if policy is consistent.
-     *
-     * @return true if consistent
      */
     void check() const;
 
     /**
      *  @internal Set internals by the ddsc policy.
      *
-     * @param the ddsc policy
+     * @param qos the ddsc policy
      */
     void set_iso_policy(const dds_qos_t* qos);
     /**
@@ -820,8 +867,6 @@ public:
     //@todo void v_policy(const v_builtinUserDataPolicy& policy);
     /**
      *  @internal Get the ddsc policy representation.
-     *
-     * @return the ddsc policy
      */
     void set_c_policy(dds_qos_t* qos) const;
 
@@ -841,6 +886,8 @@ public:
     void autodispose(bool b);
 
     bool operator ==(const WriterDataLifecycleDelegate& other) const;
+
+    WriterDataLifecycleDelegate& operator =(const WriterDataLifecycleDelegate& other) = default;
 
     void check() const;
 

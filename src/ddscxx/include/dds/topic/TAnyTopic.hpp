@@ -123,6 +123,15 @@ public:
     const TAnyTopic& operator >> (dds::topic::qos::TopicQos& qos) const;
 
     /**
+     * Copies the contents from one TAnyTopic to this
+     *
+     * @param other the TAnyTopic to copy
+     *
+     * @return reference to the TAnyTopic instance that was copied to
+     */
+    TAnyTopic& operator=(const TAnyTopic& other) = default;
+
+    /**
      * This operation obtains the InconsistentTopicStatus object of the Topic.
      *
      * The InconsistentTopicStatus can also be monitored using a

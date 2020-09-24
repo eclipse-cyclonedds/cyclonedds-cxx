@@ -53,7 +53,7 @@
  * specified either at Subscriber creation time or prior to calling the enable operation
  * on the Subscriber.
  *
- * @see @ref DCPS_QoS
+ * @see for more information: @ref DCPS_QoS
  */
 class dds::sub::qos::SubscriberQos : public ::dds::core::EntityQos<org::eclipse::cyclonedds::sub::qos::SubscriberQosDelegate>
 {

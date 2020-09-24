@@ -210,13 +210,13 @@ SubscriberDelegate::remove_datareader(
 std::vector<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type>
 SubscriberDelegate::find_datareaders(const std::string& topic_name)
 {
-    std::vector<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type> readers;
+    std::vector<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type> _readers;
 
     org::eclipse::cyclonedds::core::EntitySet::vector entities;
     org::eclipse::cyclonedds::core::EntitySet::vectorIterator iter;
 
     entities = this->readers.copy();
-    readers.reserve(entities.size());
+    _readers.reserve(entities.size());
     for (iter = entities.begin(); iter != entities.end(); ++iter) {
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = iter->lock();
         if (ref) {
@@ -224,12 +224,12 @@ SubscriberDelegate::find_datareaders(const std::string& topic_name)
                     OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<AnyDataReaderDelegate>(ref);
             assert(tmp);
             if (tmp->topic_description().name() == topic_name) {
-                readers.push_back(tmp);
+                _readers.push_back(tmp);
             }
         }
     }
 
-    return readers;
+    return _readers;
 }
 
 std::vector<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type>
@@ -239,8 +239,8 @@ SubscriberDelegate::get_datareaders(
     (void)mask;
     ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-    std::vector<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type> readers;
-    return readers;
+    std::vector<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type> _readers;
+    return _readers;
 }
 
 void

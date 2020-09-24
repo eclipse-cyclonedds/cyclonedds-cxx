@@ -98,8 +98,6 @@ public:
 
     /**
      * Creates a "null" Reference.
-     *
-     * @param null
      */
     explicit Reference(dds::core::null_type&);
 
@@ -193,6 +191,9 @@ public:
     /** @copydoc dds::core::Reference::operator=(const Reference<D>& that) */
     template <typename R>
     Reference& operator=(const R& rhs);
+
+    /** @copydoc dds::core::Reference::operator=(const Reference<D>& that) */
+    Reference& operator=(const Reference& other) = default;
 
     /**
      * Special assignment operators that takes care of assigning

@@ -48,7 +48,7 @@ class TQosProvider;
  *
  * The QosProvider is delivered as part of the DCPS API of Vortex OpenSplice.
  *
- * @see @ref DCPS_QoS_Provider "QoS Provider extensive information."
+ * @see for more information: @ref DCPS_QoS_Provider "QoS Provider extensive information."
  */
 template <typename DELEGATE>
 class dds::core::TQosProvider : public dds::core::Reference<DELEGATE>

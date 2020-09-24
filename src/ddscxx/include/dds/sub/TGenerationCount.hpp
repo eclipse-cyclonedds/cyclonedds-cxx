@@ -57,7 +57,7 @@ class TGenerationCount;
  * the SampleInfo capture a snapshot of the corresponding counters at the time
  * the sample was received.
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 template <typename DELEGATE>
 class dds::sub::TGenerationCount : public dds::core::Value<DELEGATE>

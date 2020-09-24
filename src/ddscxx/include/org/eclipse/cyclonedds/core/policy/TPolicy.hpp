@@ -117,7 +117,7 @@ public:
     /**
      * Creates a ProductData QoS instance
      *
-     * @param value the value
+     * @param name the name
      */
     TProductData(const std::string& name) : dds::core::Value<D>(name) { }
 
@@ -132,7 +132,7 @@ public:
     /**
      * Sets the name
      *
-     * @param value the name
+     * @param name the name to set
      */
     TProductData& name(const std::string& name)
     {
@@ -203,7 +203,7 @@ public:
     /**
      * Sets multiple keys
      *
-     * @param names a sequence containing multiple keys
+     * @param keys a sequence containing multiple keys
      */
     TSubscriptionKey& key(const dds::core::StringSeq& keys)
     {
@@ -274,7 +274,7 @@ public:
     /**
        * Sets the used flag
        *
-       * @param the used flag
+       * @param used the state of the flag to set
        */
       TReaderLifespan& used(bool used)
       {
@@ -332,7 +332,9 @@ public:
     /**
      * Creates a Scheduling QoS instance
      *
-     * @param value the value
+     * @param scheduling_kind the scheduling kind
+     * @param scheduling_priority_kind the scheduling priority kind
+     * @param scheduling_priority the scheduling priority
      */
     TScheduling(const org::eclipse::cyclonedds::core::policy::SchedulingKind::Type& scheduling_kind,
                 const org::eclipse::cyclonedds::core::policy::SchedulingPriorityKind::Type& scheduling_priority_kind,

@@ -74,9 +74,9 @@ class TStatusCondition;
  * how to use this Condition.
  *
  * @see dds::core::cond::Condition
- * @see @ref DCPS_Modules_Infrastructure_Status  "Status concept"
- * @see @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
- * @see @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Status  "Status concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
+ * @see for more information: @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
  */
 template <typename DELEGATE>
 class dds::core::cond::TStatusCondition : public dds::core::cond::TCondition<DELEGATE>
@@ -108,7 +108,7 @@ public:
      * attached to.
      *
      * @param  e       The Entity to associate with the StatusCondition.
-     * @tparam functor The functor to be called when the StatusCondition triggers.
+     * @param functor The functor to be called when the StatusCondition triggers.
      * @throw  dds::core::Exception
      */
     template <typename FUN>
@@ -160,7 +160,6 @@ public:
      *
      * @param  status A bit mask in which each bit sets the status which is taken
      *                into account for the StatusCondition.the enabled statuses.
-     * @return void
      * @throw  dds::core::AlreadyClosedError
      * @throw  dds::core::Error
      */

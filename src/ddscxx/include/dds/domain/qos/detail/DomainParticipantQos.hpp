@@ -53,7 +53,7 @@
  * specified either at DomainParticipant creation time or prior to calling the enable
  * operation on the DomainParticipant.
  *
- * @see @ref DCPS_QoS
+ * @see for more information: @ref DCPS_QoS
  */
 class dds::domain::qos::DomainParticipantQos : public ::dds::core::EntityQos<org::eclipse::cyclonedds::domain::qos::DomainParticipantQosDelegate>
 {

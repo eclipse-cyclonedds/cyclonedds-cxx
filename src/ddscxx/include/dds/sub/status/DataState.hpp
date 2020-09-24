@@ -52,7 +52,7 @@ class DataState;
  * - <b><i>not_read</i></b>
  *      - The DataReader has not accessed that sample before.
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 class OMG_DDS_API dds::sub::status::SampleState : public std::bitset<OMG_DDS_STATE_BIT_COUNT>
 {
@@ -82,6 +82,17 @@ public:
      * @param src the SampleState to copy from
      */
     SampleState(const SampleState& src);
+
+    /**
+     * Copy assignment operator.
+     *
+     * Copy the contents from one SampleState to another.
+     *
+     * @param src the SampleState to copy from
+     *
+     * @return reference to the SampleState instance that was copied to
+     */
+    SampleState& operator=(const SampleState& src) = default;
 
     /**
      * Construct a SampleState with existing MaskType.
@@ -141,7 +152,7 @@ public:
  *      - The DataReader has already accessed
  *        samples of the same instance and that the instance has not been reborn since.
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 class OMG_DDS_API dds::sub::status::ViewState : public std::bitset<OMG_DDS_STATE_BIT_COUNT>
 {
@@ -172,6 +183,17 @@ public:
      * @param src the ViewState to copy from
      */
     ViewState(const ViewState& src);
+
+    /**
+     * Copy assignment operator.
+     *
+     * Copy the contents from one ViewState to another.
+     *
+     * @param src the ViewState to copy from
+     *
+     * @return reference to the ViewState instance that was copied to
+     */
+    ViewState& operator=(const ViewState& src) = default;
 
     /**
      * Construct a ViewState with existing MaskType.
@@ -241,7 +263,7 @@ public:
  *        declared as not-alive by the DataReader because it detected that there are no live
  *        DataWriter objects writing that instance.
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 class OMG_DDS_API dds::sub::status::InstanceState : public std::bitset<OMG_DDS_STATE_BIT_COUNT>
 {
@@ -272,6 +294,17 @@ public:
      * @param src the InstanceState to copy from
      */
     InstanceState(const InstanceState& src);
+
+    /**
+     * Copy assignment operator.
+     *
+     * Copy the contents from one InstanceState to another.
+     *
+     * @param src the InstanceState to copy from
+     *
+     * @return reference to the InstanceState instance that was copied to
+     */
+    InstanceState& operator=(const InstanceState& src) = default;
 
     /**
      * Construct an InstanceState with existing MaskType.
@@ -366,7 +399,7 @@ public:
  *  - The view_state of the related instance (i.e., if the instance is NEW, or NOT_NEW for that DataReader).
  *  - The instance_state of the related instance (i.e., if the instance is ALIVE, NOT_ALIVE_DISPOSED, or NOT_ALIVE_NO_WRITERS).
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 class OMG_DDS_API dds::sub::status::DataState
 {

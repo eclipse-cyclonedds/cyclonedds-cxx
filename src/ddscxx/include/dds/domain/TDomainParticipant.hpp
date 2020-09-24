@@ -59,7 +59,7 @@ class DomainParticipantListener;
  * independent distributed applications can coexist in the same physical
  * network without interfering, or even being aware of each other.
  *
- * @see @ref DCPS_Modules_DomainParticipant "Domain Participant"
+ * @see for more information: @ref DCPS_Modules_DomainParticipant "Domain Participant"
  */
 template <typename DELEGATE>
 class dds::domain::TDomainParticipant : public ::dds::core::TEntity<DELEGATE>
@@ -140,6 +140,16 @@ public:
                        dds::domain::DomainParticipantListener*         listener = NULL,
                        const dds::core::status::StatusMask&            event_mask = dds::core::status::StatusMask::none(),
                        const std::string&                              config = std::string());
+    /**
+    * Copy assignment operator.
+    *
+    * Copies the contents from one DomainParticipant to another.
+    *
+    * @param other the DomainParticipant to copy from
+    *
+    * @return reference to the DomainParticipant that was copied to
+    */
+    TDomainParticipant& operator=(const TDomainParticipant& other) = default;
 
 public:
     /** @cond */
