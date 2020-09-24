@@ -40,6 +40,8 @@ namespace cyclonedds
 namespace topic
 {
 
+DDSCXX_WARNING_MSVC_OFF(4250)
+
 class OMG_DDS_API AnyTopicDelegate :
     public virtual org::eclipse::cyclonedds::core::EntityDelegate,
     public virtual org::eclipse::cyclonedds::topic::TopicDescriptionDelegate
@@ -104,6 +106,8 @@ protected:
     org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
     void* sample_;
 };
+
+DDSCXX_WARNING_MSVC_ON(4250)
 
 }
 }

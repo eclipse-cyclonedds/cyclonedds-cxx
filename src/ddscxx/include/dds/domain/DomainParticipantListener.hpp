@@ -29,6 +29,8 @@ namespace dds
 namespace domain
 {
 
+DDSCXX_WARNING_MSVC_OFF(4250)
+
 /**
  * @brief
  * DomainParticipant events Listener
@@ -197,6 +199,8 @@ public:
     virtual ~NoOpDomainParticipantListener()  { }
     /** @endcond */
 };
+
+DDSCXX_WARNING_MSVC_ON(4250)
 
 }
 }
