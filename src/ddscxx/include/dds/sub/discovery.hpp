@@ -51,8 +51,9 @@ void OMG_DDS_API ignore(const dds::domain::DomainParticipant& dp,
  * @param dp      the DomainParticipant for which the remote
  *                entity will be ignored
  *
- * @param handle  the InstanceHandle of the remote entity that
- *                has to be ignored
+ * @param begin  the start of the range to be ignored
+ *
+ * @param end    the end of the range to be ignored
  */
 template <typename FwdIterator>
 void ignore(const dds::domain::DomainParticipant& dp, FwdIterator begin, FwdIterator end);

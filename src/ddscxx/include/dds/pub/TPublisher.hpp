@@ -49,7 +49,7 @@ class PublisherListener;
  * considers any extra information that goes with the data (timestamp,
  * writer, etc.) as well as the QoS of the Publisher and the DataWriter.
  *
- * @see @ref DCPS_Modules_Publisher "Publisher"
+ * @see for more information: @ref DCPS_Modules_Publisher "Publisher"
  */
 template <typename DELEGATE>
 class dds::pub::TPublisher : public dds::core::TEntity<DELEGATE>

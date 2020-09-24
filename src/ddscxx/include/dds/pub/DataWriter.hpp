@@ -82,8 +82,8 @@ template <typename T> class DataWriterListener;
  * writer.write(sample);
  * @endcode
  *
- * @see @ref DCPS_Modules_Publication "Publication concept"
- * @see @ref DCPS_Modules_Publication_DataWriter "DataWriter concept"
+ * @see for more information: @ref DCPS_Modules_Publication "Publication concept"
+ * @see for more information: @ref DCPS_Modules_Publication_DataWriter "DataWriter concept"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class dds::pub::DataWriter : public ::dds::pub::TAnyDataWriter< DELEGATE<T> >
@@ -357,7 +357,7 @@ public:
      * <i>Blocking</i><br>
      * This operation can be blocked (see @ref anchor_dds_pub_datawriter_write_blocking "write blocking").
      *
-     * @param sample the sample to be written
+     * @param data the sample to be written
      * @param instance the handle representing the instance written
      * @param timestamp the timestamp to use for this sample
      * @throws dds::core::Error

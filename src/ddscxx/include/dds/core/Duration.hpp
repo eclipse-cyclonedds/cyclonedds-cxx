@@ -83,7 +83,7 @@ public:
 
     /**
      * Create a Duration from a number of milliseconds
-     * @param miliseconds number of milliseconds
+     * @param milliseconds number of milliseconds
      */
     static const Duration from_millisecs(int64_t milliseconds);
 
@@ -139,7 +139,8 @@ public:
 
     /**
      * Returns true if the Duration is greater than or equal to the comparator
-     * @param Duration &that
+     * @param that the Duration to compare
+     * @return true if that is larger than or equal to this
      */
     bool operator >=(const Duration& that) const;
 

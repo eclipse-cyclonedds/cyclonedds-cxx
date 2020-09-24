@@ -87,7 +87,7 @@ class TCoherentAccess;
  * // CoherentAccess went out of scope: it is ended implicitly
  * @endcode
  *
- * @see @ref DCPS_Modules_Subscription "Subscription"
+ * @see for more information: @ref DCPS_Modules_Subscription "Subscription"
  * @see dds::sub::Subscriber
  */
 template <typename DELEGATE>

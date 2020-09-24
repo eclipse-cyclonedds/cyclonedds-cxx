@@ -58,9 +58,9 @@ class Sample;
  * }
  * @endcode
  *
- * @see @ref DCPS_Modules_Subscription_DataSample "DataSample" for more information
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
- * @see @ref DCPS_Modules_Subscription "Subscription" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_DataSample "DataSample"
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
+ * @see for more information: @ref DCPS_Modules_Subscription "Subscription"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class dds::sub::Sample : public dds::core::Value< DELEGATE<T> >

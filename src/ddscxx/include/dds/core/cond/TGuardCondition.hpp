@@ -60,8 +60,8 @@ class TGuardCondition;
  * with a WaitSet is the same.
  *
  * @see dds::core::cond::Condition
- * @see @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
- * @see @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
+ * @see for more information: @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
  */
 template <typename DELEGATE>
 class dds::core::cond::TGuardCondition : public dds::core::cond::TCondition<DELEGATE>
@@ -92,7 +92,7 @@ public:
      * dds::core::cond::WaitSet::dispatch() on the WaitSet to which this GuardCondition is
      * attached to.
      *
-     * @tparam functor The functor to be called when the GuardCondition triggers.
+     * @param functor The functor to be called when the GuardCondition triggers.
      * @throw  dds::core::Exception
      */
     template <typename FUN>

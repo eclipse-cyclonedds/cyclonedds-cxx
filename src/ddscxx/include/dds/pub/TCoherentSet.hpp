@@ -63,7 +63,7 @@ class TCoherentSet;
  * can see both together; otherwise, it may, for example,
  * erroneously interpret that the aircraft is on a collision course.
  *
- * @see @ref DCPS_Modules_Publication "Publication"
+ * @see for more information: @ref DCPS_Modules_Publication "Publication"
  * @see dds::pub::Publisher
  */
 template <typename DELEGATE>

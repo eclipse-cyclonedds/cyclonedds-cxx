@@ -89,8 +89,4 @@ namespace cond
 }
 }
 
-#ifdef _WIN32
-#pragma warning ( pop )
-#endif
-
 #endif /* CYCLONEDDS_CORE_COND_WAITSET_DELEGATE_HPP_ */

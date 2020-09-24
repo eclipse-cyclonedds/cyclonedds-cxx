@@ -144,11 +144,11 @@ org::eclipse::cyclonedds::core::EntityDelegate::retain()
 
 void
 org::eclipse::cyclonedds::core::EntityDelegate::listener_set(
-                 void *listener,
+                 void *_listener,
                  const dds::core::status::StatusMask& mask)
 {
     dds_listener_t *callbacks;
-    this->listener = listener;
+    this->listener = _listener;
     this->listener_mask = mask;
 
     callbacks = dds_create_listener(this);

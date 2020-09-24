@@ -36,9 +36,9 @@ class TopicInstance;
  * A TopicInstance encapsulates a dds::sub::Sample and its associated
  * dds::core::InstanceHandle.
  *
- * @see @ref DCPS_Modules_TopicDefinition "Topic Definition"
- * @see @ref dds::sub::Sample
- * @see @ref dds::core::InstanceHandle
+ * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
+ * @see for more information: @ref dds::sub::Sample
+ * @see for more information: @ref dds::core::InstanceHandle
  */
 template <typename T>
 class dds::topic::TopicInstance

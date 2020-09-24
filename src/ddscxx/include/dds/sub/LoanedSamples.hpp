@@ -79,9 +79,9 @@ template <typename T> typename T::const_iterator cend(const T& t);
  * // takes care of the loan and resource handling.
  * @endcode
  *
- * @see @ref DCPS_Modules_Subscription_DataSample "DataSample" for more information
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
- * @see @ref DCPS_Modules_Subscription "Subscription" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_DataSample "DataSample"
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
+ * @see for more information: @ref DCPS_Modules_Subscription "Subscription"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class dds::sub::LoanedSamples
@@ -120,6 +120,14 @@ public:
      * Just references and reference counts are updated.
      */
     LoanedSamples(const LoanedSamples& other);
+
+    /**
+     * Copy-assigns a LoanedSamples instance to another.
+     *
+     * No actual data samples are copied.<br>
+     * Just references and reference counts are updated.
+     */
+    LoanedSamples& operator=(const LoanedSamples& other) = default;
 
 
 public:

@@ -51,8 +51,8 @@ class TCondition;
  * the Data Distribution Service (except a GuardCondition) depending on the
  * evaluation of the Condition.
  *
- * @see @ref DCPS_Modules_Infrastructure_Status  "Status concept"
- * @see @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Status  "Status concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
  */
 template <typename DELEGATE>
 class dds::core::cond::TCondition : public virtual dds::core::Reference<DELEGATE>
@@ -78,8 +78,7 @@ public:
      * dds::core::cond::WaitSet::dispatch() on the WaitSet to which this
      * Condition is attached to.
      *
-     * @tparam Functor The functor to be called when the StatusCondition triggers.
-     * @return void
+     * @param func The functor to be called when the StatusCondition triggers.
      * @throw  dds::core::Exception
      */
     template <typename Functor>
@@ -91,7 +90,6 @@ public:
      * After the invocation of this function no handler will be registered with
      * this Condition.
      *
-     * @return void
      * @throw  dds::core::Exception
      */
     void reset_handler();
@@ -102,7 +100,6 @@ public:
      * The Condition has to have been triggered for the functor will be called
      * by this function.
      *
-     * @return void
      * @throw  dds::core::Exception
      */
     void dispatch();

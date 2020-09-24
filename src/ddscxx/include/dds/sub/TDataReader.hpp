@@ -98,8 +98,8 @@ class DataReaderListener;
  * // was automatically returned when the LoanedSamples went out of scope.
  * @endcode
  *
- * @see @ref DCPS_Modules_Subscription "Subscription concept"
- * @see @ref DCPS_Modules_Subscription_DataReader "DataReader concept"
+ * @see for more information: @ref DCPS_Modules_Subscription "Subscription concept"
+ * @see for more information: @ref DCPS_Modules_Subscription_DataReader "DataReader concept"
  */
 template <typename T, template <typename Q> class DELEGATE>
 class dds::sub::DataReader : public dds::sub::TAnyDataReader< DELEGATE<T> >
@@ -158,7 +158,7 @@ public:
      * max_samples     | dds::core::LENGTH_UNLIMITED
      * instance        | dds::core::InstanceHandle nil
      *
-     * @see @link dds::sub::DataReader::select() DataReader select() @endlink
+     * @see for more information: @link dds::sub::DataReader::select() DataReader select() @endlink
      */
     class Selector
     {
@@ -166,7 +166,7 @@ public:
         /**
          * Construct a Selector for a DataReader.
          *
-         * @param DataReader
+         * @param dr DataReader
          */
         Selector(DataReader& dr);
 
@@ -503,7 +503,7 @@ public:
      * max_samples     | dds::core::LENGTH_UNLIMITED
      * instance        | dds::core::InstanceHandle nil
      *
-     * @see @link dds::sub::DataReader::operator>>(dds::sub::LoanedSamples<T>& ls) DataReader stream operator>> @endlink
+     * @see for more information: @link dds::sub::DataReader::operator>>(dds::sub::LoanedSamples<T>& ls) DataReader stream operator>> @endlink
      */
     class ManipulatorSelector
     {

@@ -42,7 +42,7 @@ class TTopicDescription;
  * that type.<br>
  * TopicDescription has also a name that allows it to be retrieved locally.
  *
- * @see @ref DCPS_Modules_TopicDefinition "Topic Definition"
+ * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename DELEGATE>
 class dds::topic::TTopicDescription : public virtual dds::core::Reference<DELEGATE>
@@ -51,6 +51,14 @@ public:
     OMG_DDS_REF_TYPE_PROTECTED_DC(TTopicDescription, dds::core::Reference, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(TTopicDescription)
 
+    /**
+     * Copies the contents of another TopicDescription to this
+     *
+     * @param other the TopicDescription instance to copy from
+     *
+     * @return reference to the TopicDescription instance that was copied to
+     */
+    TTopicDescription& operator=(const TTopicDescription& other) = default;
 public:
     /** @cond */
     virtual ~TTopicDescription();

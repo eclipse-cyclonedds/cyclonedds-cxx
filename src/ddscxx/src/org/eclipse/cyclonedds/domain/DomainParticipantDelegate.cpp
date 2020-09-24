@@ -421,18 +421,15 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topic(
 
 void
 org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topics(
-        const std::string& type_name,
-        std::vector<dds_entity_t>& topics,
-        uint32_t max_size)
+        const std::string&,
+        std::vector<dds_entity_t>&,
+        uint32_t)
 {
     /*
      * This is used by Topic<T>::discover_topics() and
      * AnyTopicDelegate::discover_topics(), which are used
      * by topic/discovery.hpp.
      */
-    (void)topics;
-    (void)max_size;
-    (void)type_name;
     /* Add support during Topic discovery implementation. */
     ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
 }

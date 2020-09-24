@@ -61,7 +61,7 @@ class TRank;
  *      (MRS.disposed_generation_count + MRS.no_writers_generation_count) -
  *      (S.disposed_generation_count + S.no_writers_generation_count)
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 template <typename DELEGATE>
 class dds::sub::TRank : public dds::core::Value<DELEGATE>

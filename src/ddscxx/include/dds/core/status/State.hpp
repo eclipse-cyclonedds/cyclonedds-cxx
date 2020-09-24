@@ -35,7 +35,7 @@ namespace status
  * @brief
  * Class to contain the statistics about samples that have been rejected.
  *
- * @see @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo" for more information
+ * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
  */
 class OMG_DDS_API SampleRejectedState : public std::bitset<OMG_DDS_STATE_BIT_COUNT>
 {
@@ -67,6 +67,16 @@ public:
      */
     SampleRejectedState(const MaskType& src);
 
+    /**
+    * Copy assignment operator.
+    *
+    * Copies the data from src to the current instance.
+    *
+    * @param src the SampleRejectedState to copy from
+    *
+    * @return reference to the SampleRejectedState that was copied to
+    */
+    SampleRejectedState& operator=(const SampleRejectedState&) = default;
 public:
     /**
      * Get the NOT_REJECTED.
@@ -139,7 +149,7 @@ private:
  * - set conditions in dds::core::cond::StatusCondition
  * - indicate status changes when calling dds::core::Entity::status_changes
  *
- * @see @ref DCPS_Modules_Infrastructure_Status  "Status concept"
+ * @see for more information: @ref DCPS_Modules_Infrastructure_Status  "Status concept"
  */
 class OMG_DDS_API StatusMask : public std::bitset<OMG_DDS_STATUS_COUNT>
 {
@@ -170,6 +180,17 @@ public:
      * @param other the StatusMask to copy from
      */
     StatusMask(const StatusMask& other);
+
+    /**
+     * Copy assignment operator.
+     *
+     * Copies the contents from one StatusMask to another.
+     *
+     * @param other the StatusMask to copy from
+     *
+     * @return reference to the StatusMask that was copied to
+     */
+    StatusMask& operator=(const StatusMask& other) = default;
 
     /** @cond */
     ~StatusMask();
