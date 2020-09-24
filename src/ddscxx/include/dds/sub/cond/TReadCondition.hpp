@@ -109,7 +109,7 @@ public:
      * @param  dr       The DataReader to associate with the ReadCondition.
      * @param  status   A mask, which selects only those samples with the desired
      *                  sample/view/instance states.
-     * @tparam functor The functor to be called when the ReadCondition triggers.
+     * @param  functor The functor to be called when the ReadCondition triggers.
      * @throw  dds::core::Exception
      */
     template <typename FUN>
