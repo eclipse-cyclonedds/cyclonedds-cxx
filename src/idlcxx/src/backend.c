@@ -270,12 +270,9 @@ idl_walk_tree(
       matches_target_file = true;
     }
 
-    if (matches_target_file)
+    if (matches_target_file && (target_node->mask & mask))
     {
-      if (target_node->mask & mask)
-      {
-        result = action(ctx, target_node);
-      }
+      result = action(ctx, target_node);
       switch (target_node->mask & IDL_CATEGORY_MASK)
       {
       case IDL_MODULE:
