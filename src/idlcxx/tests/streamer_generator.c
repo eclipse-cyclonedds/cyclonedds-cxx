@@ -1463,10 +1463,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  size_t typedef_key_stream_td_6(const td_6 &obj, void *data, size_t position);\n\n"\
 "  size_t typedef_key_size_td_6(const td_6 &obj, size_t position);\n\n"\
 "  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position);\n\n"\
-"} //end namespace M\n\n"\
-"namespace N\n"\
-"{\n\n"\
-"} //end namespace N\n\n"
+"} //end namespace M\n\n"
 
 #define KBI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
 "size_t s::write_struct(void *data, size_t position) const\n"\
@@ -1816,23 +1813,6 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "size_t typedef_key_size_td_1(const td_1 &obj, size_t position);\n\n"\
 "size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position);\n\n"
 
-#define NSE "namespace N\n" \
-"{\n\n" \
-"} //end namespace N\n\n"
-
-#define NSD "namespace A_1\n"\
-"{\n\n"\
-"  namespace A_2\n"\
-"  {\n\n"\
-"  } //end namespace A_2\n\n"\
-"} //end namespace A_1\n\n"\
-"namespace B_1\n"\
-"{\n\n"\
-"  namespace B_2\n"\
-"  {\n\n"\
-"  } //end namespace B_2\n\n"\
-"} //end namespace B_1\n\n"
-
 void test_base(size_t n, bool ns)
 {
   char buffer[1024];
@@ -1865,7 +1845,7 @@ void test_base(size_t n, bool ns)
   create_funcs_base(impl, n, ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -1908,7 +1888,7 @@ void test_instance(bool ns)
   create_funcs_instance(impl, "mem", ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -1947,7 +1927,7 @@ void test_sequence(size_t n, bool ns)
   create_funcs_sequence(impl, "mem", n, ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -1984,7 +1964,7 @@ void test_string(bool ns)
   create_funcs_string(impl, "str", ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -2032,7 +2012,7 @@ void test_union(bool ns)
   generate_union_funcs(impl, ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -2070,7 +2050,7 @@ void test_enum(bool ns)
   generate_enum_funcs(impl, ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -2107,7 +2087,7 @@ void test_array_base(bool ns)
   generate_array_base_funcs(impl, ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -2150,7 +2130,7 @@ void test_array_instance(bool ns)
   generate_array_instance_funcs(impl, ns);
 
   CU_ASSERT_STRING_EQUAL(get_ostream_buffer(impl), get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(ns ? NSE : "", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_ostream(impl);
   destruct_idl_streamer_output(generated);
@@ -2169,7 +2149,7 @@ void test_namespace_cross_call()
   idl_streamers_generate(tree, generated);
 
   CU_ASSERT_STRING_EQUAL(CCFI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(NSD, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
   idl_delete_tree(tree);
