@@ -223,10 +223,9 @@ static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_case(context_t* ctx, idl_case_t* _case);
 static idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label);
 static idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, const char* read_accessor, uint64_t entries, bool is_key);
-static context_t* create_context(idl_streamer_output_t* str, const char* name);
+static context_t* create_context(const char* name);
 static context_t* child_context(context_t* ctx, const char* name);
-static void flush_streams(context_t* ctx);
-static void close_context(context_t* ctx);
+static void close_context(context_t* ctx, idl_streamer_output_t* str);
 static void resolve_namespace(idl_node_t* node, char** up);
 
 static char* generatealignment(int alignto)
@@ -321,12 +320,13 @@ idl_ostream_t* get_idl_streamer_head_buf(const idl_streamer_output_t* str)
   return str->head_stream;
 }
 
-context_t* create_context(idl_streamer_output_t* str, const char* name)
+context_t* create_context(const char* name)
 {
   context_t* ptr = calloc(sizeof(context_t),1);
   if (NULL != ptr)
   {
-    ptr->str = str;
+    ptr->str = create_idl_streamer_output();
+    assert(ptr->str);
     ptr->context = idl_strdup(name);
     ptr->write_size_stream = create_idl_ostream(NULL);
     ptr->write_stream = create_idl_ostream(NULL);
@@ -342,30 +342,64 @@ context_t* create_context(idl_streamer_output_t* str, const char* name)
 
 context_t* child_context(context_t* ctx, const char* name)
 {
-  context_t *ptr = create_context(ctx->str, name);
+  context_t* ptr = create_context(name);
+  assert(ptr);
 
-  if (NULL != ptr)
-  {
-    ptr->parent = ctx;
-    ptr->depth = ctx->depth + 1;
-  }
+  ptr->parent = ctx;
+  ptr->depth = ctx->depth + 1;
 
   return ptr;
 }
 
-void flush_streams(context_t* ctx)
+void close_context(context_t* ctx, idl_streamer_output_t* str)
 {
+  assert(ctx);
+
+  if (get_ostream_buffer_position(ctx->str->head_stream) != 0)
+  {
+    if (ctx->parent)
+    {
+      //there is a parent context (so all statements are made inside a namespace)
+      //move the contents to the parent
+      format_header_stream(1, ctx->parent, namespace_declaration, ctx->context);
+      format_header_stream(1, ctx->parent, open_block "\n");
+      format_header_stream(0, ctx->parent, "%s", get_ostream_buffer(ctx->str->head_stream));
+      format_header_stream(1, ctx->parent, namespace_closure, ctx->context);
+    }
+    else if (str)
+    {
+      //no parent context (so this is the root namespace)
+      //move the contents to the "exit" stream
+      format_ostream(str->head_stream, "%s", get_ostream_buffer(ctx->str->head_stream));
+    }
+  }
+
+  //bundle impl contents
   transfer_ostream_buffer(ctx->write_stream, ctx->str->impl_stream);
   transfer_ostream_buffer(ctx->write_size_stream, ctx->str->impl_stream);
   transfer_ostream_buffer(ctx->key_size_stream, ctx->str->impl_stream);
   transfer_ostream_buffer(ctx->key_max_size_stream, ctx->str->impl_stream);
   transfer_ostream_buffer(ctx->key_stream, ctx->str->impl_stream);
   transfer_ostream_buffer(ctx->read_stream, ctx->str->impl_stream);
-}
 
-void close_context(context_t* ctx)
-{
-  flush_streams(ctx);
+  if (get_ostream_buffer_position(ctx->str->impl_stream) != 0)
+  {
+    if (ctx->parent)
+    {
+      //there is a parent context (so all statements are made inside a namespace)
+      //move the contents to the parent
+      format_impl_stream(1, ctx->parent, namespace_declaration, ctx->context);
+      format_impl_stream(1, ctx->parent, open_block "\n");
+      format_impl_stream(0, ctx->parent, "%s", get_ostream_buffer(ctx->str->impl_stream));
+      format_impl_stream(1, ctx->parent, namespace_closure, ctx->context);
+    }
+    else if (str)
+    {
+      //no parent context (so this is the root namespace)
+      //move the contents to the "exit" stream
+      format_ostream(str->impl_stream, "%s", get_ostream_buffer(ctx->str->impl_stream));
+    }
+  }
 
   destruct_idl_ostream(ctx->write_stream);
   destruct_idl_ostream(ctx->write_size_stream);
@@ -374,6 +408,7 @@ void close_context(context_t* ctx)
   destruct_idl_ostream(ctx->key_stream);
   destruct_idl_ostream(ctx->read_stream);
 
+  destruct_idl_streamer_output(ctx->str);
   free(ctx->context);
   free(ctx);
 }
@@ -1166,21 +1201,9 @@ idl_retcode_t process_module(context_t* ctx, idl_module_t* module)
 
     context_t* newctx = child_context(ctx, cpp11name);
 
-    format_write_stream(1, ctx, false, namespace_declaration, cpp11name);
-    format_write_stream(1, ctx, false, open_block "\n");
-
-    format_header_stream(1, ctx, namespace_declaration, cpp11name);
-    format_header_stream(1, ctx, open_block "\n");
-
-    flush_streams(ctx);
-
     process_node(newctx, (idl_node_t*)module->definitions);
 
-    close_context(newctx);
-    format_read_stream(1, ctx, namespace_closure, cpp11name);
-    format_header_stream(1, ctx, namespace_closure, cpp11name);
-
-    flush_streams(ctx);
+    close_context(newctx, NULL);
 
     free(cpp11name);
   }
@@ -1570,12 +1593,13 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
 
 void idl_streamers_generate(const idl_tree_t* tree, idl_streamer_output_t* str)
 {
-  context_t* ctx = create_context(str, "");
+  context_t* ctx = create_context("");
 
   format_impl_stream(0, ctx, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
   if (tree->files)
     ctx->parsed_file = tree->files->name;
 
   process_node(ctx, tree->root);
-  close_context(ctx);
+
+  close_context(ctx, str);
 }
