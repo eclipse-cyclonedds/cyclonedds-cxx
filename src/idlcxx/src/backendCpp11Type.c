@@ -1356,6 +1356,8 @@ idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tre
     free(include);
   }
   if (nr_includes == 0) {
+    idl_file_out_printf(ctx, "#include <cstddef>\n");
+    idl_file_out_printf(ctx, "#include <cstdint>\n\n");
     idl_file_out_printf(ctx, "#include \"dds/ddsi/ddsi_keyhash.h\"\n");
   }
   idl_file_out_printf(ctx, "\n");
