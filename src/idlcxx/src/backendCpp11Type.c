@@ -162,29 +162,33 @@ struct_generate_constructors_and_operators(idl_backend_ctx ctx)
   idl_file_out_printf_no_indent(ctx, " {}\n\n");
   idl_indent_double_decr(ctx);
 
-  /* Start building constructor that inits all parameters explicitly. */
-  idl_file_out_printf(ctx, "explicit %s(\n", struct_ctx->name);
-  idl_indent_double_incr(ctx);
-  for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
+  /* Check if the struct has members. A struct may extend from another but have no members of its own. */
+  if (struct_ctx->member_count > 0)
   {
-    bool is_primitive = idl_declarator_is_primitive(struct_ctx->members[i].declarator_node);
-    idl_file_out_printf(ctx, "%s%s%s %s%s",
-        is_primitive ? "" : "const ",
-        struct_ctx->members[i].type_name,
-        is_primitive ? "" : "&",
-        struct_ctx->members[i].name,
-        (i == (struct_ctx->member_count - 1) ? ") :\n" : ",\n"));
+    /* Start building constructor that inits all parameters explicitly. */
+    idl_file_out_printf(ctx, "explicit %s(\n", struct_ctx->name);
+    idl_indent_double_incr(ctx);
+    for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
+    {
+      bool is_primitive = idl_declarator_is_primitive(struct_ctx->members[i].declarator_node);
+      idl_file_out_printf(ctx, "%s%s%s %s%s",
+          is_primitive ? "" : "const ",
+          struct_ctx->members[i].type_name,
+          is_primitive ? "" : "&",
+          struct_ctx->members[i].name,
+          (i == (struct_ctx->member_count - 1) ? ") :\n" : ",\n"));
+    }
+    idl_indent_double_incr(ctx);
+    for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
+    {
+      idl_file_out_printf(ctx, "%s_(%s)%s",
+          struct_ctx->members[i].name,
+          struct_ctx->members[i].name,
+          (i == (struct_ctx->member_count - 1) ? " {}\n\n" : ",\n"));
+    }
+    idl_indent_double_decr(ctx);
+    idl_indent_double_decr(ctx);
   }
-  idl_indent_double_incr(ctx);
-  for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
-  {
-    idl_file_out_printf(ctx, "%s_(%s)%s",
-        struct_ctx->members[i].name,
-        struct_ctx->members[i].name,
-        (i == (struct_ctx->member_count - 1) ? " {}\n\n" : ",\n"));
-  }
-  idl_indent_double_decr(ctx);
-  idl_indent_double_decr(ctx);
   idl_indent_decr(ctx);
 }
 
