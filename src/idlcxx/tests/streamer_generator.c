@@ -126,6 +126,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -238,6 +239,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -268,6 +270,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -326,7 +329,6 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
     format_ostream_indented(0, ostr, "namespace N\n{\n\n");
   }
 
-
   format_ostream_indented(ns * 2, ostr, "size_t s::write_struct(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
@@ -343,8 +345,9 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = (uint32_t) %s().size()+1;  //number of entries in the sequence\n", in);
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for sequence entries\n", in);
-  format_ostream_indented(ns * 2, ostr, "  position += (%s().size()+1)*1;  //entries of sequence\n", in);
+  format_ostream_indented(ns * 2, ostr, "  position += sequenceentries*1;  //entries of sequence\n", in);
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -360,6 +363,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -438,12 +442,13 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  uint32_t sequenceentries = (uint32_t) %s().size();  //number of entries in the sequence\n", seq_name);
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for sequence entries\n", seq_name);
   if (width > 4)
   {
     format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n", width, width - 1, width - 1);
   }
-  format_ostream_indented(ns * 2, ostr, "  position += (%s().size())*%d;  //entries of sequence\n", seq_name, width);
+  format_ostream_indented(ns * 2, ostr, "  position += sequenceentries*%d;  //entries of sequence\n", width);
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -459,6 +464,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -587,8 +593,9 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 4:\n");
   format_ostream_indented(ns * 2, ostr, "    case 5:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = (uint32_t) str().size()+1;  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //bytes for sequence entries\n");
-  format_ostream_indented(ns * 2, ostr, "      position += (str().size()+1)*1;  //entries of sequence\n");
+  format_ostream_indented(ns * 2, ostr, "      position += sequenceentries*1;  //entries of sequence\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
   format_ostream_indented(ns * 2, ostr, "    default:\n");
@@ -621,8 +628,9 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    case 4:\n");
   format_ostream_indented(ns * 2, ostr, "    case 5:\n");
   format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = (uint32_t) str().size()+1;  //number of entries in the sequence\n");
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //bytes for sequence entries\n");
-  format_ostream_indented(ns * 2, ostr, "      position += (str().size()+1)*1;  //entries of sequence\n");
+  format_ostream_indented(ns * 2, ostr, "      position += sequenceentries*1;  //entries of sequence\n");
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
   format_ostream_indented(ns * 2, ostr, "    default:\n");
@@ -666,6 +674,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
   format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
@@ -781,7 +790,84 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 
 void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
 {
-  create_funcs_base(ostr, 7, ns);
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
+
+  if (ns)
+  {
+    format_ostream_indented(0, ostr, "namespace N\n{\n\n");
+  }
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::write_struct(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n");
+  format_ostream_indented(ns * 2, ostr, "  position += alignmentbytes;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  *((%sE*)((char*)data+position)) = mem();  //writing bytes for member: mem()\n", ns ? "N::" : "");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::write_size(size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //bytes for member: mem()\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_size(size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_max_size(size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "bool s::key(ddsi_keyhash_t &hash) const\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t sz = key_size(0);\n");
+  format_ostream_indented(ns * 2, ostr, "  size_t padding = 16 - sz%%16;\n");
+  format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
+  format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
+  format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
+  format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
+  format_ostream_indented(ns * 2, ostr, "  {\n");
+  format_ostream_indented(ns * 2, ostr, "    if (key_max_size(0) <= 16)\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      //bind to unmodified function which just copies buffer into the keyhash\n");
+  format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    else\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      //bind to MD5 hash function\n");
+  format_ostream_indented(ns * 2, ostr, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "  }\n");
+  format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  mem() = *((%sE*)((char*)data+position));  //reading bytes for member: mem()\n", ns ? "N::" : "");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  if (ns)
+  {
+    format_ostream_indented(0, ostr, "} //end namespace N\n\n");
+  }
+
 }
 
 void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
@@ -825,6 +911,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -932,6 +1019,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t I::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -962,6 +1050,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 
   format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
@@ -1041,6 +1130,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n\n"\
 "    size_t s_1::key_stream(void *data, size_t position) const\n"\
 "    {\n"\
+"      (void)data;\n"\
 "      return position;\n"\
 "    }\n\n"\
 "    bool s_1::key(ddsi_keyhash_t &hash) const\n"\
@@ -1100,6 +1190,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n\n"\
 "    size_t s_2::key_stream(void *data, size_t position) const\n"\
 "    {\n"\
+"      (void)data;\n"\
 "      return position;\n"\
 "    }\n\n"\
 "    bool s_2::key(ddsi_keyhash_t &hash) const\n"\
@@ -1187,6 +1278,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t I::key_stream(void *data, size_t position) const\n"\
   "{\n"\
+  "  (void)data;\n"\
   "  return position;\n"\
   "}\n\n"\
   "bool I::key(ddsi_keyhash_t &hash) const\n"\
@@ -1215,6 +1307,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::key_stream(void *data, size_t position) const\n"\
   "{\n"\
+  "  (void)data;\n"\
   "  position = dynamic_cast<const I&>(*this).key_stream(data, position);\n"\
   "  return position;\n"\
   "}\n\n"\
@@ -1275,8 +1368,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "size_t s::write_size(size_t position) const\n"\
   "{\n"\
   "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+  "  uint32_t sequenceentries = (uint32_t) mem().size();  //number of entries in the sequence\n"\
   "  position += 4;  //bytes for sequence entries\n"\
-  "  position += (mem().size())*4;  //entries of sequence\n"\
+  "  position += sequenceentries*4;  //entries of sequence\n"\
   "  return position;\n"\
   "}\n\n"\
   "size_t s::key_size(size_t position) const\n"\
@@ -1289,6 +1383,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "}\n\n"\
   "size_t s::key_stream(void *data, size_t position) const\n"\
   "{\n"\
+  "  (void)data;\n"\
   "  return position;\n"\
   "}\n\n"\
   "bool s::key(ddsi_keyhash_t &hash) const\n"\
@@ -1343,19 +1438,22 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  size_t typedef_write_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
 "    position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"    uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "    position += 4;  //bytes for sequence entries\n"\
-"    position += (obj.size())*4;  //entries of sequence\n"\
+"    position += sequenceentries*4;  //entries of sequence\n"\
 "    return position;\n"\
 "  }\n\n"\
 "  size_t typedef_key_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
 "    position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"    uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "    position += 4;  //bytes for sequence entries\n"\
-"    position += (obj.size())*4;  //entries of sequence\n"\
+"    position += sequenceentries*4;  //entries of sequence\n"\
 "    return position;\n"\
 "  }\n\n"\
 "  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
+"    (void)obj;\n"\
 "    (void)position;\n"\
 "    return UINT_MAX;\n"\
 "  }\n\n"\
@@ -1371,7 +1469,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    position += sequenceentries*4;  //moving position indicator\n"\
 "    return position;\n"\
 "  }\n\n"\
-"  size_t typedef_read_td_6(td_6 &obj, void* data, size_t position)\n"\
+"  size_t typedef_read_td_6(td_6 &obj, const void* data, size_t position)\n"\
 "  {\n"\
 "    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
@@ -1400,6 +1498,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  {\n"\
 "    position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "    position += 4;  //bytes for member: mem_simple()\n"\
+"    uint32_t sequenceentries = (uint32_t) mem().size();  //number of entries in the sequence\n"\
 "    position += 4;  //bytes for sequence entries\n"\
 "    for (size_t _i = 0; _i < sequenceentries; _i++)   position = M::typedef_write_size_td_6(mem()[_i], position);\n"\
 "    return position;\n"\
@@ -1414,6 +1513,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n\n"\
 "  size_t s::key_stream(void *data, size_t position) const\n"\
 "  {\n"\
+"    (void)data;\n"\
 "    return position;\n"\
 "  }\n\n"\
 "  bool s::key(ddsi_keyhash_t &hash) const\n"\
@@ -1457,85 +1557,11 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "{\n\n"\
 "  size_t typedef_write_td_6(const td_6 &obj, void* data, size_t position);\n\n"\
 "  size_t typedef_write_size_td_6(const td_6 &obj, size_t position);\n\n"\
-"  size_t typedef_read_td_6(td_6 &obj, void* data, size_t position);\n\n"\
+"  size_t typedef_read_td_6(td_6 &obj, const void* data, size_t position);\n\n"\
 "  size_t typedef_key_stream_td_6(const td_6 &obj, void *data, size_t position);\n\n"\
 "  size_t typedef_key_size_td_6(const td_6 &obj, size_t position);\n\n"\
 "  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position);\n\n"\
 "} //end namespace M\n\n"
-
-#define KBI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
-"size_t s::write_struct(void *data, size_t position) const\n"\
-"{\n"\
-"  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
-"  position += 1;  //moving position indicator\n"\
-"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
-"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
-"  position += alignmentbytes;  //moving position indicator\n"\
-"  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
-"  position += 4;  //moving position indicator\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t s::write_size(size_t position) const\n"\
-"{\n"\
-"  position += 1;  //bytes for member: o()\n"\
-"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  position += 4;  //bytes for member: l()\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t s::key_size(size_t position) const\n"\
-"{\n"\
-"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  position += 4;  //bytes for member: l()\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t s::key_max_size(size_t position) const\n"\
-"{\n"\
-"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t s::key_stream(void *data, size_t position) const\n"\
-"{\n"\
-"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
-"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
-"  position += alignmentbytes;  //moving position indicator\n"\
-"  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
-"  position += 4;  //moving position indicator\n"\
-"  return position;\n"\
-"}\n\n"\
-"bool s::key(ddsi_keyhash_t &hash) const\n"\
-"{\n"\
-"  size_t sz = key_size(0);\n"\
-"  size_t padding = 16 - sz%16;\n"\
-"  if (sz != 0 && padding == 16) padding = 0;\n"\
-"  std::vector<unsigned char> buffer(sz+padding);\n"\
-"  memset(buffer.data()+sz,0x0,padding);\n"\
-"  key_stream(buffer.data(),0);\n"\
-"  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
-"  if (fptr == NULL)\n"\
-"  {\n"\
-"    if (key_max_size(0) <= 16)\n"\
-"    {\n"\
-"      //bind to unmodified function which just copies buffer into the keyhash\n"\
-"      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n"\
-"    }\n"\
-"    else\n"\
-"    {\n"\
-"      //bind to MD5 hash function\n"\
-"      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
-"    }\n"\
-"  }\n"\
-"  return (*fptr)(buffer,hash);\n"\
-"}\n\n"\
-"size_t s::read_struct(const void *data, size_t position)\n"\
-"{\n"\
-"  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
-"  position += 1;  //moving position indicator\n"\
-"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
-"  position += 4;  //moving position indicator\n"\
-"  return position;\n"\
-"}\n\n"
 
 #define KSI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
 "size_t s::write_struct(void *data, size_t position) const\n"\
@@ -1604,6 +1630,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t s::key_stream(void *data, size_t position) const\n"\
 "{\n"\
+"  (void)data;\n"\
 "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
@@ -1637,8 +1664,9 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t ss::key_stream(void *data, size_t position) const\n"\
 "{\n"\
+"  (void)data;\n"\
 "  position = s_().key_stream(data, position);\n"\
-"  alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
 "  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
@@ -1689,76 +1717,46 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  return position;\n"\
 "}\n\n"
 
-#define TDKI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
-"size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position)\n"\
-"{\n"\
-"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
-"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
-"  position += alignmentbytes;  //moving position indicator\n"\
-"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
-"  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
-"  position += 4;  //moving position indicator\n"\
-"  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
-"  position += sequenceentries*4;  //moving position indicator\n"\
-"  return position;\n"\
-"}\n\n"\
+
+#define KBI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
 "size_t s::write_struct(void *data, size_t position) const\n"\
 "{\n"\
 "  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
 "  position += 1;  //moving position indicator\n"\
-"  position = typedef_write_td_1(t(), data, position);\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t typedef_write_size_td_1(const td_1 &obj, size_t position)\n"\
-"{\n"\
-"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  position += 4;  //bytes for sequence entries\n"\
-"  position += (obj.size())*4;  //entries of sequence\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
+"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
+"  position += alignmentbytes;  //moving position indicator\n"\
+"  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
+"  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::write_size(size_t position) const\n"\
 "{\n"\
 "  position += 1;  //bytes for member: o()\n"\
-"  position = typedef_write_size_td_1(t(), position);\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t typedef_key_size_td_1(const td_1 &obj, size_t position)\n"\
-"{\n"\
 "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  position += 4;  //bytes for sequence entries\n"\
-"  position += (obj.size())*4;  //entries of sequence\n"\
+"  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_size(size_t position) const\n"\
 "{\n"\
-"  position = typedef_key_size_td_1(t(), position);\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
-"}\n\n"\
-"size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position)\n"\
-"{\n"\
-"  (void)position;\n"\
-"  return UINT_MAX;\n"\
 "}\n\n"\
 "size_t s::key_max_size(size_t position) const\n"\
 "{\n"\
-"  position = typedef_key_max_size_td_1(t(), position);\n"\
-"  return position;\n"\
-"}\n\n"\
-"size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position)\n"\
-"{\n"\
-"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
-"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
-"  position += alignmentbytes;  //moving position indicator\n"\
-"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
-"  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
-"  position += 4;  //moving position indicator\n"\
-"  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
-"  position += sequenceentries*4;  //moving position indicator\n"\
+"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
 "size_t s::key_stream(void *data, size_t position) const\n"\
 "{\n"\
-"  position = typedef_key_stream_td_1(t(), *data, position);\n"\
+"  (void)data;\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
+"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
+"  position += alignmentbytes;  //moving position indicator\n"\
+"  *((int32_t*)((char*)data+position)) = l();  //writing bytes for member: l()\n"\
+"  position += 4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
 "bool s::key(ddsi_keyhash_t &hash) const\n"\
@@ -1785,7 +1783,117 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n"\
 "  return (*fptr)(buffer,hash);\n"\
 "}\n\n"\
-"size_t typedef_read_td_1(td_1 &obj, void* data, size_t position)\n"\
+"size_t s::read_struct(const void *data, size_t position)\n"\
+"{\n"\
+"  o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n"\
+"  position += 1;  //moving position indicator\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
+"  position += 4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"
+
+#define TDKI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
+"size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position)\n"\
+"{\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
+"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
+"  position += alignmentbytes;  //moving position indicator\n"\
+"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
+"  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
+"  position += 4;  //moving position indicator\n"\
+"  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
+"  position += sequenceentries*4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::write_struct(void *data, size_t position) const\n"\
+"{\n"\
+"  *((uint8_t*)((char*)data+position)) = o();  //writing bytes for member: o()\n"\
+"  position += 1;  //moving position indicator\n"\
+"  position = typedef_write_td_1(t(), data, position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_write_size_td_1(const td_1 &obj, size_t position)\n"\
+"{\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
+"  position += 4;  //bytes for sequence entries\n"\
+"  position += sequenceentries*4;  //entries of sequence\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::write_size(size_t position) const\n"\
+"{\n"\
+"  position += 1;  //bytes for member: o()\n"\
+"  position = typedef_write_size_td_1(t(), position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_key_size_td_1(const td_1 &obj, size_t position)\n"\
+"{\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
+"  position += 4;  //bytes for sequence entries\n"\
+"  position += sequenceentries*4;  //entries of sequence\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::key_size(size_t position) const\n"\
+"{\n"\
+"  position = typedef_key_size_td_1(t(), position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position)\n"\
+"{\n"\
+"  (void)obj;\n"\
+"  (void)position;\n"\
+"  return UINT_MAX;\n"\
+"}\n\n"\
+"size_t s::key_max_size(size_t position) const\n"\
+"{\n"\
+"  position = typedef_key_max_size_td_1(t(), position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position)\n"\
+"{\n"\
+"  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
+"  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
+"  position += alignmentbytes;  //moving position indicator\n"\
+"  uint32_t sequenceentries = (uint32_t) obj.size();  //number of entries in the sequence\n"\
+"  *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
+"  position += 4;  //moving position indicator\n"\
+"  memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
+"  position += sequenceentries*4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::key_stream(void *data, size_t position) const\n"\
+"{\n"\
+"  (void)data;\n"\
+"  position = typedef_key_stream_td_1(t(), data, position);\n"\
+"  return position;\n"\
+"}\n\n"\
+"bool s::key(ddsi_keyhash_t &hash) const\n"\
+"{\n"\
+"  size_t sz = key_size(0);\n"\
+"  size_t padding = 16 - sz%16;\n"\
+"  if (sz != 0 && padding == 16) padding = 0;\n"\
+"  std::vector<unsigned char> buffer(sz+padding);\n"\
+"  memset(buffer.data()+sz,0x0,padding);\n"\
+"  key_stream(buffer.data(),0);\n"\
+"  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
+"  if (fptr == NULL)\n"\
+"  {\n"\
+"    if (key_max_size(0) <= 16)\n"\
+"    {\n"\
+"      //bind to unmodified function which just copies buffer into the keyhash\n"\
+"      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n"\
+"    }\n"\
+"    else\n"\
+"    {\n"\
+"      //bind to MD5 hash function\n"\
+"      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
+"    }\n"\
+"  }\n"\
+"  return (*fptr)(buffer,hash);\n"\
+"}\n\n"\
+"size_t typedef_read_td_1(td_1 &obj, const void* data, size_t position)\n"\
 "{\n"\
 "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
 "  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
@@ -1804,7 +1912,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 
 #define TDKH "size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position);\n\n"\
 "size_t typedef_write_size_td_1(const td_1 &obj, size_t position);\n\n"\
-"size_t typedef_read_td_1(td_1 &obj, void* data, size_t position);\n\n"\
+"size_t typedef_read_td_1(td_1 &obj, const void* data, size_t position);\n\n"\
 "size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position);\n\n"\
 "size_t typedef_key_size_td_1(const td_1 &obj, size_t position);\n\n"\
 "size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position);\n\n"
