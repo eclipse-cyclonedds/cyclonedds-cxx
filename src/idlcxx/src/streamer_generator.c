@@ -18,6 +18,7 @@
 #include "idlcxx/streamer_generator.h"
 #include "idlcxx/backendCpp11Utils.h"
 #include "idl/tree.h"
+#include "idl/scope.h"
 #include "idl/string.h"
 
 #define format_ostream_indented(depth,ostr,...) \
@@ -100,7 +101,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define seq_typedef_read_copy sequence_iterate position_set "%stypedef_read_%s(%s[_i], data, position);\n"
 #define seq_typedef_key_max_size sequence_iterate_checked position_set "%stypedef_key_max_size_%s(%s[_i], position);\n"
 #define seq_typedef_key sequence_iterate position_set "%stypedef_key_stream_%s(%s[_i], data, position);\n"
-#define seq_typedef_key_size sequence_iterate position_set "%stypedef_key_size_%s(%s[_i], data, position);\n"
+#define seq_typedef_key_size sequence_iterate position_set "%stypedef_key_size_%s(%s[_i], position);\n"
 #define seq_struct_write sequence_iterate position_set "%s[_i].write_struct(data,position);\n"
 #define seq_struct_write_size sequence_iterate position_set "%s[_i].write_size(position);\n"
 #define seq_struct_read_copy sequence_iterate position_set "%s[_i].read_struct(data, position);\n"
@@ -108,7 +109,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define seq_struct_key_size sequence_iterate position_set "%s[_i].key_size(position);\n"
 #define seq_struct_key_max_size sequence_iterate_checked position_set "%s[_i].key_max_size(position);"
 #define seq_incr position_incr "sequenceentries*%d;"
-#define seq_entries position_incr "(%s.size()%s)*%d;  //entries of sequence\n"
+#define seq_entries position_incr "sequenceentries*%d;  //entries of sequence\n"
 #define array_iterate "  for (size_t _i = 0; _i < %"PRIu64"; _i++) "
 #define arr_struct_write array_iterate position_set "%s[_i].write_struct(data, position);\n"
 #define arr_struct_write_size array_iterate position_set "%s[_i].write_size(position);\n"
@@ -135,7 +136,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define key_calc_define "bool %s::key(ddsi_keyhash_t &hash) const"
 #define typedef_write_define "size_t typedef_write_%s(const %s &obj, void* data, size_t position)"
 #define typedef_write_size_define "size_t typedef_write_size_%s(const %s &obj, size_t position)"
-#define typedef_read_define "size_t typedef_read_%s(%s &obj, void* data, size_t position)"
+#define typedef_read_define "size_t typedef_read_%s(%s &obj, const void* data, size_t position)"
 #define typedef_key_size_define "size_t typedef_key_size_%s(const %s &obj, size_t position)"
 #define typedef_key_max_size_define "size_t typedef_key_max_size_%s(const %s &obj, size_t position)"
 #define typedef_key_stream_define "size_t typedef_key_stream_%s(const %s &obj, void *data, size_t position)"
@@ -144,7 +145,7 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__V
 #define typedef_read_call position_set "%stypedef_read_%s(%s, data, position);\n"
 #define typedef_key_size_call position_set "%stypedef_key_size_%s(%s, position);\n"
 #define typedef_key_max_size_call position_set "%stypedef_key_max_size_%s(%s, position);\n"
-#define typedef_key_stream_call position_set "%stypedef_key_stream_%s(%s, *data, position);\n"
+#define typedef_key_stream_call position_set "%stypedef_key_stream_%s(%s, data, position);\n"
 #define union_case_max_check "if (case_max != UINT_MAX) "
 #define union_case_max_incr union_case_max_check "case_max += "
 #define union_case_max_set "case_max = "
@@ -184,6 +185,15 @@ struct functioncontents {
 
 typedef struct functioncontents functioncontents_t;
 
+static void reset_function_contents(functioncontents_t* funcs)
+{
+  assert(funcs);
+  funcs->currentalignment = -1;
+  funcs->accumulatedalignment = 0;
+  funcs->alignmentpresent = false;
+  funcs->sequenceentriespresent = false;
+}
+
 struct context
 {
   idl_streamer_output_t* str;
@@ -214,12 +224,12 @@ static idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, id
 static idl_type_spec_t* resolve_typedef(idl_type_spec_t* def);
 static idl_retcode_t process_typedef_definition(context_t* ctx, idl_typedef_t* node);
 static idl_retcode_t process_typedef_instance(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec, bool is_key);
-static idl_retcode_t process_known_width(context_t* ctx, const char* accessor, idl_mask_t typespec, bool is_key);
-static idl_retcode_t process_known_width_sequence(context_t* ctx, const char* accessor, idl_type_spec_t *typespec, bool is_key);
+static idl_retcode_t process_known_width(context_t* ctx, const char* accessor, idl_node_t* typespec, bool is_key);
+static idl_retcode_t process_known_width_sequence(context_t* ctx, const char* accessor, idl_node_t* typespec, bool is_key);
 static idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, bool plusone, bool is_key);
-static idl_retcode_t process_known_width_array(context_t* ctx, const char* accessor, uint64_t entries, idl_mask_t mask, bool is_key);
-static int determine_byte_width(idl_mask_t typespec);
-static const char* determine_cast(idl_mask_t mask);
+static idl_retcode_t process_known_width_array(context_t* ctx, const char* accessor, uint64_t entries, idl_node_t* typespec, bool is_key);
+static int determine_byte_width(idl_node_t* typespec);
+static char* determine_cast(idl_node_t* typespec);
 static idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key);
 static idl_retcode_t add_null(context_t* ctx, int nbytes, bool stream, bool is_key);
 static idl_retcode_t process_member(context_t* ctx, idl_member_t* mem);
@@ -262,12 +272,14 @@ static char* generatealignment(int alignto)
   return returnval;
 }
 
-int determine_byte_width(idl_mask_t mask)
+int determine_byte_width(idl_node_t* typespec)
 {
-  if ((mask & IDL_ENUM) == IDL_ENUM)
-    mask = IDL_UINT32;
+  if (idl_is_enum(typespec))
+    return 4;
+  else if (idl_is_string(typespec))
+    return 1;
 
-  switch (mask % (IDL_BASE_TYPE*2))
+  switch (typespec->mask % (IDL_BASE_TYPE * 2))
   {
   case IDL_INT8:
   case IDL_UINT8:
@@ -340,8 +352,8 @@ context_t* create_context(const char* name)
     ptr->key_max_size_stream = create_idl_ostream(NULL);
     ptr->key_max_size_intermediate_stream = create_idl_ostream(NULL);
     ptr->key_stream = create_idl_ostream(NULL);
-    ptr->streamer_funcs.currentalignment = -1;
-    ptr->key_funcs.currentalignment = -1;
+    reset_function_contents(&ptr->streamer_funcs);
+    reset_function_contents(&ptr->key_funcs);
   }
   return ptr;
 }
@@ -753,73 +765,82 @@ idl_retcode_t add_null(context_t* ctx, int nbytes, bool stream, bool is_key)
   return IDL_RETCODE_OK;
 }
 
-const char* determine_cast(idl_mask_t mask)
+char* determine_cast(idl_node_t* typespec)
 {
-  if ((mask & IDL_ENUM) == IDL_ENUM)
-    return uint32_cast;
+  if (idl_is_enum(typespec))
+  {
+    char* ns = idl_strdup(""), *returnval = NULL;
+    resolve_namespace(typespec, &ns);
 
+    idl_asprintf(&returnval, "%s%s", ns, ((idl_enum_t*)typespec)->name->identifier);
+    free(ns);
+    return returnval;
+  }
+  else if (idl_is_string(typespec))
+  {
+    return idl_strdup(char_cast);
+  }
+
+  idl_mask_t mask = typespec->mask;
   mask %= IDL_BASE_TYPE * 2;
   switch (mask)
   {
   case IDL_CHAR:
-    return char_cast;
+    return idl_strdup(char_cast);
     break;
   case IDL_BOOL:
-    return bool_cast;
+    return idl_strdup(bool_cast);
     break;
   case IDL_INT8:
-    return int8_cast;
+    return idl_strdup(int8_cast);
     break;
   case IDL_UINT8:
   case IDL_OCTET:
-    return uint8_cast;
+    return idl_strdup(uint8_cast);
     break;
   case IDL_INT16:
     //case IDL_SHORT:
-    return int16_cast;
+    return idl_strdup(int16_cast);
     break;
   case IDL_UINT16:
     //case IDL_USHORT:
-    return uint16_cast;
+    return idl_strdup(uint16_cast);
     break;
   case IDL_INT32:
     //case IDL_LONG:
-    return int32_cast;
+    return idl_strdup(int32_cast);
     break;
   case IDL_UINT32:
     //case IDL_ULONG:
-    return uint32_cast;
+    return idl_strdup(uint32_cast);
     break;
   case IDL_INT64:
     //case IDL_LLONG:
-    return int64_cast;
+    return idl_strdup(int64_cast);
     break;
   case IDL_UINT64:
     //case IDL_ULLONG:
-    return uint64_cast;
+    return idl_strdup(uint64_cast);
     break;
   case IDL_FLOAT:
-    return float_cast;
+    return idl_strdup(float_cast);
     break;
   case IDL_DOUBLE:
-    return double_cast;
+    return idl_strdup(double_cast);
     break;
   }
   return NULL;
 }
 
-idl_retcode_t process_known_width(context_t* ctx, const char* accessor, idl_mask_t typespec, bool is_key)
+idl_retcode_t process_known_width(context_t* ctx, const char* accessor, idl_node_t* typespec, bool is_key)
 {
   assert(ctx);
   assert(accessor);
 
-  if ((typespec & IDL_ENUM) == IDL_ENUM)
-    typespec = IDL_UINT32;
-
   int bytewidth = determine_byte_width(typespec);
   assert(bytewidth != -1);
 
-  const char* cast = determine_cast(typespec);
+  char* cast = determine_cast(typespec);
   assert(cast);
 
   check_alignment(ctx, bytewidth, is_key);
@@ -843,23 +864,24 @@ idl_retcode_t process_known_width(context_t* ctx, const char* accessor, idl_mask
 
   format_read_stream(1, ctx, primitive_read_func_read, accessor, cast, accessor);
   format_read_stream(1, ctx, primitive_incr_pos incr_comment, bytewidth);
+  free(cast);
 
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_known_width_sequence(context_t* ctx, const char* accessor, idl_type_spec_t *tspec, bool is_key)
+idl_retcode_t process_known_width_sequence(context_t* ctx, const char* accessor, idl_node_t* tspec, bool is_key)
 {
   assert(ctx);
   assert(accessor);
 
-  idl_mask_t mask = idl_is_string(tspec) ? IDL_CHAR : tspec->mask;
-  int bytewidth = determine_byte_width(mask); 
-  const char* cast = determine_cast(mask);
+  int bytewidth = determine_byte_width(tspec);
+  char* cast = determine_cast(tspec);
   assert(bytewidth > 0);
+  assert(cast);
 
   format_write_stream(1, ctx, is_key, seq_primitive_write, accessor, bytewidth, accessor);
   format_write_stream(1, ctx, is_key, seq_incr incr_comment, bytewidth);
-  format_write_size_stream(1, ctx, is_key, seq_entries, accessor, idl_is_string(tspec) ? "+1" : "", bytewidth);
+  format_write_size_stream(1, ctx, is_key, seq_entries, bytewidth);
 
   if (bytewidth > 1)
   {
@@ -870,6 +892,7 @@ idl_retcode_t process_known_width_sequence(context_t* ctx, const char* accessor,
     format_read_stream(1, ctx, seq_primitive_read_nocast, accessor);
   }
   format_read_stream(1, ctx, seq_incr incr_comment, bytewidth);
+  free(cast);
 
   return IDL_RETCODE_OK;
 }
@@ -883,22 +906,26 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
 
   format_read_stream(1, ctx, "  ");
   format_write_stream(1, ctx, is_key, "  ");
+  format_write_size_stream(1, ctx, is_key, "  ");
   if (!ctx->streamer_funcs.sequenceentriespresent)
   {
     format_read_stream(0, ctx, "uint32_t ");
     format_write_stream(0, ctx, false, "uint32_t ");
+    format_write_size_stream(0, ctx, false, "uint32_t ");
     ctx->streamer_funcs.sequenceentriespresent = true;
   }
 
   if (is_key && !ctx->key_funcs.sequenceentriespresent)
   {
     format_key_stream(0, ctx, "uint32_t ");
+    format_key_size_stream(0, ctx, "uint32_t ");
     ctx->key_funcs.sequenceentriespresent = true;
   }
   format_write_stream(0, ctx, is_key, primitive_write_func_seq, accessor, plusone ? "+1" : "");
   format_write_stream(1, ctx, is_key, primitive_write_func_seq2, accessor);
   format_write_stream(1, ctx, is_key, primitive_incr_pos incr_comment, (int)4);
 
+  format_write_size_stream(0, ctx, is_key, primitive_write_func_seq, accessor, plusone ? "+1" : "");
   format_write_size_stream(1, ctx, is_key, primitive_incr_pos bytes_for_seq_entries_comment, (int)4);
 
   if (is_key)
@@ -919,14 +946,11 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_known_width_array(context_t* ctx, const char *accessor, uint64_t entries, idl_mask_t mask, bool is_key)
+idl_retcode_t process_known_width_array(context_t* ctx, const char *accessor, uint64_t entries, idl_node_t* typespec, bool is_key)
 {
   assert(ctx);
 
-  if ((mask & IDL_ENUM) == IDL_ENUM)
-    mask = IDL_UINT32;
-
-  int bytewidth = determine_byte_width(mask);
+  int bytewidth = determine_byte_width(typespec);
   assert(bytewidth > 0);
 
   //check whether the result fits in int?
@@ -1033,7 +1057,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       int bytewidth = 1;
       if (idl_is_base_type(ispec) ||
           idl_is_enum(ispec))
-        bytewidth = determine_byte_width(ispec->mask);  //determine byte width of base type
+        bytewidth = determine_byte_width(ispec);  //determine byte width of base type
       assert(bytewidth > 0);
 
       if (bytewidth > 4)
@@ -1076,7 +1100,7 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
       {
         char* ns = idl_strdup("");
         idl_typedef_t* td = ((idl_typedef_t*)ispec);
-        resolve_namespace(td->type_spec, &ns);
+        resolve_namespace((idl_node_t*)td->declarators, &ns);
         format_write_stream(1, ctx, false, seq_typedef_write, ns, idl_identifier(td->declarators), accessor);
         format_write_size_stream(1, ctx, false, seq_typedef_write_size, ns, idl_identifier(td->declarators), accessor);
         format_read_stream(1, ctx, seq_read_resize, accessor);
@@ -1243,6 +1267,8 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
 
     format_key_stream(1, ctx, key_stream_define "\n", cpp11name);
     format_key_stream(1, ctx, open_block);
+    format_key_stream(1, ctx, "  (void)data;\n");
+
     format_key_size_stream(1, ctx, key_size_define "\n", cpp11name);
     format_key_size_stream(1, ctx, open_block);
     format_key_max_size_stream(1, ctx, key_max_size_define "\n", cpp11name);
@@ -1291,15 +1317,8 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       idl_union_t* _union = (idl_union_t*)node;
       idl_switch_type_spec_t* st = _union->switch_type_spec;
 
-      idl_mask_t disc_mask = st->mask;
-      if (idl_is_enumerator(st)) {
-        disc_mask = IDL_ULONG;
-      } else {
-        assert(idl_is_masked(st, IDL_BASE_TYPE));
-      }
-
       format_read_stream(1, ctx, union_clear_func);
-      process_known_width(ctx, "_d()", disc_mask, true);
+      process_known_width(ctx, "_d()", st, true);
       format_write_size_stream(1, ctx, true, union_switch);
       format_write_size_stream(1, ctx, true, "  {\n");
       format_write_stream(1, ctx, true, union_switch);
@@ -1375,6 +1394,9 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_key_stream(1, ctx, close_function);
   }
 
+  reset_function_contents(&ctx->streamer_funcs);
+  reset_function_contents(&ctx->key_funcs);
+
   if (cpp11name)
     free(cpp11name);
   return returnval;
@@ -1446,6 +1468,7 @@ idl_retcode_t process_typedef_definition(context_t* ctx, idl_typedef_t* node)
     format_key_size_stream(1, ctx, open_block);
     format_key_max_size_stream(1, ctx, typedef_key_max_size_define "\n", tsname, tsname);
     format_key_max_size_stream(1, ctx, open_block);
+    format_key_max_size_stream(1, ctx, "  (void)obj;\n");
 
     format_header_stream(1, ctx, typedef_write_define ";\n\n", tsname, tsname);
     format_header_stream(1, ctx, typedef_write_size_define ";\n\n", tsname, tsname);
@@ -1480,6 +1503,9 @@ idl_retcode_t process_typedef_definition(context_t* ctx, idl_typedef_t* node)
     format_key_size_stream(1, ctx, position_return);
     format_key_size_stream(1, ctx, close_function);
     format_key_max_size_stream(1, ctx, close_function);
+
+    reset_function_contents(&ctx->streamer_funcs);
+    reset_function_contents(&ctx->key_funcs);
   }
   return IDL_RETCODE_OK;
 }
@@ -1608,9 +1634,9 @@ idl_retcode_t process_base(context_t* ctx, idl_declarator_t* decl, idl_type_spec
   assert(accessor);
 
   if (entries)
-    process_known_width_array(ctx, accessor, entries, tspec->mask, is_key);
+    process_known_width_array(ctx, accessor, entries, tspec, is_key);
   else
-    process_known_width(ctx, accessor, tspec->mask, is_key);
+    process_known_width(ctx, accessor, tspec, is_key);
 
   if (accessor)
     free(accessor);
