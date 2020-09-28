@@ -120,7 +120,7 @@ get_cpp11_templ_type(const idl_node_t *node)
   switch (node->mask & IDL_TEMPL_TYPE_MASK)
   {
   case IDL_SEQUENCE:
-    vector_tmplt = "std::vector<%s>";
+    vector_tmplt = CPP11_SEQUENCE_TEMPLATE "<%s>";
     vector_element = get_cpp11_type(((const idl_sequence_t *) node)->type_spec);
     vector_size = strlen(vector_tmplt) + strlen(vector_element) - 2 /* Compensate for '%s' */ + 1 /* '\0' */;
     cpp11Type = malloc(vector_size);
@@ -128,10 +128,10 @@ get_cpp11_templ_type(const idl_node_t *node)
     free(vector_element);
     break;
   case IDL_STRING:
-    cpp11Type = idl_strdup("std::string");
+    cpp11Type = idl_strdup(CPP11_STRING_TEMPLATE);
     break;
   case IDL_WSTRING:
-    cpp11Type = idl_strdup("std::wstring");
+    cpp11Type = idl_strdup(CPP11_WSTRING_TEMPLATE);
     break;
   case IDL_FIXED_PT:
     assert(0);

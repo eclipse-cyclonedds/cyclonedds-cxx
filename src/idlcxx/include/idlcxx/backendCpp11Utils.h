@@ -12,6 +12,20 @@
 
 #include "idlcxx/backend.h"
 
+#define CPP11_SEQUENCE_TEMPLATE     "std::vector"
+#define CPP11_SEQUENCE_INCLUDE      "<vector>"
+
+#define CPP11_ARRAY_TEMPLATE        "std::array"
+#define CPP11_ARRAY_INCLUDE         "<array>"
+
+#define CPP11_STRING_TEMPLATE       "std::string"
+#define CPP11_WSTRING_TEMPLATE      "std::wstring"
+#define CPP11_STRING_INCLUDE        "<string>"
+
+#define CPP11_UNION_TEMPLATE        "std::variant"
+#define CPP11_UNION_GETTER_TEMPLATE "std::get"
+#define CPP11_UNION_INCLUDE         "<variant>"
+
 char*
 get_cpp11_name(const char* name);
 

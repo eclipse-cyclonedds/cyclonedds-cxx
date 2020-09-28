@@ -60,7 +60,7 @@ static char *
 get_cpp11_declarator_array_expr(idl_backend_ctx ctx, const idl_node_t *node, const char *member_type)
 {
   idl_node_t *next_const_expr = node->next;
-  const char *array_expr_tmplt = "std::array<%s, %s>";
+  const char *array_expr_tmplt = CPP11_ARRAY_TEMPLATE "<%s, %s>";
   size_t array_expr_len;
   char *array_expr, *element_expr, *const_expr;
 
@@ -780,7 +780,7 @@ union_generate_attributes(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "%s m__d;\n", union_ctx->discr_type);
 
   /* Declare a union attribute comprising of all the branch types. */
-  idl_file_out_printf(ctx, "std::variant<\n");
+  idl_file_out_printf(ctx, CPP11_UNION_TEMPLATE "<\n");
   idl_indent_double_incr(ctx);
   for (uint32_t i = 0; i < union_ctx->case_count; ++i) {
     idl_file_out_printf(
@@ -949,7 +949,7 @@ union_generate_getter_body(idl_backend_ctx ctx, uint32_t i)
     idl_indent_decr(ctx);
   }
   idl_indent_decr(ctx);
-  idl_file_out_printf(ctx, "return std::get<%s>(%s);\n", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
+  idl_file_out_printf(ctx, "return " CPP11_UNION_GETTER_TEMPLATE "<%s>(%s);\n", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "} else {\n");
   idl_indent_incr(ctx);
@@ -1372,16 +1372,16 @@ idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tre
   idl_reset_custom_context(ctx);
   if (util_depencencies) {
     if (util_depencencies & idl_vector_dep) {
-      idl_file_out_printf(ctx, "#include <vector>\n");
+      idl_file_out_printf(ctx, "#include " CPP11_SEQUENCE_INCLUDE "\n");
     }
     if (util_depencencies & idl_string_dep) {
-      idl_file_out_printf(ctx, "#include <string>\n");
+      idl_file_out_printf(ctx, "#include " CPP11_STRING_INCLUDE "\n");
     }
     if (util_depencencies & idl_variant_dep) {
-      idl_file_out_printf(ctx, "#include <variant>\n");
+      idl_file_out_printf(ctx, "#include " CPP11_UNION_INCLUDE "\n");
     }
     if (util_depencencies & idl_array_dep) {
-      idl_file_out_printf(ctx, "#include <array>\n");
+      idl_file_out_printf(ctx, "#include " CPP11_ARRAY_INCLUDE "\n");
     }
     idl_file_out_printf(ctx, "\n");
   }
