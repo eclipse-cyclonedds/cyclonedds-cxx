@@ -36,6 +36,9 @@ format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_size_stream, _str, #
 #define format_key_max_size_stream(indent,ctx,_str,...) \
 format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_max_size_stream, _str, ##__VA_ARGS__);
 
+#define format_key_max_size_intermediate_stream(indent,ctx,_str,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_max_size_intermediate_stream, _str, ##__VA_ARGS__);
+
 #define format_key_stream(indent,ctx,_str,...) \
 format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_stream, _str, ##__VA_ARGS__);
 
@@ -190,12 +193,14 @@ struct context
   idl_ostream_t* read_stream;
   idl_ostream_t* key_size_stream;
   idl_ostream_t* key_max_size_stream;
+  idl_ostream_t* key_max_size_intermediate_stream;
   idl_ostream_t* key_stream;
   size_t depth;
   functioncontents_t streamer_funcs;
   functioncontents_t key_funcs;
   context_t* parent;
   bool in_union;
+  bool key_max_size_unlimited;
   const char* parsed_file;
 };
 
@@ -333,6 +338,7 @@ context_t* create_context(const char* name)
     ptr->read_stream = create_idl_ostream(NULL);
     ptr->key_size_stream = create_idl_ostream(NULL);
     ptr->key_max_size_stream = create_idl_ostream(NULL);
+    ptr->key_max_size_intermediate_stream = create_idl_ostream(NULL);
     ptr->key_stream = create_idl_ostream(NULL);
     ptr->streamer_funcs.currentalignment = -1;
     ptr->key_funcs.currentalignment = -1;
@@ -405,6 +411,7 @@ void close_context(context_t* ctx, idl_streamer_output_t* str)
   destruct_idl_ostream(ctx->write_size_stream);
   destruct_idl_ostream(ctx->key_size_stream);
   destruct_idl_ostream(ctx->key_max_size_stream);
+  destruct_idl_ostream(ctx->key_max_size_intermediate_stream);
   destruct_idl_ostream(ctx->key_stream);
   destruct_idl_ostream(ctx->read_stream);
 
@@ -572,11 +579,11 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, c
       format_key_size_stream(1, ctx, arr_struct_key_size, entries, write_accessor);
       if (ctx->in_union)
       {
-        format_key_max_size_stream(1, ctx, arr_struct_key_max_size_union, entries, write_accessor);
+        format_key_max_size_intermediate_stream(1, ctx, arr_struct_key_max_size_union, entries, write_accessor);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, arr_struct_key_max_size, entries, write_accessor);
+        format_key_max_size_intermediate_stream(1, ctx, arr_struct_key_max_size, entries, write_accessor);
       }
     }
   }
@@ -592,11 +599,11 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, c
       format_key_size_stream(1, ctx, instance_key_size_func_calc, write_accessor);
       if (ctx->in_union)
       {
-        format_key_max_size_stream(1, ctx, instance_key_max_size_union_func_calc, write_accessor);
+        format_key_max_size_intermediate_stream(1, ctx, instance_key_max_size_union_func_calc, write_accessor);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, instance_key_max_size_func_calc, write_accessor);
+        format_key_max_size_intermediate_stream(1, ctx, instance_key_max_size_func_calc, write_accessor);
       }
     }
   }
@@ -684,17 +691,17 @@ idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
       format_key_size_stream(0, ctx, align_comment);
       if (ctx->in_union)
       {
-        format_key_max_size_stream(1, ctx, key_max_size_check);
-        format_key_max_size_stream(0, ctx, union_case_max_incr);
-        format_key_max_size_stream(0, ctx, buffer);
-        format_key_max_size_stream(0, ctx, align_comment);
+        format_key_max_size_intermediate_stream(1, ctx, key_max_size_check);
+        format_key_max_size_intermediate_stream(0, ctx, union_case_max_incr);
+        format_key_max_size_intermediate_stream(0, ctx, buffer);
+        format_key_max_size_intermediate_stream(0, ctx, align_comment);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, key_max_size_check);
-        format_key_max_size_stream(0, ctx, position_incr);
-        format_key_max_size_stream(0, ctx, buffer);
-        format_key_max_size_stream(0, ctx, align_comment);
+        format_key_max_size_intermediate_stream(1, ctx, key_max_size_check);
+        format_key_max_size_intermediate_stream(0, ctx, position_incr);
+        format_key_max_size_intermediate_stream(0, ctx, buffer);
+        format_key_max_size_intermediate_stream(0, ctx, align_comment);
       }
 
       ctx->key_funcs.accumulatedalignment = 0;
@@ -734,12 +741,12 @@ idl_retcode_t add_null(context_t* ctx, int nbytes, bool stream, bool is_key)
     format_key_size_stream(1, ctx, primitive_incr_pos padding_comment, nbytes);
     if (ctx->in_union)
     {
-      format_key_max_size_stream(1, ctx, union_case_max_incr " %d;", nbytes);
-      format_key_max_size_stream(0, ctx, padding_comment);
+      format_key_max_size_intermediate_stream(1, ctx, union_case_max_incr " %d;", nbytes);
+      format_key_max_size_intermediate_stream(0, ctx, padding_comment);
     }
     else
     {
-      format_key_max_size_stream(1, ctx, primitive_incr_pos padding_comment, nbytes);
+      format_key_max_size_intermediate_stream(1, ctx, primitive_incr_pos padding_comment, nbytes);
     }
   }
 
@@ -826,11 +833,11 @@ idl_retcode_t process_known_width(context_t* ctx, const char* accessor, idl_mask
   {
     if (ctx->in_union)
     {
-      format_key_max_size_stream(1, ctx, union_case_max_incr " %d;\n", bytewidth);
+      format_key_max_size_intermediate_stream(1, ctx, union_case_max_incr " %d;\n", bytewidth);
     }
     else
     {
-      format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytewidth, accessor);
+      format_key_max_size_intermediate_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytewidth, accessor);
     }
   }
 
@@ -898,11 +905,11 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
   {
     if (ctx->in_union)
     {
-      format_key_max_size_stream(1, ctx, union_case_max_incr "4;\n");
+      format_key_max_size_intermediate_stream(1, ctx, union_case_max_incr "4;\n");
     }
     else
     {
-      format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_seq_entries_comment, (int)4);
+      format_key_max_size_intermediate_stream(1, ctx, key_max_size_incr_checked bytes_for_seq_entries_comment, (int)4);
     }
   }
 
@@ -940,11 +947,11 @@ idl_retcode_t process_known_width_array(context_t* ctx, const char *accessor, ui
   {
     if (ctx->in_union)
     {
-      format_key_max_size_stream(1, ctx, union_case_max_incr "%d;\n", bytesinarray);
+      format_key_max_size_intermediate_stream(1, ctx, union_case_max_incr "%d;\n", bytesinarray);
     }
     else
     {
-      format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytesinarray, accessor);
+      format_key_max_size_intermediate_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytesinarray, accessor);
     }
   }
 
@@ -1042,11 +1049,11 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
           int bytes = ((int)bound + (idl_is_string(tspec) ? 1 : 0)) * bytewidth;
           if (ctx->in_union)
           {
-            format_key_max_size_stream(1, ctx, union_case_max_incr "%d;\n", bytes);
+            format_key_max_size_intermediate_stream(1, ctx, union_case_max_incr "%d;\n", bytes);
           }
           else
           {
-            format_key_max_size_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytes, accessor);
+            format_key_max_size_intermediate_stream(1, ctx, key_max_size_incr_checked bytes_for_member_comment, bytes, accessor);
           }
         }
         else
@@ -1054,11 +1061,11 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
           //unbounded sequences do not have a fixed max key size
           if (ctx->in_union)
           {
-            format_key_max_size_stream(1, ctx, union_case_max_set_limit);
+            format_key_max_size_intermediate_stream(1, ctx, union_case_max_set_limit);
           }
           else
           {
-            format_key_max_size_stream(1, ctx, key_max_size_boundary);
+            ctx->key_max_size_unlimited = true;
           }
         }
       }
@@ -1084,11 +1091,11 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
             //bounded sequences have a fixed max key size
             if (ctx->in_union)
             {
-              format_key_max_size_stream(1, ctx, union_case_seq_max_case_typedef, ns, idl_identifier(td->declarators), accessor);
+              format_key_max_size_intermediate_stream(1, ctx, union_case_seq_max_case_typedef, ns, idl_identifier(td->declarators), accessor);
             }
             else
             {
-              format_key_max_size_stream(1, ctx, seq_typedef_key_max_size, ns, idl_identifier(td->declarators), accessor);
+              format_key_max_size_intermediate_stream(1, ctx, seq_typedef_key_max_size, ns, idl_identifier(td->declarators), accessor);
             }
           }
           else
@@ -1096,11 +1103,11 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
             //unbounded sequences do not have a fixed max key size
             if (ctx->in_union)
             {
-              format_key_max_size_stream(1, ctx, union_case_max_set_limit);
+              format_key_max_size_intermediate_stream(1, ctx, union_case_max_set_limit);
             }
             else
             {
-              format_key_max_size_stream(1, ctx, key_max_size_boundary);
+              ctx->key_max_size_unlimited = true;
             }
           }
         }
@@ -1123,11 +1130,11 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
             //bounded sequences have a fixed max key size
             if (ctx->in_union)
             {
-              format_key_max_size_stream(1, ctx, union_case_seq_max_case_struct, accessor);
+              format_key_max_size_intermediate_stream(1, ctx, union_case_seq_max_case_struct, accessor);
             }
             else
             {
-              format_key_max_size_stream(1, ctx, seq_struct_key_max_size, accessor);
+              format_key_max_size_intermediate_stream(1, ctx, seq_struct_key_max_size, accessor);
             }
           }
           else
@@ -1135,11 +1142,11 @@ idl_retcode_t process_template(context_t* ctx, idl_declarator_t* decl, idl_type_
             //unbounded sequences do not have a fixed max key size
             if (ctx->in_union)
             {
-              format_key_max_size_stream(1, ctx, union_case_max_set_limit);
+              format_key_max_size_intermediate_stream(1, ctx, union_case_max_set_limit);
             }
             else
             {
-              format_key_max_size_stream(1, ctx, key_max_size_boundary);
+              ctx->key_max_size_unlimited = true;
             }
           }
         }
@@ -1301,7 +1308,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       format_read_stream(1, ctx, "  {\n");
 
       ctx->in_union = true;
-      format_key_max_size_stream(1, ctx, "  size_t union_max = position;\n");
+      format_key_max_size_intermediate_stream(1, ctx, "  size_t union_max = position;\n");
       if (_union->cases)
       {
         ctx->depth++;
@@ -1313,7 +1320,7 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       ctx->streamer_funcs.accumulatedalignment = 0;
       ctx->key_funcs.currentalignment = -1;
       ctx->key_funcs.accumulatedalignment = 0;
-      format_key_max_size_stream(1, ctx, "  position = max(position,union_max);\n");
+      format_key_max_size_intermediate_stream(1, ctx, "  position = max(position,union_max);\n");
       ctx->in_union = false;
 
       format_write_stream(1, ctx, true, "  }\n");
@@ -1328,7 +1335,19 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_read_stream(1, ctx, position_return);
     format_read_stream(1, ctx, close_function);
 
-    format_key_max_size_stream(1, ctx, position_return);
+    if (ctx->key_max_size_unlimited)
+    {
+      flush_ostream(ctx->key_max_size_intermediate_stream);
+      format_key_max_size_stream(1, ctx, "  (void)position;\n");
+      format_key_max_size_stream(1, ctx, "  return UINT_MAX;\n");
+      ctx->key_max_size_unlimited = false;
+    }
+    else
+    {
+      transfer_ostream_buffer(ctx->key_max_size_intermediate_stream, ctx->key_max_size_stream);
+      format_key_max_size_stream(1, ctx, position_return);
+    }
+
     format_key_max_size_stream(1, ctx, close_function);
     format_key_stream(1, ctx, key_calc_define "\n", cpp11name);
     format_key_stream(1, ctx, "{\n");
@@ -1371,15 +1390,15 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   format_write_stream(1, ctx, true, "  {\n");
   format_write_size_stream(1, ctx, true, "  {\n");
   format_read_stream(1, ctx, "  {\n");
-  format_key_max_size_stream(1, ctx, "{  //cases\n");
-  format_key_max_size_stream(1, ctx, "  size_t case_max = position;\n");
+  format_key_max_size_intermediate_stream(1, ctx, "{  //cases\n");
+  format_key_max_size_intermediate_stream(1, ctx, "  size_t case_max = position;\n");
   ctx->depth++;
 
   process_instance(ctx, _case->declarator, _case->type_spec, true);
 
   ctx->depth--;
-  format_key_max_size_stream(1, ctx, "  union_max = max(case_max,union_max);\n");
-  format_key_max_size_stream(1, ctx, "}\n");
+  format_key_max_size_intermediate_stream(1, ctx, "  union_max = max(case_max,union_max);\n");
+  format_key_max_size_intermediate_stream(1, ctx, "}\n");
   format_write_stream(1, ctx, true, "  }\n");
   format_write_stream(1, ctx, true, union_case_ending);
   format_write_size_stream(1, ctx, true, "  }\n");
@@ -1437,6 +1456,19 @@ idl_retcode_t process_typedef_definition(context_t* ctx, idl_typedef_t* node)
 
     process_instance(ctx, NULL, spec, true);
 
+    if (ctx->key_max_size_unlimited)
+    {
+      flush_ostream(ctx->key_max_size_intermediate_stream);
+      format_key_max_size_stream(1, ctx, "  (void)position;\n");
+      format_key_max_size_stream(1, ctx, "  return UINT_MAX;\n");
+      ctx->key_max_size_unlimited = false;
+    }
+    else
+    {
+      transfer_ostream_buffer(ctx->key_max_size_intermediate_stream, ctx->key_max_size_stream);
+      format_key_max_size_stream(1, ctx, position_return);
+    }
+
     format_write_stream(1, ctx, false, position_return);
     format_write_stream(1, ctx, false,close_function);
     format_write_size_stream(1, ctx, false, position_return);
@@ -1447,7 +1479,6 @@ idl_retcode_t process_typedef_definition(context_t* ctx, idl_typedef_t* node)
     format_key_stream(1, ctx, close_function);
     format_key_size_stream(1, ctx, position_return);
     format_key_size_stream(1, ctx, close_function);
-    format_key_max_size_stream(1, ctx, position_return);
     format_key_max_size_stream(1, ctx, close_function);
   }
   return IDL_RETCODE_OK;
@@ -1487,11 +1518,11 @@ idl_retcode_t process_typedef_instance(context_t* ctx, idl_declarator_t* decl, i
       format_key_size_stream(1, ctx, typedef_key_size_call, ns, tdname, accessor);
       if (ctx->in_union)
       {
-        format_key_max_size_stream(1, ctx, union_case_max_set "%stypedef_key_max_size_%(%s, position);\n", ns, tdname, accessor);
+        format_key_max_size_intermediate_stream(1, ctx, union_case_max_set "%stypedef_key_max_size_%(%s, position);\n", ns, tdname, accessor);
       }
       else
       {
-        format_key_max_size_stream(1, ctx, typedef_key_max_size_call, ns, tdname, accessor);
+        format_key_max_size_intermediate_stream(1, ctx, typedef_key_max_size_call, ns, tdname, accessor);
       }
     }
     free(ns);

@@ -1356,10 +1356,8 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n\n"\
 "  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position)\n"\
 "  {\n"\
-"    if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"    if (position != UINT_MAX)   position += 4;  //bytes for sequence entries\n"\
-"    position = UINT_MAX;\n"\
-"    return position;\n"\
+"    (void)position;\n"\
+"    return UINT_MAX;\n"\
 "  }\n\n"\
 "  size_t typedef_key_stream_td_6(const td_6 &obj, void *data, size_t position)\n"\
 "  {\n"\
@@ -1738,10 +1736,8 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "}\n\n"\
 "size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position)\n"\
 "{\n"\
-"  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment\n"\
-"  if (position != UINT_MAX)   position += 4;  //bytes for sequence entries\n"\
-"  position = UINT_MAX;\n"\
-"  return position;\n"\
+"  (void)position;\n"\
+"  return UINT_MAX;\n"\
 "}\n\n"\
 "size_t s::key_max_size(size_t position) const\n"\
 "{\n"\
