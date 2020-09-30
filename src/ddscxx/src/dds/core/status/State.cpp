@@ -15,9 +15,6 @@
  * @file
  */
 
-#ifndef OMG_DDS_CORE_STATUS_STATE_CPP_
-#define OMG_DDS_CORE_STATUS_STATE_CPP_
-
 #include <dds/core/status/State.hpp>
 
 namespace dds
@@ -79,6 +76,3 @@ StatusMask::~StatusMask() { }
 }
 }
 } /* namespace dds / core / status*/
-
-
-#endif /* OMG_DDS_CORE_STATUS_STATE_HPP_ */
