@@ -183,6 +183,19 @@
  */
 #define DDSCXX_UNUSED_ARG(a) (void)(a)
 
+/**
+ * @brief Macro to disable specific compiler warnings
+ */
+#if defined(_MSC_VER)
+#define DDSCXX_WARNING_MSVC_OFF(x) \
+  __pragma(warning(push)) \
+  __pragma(warning(disable: ## x))
+#define DDSCXX_WARNING_MSVC_ON(x) \
+  __pragma(warning(pop))
+#else
+#define DDSCXX_WARNING_MSVC_OFF(x)
+#define DDSCXX_WARNING_MSVC_ON(x)
+#endif
 
 // End of implementation
 
