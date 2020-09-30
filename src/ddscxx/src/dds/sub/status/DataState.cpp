@@ -15,9 +15,6 @@
  * @file
  */
 
-#ifndef OSPL_DDS_SUB_STATUS_DATASTATE_CPP_
-#define OSPL_DDS_SUB_STATUS_DATASTATE_CPP_
-
 #include <dds/sub/status/detail/DataStateImpl.hpp>
 
 // Implementation
@@ -103,5 +100,3 @@ InstanceState::InstanceState(const MaskType& src) : MaskType(
 } /* namespace dds */
 
 // End of implementation
-
-#endif /* OSPL_DDS_SUB_STATUS_DATASTATE_HPP_ */

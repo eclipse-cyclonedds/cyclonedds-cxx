@@ -36,7 +36,7 @@ class InstanceHandleDelegate;
 }
 }
 
-class OSPL_ISOCPP_IMPL_API org::eclipse::cyclonedds::core::InstanceHandleDelegate
+class OMG_DDS_API org::eclipse::cyclonedds::core::InstanceHandleDelegate
 {
 public:
     InstanceHandleDelegate();
