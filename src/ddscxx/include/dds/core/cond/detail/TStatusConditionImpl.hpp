@@ -35,7 +35,7 @@ template <typename DELEGATE>
 TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e)
 {
     dds::core::Reference<DELEGATE>::impl_=
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::core::cond::StatusConditionDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::core::cond::StatusConditionDelegate>(
                         e.delegate()->get_statusCondition());
 }
 
@@ -44,7 +44,7 @@ template <typename FUN>
 TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e, FUN functor)
 {
     dds::core::Reference<DELEGATE>::impl_=
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::core::cond::StatusConditionDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::core::cond::StatusConditionDelegate>(
                           e.delegate()->get_statusCondition());
     this->delegate()->set_handler(functor);
 }
@@ -79,7 +79,7 @@ TCondition<DELEGATE>::TCondition(const dds::core::cond::TStatusCondition<org::ec
         /* So, just set a null object. */
         *this = dds::core::null;
     } else {
-        this->::dds::core::Reference<DELEGATE>::impl_ = OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<DELEGATE_T>(h.delegate());
+        this->::dds::core::Reference<DELEGATE>::impl_ = ::std::dynamic_pointer_cast<DELEGATE_T>(h.delegate());
         if (h.delegate() != this->::dds::core::Reference<DELEGATE>::impl_) {
             throw dds::core::IllegalOperationError(std::string("Attempted invalid cast: ") + typeid(h).name() + " to " + typeid(*this).name());
         }

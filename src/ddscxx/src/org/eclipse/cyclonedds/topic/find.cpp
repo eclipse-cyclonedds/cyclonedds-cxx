@@ -34,7 +34,7 @@ find_topic_description(
     }
     if (entity) {
         dds::topic::TopicDescription::DELEGATE_REF_T ref =
-                OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::topic::TopicDescriptionDelegate>(entity);
+                ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::topic::TopicDescriptionDelegate>(entity);
         t = dds::topic::TopicDescription(ref);
     }
 
@@ -51,7 +51,7 @@ find_any_topic(
     org::eclipse::cyclonedds::core::EntityDelegate::ref_type entity = dp.delegate()->find_topic(topic_name);
     if (entity) {
         dds::topic::AnyTopic::DELEGATE_REF_T ref =
-                OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::topic::AnyTopicDelegate>(entity);
+                ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::topic::AnyTopicDelegate>(entity);
         t = dds::topic::AnyTopic(ref);
     }
 

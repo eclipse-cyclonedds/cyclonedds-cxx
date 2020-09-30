@@ -777,7 +777,7 @@ dds::sub::DataReader<T, dds::sub::detail::DataReader>
 dds::sub::detail::DataReader<T>::wrapper()
 {
     typename DataReader::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<DataReader<T> >(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<DataReader<T> >(this->get_strong_ref());
     dds::sub::DataReader<T, dds::sub::detail::DataReader> reader(ref);
 
     return reader;
