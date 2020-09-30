@@ -12,26 +12,7 @@
 #ifndef CYCLONEDDS_DDS_CORE_DETAIL_ARRAY_HPP_
 #define CYCLONEDDS_DDS_CORE_DETAIL_ARRAY_HPP_
 
-#include <dds/core/detail/macros.hpp>
-
-/* Compiling explicitly w/ C++ 11 support */
-#if defined(OSPL_USE_CXX11)
-#  include <array>
-#  define OSPL_CXX11_STD_MODULE ::std
-/* Compiling to use Tech Report 1 headers */
-#elif defined(OSPL_USE_TR1)
-#  ifdef _MSC_VER
-#    include <array>
-#  else
-#    include <tr1/array>
-#  endif
-#  define OSPL_CXX11_STD_MODULE ::std::tr1
-/* Compiling with boost */
-#elif defined(OSPL_USE_BOOST)
-#  include <boost/array.hpp>
-#  define OSPL_CXX11_STD_MODULE ::boost
-#endif
-
+#include <array>
 
 namespace dds
 {
@@ -39,7 +20,7 @@ namespace core
 {
 namespace detail
 {
-using OSPL_CXX11_STD_MODULE::array;
+using ::std::array;
 }
 }
 }

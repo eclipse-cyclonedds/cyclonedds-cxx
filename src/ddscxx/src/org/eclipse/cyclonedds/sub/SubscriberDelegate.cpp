@@ -221,7 +221,7 @@ SubscriberDelegate::find_datareaders(const std::string& topic_name)
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = iter->lock();
         if (ref) {
             org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type tmp =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<AnyDataReaderDelegate>(ref);
+                    ::std::dynamic_pointer_cast<AnyDataReaderDelegate>(ref);
             assert(tmp);
             if (tmp->topic_description().name() == topic_name) {
                 _readers.push_back(tmp);
@@ -253,7 +253,7 @@ dds::sub::TSubscriber<SubscriberDelegate>
 SubscriberDelegate::wrapper()
 {
     SubscriberDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<SubscriberDelegate>(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<SubscriberDelegate>(this->get_strong_ref());
     dds::sub::Subscriber sub(ref);
     return sub;
 }
@@ -287,7 +287,7 @@ void SubscriberDelegate::on_requested_deadline_missed(dds_entity_t reader,
         org::eclipse::cyclonedds::core::RequestedDeadlineMissedStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 
@@ -301,7 +301,7 @@ void SubscriberDelegate::on_requested_incompatible_qos(dds_entity_t reader,
         org::eclipse::cyclonedds::core::RequestedIncompatibleQosStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 
@@ -315,7 +315,7 @@ void SubscriberDelegate::on_sample_rejected(dds_entity_t reader,
         org::eclipse::cyclonedds::core::SampleRejectedStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 
@@ -329,7 +329,7 @@ void SubscriberDelegate::on_liveliness_changed(dds_entity_t reader,
         org::eclipse::cyclonedds::core::LivelinessChangedStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 
@@ -342,7 +342,7 @@ void SubscriberDelegate::on_liveliness_changed(dds_entity_t reader,
 void SubscriberDelegate::on_data_available(dds_entity_t reader)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 
@@ -353,7 +353,7 @@ void SubscriberDelegate::on_subscription_matched(dds_entity_t reader,
         org::eclipse::cyclonedds::core::SubscriptionMatchedStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 
@@ -367,7 +367,7 @@ void SubscriberDelegate::on_sample_lost(dds_entity_t reader,
         org::eclipse::cyclonedds::core::SampleLostStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::sub::AnyDataReaderDelegate>(
                 this->extract_strong_ref(reader));
     dds::sub::AnyDataReader adr(ref);
 

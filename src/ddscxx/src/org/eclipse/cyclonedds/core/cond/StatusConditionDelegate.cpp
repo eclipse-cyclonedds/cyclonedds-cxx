@@ -30,7 +30,7 @@ org::eclipse::cyclonedds::core::cond::StatusConditionDelegate::StatusConditionDe
         const org::eclipse::cyclonedds::core::EntityDelegate *entity,
         dds_entity_t e) :
                 org::eclipse::cyclonedds::core::cond::ConditionDelegate(),
-                myEntity(OSPL_CXX11_STD_MODULE::dynamic_pointer_cast
+                myEntity(::std::dynamic_pointer_cast
                                  <org::eclipse::cyclonedds::core::EntityDelegate>
                           (entity->get_strong_ref()))
 {
@@ -110,7 +110,7 @@ dds::core::cond::TStatusCondition
 org::eclipse::cyclonedds::core::cond::StatusConditionDelegate::wrapper()
 {
     org::eclipse::cyclonedds::core::cond::StatusConditionDelegate::ref_type ref =
-        OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<StatusConditionDelegate>
+        ::std::dynamic_pointer_cast<StatusConditionDelegate>
                                                     (this->get_strong_ref());
 
     dds::core::cond::TStatusCondition<StatusConditionDelegate> statusCondition(ref);

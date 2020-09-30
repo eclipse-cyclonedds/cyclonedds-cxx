@@ -63,7 +63,7 @@ TAnyDataReader(const H__& h)
         /* So, just set a null object. */
         *this = dds::core::null;
     } else {
-        this->::dds::core::Reference< DELEGATE_T >::impl_ = OSPL_CXX11_STD_MODULE::dynamic_pointer_cast< DELEGATE_T >(h.delegate());
+        this->::dds::core::Reference< DELEGATE_T >::impl_ = ::std::dynamic_pointer_cast< DELEGATE_T >(h.delegate());
         if (h.delegate() != this->::dds::core::Reference< DELEGATE_T >::impl_) {
             throw dds::core::IllegalOperationError(std::string("Attempted invalid cast: ") + typeid(h).name() + " to " + typeid(*this).name());
         }

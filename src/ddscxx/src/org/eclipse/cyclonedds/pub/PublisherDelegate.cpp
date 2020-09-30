@@ -242,7 +242,7 @@ PublisherDelegate::find_datawriter(const std::string& topic_name)
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = iter->lock();
         if (ref) {
             org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type tmp =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<AnyDataWriterDelegate>(ref);
+                    ::std::dynamic_pointer_cast<AnyDataWriterDelegate>(ref);
             assert(tmp);
             if (tmp->topic_description().name() == topic_name) {
                 writer = tmp;
@@ -257,7 +257,7 @@ dds::pub::TPublisher<PublisherDelegate>
 PublisherDelegate::wrapper()
 {
     PublisherDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<PublisherDelegate>(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<PublisherDelegate>(this->get_strong_ref());
     dds::pub::Publisher pub(ref);
     return pub;
 }
@@ -277,7 +277,7 @@ void PublisherDelegate::on_offered_deadline_missed(dds_entity_t writer,
         org::eclipse::cyclonedds::core::OfferedDeadlineMissedStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+           ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
                 this->extract_strong_ref(writer));
     dds::pub::AnyDataWriter adw(ref);
 
@@ -291,7 +291,7 @@ void PublisherDelegate::on_offered_incompatible_qos(dds_entity_t writer,
         org::eclipse::cyclonedds::core::OfferedIncompatibleQosStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
                 this->extract_strong_ref(writer));
     dds::pub::AnyDataWriter adw(ref);
 
@@ -305,7 +305,7 @@ void PublisherDelegate::on_liveliness_lost(dds_entity_t writer,
         org::eclipse::cyclonedds::core::LivelinessLostStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
                 this->extract_strong_ref(writer));
     dds::pub::AnyDataWriter adw(ref);
 
@@ -319,7 +319,7 @@ void PublisherDelegate::on_publication_matched(dds_entity_t writer,
         org::eclipse::cyclonedds::core::PublicationMatchedStatusDelegate &sd)
 {
     org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
                 this->extract_strong_ref(writer));
     dds::pub::AnyDataWriter adw(ref);
 

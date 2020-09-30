@@ -64,7 +64,7 @@ public:
         try {
             /* Cast base reader to typed delegate: */
             typename READER::DELEGATE_REF_T reader_typed =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<typename READER::DELEGATE_T>(*base_iter);
+                    ::std::dynamic_pointer_cast<typename READER::DELEGATE_T>(*base_iter);
             READER dr(reader_typed);
             if(dr != dds::core::null)
             {
