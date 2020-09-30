@@ -61,7 +61,8 @@
 "  size_t read_struct(const void* data, size_t position);\n"\
 "  size_t key_size(size_t position) const;\n"\
 "  size_t key_max_size(size_t position) const;\n"\
-"  size_t key_stream(void* data, size_t position) const;\n"\
+"  size_t key_write(void* data, size_t position) const;\n"\
+"  size_t key_read(const void* data, size_t position);\n"\
 "  bool key(ddsi_keyhash_t& hash) const;\n"
 
 #define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) "" \

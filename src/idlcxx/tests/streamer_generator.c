@@ -124,7 +124,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -137,7 +137,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -153,6 +153,12 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
@@ -237,7 +243,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t I::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t I::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -250,7 +256,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -268,7 +274,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -281,7 +287,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -297,6 +303,18 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t I::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
@@ -361,7 +379,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -374,7 +392,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -390,6 +408,12 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
@@ -462,7 +486,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -475,7 +499,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -491,6 +515,12 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
@@ -672,7 +702,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n");
@@ -723,7 +753,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -739,6 +769,48 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  clear();\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  _d() = *((int32_t*)((char*)data+position));  //reading bytes for member: _d()\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  switch (_d())\n");
+  format_ostream_indented(ns * 2, ostr, "  {\n");
+  format_ostream_indented(ns * 2, ostr, "    case 0:\n");
+  format_ostream_indented(ns * 2, ostr, "    case 1:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      o() = *((uint8_t*)((char*)data+position));  //reading bytes for member: o()\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 1;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    case 2:\n");
+  format_ostream_indented(ns * 2, ostr, "    case 3:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    case 4:\n");
+  format_ostream_indented(ns * 2, ostr, "    case 5:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "      str().assign((char*)data+position,(char*)data+position+sequenceentries);  //putting data into container\n");
+  format_ostream_indented(ns * 2, ostr, "      position += sequenceentries*1;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    default:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      f() = *((float*)((char*)data+position));  //reading bytes for member: f()\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "  }\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
@@ -824,7 +896,7 @@ void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -837,7 +909,7 @@ void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -853,6 +925,12 @@ void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
@@ -909,7 +987,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -922,7 +1000,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -938,6 +1016,12 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
@@ -1017,7 +1101,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t I::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t I::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -1030,7 +1114,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -1048,7 +1132,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
-  format_ostream_indented(ns * 2, ostr, "size_t s::key_stream(void *data, size_t position) const\n");
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_write(void *data, size_t position) const\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -1061,7 +1145,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  if (sz != 0 && padding == 16) padding = 0;\n");
   format_ostream_indented(ns * 2, ostr, "  std::vector<unsigned char> buffer(sz+padding);\n");
   format_ostream_indented(ns * 2, ostr, "  memset(buffer.data()+sz,0x0,padding);\n");
-  format_ostream_indented(ns * 2, ostr, "  key_stream(buffer.data(),0);\n");
+  format_ostream_indented(ns * 2, ostr, "  key_write(buffer.data(),0);\n");
   format_ostream_indented(ns * 2, ostr, "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n");
   format_ostream_indented(ns * 2, ostr, "  if (fptr == NULL)\n");
   format_ostream_indented(ns * 2, ostr, "  {\n");
@@ -1077,6 +1161,18 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  return (*fptr)(buffer,hash);\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t I::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
   format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
@@ -1128,7 +1224,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    {\n"\
 "      return position;\n"\
 "    }\n\n"\
-"    size_t s_1::key_stream(void *data, size_t position) const\n"\
+"    size_t s_1::key_write(void *data, size_t position) const\n"\
 "    {\n"\
 "      (void)data;\n"\
 "      return position;\n"\
@@ -1140,7 +1236,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      if (sz != 0 && padding == 16) padding = 0;\n"\
 "      std::vector<unsigned char> buffer(sz+padding);\n"\
 "      memset(buffer.data()+sz,0x0,padding);\n"\
-"      key_stream(buffer.data(),0);\n"\
+"      key_write(buffer.data(),0);\n"\
 "      static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "      if (fptr == NULL)\n"\
 "      {\n"\
@@ -1156,6 +1252,11 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "        }\n"\
 "      }\n"\
 "      return (*fptr)(buffer,hash);\n"\
+"    }\n\n"\
+"    size_t s_1::key_read(const void *data, size_t position)\n"\
+"    {\n"\
+"      (void)data;\n"\
+"      return position;\n"\
 "    }\n\n"\
 "    size_t s_1::read_struct(const void *data, size_t position)\n"\
 "    {\n"\
@@ -1188,7 +1289,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    {\n"\
 "      return position;\n"\
 "    }\n\n"\
-"    size_t s_2::key_stream(void *data, size_t position) const\n"\
+"    size_t s_2::key_write(void *data, size_t position) const\n"\
 "    {\n"\
 "      (void)data;\n"\
 "      return position;\n"\
@@ -1200,7 +1301,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      if (sz != 0 && padding == 16) padding = 0;\n"\
 "      std::vector<unsigned char> buffer(sz+padding);\n"\
 "      memset(buffer.data()+sz,0x0,padding);\n"\
-"      key_stream(buffer.data(),0);\n"\
+"      key_write(buffer.data(),0);\n"\
 "      static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "      if (fptr == NULL)\n"\
 "      {\n"\
@@ -1216,6 +1317,11 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "        }\n"\
 "      }\n"\
 "      return (*fptr)(buffer,hash);\n"\
+"    }\n\n"\
+"    size_t s_2::key_read(const void *data, size_t position)\n"\
+"    {\n"\
+"      (void)data;\n"\
+"      return position;\n"\
 "    }\n\n"\
 "    size_t s_2::read_struct(const void *data, size_t position)\n"\
 "    {\n"\
@@ -1276,7 +1382,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  if (position != UINT_MAX)   position = dynamic_cast<const I&>(*this).key_max_size(position);\n"\
   "  return position;\n"\
   "}\n\n"\
-  "size_t I::key_stream(void *data, size_t position) const\n"\
+  "size_t I::key_write(void *data, size_t position) const\n"\
   "{\n"\
   "  (void)data;\n"\
   "  return position;\n"\
@@ -1288,7 +1394,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  if (sz != 0 && padding == 16) padding = 0;\n"\
   "  std::vector<unsigned char> buffer(sz+padding);\n"\
   "  memset(buffer.data()+sz,0x0,padding);\n"\
-  "  key_stream(buffer.data(),0);\n"\
+  "  key_write(buffer.data(),0);\n"\
   "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
   "  if (fptr == NULL)\n"\
   "  {\n"\
@@ -1305,10 +1411,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  }\n"\
   "  return (*fptr)(buffer,hash);\n"\
   "}\n\n"\
-  "size_t s::key_stream(void *data, size_t position) const\n"\
+  "size_t s::key_write(void *data, size_t position) const\n"\
   "{\n"\
   "  (void)data;\n"\
-  "  position = dynamic_cast<const I&>(*this).key_stream(data, position);\n"\
+  "  position = dynamic_cast<const I&>(*this).key_write(data, position);\n"\
   "  return position;\n"\
   "}\n\n"\
   "bool s::key(ddsi_keyhash_t &hash) const\n"\
@@ -1318,7 +1424,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  if (sz != 0 && padding == 16) padding = 0;\n"\
   "  std::vector<unsigned char> buffer(sz+padding);\n"\
   "  memset(buffer.data()+sz,0x0,padding);\n"\
-  "  key_stream(buffer.data(),0);\n"\
+  "  key_write(buffer.data(),0);\n"\
   "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
   "  if (fptr == NULL)\n"\
   "  {\n"\
@@ -1334,6 +1440,17 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "    }\n"\
   "  }\n"\
   "  return (*fptr)(buffer,hash);\n"\
+  "}\n\n"\
+  "size_t I::key_read(const void *data, size_t position)\n"\
+  "{\n"\
+  "  (void)data;\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "size_t s::key_read(const void *data, size_t position)\n"\
+  "{\n"\
+  "  (void)data;\n"\
+  "  position = dynamic_cast<I&>(*this).key_read(data, position);\n"\
+  "  return position;\n"\
   "}\n\n"\
   "size_t I::read_struct(const void *data, size_t position)\n"\
   "{\n"\
@@ -1381,7 +1498,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "{\n"\
   "  return position;\n"\
   "}\n\n"\
-  "size_t s::key_stream(void *data, size_t position) const\n"\
+  "size_t s::key_write(void *data, size_t position) const\n"\
   "{\n"\
   "  (void)data;\n"\
   "  return position;\n"\
@@ -1393,7 +1510,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  if (sz != 0 && padding == 16) padding = 0;\n"\
   "  std::vector<unsigned char> buffer(sz+padding);\n"\
   "  memset(buffer.data()+sz,0x0,padding);\n"\
-  "  key_stream(buffer.data(),0);\n"\
+  "  key_write(buffer.data(),0);\n"\
   "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
   "  if (fptr == NULL)\n"\
   "  {\n"\
@@ -1409,6 +1526,11 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "    }\n"\
   "  }\n"\
   "  return (*fptr)(buffer,hash);\n"\
+  "}\n\n"\
+  "size_t s::key_read(const void *data, size_t position)\n"\
+  "{\n"\
+  "  (void)data;\n"\
+  "  return position;\n"\
   "}\n\n"\
   "size_t s::read_struct(const void *data, size_t position)\n"\
   "{\n"\
@@ -1457,7 +1579,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    (void)position;\n"\
 "    return UINT_MAX;\n"\
 "  }\n\n"\
-"  size_t typedef_key_stream_td_6(const td_6 &obj, void *data, size_t position)\n"\
+"  size_t typedef_key_write_td_6(const td_6 &obj, void *data, size_t position)\n"\
 "  {\n"\
 "    size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "    memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
@@ -1466,6 +1588,15 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    *((uint32_t*)((char*)data + position)) = sequenceentries;  //writing entries for member: obj\n"\
 "    position += 4;  //moving position indicator\n"\
 "    memcpy((char*)data+position,obj.data(),sequenceentries*4);  //contents for obj\n"\
+"    position += sequenceentries*4;  //moving position indicator\n"\
+"    return position;\n"\
+"  }\n\n"\
+"  size_t typedef_key_read_td_6(td_6 &obj, const void *data, size_t position)\n"\
+"  {\n"\
+"    position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"    uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
+"    position += 4;  //moving position indicator\n"\
+"    obj.assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n"\
 "    position += sequenceentries*4;  //moving position indicator\n"\
 "    return position;\n"\
 "  }\n\n"\
@@ -1511,7 +1642,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  {\n"\
 "    return position;\n"\
 "  }\n\n"\
-"  size_t s::key_stream(void *data, size_t position) const\n"\
+"  size_t s::key_write(void *data, size_t position) const\n"\
 "  {\n"\
 "    (void)data;\n"\
 "    return position;\n"\
@@ -1523,7 +1654,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    if (sz != 0 && padding == 16) padding = 0;\n"\
 "    std::vector<unsigned char> buffer(sz+padding);\n"\
 "    memset(buffer.data()+sz,0x0,padding);\n"\
-"    key_stream(buffer.data(),0);\n"\
+"    key_write(buffer.data(),0);\n"\
 "    static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "    if (fptr == NULL)\n"\
 "    {\n"\
@@ -1539,6 +1670,11 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "      }\n"\
 "    }\n"\
 "    return (*fptr)(buffer,hash);\n"\
+"  }\n\n"\
+"  size_t s::key_read(const void *data, size_t position)\n"\
+"  {\n"\
+"    (void)data;\n"\
+"    return position;\n"\
 "  }\n\n"\
 "  size_t s::read_struct(const void *data, size_t position)\n"\
 "  {\n"\
@@ -1558,7 +1694,8 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  size_t typedef_write_td_6(const td_6 &obj, void* data, size_t position);\n\n"\
 "  size_t typedef_write_size_td_6(const td_6 &obj, size_t position);\n\n"\
 "  size_t typedef_read_td_6(td_6 &obj, const void* data, size_t position);\n\n"\
-"  size_t typedef_key_stream_td_6(const td_6 &obj, void *data, size_t position);\n\n"\
+"  size_t typedef_key_write_td_6(const td_6 &obj, void *data, size_t position);\n\n"\
+"  size_t typedef_key_read_td_6(td_6 &obj, const void *data, size_t position);\n\n"\
 "  size_t typedef_key_size_td_6(const td_6 &obj, size_t position);\n\n"\
 "  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position);\n\n"\
 "} //end namespace M\n\n"
@@ -1628,7 +1765,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
-"size_t s::key_stream(void *data, size_t position) const\n"\
+"size_t s::key_write(void *data, size_t position) const\n"\
 "{\n"\
 "  (void)data;\n"\
 "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
@@ -1645,7 +1782,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  if (sz != 0 && padding == 16) padding = 0;\n"\
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
-"  key_stream(buffer.data(),0);\n"\
+"  key_write(buffer.data(),0);\n"\
 "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
@@ -1662,10 +1799,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  }\n"\
 "  return (*fptr)(buffer,hash);\n"\
 "}\n\n"\
-"size_t ss::key_stream(void *data, size_t position) const\n"\
+"size_t ss::key_write(void *data, size_t position) const\n"\
 "{\n"\
 "  (void)data;\n"\
-"  position = s_().key_stream(data, position);\n"\
+"  position = s_().key_write(data, position);\n"\
 "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
 "  position += alignmentbytes;  //moving position indicator\n"\
@@ -1680,7 +1817,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  if (sz != 0 && padding == 16) padding = 0;\n"\
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
-"  key_stream(buffer.data(),0);\n"\
+"  key_write(buffer.data(),0);\n"\
 "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
@@ -1696,6 +1833,23 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n"\
 "  }\n"\
 "  return (*fptr)(buffer,hash);\n"\
+"}\n\n"\
+"size_t s::key_read(const void *data, size_t position)\n"\
+"{\n"\
+"  (void)data;\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
+"  position += 4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t ss::key_read(const void *data, size_t position)\n"\
+"{\n"\
+"  (void)data;\n"\
+"  position = s_().key_read(data, position);\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
+"  position += 4;  //moving position indicator\n"\
+"  return position;\n"\
 "}\n\n"\
 "size_t s::read_struct(const void *data, size_t position)\n"\
 "{\n"\
@@ -1749,7 +1903,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  if (position != UINT_MAX)   position += 4;  //bytes for member: l()\n"\
 "  return position;\n"\
 "}\n\n"\
-"size_t s::key_stream(void *data, size_t position) const\n"\
+"size_t s::key_write(void *data, size_t position) const\n"\
 "{\n"\
 "  (void)data;\n"\
 "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
@@ -1766,7 +1920,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  if (sz != 0 && padding == 16) padding = 0;\n"\
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
-"  key_stream(buffer.data(),0);\n"\
+"  key_write(buffer.data(),0);\n"\
 "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
@@ -1782,6 +1936,14 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n"\
 "  }\n"\
 "  return (*fptr)(buffer,hash);\n"\
+"}\n\n"\
+"size_t s::key_read(const void *data, size_t position)\n"\
+"{\n"\
+"  (void)data;\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  l() = *((int32_t*)((char*)data+position));  //reading bytes for member: l()\n"\
+"  position += 4;  //moving position indicator\n"\
+"  return position;\n"\
 "}\n\n"\
 "size_t s::read_struct(const void *data, size_t position)\n"\
 "{\n"\
@@ -1851,7 +2013,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  position = typedef_key_max_size_td_1(t(), position);\n"\
 "  return position;\n"\
 "}\n\n"\
-"size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position)\n"\
+"size_t typedef_key_write_td_1(const td_1 &obj, void *data, size_t position)\n"\
 "{\n"\
 "  size_t alignmentbytes = (4 - (position&0x3))&0x3;  //alignment\n"\
 "  memset((char*)data+position,0x0,alignmentbytes);  //setting alignment bytes to 0x0\n"\
@@ -1863,10 +2025,10 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  position += sequenceentries*4;  //moving position indicator\n"\
 "  return position;\n"\
 "}\n\n"\
-"size_t s::key_stream(void *data, size_t position) const\n"\
+"size_t s::key_write(void *data, size_t position) const\n"\
 "{\n"\
 "  (void)data;\n"\
-"  position = typedef_key_stream_td_1(t(), data, position);\n"\
+"  position = typedef_key_write_td_1(t(), data, position);\n"\
 "  return position;\n"\
 "}\n\n"\
 "bool s::key(ddsi_keyhash_t &hash) const\n"\
@@ -1876,7 +2038,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  if (sz != 0 && padding == 16) padding = 0;\n"\
 "  std::vector<unsigned char> buffer(sz+padding);\n"\
 "  memset(buffer.data()+sz,0x0,padding);\n"\
-"  key_stream(buffer.data(),0);\n"\
+"  key_write(buffer.data(),0);\n"\
 "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
 "  if (fptr == NULL)\n"\
 "  {\n"\
@@ -1892,6 +2054,21 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    }\n"\
 "  }\n"\
 "  return (*fptr)(buffer,hash);\n"\
+"}\n\n"\
+"size_t typedef_key_read_td_1(td_1 &obj, const void *data, size_t position)\n"\
+"{\n"\
+"  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+"  uint32_t sequenceentries = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
+"  position += 4;  //moving position indicator\n"\
+"  obj.assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+sequenceentries);  //putting data into container\n"\
+"  position += sequenceentries*4;  //moving position indicator\n"\
+"  return position;\n"\
+"}\n\n"\
+"size_t s::key_read(const void *data, size_t position)\n"\
+"{\n"\
+"  (void)data;\n"\
+"  position = typedef_key_read_td_1(t(), data, position);\n"\
+"  return position;\n"\
 "}\n\n"\
 "size_t typedef_read_td_1(td_1 &obj, const void* data, size_t position)\n"\
 "{\n"\
@@ -1913,7 +2090,8 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 #define TDKH "size_t typedef_write_td_1(const td_1 &obj, void* data, size_t position);\n\n"\
 "size_t typedef_write_size_td_1(const td_1 &obj, size_t position);\n\n"\
 "size_t typedef_read_td_1(td_1 &obj, const void* data, size_t position);\n\n"\
-"size_t typedef_key_stream_td_1(const td_1 &obj, void *data, size_t position);\n\n"\
+"size_t typedef_key_write_td_1(const td_1 &obj, void *data, size_t position);\n\n"\
+"size_t typedef_key_read_td_1(td_1 &obj, const void *data, size_t position);\n\n"\
 "size_t typedef_key_size_td_1(const td_1 &obj, size_t position);\n\n"\
 "size_t typedef_key_max_size_td_1(const td_1 &obj, size_t position);\n\n"
 

@@ -57,7 +57,9 @@ class ddscxx_serdata : public ddsi_serdata {
   size_t m_size{ 0 };
   std::unique_ptr<unsigned char[]> m_data{ nullptr };
   ddsi_keyhash_t m_key;
-  bool m_key_md5_hashed;
+  bool m_key_md5_hashed = false;
+  bool hash_populated = false;
+  T m_t = T();
 
 public:
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
@@ -70,7 +72,34 @@ public:
   const ddsi_keyhash_t& key() const { return m_key; }
   bool& key_md5_hashed() { return m_key_md5_hashed; }
   const bool& key_md5_hashed() const { return m_key_md5_hashed; }
+  void populate_hash();
+  T& getT() { return m_t; }
+  const T& getT() const { return m_t; }
 };
+
+template <typename T>
+void ddscxx_serdata<T>::populate_hash()
+{
+  if (hash_populated)
+    return;
+
+  key_md5_hashed() = getT().key(key());
+  if (!key_md5_hashed())
+  {
+    ddsi_keyhash_t buf;
+    ddsrt_md5_state_t md5st;
+    ddsrt_md5_init(&md5st);
+    ddsrt_md5_append(&md5st, (ddsrt_md5_byte_t*)(key().value), 16);
+    ddsrt_md5_finish(&md5st, (ddsrt_md5_byte_t*)(buf.value));
+    memcpy(&(hash), buf.value, 4);
+  }
+  else
+  {
+    memcpy(&(hash), key().value, 4);
+  }
+
+  hash_populated = true;
+}
 
 template <typename T>
 bool serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b)
@@ -117,9 +146,19 @@ ddsi_serdata_t *serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
-  T temp;
-  temp.read_struct(calc_offset(d->data(), 4), 0);
-  d->key_md5_hashed() = temp.key(d->key());
+  switch (kind)
+  {
+  case SDK_KEY:
+    d->getT().key_read(calc_offset(d->data(), 4), 0);
+    break;
+  case SDK_DATA:
+    d->getT().read_struct(calc_offset(d->data(), 4), 0);
+    break;
+  case SDK_EMPTY:
+    assert(0);
+  }
+  d->key_md5_hashed() = d->getT().key(d->key());
+  d->populate_hash();
 
   return d;
 }
@@ -133,13 +172,36 @@ ddsi_serdata_t *serdata_from_ser_iov(
   const ddsrt_iovec_t* iov,
   size_t size)
 {
-  (void)topic;
-  (void)kind;
-  (void)niov;
-  (void)iov;
-  (void)size;
-  assert(0);
-  return NULL;
+  auto d = new ddscxx_serdata<T>(topic, kind);
+  d->resize(size);
+
+  size_t off = 0;
+  auto cursor = (unsigned char*)d->data();
+  for (ddsrt_msg_iovlen_t i = 0; i < niov && off < size; i++)
+  {
+    size_t n_bytes = iov[i].iov_len;
+    if (n_bytes + off > size) n_bytes = size - off;
+    memcpy(cursor, iov[i].iov_base, n_bytes);
+    cursor += n_bytes;
+    off += n_bytes;
+  }
+
+  switch (kind)
+  {
+  case SDK_KEY:
+    d->getT().key_read(calc_offset(d->data(), 4), 0);
+    break;
+  case SDK_DATA:
+    d->getT().read_struct(calc_offset(d->data(), 4), 0);
+    break;
+  case SDK_EMPTY:
+    assert(0);
+  }
+  d->key_md5_hashed() = d->getT().key(d->key());
+  d->populate_hash();
+
+  return d;
+
 }
 #endif
 
@@ -149,8 +211,9 @@ ddsi_serdata_t *serdata_from_keyhash(
   const struct ddsi_keyhash* keyhash)
 {
   (void)keyhash;
-  /* there is no key field, so from_keyhash is trivial */
-  return new ddscxx_serdata<T>(topic, SDK_KEY);
+  (void)topic;
+  //replace with (if key_size_max <= 16) then populate the data class with the key hash (key_read)
+  return nullptr;
 }
 
 template <typename T>
@@ -182,22 +245,27 @@ ddsi_serdata_t *serdata_from_sample(
     auto topic = static_cast<const ddscxx_sertopic<T>*>(topiccmn);
     auto d = new ddscxx_serdata<T>(topic, kind);
 
-    if (kind != SDK_DATA) {
-      //???
-    }
-    else  {
-      auto msg = static_cast<const T*>(sample);
+    auto msg = static_cast<const T*>(sample);
+    size_t sz = 4 + (kind == SDK_KEY ? msg->key_size(0) : msg->write_size(0));  //4 bytes extra to also include the header
+    d->resize(sz);
+    unsigned char* ptr = (unsigned char*)d->data();
+    memset(ptr, 0x0, 4);
+    if (native_endianness() == endianness::little_endian)
+      *(ptr + 1) = 0x1;
 
-      size_t sz = msg->write_size(0);
-      d->resize(sz + 4);  //4 bytes extra to also include the header
-      unsigned char* ptr = (unsigned char*)d->data();
-      memset(ptr, 0x0, 4);
-      if (native_endianness() == endianness::little_endian)
-        *(ptr + 1) = 0x1;
-
+    switch (kind)
+    {
+    case SDK_KEY:
+      msg->key_write(calc_offset(d->data(), 4), 0);
+      break;
+    case SDK_DATA:
       msg->write_struct(calc_offset(d->data(), 4), 0);
-      d->key_md5_hashed() = msg->key(d->key());
+      break;
+    case SDK_EMPTY:
+      assert(0);
     }
+    d->key_md5_hashed() = msg->key(d->key());
+    d->populate_hash();
 
     return d;
   }
@@ -250,6 +318,12 @@ ddsi_serdata_t *serdata_to_topicless(const struct ddsi_serdata* dcmn)
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
   auto d1 = new ddscxx_serdata<T>(d->topic, SDK_KEY);
   d1->topic = nullptr;
+
+  auto t = d->getT();
+  d1->resize(t.key_size(0));
+  t.key_write(d1->data(), 0);
+  d1->hash = d->hash;
+
   return d1;
 }
 
@@ -260,12 +334,14 @@ bool serdata_topicless_to_sample(
   void** bufptr, void* buflim)
 {
   (void)topic;
-  (void)dcmn;
-  (void)sample;
   (void)bufptr;
   (void)buflim;
-  assert(0);
-  /* ROS 2 doesn't do keys in a meaningful way yet */
+
+  auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+
+  T* ptr = (T*)sample;
+  ptr->key_read(d->data(), 0);
+
   return true;
 }
 
@@ -283,9 +359,9 @@ size_t serdata_print(
 {
   (void)tpcmn;
   (void)dcmn;
-  (void)buf;
-  (void)bufsize;
-  assert(0);
+  //implementation to follow!!!
+  if (bufsize > 0)
+    buf[0] = 0x0;
   return 0;
 }
 #endif
@@ -341,6 +417,7 @@ template <typename T>
 ddscxx_serdata<T>::ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind)
   : ddsi_serdata{}
 {
+  memset(m_key.value, 0x0, 16);
   ddsi_serdata_init(this, topic, kind);
 }
 
@@ -399,7 +476,10 @@ void sertopic_free_samples(
   (void)ptrs;
   (void)count;
   (void)op;
-  assert(0);
+  assert(count == 1);
+  T* ptr = (T*)ptrs[0];
+  assert(ptr);
+  *ptr = T();
 }
 
 #if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH
