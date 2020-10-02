@@ -259,6 +259,9 @@ get_cpp11_base_type_const_value(const idl_constval_t *constval)
   {
   case IDL_BOOL:
     return idl_strdup(constval->value.bln ? "true" : "false");
+  case IDL_OCTET:
+    cnt = idl_asprintf(&str, "%" PRIu8, constval->value.oct);
+    break;
   case IDL_INT8:
     cnt = idl_asprintf(&str, "%" PRId8, constval->value.int8);
     break;
