@@ -57,9 +57,9 @@ public:
         return ::std::vector<uint8_t>();
     }
 
-    static const char *getKeyList()
+    static bool isKeyless()
     {
-        return "ExampleKeylist";
+        return true;
     }
 
     static const char *getTypeName()

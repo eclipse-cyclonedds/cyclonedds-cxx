@@ -431,7 +431,7 @@ ddscxx_sertopic<T>::ddscxx_sertopic(
     type_name,
     &ddscxx_sertopic<T>::ddscxx_sertopic_ops,
     &ddscxx_serdata<T>::ddscxx_serdata_ops,
-    true);
+    org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless());
 }
 
 template <typename T>
