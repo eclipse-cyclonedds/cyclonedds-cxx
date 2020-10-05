@@ -31,6 +31,11 @@
 #define IDL_CATEGORY_MASK (IDL_BASE_TYPE | IDL_TEMPL_TYPE | IDL_MODULE | IDL_STRUCT |\
             IDL_UNION | IDL_ENUM | IDL_TYPEDEF | IDL_CONST | IDL_MEMBER | IDL_DECLARATOR | IDL_CASE)
 
+/* An idl_retcode_t value used to abort a walk function.                      */
+/* An abort does not represent an error and should therefore not be negative. */
+/* To distinguish it from IDL_RETCODE_OK we come up with a new value here.    */
+#define IDL_RETCODE_ABORT 1
+
 typedef struct idl_file_out_s {
   FILE *file;
 } *idl_file_out;

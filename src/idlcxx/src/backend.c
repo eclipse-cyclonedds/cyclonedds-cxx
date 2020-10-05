@@ -218,6 +218,48 @@ idl_declarator_is_primitive(const idl_declarator_t *declarator)
   return (is_primitive & !idl_declarator_is_array(declarator));
 }
 
+static idl_retcode_t
+module_has_node_from_current_file(idl_backend_ctx ctx, const idl_node_t *node)
+{
+  (void) node;
+  bool *matches_target_file = (bool *) idl_get_custom_context(ctx);
+  *matches_target_file = true;
+  return IDL_RETCODE_ABORT;
+}
+
+static bool
+node_matches_target_file(idl_backend_ctx ctx, const idl_node_t *node)
+{
+  /* Only walk over struct, union, enum, typedef and const declarations that match the  */
+  /* specified file. Other node types may refer to dependencies from other files, but   */
+  /* still need to be generated in full (e.g. all members of a struct). For a module    */
+  /* we need to determine whether or not to visit by examining the contents of its      */
+  /* declarations.                                                                      */
+  bool matches_target_file = true;
+
+  if (ctx->target_file)
+  {
+    if (idl_is_struct(node) || idl_is_union(node) ||
+        idl_is_enum(node) || idl_is_typedef(node) || idl_is_const(node))
+    {
+      matches_target_file = (strcmp(ctx->target_file, node->location.first.file) == 0);
+    }
+    else if (idl_is_module(node))
+    {
+      const idl_module_t *module_node = (const idl_module_t *) node;
+      void *current_context = idl_get_custom_context(ctx);
+
+      matches_target_file = false;
+      idl_reset_custom_context(ctx);
+      idl_set_custom_context(ctx, &matches_target_file);
+      idl_walk_node_list(ctx, module_node->definitions, module_has_node_from_current_file, IDL_MASK_ALL);
+      idl_reset_custom_context(ctx);
+      idl_set_custom_context(ctx, current_context);
+    }
+  }
+  return matches_target_file;
+}
+
 idl_retcode_t
 idl_walk_node_list(
     idl_backend_ctx ctx,
@@ -228,16 +270,7 @@ idl_walk_node_list(
   idl_retcode_t result = IDL_RETCODE_OK;
 
   while (target_node && result == IDL_RETCODE_OK) {
-    bool matches_target_file;
-
-    /* For top-level nodes, only walk over that match the specified file.                 */
-    /* (Lower level nodes are typically contained in the same file as their parent node,  */
-    /* and may contain valid references to types contained in another file.               */
-    if (ctx->target_file && !target_node->parent) {
-      matches_target_file = (strcmp(ctx->target_file, target_node->location.first.file) == 0);
-    } else {
-      matches_target_file = true;
-    }
+    bool matches_target_file = node_matches_target_file(ctx, target_node);
 
     if ((target_node->mask & mask) && matches_target_file)
     {
@@ -259,16 +292,7 @@ idl_walk_tree(
   const idl_node_t *sub_node = NULL;
 
   while (target_node && result == IDL_RETCODE_OK) {
-    bool matches_target_file;
-
-    /* For top-level nodes, only walk over that match the specified file.                 */
-    /* (Lower level nodes are typically contained in the same file as their parent node,  */
-    /* and may contain valid references to types contained in another file.               */
-    if (ctx->target_file && !target_node->parent) {
-      matches_target_file = (strcmp(ctx->target_file, target_node->location.first.file) == 0);
-    } else {
-      matches_target_file = true;
-    }
+    bool matches_target_file = node_matches_target_file(ctx, target_node);
 
     if (matches_target_file && (target_node->mask & mask))
     {
