@@ -378,6 +378,7 @@ context_t* child_context(context_t* ctx, const char* name)
 
   ptr->parent = ctx;
   ptr->depth = ctx->depth + 1;
+  ptr->parsed_file = ctx->parsed_file;
 
   return ptr;
 }
@@ -472,13 +473,15 @@ void resolve_namespace(idl_node_t* node, char** up)
 
 idl_retcode_t process_node(context_t* ctx, idl_node_t* node)
 {
-  if (node->parent != NULL ||
-      ctx->parsed_file == NULL ||
-      (0 == strcmp(node->location.first.file, ctx->parsed_file)/* && 0 == strcmp(node->location.last.file, ctx->parsed_file)*/))  //location.last.file check commented out due to bug
+
+  if (idl_is_module(node))
   {
-    if (idl_is_module(node))
-      process_module(ctx, (idl_module_t*)node);
-    else if (idl_is_struct(node) || idl_is_union(node))
+    process_module(ctx, (idl_module_t*)node);  //module entries are not filtered on which file they are defined in, since their first occurance may be in another (previous) file
+  }
+  else if (ctx->parsed_file == NULL ||
+           0 == strcmp(node->location.first.file, ctx->parsed_file))
+  {
+    if (idl_is_struct(node) || idl_is_union(node))
       process_constructed(ctx, node);
     else if (idl_is_typedef(node))
       process_typedef_definition(ctx, (idl_typedef_t*)node);
