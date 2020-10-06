@@ -1301,16 +1301,18 @@ cpp11_scope_walk(idl_backend_ctx ctx, const idl_node_t *node)
 
 typedef enum
 {
-  idl_no_dep      = 0x0,
-  idl_string_dep  = 0x01 << 0,
-  idl_array_dep   = 0x01 << 1,
-  idl_vector_dep  = 0x01 << 2,
-  idl_variant_dep = 0x01 << 3
+  idl_no_dep        = 0x0,
+  idl_string_dep    = 0x01 << 0,
+  idl_array_dep     = 0x01 << 1,
+  idl_vector_dep    = 0x01 << 2,
+  idl_variant_dep   = 0x01 << 3,
+  idl_optional_dep  = 0x01 << 4
 } idl_include_dep;
 
 static idl_retcode_t
 get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
 {
+  idl_retcode_t result = IDL_RETCODE_OK;
   idl_include_dep *dependency_mask = (idl_include_dep *) idl_get_custom_context(ctx);
 
   switch (node->mask & IDL_CATEGORY_MASK)
@@ -1323,6 +1325,7 @@ get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
     {
     case IDL_SEQUENCE:
       (*dependency_mask) |= idl_vector_dep;
+      result = get_util_dependencies(ctx, ((const idl_sequence_t *)node)->type_spec);
       break;
     case IDL_STRING:
       (*dependency_mask) |= idl_string_dep;
@@ -1339,7 +1342,7 @@ get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
   default:
     break;
   }
-  return IDL_RETCODE_OK;
+  return result;
 }
 
 static void
