@@ -143,6 +143,7 @@ size_t flush_ostream(idl_ostream_t* str)
     fprintf(str->_file, "%s", str->_buf.data);
 
   size_t returnval = str->_buf.used;
+  str->_buf.data[0] = 0x0;
   str->_buf.used = 0;
 
   return returnval;
