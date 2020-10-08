@@ -607,6 +607,29 @@ dds::sub::detail::DataReader<T>::default_filter_state(const dds::sub::status::Da
     scopedLock.unlock();
 }
 
+template <typename T>
+dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>
+dds::sub::detail::DataReader<T>::read_cdr()
+{
+    dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> samples;
+    dds::sub::detail::LoanedCDRSamplesHolder<org::eclipse::cyclonedds::topic::CDRBlob> holder(samples);
+
+    this->AnyDataReaderDelegate::read_cdr((dds_entity_t)(this->ddsc_entity), this->status_filter_, holder, (uint32_t)dds::core::LENGTH_UNLIMITED);
+
+    return samples;
+}
+
+template <typename T>
+dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>
+dds::sub::detail::DataReader<T>::take_cdr()
+{
+    dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> samples;
+    dds::sub::detail::LoanedCDRSamplesHolder<org::eclipse::cyclonedds::topic::CDRBlob> holder(samples);
+
+    this->AnyDataReaderDelegate::take_cdr((dds_entity_t)(this->ddsc_entity), this->status_filter_, holder, (uint32_t)dds::core::LENGTH_UNLIMITED);
+
+    return samples;
+}
 
 template <typename T>
 dds::sub::LoanedSamples<T>

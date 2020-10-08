@@ -18,6 +18,7 @@
 
 #include <dds/sub/LoanedSamples.hpp>
 #include "org/eclipse/cyclonedds/sub/AnyDataReaderDelegate.hpp"
+#include "org/eclipse/cyclonedds/topic/datatopic.hpp"
 
 namespace dds
 {
@@ -30,7 +31,7 @@ template <typename T>
 class LoanedSamplesHolder : public SamplesHolder
 {
 public:
-    LoanedSamplesHolder(dds::sub::LoanedSamples<T>& samples) : samples_(samples), index(0)
+    LoanedSamplesHolder(dds::sub::LoanedSamples<T>& samples) : samples_(samples), index_(0)
     {
     }
 
@@ -39,23 +40,23 @@ public:
     }
 
     uint32_t get_length() const {
-        return this->index;
+        return this->index_;
     }
 
     SamplesHolder& operator++(int)
     {
-        this->index++;
+        this->index_++;
         return *this;
     }
 
     void *data()
     {
-        return (*this->samples_.delegate())[this->index].delegate().data_ptr();
+        return (*this->samples_.delegate())[this->index_].delegate().data_ptr();
     }
 
     detail::SampleInfo* info()
     {
-        return (*this->samples_.delegate())[this->index].delegate().info_ptr();
+        return (*this->samples_.delegate())[this->index_].delegate().info_ptr();
     }
 
     void **cpp_sample_pointers()
@@ -84,12 +85,60 @@ public:
         }
     }
 
-private:
+    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
+    {
+        delete [] c_sample_infos;
+        delete [] c_sample_pointers;
+    }
+
+protected:
     dds::sub::LoanedSamples<T>& samples_;
-    uint32_t index;
+    uint32_t index_;
 };
 
+template <typename T>
+class LoanedCDRSamplesHolder : public LoanedSamplesHolder<T>
+{
+public:
+    LoanedCDRSamplesHolder(dds::sub::LoanedSamples<T>& samples) : LoanedSamplesHolder<T>(samples)
+    {
+    }
 
+    void set_length(uint32_t len) {
+        LoanedSamplesHolder<T>::set_length(len);
+        this->index_ = len;
+    }
+
+    void **cpp_sample_pointers()
+    {
+        uint32_t cpp_sample_size = this->samples_.delegate()->length();
+        return new void * [cpp_sample_size];
+    }
+
+    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
+    {
+        struct ddsi_serdata **cdr_blobs = (struct ddsi_serdata **) c_sample_pointers;
+        for (uint32_t i = 0; i < this->index_; ++i)
+        {
+            ddsrt_iovec_t blob_content;
+            struct ddsi_serdata *current_blob = cdr_blobs[i];
+            ddsi_serdata_to_ser_ref(current_blob, 0, ddsi_serdata_size(current_blob), &blob_content);
+            T &sample_data = (*this->samples_.delegate())[i].delegate().data();
+            memcpy(sample_data.encoding().data(), blob_content.iov_base, 4);
+            sample_data.kind(static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
+            if (sample_data.kind() != org::eclipse::cyclonedds::topic::BlobKind::Empty)
+            {
+                sample_data.payload().assign(
+                        reinterpret_cast<uint8_t *>(blob_content.iov_base) + 4,
+                        reinterpret_cast<uint8_t *>(blob_content.iov_base) + blob_content.iov_len);
+            }
+            ddsi_serdata_to_ser_unref(current_blob, &blob_content);
+            ddsi_serdata_unref(current_blob);
+        }
+        delete [] c_sample_infos;
+        delete [] c_sample_pointers;
+    }
+};
 
 template <typename T, typename SamplesFWIterator>
 class SamplesFWInteratorHolder : public SamplesHolder
@@ -146,6 +195,12 @@ public:
         for (uint32_t i = 0; i < length; ++i, ++tmp_iterator) {
             org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], (tmp_iterator->delegate()).info());
         }
+    }
+
+    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
+    {
+        delete [] c_sample_infos;
+        delete [] c_sample_pointers;
     }
 
 private:
@@ -209,6 +264,12 @@ public:
             this->iterator = std::move(samples[i]);
             this->iterator++;
         }
+    }
+
+    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
+    {
+        delete [] c_sample_infos;
+        delete [] c_sample_pointers;
     }
 
 private:

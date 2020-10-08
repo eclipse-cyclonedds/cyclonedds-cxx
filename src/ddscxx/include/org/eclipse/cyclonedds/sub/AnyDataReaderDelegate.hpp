@@ -31,6 +31,7 @@
 #include <org/eclipse/cyclonedds/core/ObjectSet.hpp>
 #include <org/eclipse/cyclonedds/ForwardDeclarations.hpp>
 #include <dds/topic/TopicDescription.hpp>
+#include <org/eclipse/cyclonedds/topic/CDRBlob.hpp>
 
 #include <dds/topic/BuiltinTopic.hpp>
 
@@ -75,6 +76,7 @@ public:
     virtual void **cpp_sample_pointers() = 0;
     virtual dds_sample_info_t *cpp_info_pointers() = 0;
     virtual void set_sample_infos(dds_sample_info_t *info) = 0;
+    virtual void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos) = 0;
 };
 
 }
@@ -93,7 +95,6 @@ namespace sub
 {
 
 class QueryDelegate;
-
 
 class OMG_DDS_API AnyDataReaderDelegate : public org::eclipse::cyclonedds::core::EntityDelegate
 {
@@ -166,6 +167,18 @@ public:
     void setSample(void* sample);
     void* getSample() const;
 
+
+    void read_cdr(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void take_cdr(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
 
     void read(
             const dds_entity_t reader,
