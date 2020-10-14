@@ -306,9 +306,20 @@ get_cpp11_base_type_const_value(const idl_constval_t *constval)
 static char *
 get_cpp11_templ_type_const_value(const idl_constval_t *constval)
 {
-  if (idl_is_masked(constval, IDL_STRING))
-    return idl_strdup(constval->value.str);
-  return NULL;
+  char *str;
+  size_t len;
+
+  if (!idl_is_masked(constval, IDL_STRING))
+    return NULL;
+  assert(constval->value.str);
+  len = strlen(constval->value.str);
+  if (!(str = malloc(len + 2 /* quotes */ + 1)))
+    return NULL;
+  str[0] = '"';
+  memcpy(str + 1, constval->value.str, len);
+  str[1 + len] = '"';
+  str[1 + len + 1] = '\0';
+  return str;
 }
 
 char *
