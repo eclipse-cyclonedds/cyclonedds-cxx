@@ -98,7 +98,6 @@ protected:
                      const std::string& type_name);
 
     dds::topic::qos::TopicQos qos_;
-    org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
     void* sample_;
 };
 

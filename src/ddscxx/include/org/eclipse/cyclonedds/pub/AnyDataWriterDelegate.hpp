@@ -104,16 +104,6 @@ protected:
     AnyDataWriterDelegate(const dds::pub::qos::DataWriterQos& qos,
                           const dds::topic::TopicDescription& td);
 
-    inline void setSampleSize(size_t _sampleSize)
-    {
-        this->sampleSize = _sampleSize;
-    }
-
-    inline size_t getSampleSize()
-    {
-        return this->sampleSize;
-    }
-
     void
     write(dds_entity_t writer,
           const void *data,
@@ -161,9 +151,6 @@ protected:
                     const void *data);
 
 private:
-    org::eclipse::cyclonedds::topic::copyInFunction  copyIn;
-    org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
-    size_t sampleSize;
     dds::pub::qos::DataWriterQos qos_;
     dds::topic::TopicDescription td_;
 

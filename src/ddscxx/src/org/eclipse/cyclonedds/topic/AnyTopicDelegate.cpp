@@ -42,7 +42,6 @@ AnyTopicDelegate::AnyTopicDelegate(
     : org::eclipse::cyclonedds::core::EntityDelegate(),
       org::eclipse::cyclonedds::topic::TopicDescriptionDelegate(dp, name, type_name),
       qos_(qos),
-      copyOut(NULL),
       sample_(NULL)
 {
 }
@@ -56,7 +55,6 @@ AnyTopicDelegate::AnyTopicDelegate(
     : org::eclipse::cyclonedds::core::EntityDelegate(),
       org::eclipse::cyclonedds::topic::TopicDescriptionDelegate(dp, name, type_name),
       qos_(qos),
-      copyOut(NULL),
       sample_(NULL)
 {
     this->ddsc_entity = ddsc_topic;
