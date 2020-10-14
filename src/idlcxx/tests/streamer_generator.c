@@ -494,7 +494,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   }
   else
   {
-    format_ostream_indented(ns * 2, ostr, "  memcpy((char*)data+position,%s().data(),%s*%d); //writing bytes for member: %s()\n", seq_name, se, width, seq_name);
+    format_ostream_indented(ns * 2, ostr, "  if (0 < %s().size()) memcpy((char*)data+position,%s().data(),%s*%d); //writing bytes for member: %s()\n", seq_name, seq_name, se, width, seq_name);
     format_ostream_indented(ns * 2, ostr, "  position += %s*%d;  //entries of sequence\n", se, width);
   }
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
@@ -1505,7 +1505,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  *((uint32_t*)((char*)data + position)) = _se0;  //writing entries for member: mem()\n"\
   "  position += 4;  //moving position indicator\n"\
   "  if (_se0 > 20) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member mem() in excess of maximum length 20\");\n"\
-  "  memcpy((char*)data+position,mem().data(),_se0*4); //writing bytes for member: mem()\n"\
+  "  if (0 < mem().size()) memcpy((char*)data+position,mem().data(),_se0*4); //writing bytes for member: mem()\n"\
   "  position += _se0*4;  //entries of sequence\n"\
   "  return position;\n"\
   "}\n\n"\
@@ -1580,7 +1580,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    uint32_t _se1 = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "    *((uint32_t*)((char*)data + position)) = _se1;  //writing entries for member: obj\n"\
 "    position += 4;  //moving position indicator\n"\
-"    memcpy((char*)data+position,obj.data(),_se1*4); //writing bytes for member: obj\n"\
+"    if (0 < obj.size()) memcpy((char*)data+position,obj.data(),_se1*4); //writing bytes for member: obj\n"\
 "    position += _se1*4;  //entries of sequence\n"\
 "    return position;\n"\
 "  }\n\n"\
@@ -1614,7 +1614,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "    uint32_t _se1 = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "    *((uint32_t*)((char*)data + position)) = _se1;  //writing entries for member: obj\n"\
 "    position += 4;  //moving position indicator\n"\
-"    memcpy((char*)data+position,obj.data(),_se1*4); //writing bytes for member: obj\n"\
+"    if (0 < obj.size()) memcpy((char*)data+position,obj.data(),_se1*4); //writing bytes for member: obj\n"\
 "    position += _se1*4;  //entries of sequence\n"\
 "    return position;\n"\
 "  }\n\n"\
@@ -1997,7 +1997,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  uint32_t _se0 = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "  *((uint32_t*)((char*)data + position)) = _se0;  //writing entries for member: obj\n"\
 "  position += 4;  //moving position indicator\n"\
-"  memcpy((char*)data+position,obj.data(),_se0*4); //writing bytes for member: obj\n"\
+"  if (0 < obj.size()) memcpy((char*)data+position,obj.data(),_se0*4); //writing bytes for member: obj\n"\
 "  position += _se0*4;  //entries of sequence\n"\
 "  return position;\n"\
 "}\n\n"\
@@ -2054,7 +2054,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 "  uint32_t _se0 = (uint32_t) obj.size();  //number of entries in the sequence\n"\
 "  *((uint32_t*)((char*)data + position)) = _se0;  //writing entries for member: obj\n"\
 "  position += 4;  //moving position indicator\n"\
-"  memcpy((char*)data+position,obj.data(),_se0*4); //writing bytes for member: obj\n"\
+"  if (0 < obj.size()) memcpy((char*)data+position,obj.data(),_se0*4); //writing bytes for member: obj\n"\
 "  position += _se0*4;  //entries of sequence\n"\
 "  return position;\n"\
 "}\n\n"\
