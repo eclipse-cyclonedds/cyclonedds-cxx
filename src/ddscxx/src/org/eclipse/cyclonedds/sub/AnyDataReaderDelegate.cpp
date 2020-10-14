@@ -48,7 +48,7 @@ struct ReaderCopyInfo {
 AnyDataReaderDelegate::AnyDataReaderDelegate(
         const dds::sub::qos::DataReaderQos& qos,
         const dds::topic::TopicDescription& td)
-  : copyIn(NULL), copyOut(NULL), sampleSize(0), qos_(qos), td_(td), sample_(0)
+  : qos_(qos), td_(td), sample_(0)
 {
 }
 
@@ -441,34 +441,19 @@ AnyDataReaderDelegate::get_key_value(
     const dds::core::InstanceHandle& handle,
     void *key)
 {
-    dds_return_t ret;
-    void *cKey;
-
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     this->check();
 
-    cKey = dds_alloc (sampleSize);
-    ret = dds_instance_get_key(reader, handle.delegate().handle(), cKey);
-    copyOut(cKey, key);
-    dds_free(cKey);
+    dds_return_t ret = dds_instance_get_key(reader, handle.delegate().handle(), key);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "dds_instance_get_key failed.");
 }
 
 dds_instance_handle_t AnyDataReaderDelegate::lookup_instance
   (const dds_entity_t reader, const void *key) const
 {
-    dds_instance_handle_t handle;
-    void *cKey;
-
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     this->check();
-
-    cKey = dds_alloc (sampleSize);
-    copyIn (key, cKey);
-    handle = dds_lookup_instance (reader, cKey);
-    dds_free (cKey);
-
-    return handle;
+    return dds_lookup_instance(reader, key);
 }
 
 dds::core::status::LivelinessChangedStatus

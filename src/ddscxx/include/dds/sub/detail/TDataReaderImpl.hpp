@@ -503,7 +503,6 @@ dds::sub::detail::DataReader<T>::common_constructor(
 
     this->AnyDataReaderDelegate::td_.delegate()->incrNrDependents();
 
-    this->AnyDataReaderDelegate::setSampleSize(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
     this->AnyDataReaderDelegate::setSample(&this->typed_sample_);
     this->set_ddsc_entity(ddsc_reader);
     this->listener(listener, mask);

@@ -163,16 +163,6 @@ public:
     void add_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
     void remove_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
 
-    inline void setSampleSize(size_t _sampleSize)
-    {
-        this->sampleSize = _sampleSize;
-    }
-
-    inline size_t getSampleSize() const
-    {
-        return this->sampleSize;
-    }
-
     void setSample(void* sample);
     void* getSample() const;
 
@@ -242,10 +232,6 @@ private:
             dds_sample_info_t*& c_sample_infos);
 
 protected:
-
-    org::eclipse::cyclonedds::topic::copyInFunction  copyIn;
-    org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
-    size_t sampleSize;
     org::eclipse::cyclonedds::core::ObjectSet queries;
     dds::sub::qos::DataReaderQos qos_;
     dds::topic::TopicDescription td_;

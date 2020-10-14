@@ -30,10 +30,6 @@ namespace cyclonedds
 namespace topic
 {
 
-typedef void (*copyInFunction)(const void *, void *);
-typedef void (*copyOutFunction)(const void *, void *);
-
-
 template <class TOPIC> class TopicTraits
 {
 public:
