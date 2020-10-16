@@ -56,10 +56,10 @@ class ddscxx_serdata : public ddsi_serdata {
   std::unique_ptr<unsigned char[]> m_data{ nullptr };
   ddsi_keyhash_t m_key;
   bool m_key_md5_hashed = false;
-  bool hash_populated = false;
   T m_t = T();
 
 public:
+  bool hash_populated = false;
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
   ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
 
@@ -263,6 +263,7 @@ ddsi_serdata_t *serdata_from_sample(
       assert(0);
     }
     d->key_md5_hashed() = msg->key(d->key());
+    d->getT() = *msg;
     d->populate_hash();
 
     return d;
@@ -320,7 +321,9 @@ ddsi_serdata_t *serdata_to_topicless(const struct ddsi_serdata* dcmn)
   auto t = d->getT();
   d1->resize(t.key_size(0));
   t.key_write(d1->data(), 0);
+  d1->key_md5_hashed() = t.key(d1->key());
   d1->hash = d->hash;
+  d1->hash_populated = true;
 
   return d1;
 }
