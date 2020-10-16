@@ -1,16 +1,14 @@
-// Copyright 2019 ADLINK Technology
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright(c) 2020 ADLINK Technology Limited and others
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+ * v. 1.0 which is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+ */
 #ifndef DDSCXXDATATOPIC_HPP_
 #define DDSCXXDATATOPIC_HPP_
 
@@ -232,7 +230,7 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
   m_size = requested_size + n_pad_bytes;
 
   // zero the very end. The caller isn't necessarily going to overwrite it.
-  std::memset(calc_offset(m_data.get(), (ptrdiff_t)requested_size), '\0', n_pad_bytes);
+  std::memset(calc_offset(m_data.get(), requested_size), '\0', n_pad_bytes);
 }
 
 template <typename T>
@@ -278,7 +276,7 @@ template <typename T>
 void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  memcpy(buf, calc_offset(d->data(), (ptrdiff_t)off), sz);
+  memcpy(buf, calc_offset(d->data(), off), sz);
 }
 
 template <typename T>
@@ -287,7 +285,7 @@ ddsi_serdata_t *serdata_to_ser_ref(
   size_t sz, ddsrt_iovec_t* ref)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  ref->iov_base = calc_offset(d->data(), (ptrdiff_t)off);
+  ref->iov_base = calc_offset(d->data(), off);
   ref->iov_len = (ddsrt_iov_len_t)sz;
   return ddsi_serdata_ref(d);
 }
@@ -307,7 +305,7 @@ bool serdata_to_sample(
   (void)bufptr;
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  (static_cast<T*>(sample))->read_struct((char*)ptr->data() + 4, 0);
+  (static_cast<T*>(sample))->read_struct(static_cast<char*>(ptr->data()) + 4, 0);
 
   return false;
 }
@@ -339,7 +337,7 @@ bool serdata_topicless_to_sample(
 
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  T* ptr = (T*)sample;
+  T* ptr = static_cast<T*>(sample);
   ptr->key_read(d->data(), 0);
 
   return true;
