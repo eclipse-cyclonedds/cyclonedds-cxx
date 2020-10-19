@@ -1,0 +1,4 @@
+# Hashes of file build rules.
+40c1e4819da5a8cb68040adac92f4125 ATCDataModel.cpp
+fddd14f350ead66c37299d516fb6c2fc CMakeFiles/ddscxxATCDataModel_lib_idl_isocpp_generate
+fddd14f350ead66c37299d516fb6c2fc CMakeFiles/isocpp_idlpp
