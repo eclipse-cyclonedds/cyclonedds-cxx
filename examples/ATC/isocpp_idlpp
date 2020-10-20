@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Copyright(c) 2006 to 2019 ADLINK Technology Limited and others
+#
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/karoui/ADLINK/idlpp-cxx/lib
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/home/karoui/ADLINK/idlpp-cxx/lib
+
+if [ "/home/karoui/ADLINK/idlpp-cxx" = "" ]; then
+    export LITE_HOME=/home/karoui/ADLINK/CycloC++/release/share/CycloneDDS_CXX_API/examples/ATC
+else
+    export LITE_HOME=/home/karoui/ADLINK/idlpp-cxx
+fi
+
+#
+# There are numerous memory leaks in idlpp. It is too
+# much effort to actually fix all those memory leaks as this implementation will be replaced by a proper idl compiler in the near future.
+# So, take the easy (and really unwanted) way out and suppress the leak detection
+# of the address sanitizer when it is enabled.
+# Only to be able to generate source files from idl when the sanitizer is enabled.
+#
+export ASAN_OPTIONS="detect_leaks=false:leak_check_at_exit=false"
+
+java -classpath "/home/karoui/ADLINK/idlpp-cxx/share/Idlpp-cxx/idlpp/*" com.prismtech.lite.compilers.Idlcpp -idlpp "/home/karoui/ADLINK/idlpp-cxx/share/Idlpp-cxx/idlpp/idlpp" -templates "/home/karoui/ADLINK/idlpp-cxx/share/Idlpp-cxx/idlpp/templates" -l isocpp "$@"
