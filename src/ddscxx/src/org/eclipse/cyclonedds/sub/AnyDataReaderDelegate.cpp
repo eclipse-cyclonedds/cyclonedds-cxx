@@ -240,6 +240,7 @@ AnyDataReaderDelegate::read(
       if (ret > 0) {
         /* When > 0, ret represents the number of samples read. */
           samples.set_length((uint32_t) ret);
+          samples.set_sample_infos(c_sample_infos);
       } else {
           samples.set_length(0);
       }
