@@ -60,7 +60,7 @@ static char *
 get_cpp11_declarator_array_expr(idl_backend_ctx ctx, const idl_node_t *node, const char *member_type)
 {
   idl_node_t *next_const_expr = node->next;
-  const char *array_expr_tmplt = CPP11_ARRAY_TEMPLATE "<%s, %s>";
+  const char *array_expr_tmplt = IDLCXX_ARRAY_TEMPLATE "<%s, %s>";
   size_t array_expr_len;
   char *array_expr, *element_expr, *const_expr;
 
@@ -781,7 +781,7 @@ union_generate_attributes(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "%s m__d;\n", union_ctx->discr_type);
 
   /* Declare a union attribute comprising of all the branch types. */
-  idl_file_out_printf(ctx, CPP11_UNION_TEMPLATE "<\n");
+  idl_file_out_printf(ctx, IDLCXX_UNION_TEMPLATE "<\n");
   idl_indent_double_incr(ctx);
   for (uint32_t i = 0; i < union_ctx->case_count; ++i) {
     idl_file_out_printf(
@@ -950,7 +950,7 @@ union_generate_getter_body(idl_backend_ctx ctx, uint32_t i)
     idl_indent_decr(ctx);
   }
   idl_indent_decr(ctx);
-  idl_file_out_printf(ctx, "return " CPP11_UNION_GETTER_TEMPLATE "<%s>(%s);\n", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
+  idl_file_out_printf(ctx, "return " IDLCXX_UNION_GETTER_TEMPLATE "<%s>(%s);\n", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "} else {\n");
   idl_indent_incr(ctx);
@@ -1301,12 +1301,14 @@ cpp11_scope_walk(idl_backend_ctx ctx, const idl_node_t *node)
 
 typedef enum
 {
-  idl_no_dep        = 0x0,
-  idl_string_dep    = 0x01 << 0,
-  idl_array_dep     = 0x01 << 1,
-  idl_vector_dep    = 0x01 << 2,
-  idl_variant_dep   = 0x01 << 3,
-  idl_optional_dep  = 0x01 << 4
+  idl_no_dep                = 0x0,
+  idl_string_bounded_dep    = 0x01 << 0,
+  idl_string_unbounded_dep  = 0x01 << 1,
+  idl_array_dep             = 0x01 << 2,
+  idl_vector_bounded_dep    = 0x01 << 3,
+  idl_vector_unbounded_dep  = 0x01 << 4,
+  idl_variant_dep           = 0x01 << 5,
+  idl_optional_dep          = 0x01 << 6
 } idl_include_dep;
 
 static idl_retcode_t
@@ -1324,11 +1326,17 @@ get_util_dependencies(idl_backend_ctx ctx, const idl_node_t *node)
     switch (node->mask & IDL_TEMPL_TYPE_MASK)
     {
     case IDL_SEQUENCE:
-      (*dependency_mask) |= idl_vector_dep;
+      if (((const idl_sequence_t*)node)->maximum)
+        (*dependency_mask) |= idl_vector_bounded_dep;
+      else
+        (*dependency_mask) |= idl_vector_unbounded_dep;
       result = get_util_dependencies(ctx, ((const idl_sequence_t *)node)->type_spec);
       break;
     case IDL_STRING:
-      (*dependency_mask) |= idl_string_dep;
+      if (((const idl_string_t*)node)->maximum)
+        (*dependency_mask) |= idl_string_bounded_dep;
+      else
+        (*dependency_mask) |= idl_string_unbounded_dep;
       break;
     default:
       break;
@@ -1376,17 +1384,41 @@ idl_generate_include_statements(idl_backend_ctx ctx, const idl_tree_t *parse_tre
   idl_walk_tree(ctx, parse_tree->root, get_util_dependencies, IDL_MASK_ALL);
   idl_reset_custom_context(ctx);
   if (util_depencencies) {
-    if (util_depencencies & idl_vector_dep) {
-      idl_file_out_printf(ctx, "#include " CPP11_SEQUENCE_INCLUDE "\n");
+    if (strcmp(IDLCXX_SEQUENCE_BOUNDED_INCLUDE, IDLCXX_SEQUENCE_UNBOUNDED_INCLUDE))
+    {
+      if (util_depencencies & idl_vector_bounded_dep) {
+        idl_file_out_printf(ctx, "#include " IDLCXX_SEQUENCE_BOUNDED_INCLUDE "\n");
+      }
+      if (util_depencencies & idl_vector_unbounded_dep) {
+        idl_file_out_printf(ctx, "#include " IDLCXX_SEQUENCE_UNBOUNDED_INCLUDE "\n");
+      }
     }
-    if (util_depencencies & idl_string_dep) {
-      idl_file_out_printf(ctx, "#include " CPP11_STRING_INCLUDE "\n");
+    else
+    {
+      if (util_depencencies & (idl_vector_bounded_dep | idl_vector_unbounded_dep)) {
+        idl_file_out_printf(ctx, "#include " IDLCXX_SEQUENCE_BOUNDED_INCLUDE "\n");
+      }
+    }
+    if (strcmp(IDLCXX_STRING_BOUNDED_INCLUDE, IDLCXX_STRING_UNBOUNDED_INCLUDE))
+    {
+      if (util_depencencies & idl_string_bounded_dep) {
+        idl_file_out_printf(ctx, "#include " IDLCXX_STRING_BOUNDED_INCLUDE "\n");
+      }
+      if (util_depencencies & idl_string_unbounded_dep) {
+        idl_file_out_printf(ctx, "#include " IDLCXX_STRING_UNBOUNDED_INCLUDE "\n");
+      }
+    }
+    else
+    {
+      if (util_depencencies & (idl_string_bounded_dep | idl_string_unbounded_dep)) {
+        idl_file_out_printf(ctx, "#include " IDLCXX_STRING_BOUNDED_INCLUDE "\n");
+      }
     }
     if (util_depencencies & idl_variant_dep) {
-      idl_file_out_printf(ctx, "#include " CPP11_UNION_INCLUDE "\n");
+      idl_file_out_printf(ctx, "#include " IDLCXX_UNION_INCLUDE "\n");
     }
     if (util_depencencies & idl_array_dep) {
-      idl_file_out_printf(ctx, "#include " CPP11_ARRAY_INCLUDE "\n");
+      idl_file_out_printf(ctx, "#include " IDLCXX_ARRAY_INCLUDE "\n");
     }
     idl_file_out_printf(ctx, "\n");
   }
