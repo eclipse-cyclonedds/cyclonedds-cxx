@@ -120,28 +120,20 @@ get_cpp11_templ_type(const idl_node_t *node)
     {
       uint64_t bound = ((const idl_sequence_t*)node)->maximum;
       char* vector_element = get_cpp11_type(((const idl_sequence_t*)node)->type_spec);
-      if (0 != bound && 0 != strcmp(IDLCXX_SEQUENCE_BOUNDED_TEMPLATE, CPP11_SEQUENCE_TEMPLATE))
-      {
-        idl_asprintf(&cpp11Type, IDLCXX_SEQUENCE_BOUNDED_TEMPLATE"<%s, %"PRIu64">", vector_element, bound);
-      }
+      if (bound)
+        idl_asprintf(&cpp11Type, CPP11_BOUNDED_SEQUENCE_TEMPLATE(vector_element, bound));
       else
-      {
-        idl_asprintf(&cpp11Type, IDLCXX_SEQUENCE_UNBOUNDED_TEMPLATE"<%s>", vector_element);
-      }
+        idl_asprintf(&cpp11Type, CPP11_SEQUENCE_TEMPLATE(vector_element));
       free(vector_element);
     }
     break;
   case IDL_STRING:
     {
       uint64_t bound = ((const idl_string_t*)node)->maximum;
-      if (0 != bound && 0 != strcmp(IDLCXX_STRING_BOUNDED_TEMPLATE, CPP11_STRING_TEMPLATE))
-      {
-        idl_asprintf(&cpp11Type, IDLCXX_STRING_BOUNDED_TEMPLATE"<%"PRIu64">", bound);
-      }
+      if (bound)
+        idl_asprintf(&cpp11Type, CPP11_BOUNDED_STRING_TEMPLATE(bound));
       else
-      {
-        idl_asprintf(&cpp11Type, IDLCXX_STRING_UNBOUNDED_TEMPLATE);
-      }
+        idl_asprintf(&cpp11Type, CPP11_STRING_TEMPLATE());
     }
     break;
   case IDL_WSTRING:
