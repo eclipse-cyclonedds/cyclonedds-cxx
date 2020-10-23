@@ -9,57 +9,42 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-
+#include <inttypes.h>
 #include "idlcxx/backend.h"
 
-//default (C++ STL) container definitions
-#define CPP11_SEQUENCE_TEMPLATE     "std::vector"
-#define CPP11_SEQUENCE_INCLUDE      "<vector>"
+// replace the definitions below (CPP11_...) with your own custom classes and includes.
 
-#define CPP11_ARRAY_TEMPLATE        "std::array"
-#define CPP11_ARRAY_INCLUDE         "<array>"
+#define CPP11_SEQUENCE_TEMPLATE(type)                 "std::vector<%s>", type
+#define CPP11_SEQUENCE_INCLUDE                        "<vector>"
 
-#define CPP11_STRING_TEMPLATE       "std::string"
-#define CPP11_STRING_INCLUDE        "<string>"
+// default (C++ STL) container definitions
+// bounded sequences require a template class taking a single typename and a single size
+// E.G. custom_bounded_vector<custom_class,255>
+//#define CPP11_BOUNDED_SEQUENCE_TEMPLATE(type, bound)  "non_std::vector<%s, %" PRIu64 ">", type, bound
+#define CPP11_BOUNDED_SEQUENCE_TEMPLATE(type, bound)  "std::vector<%s>", type
+#define CPP11_BOUNDED_SEQUENCE_INCLUDE                "<vector>"
 
-#define CPP11_UNION_TEMPLATE        "std::variant"
-#define CPP11_UNION_GETTER_TEMPLATE "std::get"
-#define CPP11_UNION_INCLUDE         "<variant>"
+// array templates
+// arrays require a template class taking a with a single typename and a single size
+// E.G. custom_array<custom_class,16>
+#define CPP11_ARRAY_TEMPLATE(element, const_expr)     "std::array<%s, %s>", element, const_expr
+#define CPP11_ARRAY_INCLUDE                           "<array>"
 
-//replace the definitions below (CPP11_...) with your own custom classes and the includes necessary
-//only the custom class names need be defined, the template parameters will be done by idlc
-//N.B.: replacing one definition usually requires all definitions in that group to be replaced
+// string templates
+// unbounded strings require just a class name
+// E.G. std::string
+#define CPP11_STRING_TEMPLATE()                       "std::string"
+#define CPP11_STRING_INCLUDE                          "<string>"
 
-//sequence templates
-//unbounded sequences require a template class taking a single typename
-//E.G. std::vector<std::string>
-#define IDLCXX_SEQUENCE_UNBOUNDED_TEMPLATE  CPP11_SEQUENCE_TEMPLATE
-#define IDLCXX_SEQUENCE_UNBOUNDED_INCLUDE   CPP11_SEQUENCE_INCLUDE
-//bounded sequences require a template class taking a single typename and a single size
-//E.G. custom_bounded_vector<custom_class,255>
-#define IDLCXX_SEQUENCE_BOUNDED_TEMPLATE    CPP11_SEQUENCE_TEMPLATE
-#define IDLCXX_SEQUENCE_BOUNDED_INCLUDE     CPP11_SEQUENCE_INCLUDE
+// bounded strings require a template class with a single size
+// E.G. custom_bounded_string<127>
+//#define CPP11_BOUNDED_STRING_TEMPLATE(bound)          "non_std::string<%" PRIu64 ">", bound
+#define CPP11_BOUNDED_STRING_TEMPLATE(bound)          "std::string"
+#define CPP11_BOUNDED_STRING_INCLUDE                  "<string>"
 
-//array templates
-//arrays require a template class taking a with a single typename and a single size
-//E.G. custom_array<custom_class,16>
-#define IDLCXX_ARRAY_TEMPLATE        CPP11_ARRAY_TEMPLATE
-#define IDLCXX_ARRAY_INCLUDE         CPP11_ARRAY_INCLUDE
-
-//string templates
-//unbounded strings require just a class name
-//E.G. std::string
-#define IDLCXX_STRING_UNBOUNDED_TEMPLATE  CPP11_STRING_TEMPLATE
-#define IDLCXX_STRING_UNBOUNDED_INCLUDE   CPP11_STRING_INCLUDE
-//bounded strings require a template class with a single size
-//E.G. custom_bounded_string<127>
-#define IDLCXX_STRING_BOUNDED_TEMPLATE    CPP11_STRING_TEMPLATE
-#define IDLCXX_STRING_BOUNDED_INCLUDE     CPP11_STRING_INCLUDE
-
-//union templates
-#define IDLCXX_UNION_TEMPLATE        CPP11_UNION_TEMPLATE
-#define IDLCXX_UNION_GETTER_TEMPLATE CPP11_UNION_GETTER_TEMPLATE
-#define IDLCXX_UNION_INCLUDE         CPP11_UNION_INCLUDE
+#define CPP11_UNION_TEMPLATE                          "std::variant"
+#define CPP11_UNION_GETTER_TEMPLATE                   "std::get"
+#define CPP11_UNION_INCLUDE                           "<variant>"
 
 char*
 get_cpp11_name(const char* name);
