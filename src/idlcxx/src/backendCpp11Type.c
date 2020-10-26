@@ -273,7 +273,7 @@ struct_generate_body(idl_backend_ctx ctx, const idl_struct_t *struct_node)
 
   /* Create class declaration. */
   if (struct_ctx.base_type) {
-    idl_file_out_printf(ctx, "class %s : %s\n", struct_ctx.name, struct_ctx.base_type);
+    idl_file_out_printf(ctx, "class %s : public %s\n", struct_ctx.name, struct_ctx.base_type);
   } else {
     idl_file_out_printf(ctx, "class %s\n", struct_ctx.name);
   }
