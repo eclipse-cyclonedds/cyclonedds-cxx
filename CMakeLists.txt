@@ -11,6 +11,13 @@
 #
 cmake_minimum_required(VERSION 3.7)
 project(CycloneDDS-CXX VERSION 0.1.0 LANGUAGES C CXX)
+# when updating the version number also generate a new GUID
+set(CPACK_WIX_UPGRADE_GUID "0D106C1A-D499-4DD4-ABD5-BE77415C1E8B")
+
+set(PROJECT_NAME_FULL "Eclipse Cyclone DDS ISO IEC C++ PSM")
+
+# Set some convenience variants of the project-name
+string(REPLACE " " "-" PROJECT_NAME_DASHED "${PROJECT_NAME_FULL}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
 
@@ -189,3 +196,5 @@ endif()
 if(BUILD_DOCS)
   add_subdirectory(docs)
 endif()
+
+include(Packaging)
