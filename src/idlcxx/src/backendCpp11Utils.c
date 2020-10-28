@@ -224,12 +224,15 @@ char *
 get_default_value(idl_backend_ctx ctx, const idl_node_t *node)
 {
   static const idl_mask_t mask = (IDL_BASE_TYPE|(IDL_BASE_TYPE-1));
+  const idl_node_t *unwinded_node = idl_unalias(node);
   (void)ctx;
 
-  if (idl_is_enum(node))
-    return get_cpp11_fully_scoped_name((idl_node_t*)((idl_enum_t*)node)->enumerators);
 
-  switch (node->mask & mask)
+
+  if (idl_is_enum(unwinded_node))
+    return get_cpp11_fully_scoped_name((idl_node_t*)((idl_enum_t*)unwinded_node)->enumerators);
+
+  switch (unwinded_node->mask & mask)
   {
   case IDL_BOOL:
     return idl_strdup("false");

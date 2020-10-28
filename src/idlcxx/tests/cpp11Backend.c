@@ -68,11 +68,10 @@
 #define IDL_OUTPUT_STRUCT_PRIM(struct_name,member_type,default_value,member_name) "" \
 "class " struct_name "\n{\n" \
 "private:\n" \
-"  " member_type " " member_name "_;\n" \
+"  " member_type " " member_name "_ = " default_value ";\n" \
 "\n" \
 "public:\n" \
-"  " struct_name "() :\n" \
-"      " member_name "_(" default_value ") {}\n" \
+"  " struct_name "() = default;\n" \
 "\n" \
 "  explicit " struct_name "(\n" \
 "      " member_type " " member_name ") :\n" \
@@ -85,13 +84,33 @@
 IDL_OUTPUT_STREAMER_INTERFACES\
 "};\n\n"
 
+#define IDL_OUTPUT_STRUCT_PRIM_ARR(struct_name,member_type,member_name) "" \
+"class " struct_name "\n{\n" \
+"private:\n" \
+"  " member_type " " member_name "_ = { };\n" \
+"\n" \
+"public:\n" \
+"  " struct_name "() = default;\n" \
+"\n" \
+"  explicit " struct_name "(\n" \
+"      const " member_type "& " member_name ") :\n" \
+"          " member_name "_(" member_name ") {}\n" \
+"\n" \
+"  const " member_type "& " member_name "() const { return this->" member_name "_; }\n" \
+"  " member_type "& " member_name "() { return this->" member_name "_; }\n" \
+"  void " member_name "(const " member_type "& _val_) { this->" member_name "_ = _val_; }\n" \
+"  void " member_name "(" member_type "&& _val_) { this->" member_name "_ = _val_; }\n" \
+"\n" \
+IDL_OUTPUT_STREAMER_INTERFACES\
+"};\n\n"
+
 #define IDL_OUTPUT_STRUCT_NO_PRIM(struct_name,member_type,member_name) "" \
 "class " struct_name "\n{\n" \
 "private:\n" \
 "  " member_type " " member_name "_;\n" \
 "\n" \
 "public:\n" \
-"  " struct_name "() {}\n" \
+"  " struct_name "() = default;\n" \
 "\n"\
 "  explicit " struct_name "(\n" \
 "      const " member_type "& " member_name ") :\n" \
@@ -309,8 +328,8 @@ CU_TheoryDataPoints(cpp11Backend, Struct) =
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::string>","listBStr"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::string>","bListBStr"),
                               IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::vector<std::vector<std::string>>","strSeqSeq"),
-                              IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<float, 3>","coordinate"),
-                              IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
+                              IDL_OUTPUT_STRUCT_PRIM_ARR("AttrHolder","std::array<float, 3>","coordinate"),
+                              IDL_OUTPUT_STRUCT_PRIM_ARR("AttrHolder","std::array<std::array<float, 3>, 2>","LineCoordinates"),
                               IDL_OUTPUT_STRUCT_PRIM("EmbeddedStr","int32_t","0","x") IDL_OUTPUT_STRUCT_NO_PRIM("AttrHolder","::EmbeddedStr","emb_str"),
                               IDL_OUTPUT_ENUM("Color","Red","Yellow","Blue") IDL_OUTPUT_STRUCT_PRIM("AttrHolder","::Color","::Color::Red","col")
                               )

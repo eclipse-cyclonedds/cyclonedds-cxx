@@ -114,9 +114,27 @@ struct_generate_attributes(idl_backend_ctx ctx)
   idl_indent_incr(ctx);
   for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
   {
-    idl_file_out_printf(ctx, "%s %s_;\n",
-        struct_ctx->members[i].type_name,
-        struct_ctx->members[i].name);
+    const idl_node_t *member_type_node = struct_ctx->members[i].member_type_node;
+    const idl_declarator_t *declarator_node = struct_ctx->members[i].declarator_node;
+
+    idl_file_out_printf(ctx, "%s %s_",
+      struct_ctx->members[i].type_name,
+      struct_ctx->members[i].name);
+
+    if (idl_declarator_is_array((const idl_declarator_t *) declarator_node))
+    {
+      idl_file_out_printf_no_indent(ctx, " = { }");
+    }
+    else
+    {
+      char *def_value = get_default_value(ctx, member_type_node);
+      if (def_value)
+      {
+        idl_file_out_printf_no_indent(ctx, " = %s", def_value);
+        free(def_value);
+      }
+    }
+    idl_file_out_printf_no_indent(ctx, ";\n");
   }
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "\n");
@@ -126,37 +144,11 @@ static void
 struct_generate_constructors_and_operators(idl_backend_ctx ctx)
 {
   cpp11_struct_context *struct_ctx = (cpp11_struct_context *) idl_get_custom_context(ctx);
-  bool def_value_present = false;
 
   /* Start building default (empty) constructor. */
   idl_file_out_printf(ctx, "public:\n");
   idl_indent_incr(ctx);
-  idl_file_out_printf(ctx, "%s()", struct_ctx->name);
-
-  /* Make double indent for member initialization list */
-  idl_indent_double_incr(ctx);
-  for (uint32_t i = 0; i < struct_ctx->member_count; ++i)
-  {
-    const idl_node_t *member_type_node = struct_ctx->members[i].member_type_node;
-    const idl_declarator_t *declarator_node = struct_ctx->members[i].declarator_node;
-    char *defValue = get_default_value(ctx, member_type_node);
-    if (defValue && !idl_declarator_is_array((const idl_declarator_t *) declarator_node)) {
-      if (!def_value_present)
-      {
-        idl_file_out_printf_no_indent(ctx, " :\n");
-        def_value_present = true;
-      }
-      else
-      {
-        idl_file_out_printf_no_indent(ctx, ",\n");
-      }
-      idl_file_out_printf(ctx, "%s_(%s)", struct_ctx->members[i].name, defValue);
-    }
-    if (defValue)
-      free(defValue);
-  }
-  idl_file_out_printf_no_indent(ctx, " {}\n\n");
-  idl_indent_double_decr(ctx);
+  idl_file_out_printf(ctx, "%s() = default;\n\n", struct_ctx->name);
 
   /* Check if the struct has members. A struct may extend from another but have no members of its own. */
   if (struct_ctx->member_count > 0)
