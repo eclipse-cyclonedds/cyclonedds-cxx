@@ -333,8 +333,8 @@ static idl_retcode_t
 count_labels(idl_backend_ctx ctx, const idl_node_t *node)
 {
   uint32_t *nr_labels = (uint32_t *) idl_get_custom_context(ctx);
-  (void)node;
-  ++(*nr_labels);
+  const idl_case_label_t *label = (const idl_case_label_t *) node;
+  if (label->const_expr) ++(*nr_labels);
   return IDL_RETCODE_OK;
 }
 
@@ -369,13 +369,12 @@ get_cpp11_labels(idl_backend_ctx ctx, const idl_node_t *node)
   /* Check if there is a label: if not it represents the default case. */
   if (label->const_expr) {
     case_data->labels[case_data->label_count] = get_label_value(label);
+    ++(case_data->label_count);
   } else {
     /* Assert that there can only be one default case */
     assert(union_ctx->default_case == NULL);
     union_ctx->default_case = case_data;
-    case_data->labels[case_data->label_count] = NULL;
   }
-  ++(case_data->label_count);
   return IDL_RETCODE_OK;
 }
 
@@ -667,13 +666,13 @@ manage_pivot (void **array, uint64_t low, uint64_t high, idl_comparison_fn compa
 
   for (uint64_t j = low; j <= high- 1; j++)
   {
-    if (compare_elements(&array[j], &pivot) == IDL_LT)
+    if (compare_elements(array[j], pivot) == IDL_LT)
     {
       swap(&array[i++], &array[j]);
     }
   }
-  swap(&array[i + 1], &array[high]);
-  return (i + 1);
+  swap(&array[i], &array[high]);
+  return i;
 }
 
 static void quick_sort(void **array, uint64_t low, uint64_t high, idl_comparison_fn compare_elements)
@@ -732,7 +731,7 @@ get_default_discr_value(idl_backend_ctx ctx, const idl_union_t *union_node)
       const idl_case_label_t *label = case_data->case_labels;
       while (label)
       {
-        all_labels[i++] = label->const_expr;
+        if (label->const_expr) all_labels[i++] = label->const_expr;
         label = (const idl_case_label_t *) label->node.next;
       }
       case_data = (const idl_case_t *) case_data->node.next;
@@ -943,7 +942,6 @@ union_generate_getter_body(idl_backend_ctx ctx, uint32_t i)
       }
     }
     idl_file_out_printf_no_indent(ctx, ") {\n");
-    idl_indent_decr(ctx);
   }
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "return " CPP11_UNION_GETTER_TEMPLATE "<%s>(%s);\n", union_ctx->cases[i].type_name, union_ctx->cases[i].name);
