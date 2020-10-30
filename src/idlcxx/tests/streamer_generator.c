@@ -1495,7 +1495,7 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  return position;\n"\
   "}\n\n"
 
-#define BSI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
+#define BSEQI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
   "size_t s::write_struct(void *data, size_t position) const\n"\
   "{\n"\
   "  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment\n"\
@@ -1566,6 +1566,80 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   "  position += 4;  //moving position indicator\n"\
   "  mem().assign((int32_t*)((char*)data+position),(int32_t*)((char*)data+position)+_se0); //reading bytes for member: mem()\n"\
   "  position += _se0*4;  //entries of sequence\n"\
+  "  return position;\n"\
+  "}\n\n"
+
+#define BSTRI "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n"\
+  "size_t s::write_struct(void *data, size_t position) const\n"\
+  "{\n"\
+  "  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment\n"\
+  "  memset((char*)data+position,0x0,_al0);  //setting alignment bytes to 0x0\n"\
+  "  position += _al0;  //moving position indicator\n"\
+  "  uint32_t _se0 = (uint32_t) mem().size()+1;  //number of entries in the sequence\n"\
+  "  *((uint32_t*)((char*)data + position)) = _se0;  //writing entries for member: mem()\n"\
+  "  position += 4;  //moving position indicator\n"\
+  "  if (_se0 > 21) throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member mem() in excess of maximum length 20\");\n"\
+  "  memcpy((char*)data+position,mem().data(),_se0*1); //writing bytes for member: mem()\n"\
+  "  position += _se0;  //entries of sequence\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "size_t s::write_size(size_t position) const\n"\
+  "{\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+  "  uint32_t _se0 = (uint32_t) mem().size()+1;  //number of entries in the sequence\n"\
+  "  position += 4;  //bytes for sequence entries\n"\
+  "  position += _se0;  //entries of sequence\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "size_t s::key_size(size_t position) const\n"\
+  "{\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "size_t s::key_max_size(size_t position) const\n"\
+  "{\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "size_t s::key_write(void *data, size_t position) const\n"\
+  "{\n"\
+  "  (void)data;\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "bool s::key(ddsi_keyhash_t &hash) const\n"\
+  "{\n"\
+  "  size_t sz = key_size(0);\n"\
+  "  size_t padding = 16 - sz%16;\n"\
+  "  if (sz != 0 && padding == 16) padding = 0;\n"\
+  "  std::vector<unsigned char> buffer(sz+padding);\n"\
+  "  memset(buffer.data()+sz,0x0,padding);\n"\
+  "  key_write(buffer.data(),0);\n"\
+  "  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;\n"\
+  "  if (fptr == NULL)\n"\
+  "  {\n"\
+  "    if (key_max_size(0) <= 16)\n"\
+  "    {\n"\
+  "      //bind to unmodified function which just copies buffer into the keyhash\n"\
+  "      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n"\
+  "    }\n"\
+  "    else\n"\
+  "    {\n"\
+  "      //bind to MD5 hash function\n"\
+  "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n"\
+  "    }\n"\
+  "  }\n"\
+  "  return (*fptr)(buffer,hash);\n"\
+  "}\n\n"\
+  "size_t s::key_read(const void *data, size_t position)\n"\
+  "{\n"\
+  "  (void)data;\n"\
+  "  return position;\n"\
+  "}\n\n"\
+  "size_t s::read_struct(const void *data, size_t position)\n"\
+  "{\n"\
+  "  position += (4 - (position&0x3))&0x3;  //alignment\n"\
+  "  uint32_t _se0 = *((uint32_t*)((char*)data+position));  //number of entries in the sequence\n"\
+  "  position += 4;  //moving position indicator\n"\
+  "  mem().assign((char*)((char*)data+position),(char*)((char*)data+position)+_se0); //reading bytes for member: mem()\n"\
+  "  position += _se0;  //entries of sequence\n"\
   "  return position;\n"\
   "}\n\n"
 
@@ -2663,7 +2737,27 @@ void test_bounded_sequence()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(BSI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(BSEQI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
+}
+
+void test_bounded_string()
+{
+  const char* str =
+    "struct s {\n"\
+    "string<20> mem;\n"\
+    "};\n";
+
+  idl_tree_t* tree = NULL;
+  idl_parse_string(str, 0u, &tree);
+
+  idl_streamer_output_t* generated = create_idl_streamer_output();
+  idl_streamers_generate(tree, generated);
+
+  CU_ASSERT_STRING_EQUAL(BSTRI, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -2886,6 +2980,11 @@ CU_Test(streamer_generator, struct_inheritance)
 CU_Test(streamer_generator, bounded_sequence)
 {
   test_bounded_sequence();
+}
+
+CU_Test(streamer_generator, bounded_string)
+{
+  test_bounded_string();
 }
 
 CU_Test(streamer_generator, typedef_resolution)

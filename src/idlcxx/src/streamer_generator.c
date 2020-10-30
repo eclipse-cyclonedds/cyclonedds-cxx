@@ -1523,7 +1523,8 @@ idl_retcode_t process_string_impl(context_t* ctx, const char* accessor, idl_stri
   if (bound)
   {
     //add boundary checking function
-    format_write_stream(1, ctx, is_key, seq_length_exception, ctx->depth, bound, accessor, bound);
+    format_write_stream(1, ctx, is_key, seq_length_exception, ctx->depth, bound+1, accessor, bound);
+    //adding one to the length check here, since the sequence_entries CDR field for a string includes the terminating NULL
   }
   else if (is_key)
   {
