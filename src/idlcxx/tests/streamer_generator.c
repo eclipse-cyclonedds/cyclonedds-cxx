@@ -571,6 +571,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   }
   if (n == 2)
   {
+    format_ostream_indented(ns * 2, ostr, "  %s().resize(%s);\n", seq_name, se);
     format_ostream_indented(ns * 2, ostr, "  for (size_t _b = 0; _b < %s; _b++) %s()[_b] = (*((char*)data+position++) ? 0x1 : 0x0); //reading bytes for member: %s()\n", se, seq_name, seq_name);
   }
   else

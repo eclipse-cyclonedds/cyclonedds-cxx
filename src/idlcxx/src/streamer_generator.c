@@ -1627,6 +1627,7 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
     if (0 == strcmp(cast,bool_cast))  //necessary because IDL_BOOL has overlap with IDL_ULONG
     {
       format_write_stream(1, ctx, is_key, bool_write_seq, ctx->depth, accessor, accessor);
+      format_read_stream(1, ctx, is_key, seq_read_resize, accessor, ctx->depth);
       format_read_stream(1, ctx, is_key, bool_read_seq, ctx->depth, accessor, accessor);
     }
     else
