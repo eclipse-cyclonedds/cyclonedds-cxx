@@ -58,6 +58,7 @@
 #define IDL_OUTPUT_STREAMER_INTERFACES ""\
 "  size_t write_struct(void* data, size_t position) const;\n"\
 "  size_t write_size(size_t offset) const;\n"\
+"  size_t max_size(size_t offset) const;\n"\
 "  size_t read_struct(const void* data, size_t position);\n"\
 "  size_t key_size(size_t position) const;\n"\
 "  size_t key_max_size(size_t position) const;\n"\

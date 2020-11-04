@@ -224,6 +224,7 @@ generate_streamer_interfaces(idl_backend_ctx ctx)
   idl_indent_incr(ctx);
   idl_file_out_printf(ctx, "size_t write_struct(void* data, size_t position) const;\n");
   idl_file_out_printf(ctx, "size_t write_size(size_t offset) const;\n");
+  idl_file_out_printf(ctx, "size_t max_size(size_t offset) const;\n");
   idl_file_out_printf(ctx, "size_t read_struct(const void* data, size_t position);\n");
   idl_file_out_printf(ctx, "size_t key_size(size_t position) const;\n");
   idl_file_out_printf(ctx, "size_t key_max_size(size_t position) const;\n");
