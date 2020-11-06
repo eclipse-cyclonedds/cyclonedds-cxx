@@ -23,6 +23,8 @@
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 #include <dds/dds.h>
 
+#include "dds/ddsi/ddsi_serdata.h"
+
 namespace org
 {
 namespace eclipse
@@ -79,6 +81,45 @@ AnyDataWriterDelegate::qos(const dds::pub::qos::DataWriterQos& qos)
     dds_delete_qos(dwQos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Could not set writer qos.");
     this->qos_ = qos;
+}
+
+void
+AnyDataWriterDelegate::write_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    dds_return_t ret;
+    struct ddsi_serdata *ser_data;
+    ddsrt_iovec_t blob_holders[2];
+
+    /* Ignore the handle until ddsc supports writes with instance handles. */
+    (void)handle;
+
+    /* Create an array of ddsrt_iovec_t to contain both the encoding and the CDR payload. */
+    blob_holders[0].iov_len = 4;
+    blob_holders[0].iov_base = const_cast<char *>(data->encoding().data());
+    blob_holders[1].iov_len = static_cast<ddsrt_iov_len_t>(data->payload().size());
+    blob_holders[1].iov_base = const_cast<uint8_t *>(data->payload().data());
+
+    /* Now create a dedicated ser_data that contains both encoding and payload as contiguous memory. */
+    ser_data = ddsi_serdata_from_ser_iov(
+        td_->get_ser_topic(),
+        static_cast<ddsi_serdata_kind>(data->kind()),
+        2,
+        blob_holders,
+        data->payload().size() + 4);
+
+    if (timestamp != dds::core::Time::invalid()) {
+        dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
+        ser_data->timestamp.v = ddsc_time;
+        ret = dds_forwardcdr(writer, ser_data);
+    } else {
+        ret = dds_writecdr(writer, ser_data);
+    }
+
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
 }
 
 void

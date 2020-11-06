@@ -34,7 +34,8 @@ TopicDescriptionDelegate::TopicDescriptionDelegate(
     : myParticipant(dp),
       myTopicName(name),
       myTypeName(type_name),
-      nrDependents(0)
+      nrDependents(0),
+      ser_topic_(NULL)
 {
 }
 
@@ -82,6 +83,12 @@ bool
 TopicDescriptionDelegate::hasDependents() const
 {
     return (nrDependents > 0);
+}
+
+ddsi_sertopic *
+TopicDescriptionDelegate::get_ser_topic()
+{
+    return ser_topic_;
 }
 
 

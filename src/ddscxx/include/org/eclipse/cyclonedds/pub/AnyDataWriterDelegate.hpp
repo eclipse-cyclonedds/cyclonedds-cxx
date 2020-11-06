@@ -28,6 +28,7 @@
 #include <dds/topic/TopicDescription.hpp>
 #include <dds/topic/BuiltinTopic.hpp>
 
+#include <org/eclipse/cyclonedds/topic/CDRBlob.hpp>
 
 namespace dds { namespace pub {
 template <typename DELEGATE>
@@ -103,6 +104,12 @@ public:
 protected:
     AnyDataWriterDelegate(const dds::pub::qos::DataWriterQos& qos,
                           const dds::topic::TopicDescription& td);
+
+    void
+    write_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp);
 
     void
     write(dds_entity_t writer,

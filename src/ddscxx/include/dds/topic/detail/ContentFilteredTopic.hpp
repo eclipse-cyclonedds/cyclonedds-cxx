@@ -51,6 +51,7 @@ public:
         //@todo validate_filter();
         topic.delegate()->incrNrDependents();
         this->myParticipant.delegate()->add_cfTopic(*this);
+        this->ser_topic_ = topic->get_ser_topic();
     }
 
     virtual ~ContentFilteredTopic()
