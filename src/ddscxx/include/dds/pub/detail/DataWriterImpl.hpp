@@ -465,6 +465,30 @@ dds::pub::detail::DataWriter<T>::init(ObjectDelegate::weak_ref_type weak_ref)
 
 template <typename T>
 void
+dds::pub::detail::DataWriter<T>::write_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
+{
+    this->check();
+    AnyDataWriterDelegate::write_cdr((dds_entity_t)this->ddsc_entity,
+                                  &sample,
+                                  dds::core::InstanceHandle(dds::core::null),
+                                  dds::core::Time::invalid());
+}
+
+template <typename T>
+void
+dds::pub::detail::DataWriter<T>::write_cdr(
+            const org::eclipse::cyclonedds::topic::CDRBlob& sample,
+            const dds::core::Time& timestamp)
+{
+    this->check();
+    AnyDataWriterDelegate::write_cdr((dds_entity_t)this->ddsc_entity,
+                                  &sample,
+                                  dds::core::InstanceHandle(dds::core::null),
+                                  timestamp);
+}
+
+template <typename T>
+void
 dds::pub::detail::DataWriter<T>::write(const T& sample)
 {
     this->check();
