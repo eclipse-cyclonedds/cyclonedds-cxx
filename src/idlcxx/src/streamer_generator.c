@@ -227,8 +227,8 @@ static uint64_t array_entries(idl_declarator_t* decl);
 static idl_retcode_t add_default_case(context_t* ctx);
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
 static idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec, bool is_key);
-static idl_retcode_t process_struct_decl(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec, bool is_key);
-static idl_retcode_t process_struct_impl(context_t* ctx, const char* accessor, bool is_key, bool key_is_all_members);
+static idl_retcode_t process_constructed_type_decl(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec, bool is_key);
+static idl_retcode_t process_constructed_type_impl(context_t* ctx, const char* accessor, bool is_key, bool key_is_all_members);
 static idl_retcode_t process_base_decl(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec, bool is_key);
 static idl_retcode_t process_base_impl(context_t* ctx, const char *accessor, uint64_t entries, idl_type_spec_t* spec, bool is_key);
 static idl_retcode_t process_string_decl(context_t* ctx, idl_declarator_t* decl, idl_string_t* spec, bool is_key);
@@ -559,6 +559,11 @@ bool has_keys(idl_type_spec_t* spec)
       mem = (idl_member_t*)(mem->node.next);
     }
   }
+  //is union
+  else if (idl_is_union(spec))
+  {
+    if (idl_is_masked(((idl_union_t*)spec)->switch_type_spec, IDL_KEY)) return true;
+  }
   //is typedef
   else if (idl_is_typedef(spec))
   {
@@ -610,9 +615,9 @@ idl_retcode_t process_instance(context_t* ctx, idl_declarator_t* decl, idl_type_
   {
     return process_base_decl(ctx, decl, spec, is_key);
   }
-  else if (idl_is_struct(spec))
+  else if (idl_is_struct(spec) || idl_is_union(spec))
   {
-    return process_struct_decl(ctx, decl, (idl_struct_t*)spec, is_key);
+    return process_constructed_type_decl(ctx, decl, spec, is_key);
   }
   else if (idl_is_string(spec))
   {
@@ -668,7 +673,7 @@ uint64_t array_entries(idl_declarator_t* decl)
   return entries;
 }
 
-idl_retcode_t process_struct_decl(context_t* ctx, idl_declarator_t* decl, idl_struct_t* spec, bool is_key)
+idl_retcode_t process_constructed_type_decl(context_t* ctx, idl_declarator_t* decl, idl_type_spec_t* spec, bool is_key)
 {
   assert(ctx);
 
@@ -688,7 +693,7 @@ idl_retcode_t process_struct_decl(context_t* ctx, idl_declarator_t* decl, idl_st
     accessor = temp;
   }
 
-  process_struct_impl(ctx, accessor, is_key, !has_keys((idl_type_spec_t*)spec));
+  process_constructed_type_impl(ctx, accessor, is_key, !has_keys(spec));
   free(accessor);
 
   if (entries)
@@ -696,12 +701,12 @@ idl_retcode_t process_struct_decl(context_t* ctx, idl_declarator_t* decl, idl_st
 
   if (NULL != decl &&
       ((idl_node_t*)decl)->next)
-    process_struct_decl(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, spec, is_key);
+    process_constructed_type_decl(ctx, (idl_declarator_t*)((idl_node_t*)decl)->next, spec, is_key);
 
   return IDL_RETCODE_OK;
 }
 
-idl_retcode_t process_struct_impl(context_t* ctx, const char* accessor, bool is_key, bool key_is_all_members)
+idl_retcode_t process_constructed_type_impl(context_t* ctx, const char* accessor, bool is_key, bool key_is_all_members)
 {
   return write_instance_funcs(ctx, accessor, accessor, is_key, key_is_all_members);
 }
@@ -1208,18 +1213,19 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     {
       idl_union_t* _union = (idl_union_t*)node;
       idl_switch_type_spec_t* st = _union->switch_type_spec;
+      bool disc_is_key = idl_is_masked(st, IDL_KEY);
 
       format_read_stream(1, ctx, true, union_clear_func);
-      process_known_width(ctx, "_d()", st, true);
-      format_write_size_stream(1, ctx, true, union_switch);
-      format_write_size_stream(1, ctx, true, "  {\n");
-      format_write_stream(1, ctx, true, union_switch);
-      format_write_stream(1, ctx, true, "  {\n");
-      format_read_stream(1, ctx, true, union_switch);
-      format_read_stream(1, ctx, true, "  {\n");
+      process_known_width(ctx, "_d()", st, disc_is_key);
+      format_write_size_stream(1, ctx, false, union_switch);
+      format_write_size_stream(1, ctx, false, "  {\n");
+      format_write_stream(1, ctx, false, union_switch);
+      format_write_stream(1, ctx, false, "  {\n");
+      format_read_stream(1, ctx, false, union_switch);
+      format_read_stream(1, ctx, false, "  {\n");
 
       ctx->in_union = true;
-      format_max_size_intermediate_stream(1, ctx, true, "  size_t union_max = position;\n");
+      format_max_size_intermediate_stream(1, ctx, false, "  size_t union_max = position;\n");
       if (_union->cases)
       {
         ctx->depth++;
@@ -1231,12 +1237,12 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
       ctx->streamer_funcs.accumulatedalignment = 0;
       ctx->key_funcs.currentalignment = -1;
       ctx->key_funcs.accumulatedalignment = 0;
-      format_max_size_intermediate_stream(1, ctx, true, "  position = max(position,union_max);\n");
+      format_max_size_intermediate_stream(1, ctx, false, "  position = max(position,union_max);\n");
       ctx->in_union = false;
 
-      format_write_stream(1, ctx, true, "  }\n");
-      format_write_size_stream(1, ctx, true, "  }\n");
-      format_read_stream(1, ctx, true, "  }\n");
+      format_write_stream(1, ctx, false, "  }\n");
+      format_write_size_stream(1, ctx, false, "  }\n");
+      format_read_stream(1, ctx, false, "  }\n");
     }
 
     format_write_size_stream(1, ctx, true, position_return);
@@ -1314,24 +1320,24 @@ idl_retcode_t process_case(context_t* ctx, idl_case_t* _case)
   if (_case->case_labels)
     process_case_label(ctx, _case->case_labels);
 
-  format_write_stream(1, ctx, true, "  {\n");
-  format_write_size_stream(1, ctx, true, "  {\n");
-  format_read_stream(1, ctx, true, "  {\n");
-  format_max_size_intermediate_stream(1, ctx, true, "{  //cases\n");
-  format_max_size_intermediate_stream(1, ctx, true, "  size_t case_max = position;\n");
+  format_write_stream(1, ctx, false, "  {\n");
+  format_write_size_stream(1, ctx, false, "  {\n");
+  format_read_stream(1, ctx, false, "  {\n");
+  format_max_size_intermediate_stream(1, ctx, false, "{  //cases\n");
+  format_max_size_intermediate_stream(1, ctx, false, "  size_t case_max = position;\n");
   ctx->depth++;
 
-  process_instance(ctx, _case->declarator, _case->type_spec, true);
+  process_instance(ctx, _case->declarator, _case->type_spec, false);
 
   ctx->depth--;
-  format_max_size_intermediate_stream(1, ctx, true, "  union_max = max(case_max,union_max);\n");
-  format_max_size_intermediate_stream(1, ctx, true, "}\n");
-  format_write_stream(1, ctx, true, "  }\n");
-  format_write_stream(1, ctx, true, union_case_ending);
-  format_write_size_stream(1, ctx, true, "  }\n");
-  format_write_size_stream(1, ctx, true, union_case_ending);
-  format_read_stream(1, ctx, true, "  }\n");
-  format_read_stream(1, ctx, true, union_case_ending);
+  format_max_size_intermediate_stream(1, ctx, false, "  union_max = max(case_max,union_max);\n");
+  format_max_size_intermediate_stream(1, ctx, false, "}\n");
+  format_write_stream(1, ctx, false, "  }\n");
+  format_write_stream(1, ctx, false, union_case_ending);
+  format_write_size_stream(1, ctx, false, "  }\n");
+  format_write_size_stream(1, ctx, false, union_case_ending);
+  format_read_stream(1, ctx, false, "  }\n");
+  format_read_stream(1, ctx, false, union_case_ending);
 
   ctx->streamer_funcs = sfuncs;
   ctx->key_funcs = kfuncs;
@@ -1532,9 +1538,9 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 
     if (buffer)
     {
-      format_write_stream(1, ctx, true, union_case, buffer);
-      format_write_size_stream(1, ctx, true, union_case, buffer);
-      format_read_stream(1, ctx, true, union_case, buffer);
+      format_write_stream(1, ctx, false, union_case, buffer);
+      format_write_size_stream(1, ctx, false, union_case, buffer);
+      format_read_stream(1, ctx, false, union_case, buffer);
       free(buffer);
     }
   }
@@ -1551,9 +1557,9 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
 
 idl_retcode_t add_default_case(context_t* ctx)
 {
-  format_write_stream(1, ctx, true, default_case);
-  format_write_size_stream(1, ctx, true, default_case);
-  format_read_stream(1, ctx, true, default_case);
+  format_write_stream(1, ctx, false, default_case);
+  format_write_size_stream(1, ctx, false, default_case);
+  format_read_stream(1, ctx, false, default_case);
 
   return IDL_RETCODE_OK;
 }
@@ -1775,9 +1781,9 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
     {
       process_sequence_impl(ctx, entryaccess, (idl_sequence_t*)ispec, is_key);
     }
-    else if (idl_is_struct(ispec))
+    else if (idl_is_struct(ispec) || idl_is_union(ispec))
     {
-      process_struct_impl(ctx, entryaccess, is_key, !has_keys((idl_type_spec_t*)spec));
+      process_constructed_type_impl(ctx, entryaccess, is_key, !has_keys((idl_type_spec_t*)spec));
     }
     else if (idl_is_typedef(ispec))
     {
