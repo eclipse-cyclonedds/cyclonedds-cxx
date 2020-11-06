@@ -802,10 +802,19 @@ union_generate_constructor(idl_backend_ctx ctx)
   idl_file_out_printf(ctx, "%s() :\n", union_ctx->name);
   idl_indent_double_incr(ctx);
   idl_file_out_printf(ctx, "m__d(%s)", union_ctx->default_label);
+
+  /* If there is no implicit default case, then a value should be set explicitly. */
   if (!union_ctx->has_impl_default)
   {
     idl_file_out_printf_no_indent(ctx, ",\n");
-    idl_file_out_printf(ctx, "%s()", union_ctx->default_case->name);
+
+    /* If there is an explicit default case, then pick that one. */
+    if (union_ctx->default_case) {
+      idl_file_out_printf(ctx, "%s()", union_ctx->default_case->name);
+    } else {
+      /* Otherwise pick the first case that is specified. */
+      idl_file_out_printf(ctx, "%s()", union_ctx->cases[0].name);
+    }
   }
   idl_file_out_printf_no_indent(ctx, " {}\n\n");
   idl_indent_double_decr(ctx);
