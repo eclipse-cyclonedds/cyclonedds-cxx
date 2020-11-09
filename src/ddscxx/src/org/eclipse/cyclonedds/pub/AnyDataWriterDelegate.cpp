@@ -24,6 +24,8 @@
 #include <dds/dds.h>
 
 #include "dds/ddsi/ddsi_serdata.h"
+#include "dds/ddsi/q_protocol.h"
+
 
 namespace org
 {
@@ -88,7 +90,8 @@ AnyDataWriterDelegate::write_cdr(
     dds_entity_t writer,
     const org::eclipse::cyclonedds::topic::CDRBlob *data,
     const dds::core::InstanceHandle& handle,
-    const dds::core::Time& timestamp)
+    const dds::core::Time& timestamp,
+    uint32_t statusinfo)
 {
     dds_return_t ret;
     struct ddsi_serdata *ser_data;
@@ -111,6 +114,7 @@ AnyDataWriterDelegate::write_cdr(
         blob_holders,
         data->payload().size() + 4);
 
+    ser_data->statusinfo = statusinfo;
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
         ser_data->timestamp.v = ddsc_time;
@@ -120,6 +124,36 @@ AnyDataWriterDelegate::write_cdr(
     }
 
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
+}
+
+void
+AnyDataWriterDelegate::write_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    this->write_cdr(writer, data, handle, timestamp, 0);
+}
+
+void
+AnyDataWriterDelegate::dispose_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_DISPOSE);
+}
+
+void
+AnyDataWriterDelegate::unregister_instance_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_UNREGISTER);
 }
 
 void
