@@ -101,12 +101,32 @@ public:
     void write_flush();
     void set_batch(bool);
 
+private:
+    void
+    write_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp,
+          uint32_t statusinfo);
+
 protected:
     AnyDataWriterDelegate(const dds::pub::qos::DataWriterQos& qos,
                           const dds::topic::TopicDescription& td);
 
     void
     write_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp);
+
+    void
+    dispose_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp);
+
+    void
+    unregister_instance_cdr(dds_entity_t writer,
           const org::eclipse::cyclonedds::topic::CDRBlob *data,
           const dds::core::InstanceHandle& handle,
           const dds::core::Time& timestamp);

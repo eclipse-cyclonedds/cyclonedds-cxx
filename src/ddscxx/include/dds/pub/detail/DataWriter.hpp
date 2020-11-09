@@ -73,6 +73,14 @@ public:
 
     void write_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample, const dds::core::Time& timestamp);
 
+    void dispose_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample);
+
+    void dispose_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample, const dds::core::Time& timestamp);
+
+    void unregister_instance_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample);
+
+    void unregister_instance_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample, const dds::core::Time& timestamp);
+
     void write(const T& sample);
 
     void write(const T& sample, const dds::core::Time& timestamp);

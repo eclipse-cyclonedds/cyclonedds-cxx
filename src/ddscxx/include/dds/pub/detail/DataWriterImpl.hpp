@@ -489,6 +489,54 @@ dds::pub::detail::DataWriter<T>::write_cdr(
 
 template <typename T>
 void
+dds::pub::detail::DataWriter<T>::dispose_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
+{
+    this->check();
+    AnyDataWriterDelegate::dispose_cdr((dds_entity_t)this->ddsc_entity,
+                                  &sample,
+                                  dds::core::InstanceHandle(dds::core::null),
+                                  dds::core::Time::invalid());
+}
+
+template <typename T>
+void
+dds::pub::detail::DataWriter<T>::dispose_cdr(
+            const org::eclipse::cyclonedds::topic::CDRBlob& sample,
+            const dds::core::Time& timestamp)
+{
+    this->check();
+    AnyDataWriterDelegate::dispose_cdr((dds_entity_t)this->ddsc_entity,
+                                  &sample,
+                                  dds::core::InstanceHandle(dds::core::null),
+                                  timestamp);
+}
+
+template <typename T>
+void
+dds::pub::detail::DataWriter<T>::unregister_instance_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
+{
+    this->check();
+    AnyDataWriterDelegate::unregister_instance_cdr((dds_entity_t)this->ddsc_entity,
+                                  &sample,
+                                  dds::core::InstanceHandle(dds::core::null),
+                                  dds::core::Time::invalid());
+}
+
+template <typename T>
+void
+dds::pub::detail::DataWriter<T>::unregister_instance_cdr(
+            const org::eclipse::cyclonedds::topic::CDRBlob& sample,
+            const dds::core::Time& timestamp)
+{
+    this->check();
+    AnyDataWriterDelegate::unregister_instance_cdr((dds_entity_t)this->ddsc_entity,
+                                  &sample,
+                                  dds::core::InstanceHandle(dds::core::null),
+                                  timestamp);
+}
+
+template <typename T>
+void
 dds::pub::detail::DataWriter<T>::write(const T& sample)
 {
     this->check();
