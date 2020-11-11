@@ -40,7 +40,7 @@ TGuardCondition<DELEGATE>::TGuardCondition()
 
 template <typename DELEGATE>
 template <typename FUN>
-TGuardCondition<DELEGATE>::TGuardCondition(FUN& functor)
+TGuardCondition<DELEGATE>::TGuardCondition(FUN functor)
 {
     this->set_ref(new DELEGATE);
     this->delegate()->init(this->impl_);

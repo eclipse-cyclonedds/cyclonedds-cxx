@@ -82,11 +82,7 @@ public:
      * @throw  dds::core::Exception
      */
     template <typename Functor>
-    void handler(Functor& func);
-
-    /** @copydoc dds::core::cond::TCondition::handler(Functor& func) */
-    template <typename Functor>
-    void handler(const Functor& func);
+    void handler(Functor func);
 
     /**
      * Resets the handler for this Condition.

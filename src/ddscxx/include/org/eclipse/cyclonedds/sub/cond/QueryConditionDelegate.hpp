@@ -55,31 +55,6 @@ public:
             const dds::sub::AnyDataReader& dr,
             const dds::sub::status::DataState& data_state);
 
-    template<typename FUN>
-    QueryConditionDelegate(
-            const dds::sub::AnyDataReader& dr,
-            const std::string& expression,
-            const dds::sub::status::DataState& data_state,
-            const FUN& functor) :
-                QueryDelegate(dr, expression, data_state),
-                ReadConditionDelegate(dr, data_state)
-    {
-        this->set_handler<FUN>(functor);
-    }
-
-    template<typename FUN>
-    QueryConditionDelegate(
-            const dds::sub::AnyDataReader& dr,
-            const std::string& expression,
-            const std::vector<std::string>& params,
-            const dds::sub::status::DataState& data_state,
-            const FUN& functor) :
-                QueryDelegate(dr, expression, params, data_state),
-                ReadConditionDelegate(dr, data_state)
-    {
-        this->set_handler<FUN>(functor);
-    }
-
     ~QueryConditionDelegate();
 
     typedef bool (*Filter_fn) (const void * sample);
