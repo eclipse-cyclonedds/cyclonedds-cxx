@@ -40,7 +40,7 @@ find(const dds::pub::Publisher& pub, const std::string& topic_name,
         if (writer_base) {
             /* Cast base writer to typed delegate: */
             typename WRITER::DELEGATE_REF_T writer_typed =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<typename WRITER::DELEGATE_T>(writer_base);
+                    ::std::dynamic_pointer_cast<typename WRITER::DELEGATE_T>(writer_base);
             WRITER dw(writer_typed);
             if(dw != dds::core::null)
             {
@@ -63,7 +63,7 @@ find(const dds::pub::Publisher& pub,
     if (writer_base) {
         /* Cast base writer to typed delegate: */
         typename WRITER::DELEGATE_REF_T writer_typed =
-                OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<typename WRITER::DELEGATE_T>(writer_base);
+                ::std::dynamic_pointer_cast<typename WRITER::DELEGATE_T>(writer_base);
         WRITER dw(writer_typed);
         if(dw != dds::core::null)
         {

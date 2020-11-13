@@ -38,7 +38,7 @@ TCondition<DELEGATE>::~TCondition()
 
 template <typename DELEGATE>
 template <typename Functor>
-void TCondition<DELEGATE>::handler(Functor& func)
+void TCondition<DELEGATE>::handler(Functor func)
 {
     this->delegate()->set_handler(func);
 }

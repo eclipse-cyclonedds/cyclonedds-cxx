@@ -139,7 +139,7 @@ dds::topic::TAnyTopic<AnyTopicDelegate>
 AnyTopicDelegate::wrapper_to_any()
 {
     AnyTopicDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<AnyTopicDelegate>(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<AnyTopicDelegate>(this->get_strong_ref());
     dds::topic::AnyTopic any_topic(ref);
     return any_topic;
 }

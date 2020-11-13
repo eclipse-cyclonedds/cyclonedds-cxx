@@ -64,9 +64,10 @@ org::eclipse::cyclonedds::core::convertStringSeq(
     to = new char*[from.size()];
     for(uint32_t i = 0; i < from.size(); i++)
     {
-        size_t len = from[i].length() + 1;
-        to[i] = new char[len];
-        ddsrt_strlcpy(to[i], from[i].c_str(), len);
+        size_t len = from[i].length();
+        to[i] = new char[len + 1];
+        to[i][len] = '\0';
+        memcpy(to[i], from[i].c_str(), len);
     }
 }
 

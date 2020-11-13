@@ -108,6 +108,18 @@ macos1015_xcode11_5: &macos1015_xcode11_5
   install:
     - python3 -m pip install conan --upgrade --user
 
+freebsd12_clang8: &freebsd12_clang8
+  os: freebsd
+  compiler: clang
+  addons:
+    pkg:
+      packages: [ py37-pip ]
+  before_install:
+    - eval "export BUILD_TOOL_OPTIONS='-j 4'"
+    - eval "export GENERATOR='Unix Makefiles'"
+  install:
+    - pip install conan --upgrade --user
+
 windows1809_vs2017: &windows1809_vs2017
   os: windows
   # Microsoft Windows instances freeze at "install:" if secure environment
@@ -170,6 +182,8 @@ jobs:
       env: [ ARCH=x86_64, BUILD_TYPE=Debug, SANITIZER=address ]
     - <<: *macos1015_xcode11_5
       env: [ ARCH=x86_64, BUILD_TYPE=Release ]
+    - <<: *freebsd12_clang8
+      env: [ ARCH=x86_64, BUILD_TYPE=Debug ]
     - <<: *windows1809_vs2017
       env: [ ARCH=x86, BUILD_TYPE=Debug ]
     - <<: *windows1809_vs2017
@@ -206,6 +220,7 @@ script:
           -DCMAKE_PREFIX_PATH=${TRAVIS_BUILD_DIR}/cyclonedds/build/install
           -DUSE_SANITIZER=${SANITIZER}
           -DBUILD_TESTING=on
+          -DWERROR=on
           -G "${GENERATOR}" ..
   - cmake --build . --config ${BUILD_TYPE} --target install -- ${BUILD_TOOL_OPTIONS}
   - ctest -j 4 --output-on-failure -T test -C ${BUILD_TYPE}

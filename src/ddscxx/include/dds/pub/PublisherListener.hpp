@@ -31,6 +31,7 @@ class NoOpPublisherListener;
 }
 }
 
+DDSCXX_WARNING_MSVC_OFF(4250)
 
 /**
  * @brief
@@ -135,6 +136,6 @@ public:
     /** @endcond */
 };
 
-
+DDSCXX_WARNING_MSVC_ON(4250)
 
 #endif /* OMG_DDS_PUB_PUBLISHER_LISTENER_HPP_ */

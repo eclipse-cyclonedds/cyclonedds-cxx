@@ -37,12 +37,6 @@ class OMG_DDS_API GuardConditionDelegate :
 public:
     GuardConditionDelegate();
 
-    template<typename FUN>
-    GuardConditionDelegate(const FUN& functor) :
-       org::eclipse::cyclonedds::core::cond::ConditionDelegate(functor)
-    {
-    }
-
     ~GuardConditionDelegate();
 
     void close();

@@ -18,15 +18,7 @@
 #ifndef CYCLONEDDS_CORE_CONFIG_HPP_
 #define CYCLONEDDS_CORE_CONFIG_HPP_
 
-#ifndef OPENSPLICE_ISOCXX_PSM
-#define OPENSPLICE_ISOCXX_PSM
-#endif
-
 #include <dds/core/macros.hpp>
 #include <dds/core/types.hpp>
-
-/** @internal Using a separate macro for org::opensplice in case we want to separate libs
-later */
-#define OSPL_ISOCPP_IMPL_API OMG_DDS_API
 
 #endif /* CYCLONEDDS_CORE_CONFIG_HPP_ */

@@ -32,25 +32,12 @@ namespace cyclonedds
 namespace core
 {
 
-#if defined(OSPL_USE_CXX11)
-
 template <typename T>
 struct WeakReferenceSet
 {
     typedef typename std::set<T, std::owner_less<T> > wset;
     typedef typename std::set<T, std::owner_less<T> >::iterator iterator;
 };
-
-#else
-
-template <typename T>
-struct WeakReferenceSet
-{
-    typedef typename std::set<T> wset;
-    typedef typename std::set<T>::iterator iterator;
-};
-
-#endif
 
 }
 }

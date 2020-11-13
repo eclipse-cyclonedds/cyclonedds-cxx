@@ -37,7 +37,7 @@ template <typename DELEGATE>
 template <typename D>
 dds::core::Reference<DELEGATE>::Reference(const Reference<D>& ref)
 {
-    impl_ = OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<DELEGATE_T>(ref.impl_);
+    impl_ = ::std::dynamic_pointer_cast<DELEGATE_T>(ref.impl_);
     if (impl_ != ref.impl_) {
         throw dds::core::IllegalOperationError(std::string("Attempted invalid cast: ") + typeid(ref).name() + " to " + typeid(*this).name());
     }

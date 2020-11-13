@@ -30,6 +30,9 @@ namespace cyclonedds
 {
 namespace core
 {
+
+DDSCXX_WARNING_MSVC_OFF(4251)
+
 class OMG_DDS_API ObjectDelegate
 {
 public:
@@ -57,6 +60,8 @@ protected:
     bool closed;
     ObjectDelegate::weak_ref_type myself;
 };
+
+DDSCXX_WARNING_MSVC_ON(4251)
 
 }
 }

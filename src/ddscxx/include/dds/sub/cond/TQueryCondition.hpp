@@ -117,14 +117,7 @@ public:
      */
     template <typename FUN>
     TQueryCondition(const dds::sub::Query& query,
-                    const dds::sub::status::DataState& status, FUN& functor);
-
-    /**
-     * @copydoc dds::sub::cond::TQueryCondition::TQueryCondition(const dds::sub::Query& query, const dds::sub::status::DataState& status, FUN& functor)
-     */
-    template <typename FUN>
-    TQueryCondition(const dds::sub::Query& query,
-                    const dds::sub::status::DataState& status, const FUN& functor);
+                    const dds::sub::status::DataState& status, FUN functor);
 
     /**
      * Creates a QueryCondition instance.
@@ -189,18 +182,8 @@ public:
                     const std::string& expression,
                     const std::vector<std::string>& params,
                     const dds::sub::status::DataState& status,
-                    FUN& functor);
+                    FUN functor);
 
-
-  /**
-     * @copydoc dds::sub::cond::TQueryCondition::TQueryCondition(const dds::sub::AnyDataReader& dr, const std::string& expression, const std::vector<std::string>& params, const dds::sub::status::DataState& status, FUN& functor)
-     */
-    template <typename FUN>
-    TQueryCondition(const dds::sub::AnyDataReader& dr,
-                    const std::string& expression,
-                    const std::vector<std::string>& params,
-                    const dds::sub::status::DataState& status,
-                    const FUN& functor);
 
     /** @cond */
     ~TQueryCondition();

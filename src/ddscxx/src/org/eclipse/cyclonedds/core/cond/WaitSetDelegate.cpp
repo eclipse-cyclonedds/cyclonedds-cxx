@@ -102,8 +102,7 @@ org::eclipse::cyclonedds::core::cond::WaitSetDelegate::dispatch(
     try {
         wait(triggered, timeout);
     }
-    catch(dds::core::TimeoutError &e) {
-        (void)e;
+    catch(dds::core::TimeoutError &) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_TIMEOUT_ERROR,
             "dds::core::cond::WaitSet::dispatch() timed out.");
     }

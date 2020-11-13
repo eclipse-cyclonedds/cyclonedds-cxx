@@ -88,7 +88,7 @@ org::eclipse::cyclonedds::sub::BuiltinSubscriberDelegate::get_builtin_subscriber
 
     org::eclipse::cyclonedds::core::EntityDelegate::ref_type entity = dp.delegate()->builtin_subscriber();
     if (entity) {
-        builtin_subscriber = OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<SubscriberDelegate>(entity);
+        builtin_subscriber = ::std::dynamic_pointer_cast<SubscriberDelegate>(entity);
     } else {
         dds::sub::qos::SubscriberQos qos;
 

@@ -113,13 +113,7 @@ public:
      * @throw  dds::core::Exception
      */
     template <typename FUN>
-    TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status, FUN& functor);
-
-    /**
-     * @copydoc dds::sub::cond::TReadCondition::TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status, FUN& functor)
-     */
-    template <typename FUN>
-    TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status, const FUN& functor);
+    TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status, FUN functor);
 
     /** @cond */
     ~TReadCondition();

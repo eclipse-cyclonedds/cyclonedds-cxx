@@ -35,6 +35,9 @@ namespace cyclonedds
 {
 namespace core
 {
+
+DDSCXX_WARNING_MSVC_OFF(4251)
+
 class OMG_DDS_API DDScObjectDelegate : public virtual org::eclipse::cyclonedds::core::ObjectDelegate
 {
 public:
@@ -60,6 +63,9 @@ private:
     static org::eclipse::cyclonedds::core::DDScObjectDelegate::entity_map_type entity_map;
     static Mutex entity_map_mutex;
 };
+
+DDSCXX_WARNING_MSVC_ON(4251)
+
 }
 }
 }

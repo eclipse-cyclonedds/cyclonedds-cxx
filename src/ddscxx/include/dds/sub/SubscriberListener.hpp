@@ -27,6 +27,8 @@ namespace dds
 namespace sub
 {
 
+DDSCXX_WARNING_MSVC_OFF(4250)
+
 /**
  * @brief
  * Subscriber events Listener
@@ -196,6 +198,8 @@ public:
     virtual void on_data_on_readers(Subscriber&) { }
 /** @endcond */
 };
+
+DDSCXX_WARNING_MSVC_ON(4250)
 
 }
 }

@@ -822,7 +822,7 @@ dds::pub::DataWriter<T, dds::pub::detail::DataWriter>
 dds::pub::detail::DataWriter<T>::wrapper()
 {
     typename DataWriter::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<DataWriter<T> >(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<DataWriter<T> >(this->get_strong_ref());
     dds::pub::DataWriter<T, dds::pub::detail::DataWriter> writer(ref);
 
     return writer;

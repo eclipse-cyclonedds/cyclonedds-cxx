@@ -660,7 +660,7 @@ dds::sub::TAnyDataReader<AnyDataReaderDelegate>
 AnyDataReaderDelegate::wrapper_to_any()
 {
     AnyDataReaderDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<AnyDataReaderDelegate>(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<AnyDataReaderDelegate>(this->get_strong_ref());
     dds::sub::AnyDataReader any_reader(ref);
     return any_reader;
 }

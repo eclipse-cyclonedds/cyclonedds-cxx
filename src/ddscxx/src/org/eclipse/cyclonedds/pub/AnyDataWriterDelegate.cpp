@@ -344,7 +344,7 @@ dds::pub::TAnyDataWriter<AnyDataWriterDelegate>
 AnyDataWriterDelegate::wrapper_to_any()
 {
     AnyDataWriterDelegate::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<AnyDataWriterDelegate>(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<AnyDataWriterDelegate>(this->get_strong_ref());
     dds::pub::AnyDataWriter any_writer(ref);
     return any_writer;
 }
