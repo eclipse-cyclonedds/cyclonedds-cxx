@@ -59,7 +59,7 @@ discover(
        *fit++ = *it;
     }
 
-    return (uint32_t)list.size();
+    return static_cast<uint32_t>(list.size());
 }
 
 template <typename ANYTOPIC, typename BinIterator>
@@ -70,7 +70,7 @@ discover_all(
 {
     std::vector<ANYTOPIC> list;
 
-    org::eclipse::cyclonedds::topic::lookup_topic<ANYTOPIC, typename ANYTOPIC::DELEGATE_T>::discover(dp, list, (uint32_t)dds::core::LENGTH_UNLIMITED);
+    org::eclipse::cyclonedds::topic::lookup_topic<ANYTOPIC, typename ANYTOPIC::DELEGATE_T>::discover(dp, list, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
     BinIterator bit = begin;
     for (typename std::vector<ANYTOPIC>::const_iterator it = list.begin(); it != list.end(); ++it) {

@@ -75,7 +75,7 @@ org::eclipse::cyclonedds::core::cond::WaitSetDelegate::wait(
         delete[] attach;
         ISOCPP_THROW_EXCEPTION(ISOCPP_TIMEOUT_ERROR, "dds::core::cond::WaitSet::wait() timed out.");
     } else if (n_triggered > 0) {
-        triggered.reserve((size_t)n_triggered);
+        triggered.reserve(static_cast<size_t>(n_triggered));
 
         for (int i = 0; i < n_triggered; i++) {
             org::eclipse::cyclonedds::core::cond::ConditionDelegate *cd =

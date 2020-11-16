@@ -73,7 +73,7 @@ TAnyDataReader(const H__& h)
 template <typename T__>
 TAnyDataReader&
 operator=(const T__& rhs) {
-    if (this != (TAnyDataReader*)&rhs) {
+    if (this != static_cast<TAnyDataReader*>(&rhs)) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */

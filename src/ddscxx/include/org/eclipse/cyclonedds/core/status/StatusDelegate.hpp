@@ -63,7 +63,7 @@ public:
 public:
     void ddsc_status(const dds_inconsistent_topic_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
     }
 
@@ -107,7 +107,7 @@ public:
 public:
     void ddsc_status(const dds_sample_lost_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
     }
 
@@ -176,7 +176,7 @@ public:
 public:
     void ddsc_status(const dds_sample_rejected_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
         switch (from->last_reason) {
         case DDS_NOT_REJECTED:
@@ -240,7 +240,7 @@ public:
 public:
     void ddsc_status(const dds_liveliness_lost_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
     }
 
@@ -321,8 +321,8 @@ public:
 public:
     void ddsc_status(const dds_liveliness_changed_status_t* from)
     {
-        alive_count_ = (int32_t)from->alive_count;
-        not_alive_count_ = (int32_t)from->not_alive_count;
+        alive_count_ = static_cast<int32_t>(from->alive_count);
+        not_alive_count_ = static_cast<int32_t>(from->not_alive_count);
         alive_count_change_ = from->alive_count_change;
         not_alive_count_change_ = from->not_alive_count_change;
         last_publication_handle_ = dds::core::InstanceHandle(from->last_publication_handle);
@@ -385,7 +385,7 @@ public:
 public:
     void ddsc_status(const dds_offered_deadline_missed_status* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
         last_instance_handle_ = dds::core::InstanceHandle(from->last_instance_handle);
     }
@@ -444,7 +444,7 @@ public:
 public:
     void ddsc_status(const dds_requested_deadline_missed_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
         last_instance_handle_ = dds::core::InstanceHandle(from->last_instance_handle);
     }
@@ -521,7 +521,7 @@ public  :
 public:
     void ddsc_status(const dds_offered_incompatible_qos_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
         last_policy_id_ = from->last_policy_id;
         policies_.clear();
@@ -608,7 +608,7 @@ public  :
 public:
     void ddsc_status(const dds_requested_incompatible_qos_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
         last_policy_id_ = from->last_policy_id;
         policies_.clear();
@@ -703,9 +703,9 @@ public:
 public:
     void ddsc_status(const dds_publication_matched_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
-        current_count_ = (int32_t)from->current_count;
+        current_count_ = static_cast<int32_t>(from->current_count);
         current_count_change_ = from->current_count_change;
         last_subscription_handle_ = dds::core::InstanceHandle(from->last_subscription_handle);
     }
@@ -789,9 +789,9 @@ public:
 public:
     void ddsc_status(const dds_subscription_matched_status_t* from)
     {
-        total_count_ = (int32_t)from->total_count;
+        total_count_ = static_cast<int32_t>(from->total_count);
         total_count_change_ = from->total_count_change;
-        current_count_ = (int32_t)from->current_count;
+        current_count_ = static_cast<int32_t>(from->current_count);
         current_count_change_ = from->current_count_change;
         last_publication_handle_ = dds::core::InstanceHandle(from->last_publication_handle);
     }

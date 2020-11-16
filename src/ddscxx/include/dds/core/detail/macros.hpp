@@ -22,8 +22,8 @@
 #include <string.h>
 
 // == Constants
-#define OMG_DDS_DEFAULT_STATE_BIT_COUNT_DETAIL (size_t)32
-#define OMG_DDS_DEFAULT_STATUS_COUNT_DETAIL    (size_t)32
+#define OMG_DDS_DEFAULT_STATE_BIT_COUNT_DETAIL static_cast<size_t>(32)
+#define OMG_DDS_DEFAULT_STATUS_COUNT_DETAIL    static_cast<size_t>(32)
 // ==========================================================================
 
 #define OSPL_DEFAULT_TO_CXX11

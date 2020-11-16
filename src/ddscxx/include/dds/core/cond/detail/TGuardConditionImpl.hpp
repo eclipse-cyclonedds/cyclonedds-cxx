@@ -83,7 +83,7 @@ template <typename DELEGATE>
 TCondition<DELEGATE>&
 TCondition<DELEGATE>::operator=(const dds::core::cond::TGuardCondition<org::eclipse::cyclonedds::core::cond::GuardConditionDelegate>& rhs)
 {
-    if (this != (TCondition*)&rhs) {
+    if (this != static_cast<TCondition*>(&rhs)) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */

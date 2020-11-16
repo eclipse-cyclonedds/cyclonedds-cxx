@@ -106,7 +106,7 @@
 
 #define ISOCPP_DDSC_RESULT_CHECK_AND_THROW(code, ...)      \
     org::eclipse::cyclonedds::core::utils::check_ddsc_result_and_throw_exception(    \
-        (dds_return_t)(code),                         \
+        static_cast<dds_return_t>(code),              \
         __FILE__,                                     \
         __LINE__,                                     \
         OS_PRETTY_FUNCTION,                           \

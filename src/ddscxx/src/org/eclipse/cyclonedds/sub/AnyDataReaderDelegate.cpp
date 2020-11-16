@@ -123,7 +123,7 @@ AnyDataReaderDelegate::get_ddsc_state_mask(const dds::sub::status::DataState& st
     i_state <<= 4;
 
     /* The mask is all states or-ed. */
-    return (uint32_t)(s_state | v_state | i_state);
+    return static_cast<uint32_t>(s_state | v_state | i_state);
 }
 
 bool AnyDataReaderDelegate::init_samples_buffers(
@@ -134,7 +134,7 @@ bool AnyDataReaderDelegate::init_samples_buffers(
                           void**&                           c_sample_pointers,
                           dds_sample_info_t*&               c_sample_infos)
 {
-    if(requested_max_samples == (uint32_t)dds::core::LENGTH_UNLIMITED)
+    if(requested_max_samples == static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED))
     {
         //TODO: fix this when cyclonedds has been upgraded.
         /*
@@ -172,7 +172,7 @@ bool AnyDataReaderDelegate::init_samples_buffers(
     }
     else
     {
-        c_sample_pointers_size = (size_t)requested_max_samples;
+        c_sample_pointers_size = static_cast<size_t>(requested_max_samples);
         samples_to_read_cnt    = requested_max_samples;
     }
 
@@ -184,7 +184,7 @@ bool AnyDataReaderDelegate::init_samples_buffers(
        * loan. So, prepare sample memory up-front. This will cause performance
        * decrease due to an extra copy action. Oh, well.
        */
-        samples.set_length((uint32_t) c_sample_pointers_size);
+        samples.set_length(static_cast<uint32_t>(c_sample_pointers_size));
         c_sample_pointers = samples.cpp_sample_pointers();
         c_sample_infos = samples.cpp_info_pointers();
     }
@@ -326,7 +326,7 @@ AnyDataReaderDelegate::read(
 
       if (ret > 0) {
         /* When > 0, ret represents the number of samples read. */
-          samples.set_length((uint32_t) ret);
+          samples.set_length(static_cast<uint32_t>(ret));
           samples.set_sample_infos(c_sample_infos);
       } else {
           samples.set_length(0);
@@ -377,7 +377,7 @@ AnyDataReaderDelegate::take(
 
         if (ret > 0) {
           /* When > 0, ret represents the number of samples read. */
-            samples.set_length((uint32_t) ret);
+            samples.set_length(static_cast<uint32_t>(ret));
             samples.set_sample_infos(c_sample_infos);
         } else {
             samples.set_length(0);
@@ -428,7 +428,7 @@ AnyDataReaderDelegate::read_instance(
 
         if (ret > 0) {
             /* When > 0, ret represents the number of samples read. */
-            samples.set_length((uint32_t) ret);
+            samples.set_length(static_cast<uint32_t>(ret));
             samples.set_sample_infos(c_sample_infos);
         } else {
             samples.set_length(0);
@@ -479,7 +479,7 @@ AnyDataReaderDelegate::take_instance(
 
         if (ret > 0) {
             /* When > 0, ret represents the number of samples read. */
-            samples.set_length((uint32_t) ret);
+            samples.set_length(static_cast<uint32_t>(ret));
             samples.set_sample_infos(c_sample_infos);
         } else {
             samples.set_length(0);
@@ -731,12 +731,12 @@ AnyDataReaderDelegate::copy_sample_infos(
     info.state(dds::sub::status::DataState(ss, vs, is));
 
     info.generation_count().delegate() = org::eclipse::cyclonedds::sub::GenerationCountImpl(
-                                    (int32_t)from.disposed_generation_count,
-                                    (int32_t)from.no_writers_generation_count);
+                                    static_cast<int32_t>(from.disposed_generation_count),
+                                    static_cast<int32_t>(from.no_writers_generation_count));
     info.rank().delegate() = org::eclipse::cyclonedds::sub::RankImpl(
-                                    (int32_t)from.sample_rank,
-                                    (int32_t)from.generation_rank,
-                                    (int32_t)from.absolute_generation_rank);
+                                    static_cast<int32_t>(from.sample_rank),
+                                    static_cast<int32_t>(from.generation_rank),
+                                    static_cast<int32_t>(from.absolute_generation_rank));
     info.valid(from.valid_data);
     dds::core::InstanceHandle ih(from.instance_handle);
     info.instance_handle(ih);

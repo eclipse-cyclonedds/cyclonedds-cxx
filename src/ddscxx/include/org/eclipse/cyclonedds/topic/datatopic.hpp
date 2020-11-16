@@ -87,8 +87,8 @@ void ddscxx_serdata<T>::populate_hash()
     ddsi_keyhash_t buf;
     ddsrt_md5_state_t md5st;
     ddsrt_md5_init(&md5st);
-    ddsrt_md5_append(&md5st, (ddsrt_md5_byte_t*)(key().value), 16);
-    ddsrt_md5_finish(&md5st, (ddsrt_md5_byte_t*)(buf.value));
+    ddsrt_md5_append(&md5st, static_cast<const ddsrt_md5_byte_t*>(key().value), 16);
+    ddsrt_md5_finish(&md5st, static_cast<ddsrt_md5_byte_t*>(buf.value));
     memcpy(&(hash), buf.value, 4);
   }
   else
@@ -128,7 +128,7 @@ ddsi_serdata_t *serdata_from_ser(
 
   d->resize(size);
 
-  auto cursor = (unsigned char*)d->data();
+  auto cursor = static_cast<unsigned char*>(d->data());
   while (fragchain) {
     if (fragchain->maxp1 > off) {
       //only copy if this fragment adds data
@@ -174,7 +174,7 @@ ddsi_serdata_t *serdata_from_ser_iov(
   d->resize(size);
 
   size_t off = 0;
-  auto cursor = (unsigned char*)d->data();
+  auto cursor = static_cast<unsigned char*>(d->data());
   for (ddsrt_msg_iovlen_t i = 0; i < niov && off < size; i++)
   {
     size_t n_bytes = iov[i].iov_len;
@@ -230,7 +230,7 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
   m_size = requested_size + n_pad_bytes;
 
   // zero the very end. The caller isn't necessarily going to overwrite it.
-  std::memset(calc_offset(m_data.get(), requested_size), '\0', n_pad_bytes);
+  std::memset(calc_offset(m_data.get(), static_cast<ptrdiff_t>(requested_size)), '\0', n_pad_bytes);
 }
 
 template <typename T>
@@ -246,7 +246,7 @@ ddsi_serdata_t *serdata_from_sample(
     auto msg = static_cast<const T*>(sample);
     size_t sz = 4 + (kind == SDK_KEY ? msg->key_size(0) : msg->write_size(0));  //4 bytes extra to also include the header
     d->resize(sz);
-    unsigned char* ptr = (unsigned char*)d->data();
+    auto ptr = static_cast<unsigned char*>(d->data());
     memset(ptr, 0x0, 4);
     if (native_endianness() == endianness::little_endian)
       *(ptr + 1) = 0x1;
@@ -277,7 +277,7 @@ template <typename T>
 void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  memcpy(buf, calc_offset(d->data(), off), sz);
+  memcpy(buf, calc_offset(d->data(), static_cast<ptrdiff_t>(off)), sz);
 }
 
 template <typename T>
@@ -286,8 +286,8 @@ ddsi_serdata_t *serdata_to_ser_ref(
   size_t sz, ddsrt_iovec_t* ref)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  ref->iov_base = calc_offset(d->data(), off);
-  ref->iov_len = (ddsrt_iov_len_t)sz;
+  ref->iov_base = calc_offset(d->data(), static_cast<ptrdiff_t>(off));
+  ref->iov_len = static_cast<ddsrt_iov_len_t>(sz);
   return ddsi_serdata_ref(d);
 }
 
@@ -379,8 +379,8 @@ void serdata_get_keyhash(
   {
     ddsrt_md5_state_t md5st;
     ddsrt_md5_init(&md5st);
-    ddsrt_md5_append(&md5st, (ddsrt_md5_byte_t*)(ptr->key().value), 16);
-    ddsrt_md5_finish(&md5st, (ddsrt_md5_byte_t*)(buf->value));
+    ddsrt_md5_append(&md5st, static_cast<const ddsrt_md5_byte_t*>(ptr->key().value), 16);
+    ddsrt_md5_finish(&md5st, static_cast<ddsrt_md5_byte_t*>(buf->value));
   }
   else
   {

@@ -172,7 +172,7 @@ dds::core::Duration::operator +=(const Duration& a_ti)
 {
   org::eclipse::cyclonedds::core::timehelper::validate<dds::core::Duration>(*this, "dds::core::Duration", "operator += this");
   org::eclipse::cyclonedds::core::timehelper::validate<dds::core::Duration>(a_ti, "dds::core::Duration", "operator += a_ti");
-  sec_ += (int32_t) a_ti.sec();
+  sec_ += static_cast<int32_t>(a_ti.sec());
   uint32_t dns = nsec_ + a_ti.nanosec();
   if (dns > NS)
   {
@@ -232,10 +232,10 @@ dds::core::Duration&
 dds::core::Duration::operator *=(uint64_t factor)
 {
     org::eclipse::cyclonedds::core::timehelper::validate<dds::core::Duration>(*this, "dds::core::Duration", " operator *=");
-    this->sec((int64_t)this->sec_ * (int64_t)factor);
+    this->sec(static_cast<int64_t>(this->sec_) * static_cast<int64_t>(factor));
     uint64_t ns = this->nanosec() * factor;
     if(ns  > NS) {
-        this->sec((int64_t)this->sec_ + (int64_t)ns / (int64_t)NS);
+        this->sec(static_cast<int64_t>(this->sec_) + static_cast<int64_t>(ns) / static_cast<int64_t>(NS));
         /* cast below is safe because ns % NS is always < NS which is 32 bit */
         this->nanosec(static_cast<uint32_t>(ns % NS));
     } else {
@@ -262,19 +262,19 @@ const dds::core::Duration dds::core::operator /(const dds::core::Duration& rhs, 
         ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "Divide by zero");
     }
     /* This will round up from nanoseconds to microseconds. Good enough for now. */
-    return dds::core::Duration::from_microsecs(rhs.to_microsecs() / (int64_t)lhs);
+    return dds::core::Duration::from_microsecs(rhs.to_microsecs() / static_cast<int64_t>(lhs));
 }
 
 const dds::core::Duration
 dds::core::Duration::infinite()
 {
-    static Duration d((int64_t)0x7fffffff, (uint32_t)0x7fffffff);
+    static Duration d(static_cast<int64_t>(0x7fffffff), static_cast<uint32_t>(0x7fffffff));
     return d;
 }
 
 const dds::core::Duration
 dds::core::Duration::zero()
 {
-    static Duration d((int64_t)0, (uint32_t)0);
+    static Duration d(static_cast<int64_t>(0), static_cast<uint32_t>(0));
     return d;
 }
