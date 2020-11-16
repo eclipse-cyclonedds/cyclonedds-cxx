@@ -22,10 +22,10 @@
 uint32_t org::eclipse::cyclonedds::domain::any_id()
 {
     /* The any_id is basically the same as cyclonedds default domain. */
-    return (uint32_t)DDS_DOMAIN_DEFAULT;
+    return static_cast<uint32_t>(DDS_DOMAIN_DEFAULT);
 }
 
 uint32_t org::eclipse::cyclonedds::domain::default_id()
 {
-    return (uint32_t)DDS_DOMAIN_DEFAULT;
+    return static_cast<uint32_t>(DDS_DOMAIN_DEFAULT);
 }

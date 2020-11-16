@@ -47,7 +47,7 @@ SubscriberDelegate::SubscriberDelegate(
     dds_entity_t ddsc_sub;
     dds_qos_t* ddsc_qos;
 
-    ddsc_par = (dds_entity_t)this->dp_.delegate()->get_ddsc_entity();
+    ddsc_par = static_cast<dds_entity_t>(this->dp_.delegate()->get_ddsc_entity());
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_par, "Could not get subscriber participant.");
 
     qos.delegate().check();

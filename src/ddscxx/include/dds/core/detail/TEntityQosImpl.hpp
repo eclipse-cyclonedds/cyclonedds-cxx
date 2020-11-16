@@ -84,7 +84,7 @@ template <typename DELEGATE>
 template <typename T>
 TEntityQos<DELEGATE>& TEntityQos<DELEGATE>::operator = (const TEntityQos<T>& other)
 {
-    if(this != (TEntityQos<DELEGATE>*)&other)
+    if(this != reinterpret_cast<const TEntityQos<DELEGATE>*>(&other))
     {
         this->d_ = other.delegate();
     }
