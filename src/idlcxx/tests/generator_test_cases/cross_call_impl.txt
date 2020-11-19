@@ -1,0 +1,172 @@
+#include "org/eclipse/cyclonedds/topic/hash.hpp"
+
+namespace A_1
+{
+
+  namespace A_2
+  {
+
+    size_t s_1::write_struct(void *data, size_t position) const
+    {
+      size_t _al2 = (4 - (position&0x3))&0x3;  //alignment
+      memset(static_cast<char*>(data)+position,0x0,_al2);  //setting alignment bytes to 0x0
+      position += _al2;  //moving position indicator
+      *reinterpret_cast<int32_t*>(static_cast<char*>(data)+position) = m_1();  //writing bytes for member: m_1()
+      position += 4;  //moving position indicator
+      return position;
+    }
+
+    size_t s_1::write_size(size_t position) const
+    {
+      position += (4 - (position&0x3))&0x3;  //alignment
+      position += 4;  //bytes for member: m_1()
+      return position;
+    }
+
+    size_t s_1::max_size(size_t position) const
+    {
+      if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
+      if (position != UINT_MAX)   position += 4;  //bytes for member: m_1()
+      return position;
+    }
+
+    size_t s_1::key_size(size_t position) const
+    {
+      return position;
+    }
+
+    size_t s_1::key_max_size(size_t position) const
+    {
+      return position;
+    }
+
+    size_t s_1::key_write(void *data, size_t position) const
+    {
+      (void)data;
+      return position;
+    }
+
+    bool s_1::key(ddsi_keyhash_t &hash) const
+    {
+      size_t sz = key_size(0);
+      size_t padding = 16 - sz%16;
+      if (sz != 0 && padding == 16) padding = 0;
+      std::vector<unsigned char> buffer(sz+padding);
+      memset(buffer.data()+sz,0x0,padding);
+      key_write(buffer.data(),0);
+      static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+      if (fptr == NULL)
+      {
+        if (key_max_size(0) <= 16)
+        {
+          //bind to unmodified function which just copies buffer into the keyhash
+          fptr = &org::eclipse::cyclonedds::topic::simple_key;
+        }
+        else
+        {
+          //bind to MD5 hash function
+          fptr = &org::eclipse::cyclonedds::topic::complex_key;
+        }
+      }
+      return (*fptr)(buffer,hash);
+    }
+
+    size_t s_1::key_read(const void *data, size_t position)
+    {
+      (void)data;
+      return position;
+    }
+
+    size_t s_1::read_struct(const void *data, size_t position)
+    {
+      position += (4 - (position&0x3))&0x3;  //alignment
+      m_1() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: m_1()
+      position += 4;  //moving position indicator
+      return position;
+    }
+
+  } //end namespace A_2
+
+} //end namespace A_1
+
+namespace B_1
+{
+
+  namespace B_2
+  {
+
+    size_t s_2::write_struct(void *data, size_t position) const
+    {
+      position = m_2().write_struct(data, position);
+      return position;
+    }
+
+    size_t s_2::write_size(size_t position) const
+    {
+      position = m_2().write_size(position);
+      return position;
+    }
+
+    size_t s_2::max_size(size_t position) const
+    {
+      if (position != UINT_MAX)   position = m_2().max_size(position);
+      return position;
+    }
+
+    size_t s_2::key_size(size_t position) const
+    {
+      return position;
+    }
+
+    size_t s_2::key_max_size(size_t position) const
+    {
+      return position;
+    }
+
+    size_t s_2::key_write(void *data, size_t position) const
+    {
+      (void)data;
+      return position;
+    }
+
+    bool s_2::key(ddsi_keyhash_t &hash) const
+    {
+      size_t sz = key_size(0);
+      size_t padding = 16 - sz%16;
+      if (sz != 0 && padding == 16) padding = 0;
+      std::vector<unsigned char> buffer(sz+padding);
+      memset(buffer.data()+sz,0x0,padding);
+      key_write(buffer.data(),0);
+      static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+      if (fptr == NULL)
+      {
+        if (key_max_size(0) <= 16)
+        {
+          //bind to unmodified function which just copies buffer into the keyhash
+          fptr = &org::eclipse::cyclonedds::topic::simple_key;
+        }
+        else
+        {
+          //bind to MD5 hash function
+          fptr = &org::eclipse::cyclonedds::topic::complex_key;
+        }
+      }
+      return (*fptr)(buffer,hash);
+    }
+
+    size_t s_2::key_read(const void *data, size_t position)
+    {
+      (void)data;
+      return position;
+    }
+
+    size_t s_2::read_struct(const void *data, size_t position)
+    {
+      position = m_2().read_struct(data, position);
+      return position;
+    }
+
+  } //end namespace B_2
+
+} //end namespace B_1
+

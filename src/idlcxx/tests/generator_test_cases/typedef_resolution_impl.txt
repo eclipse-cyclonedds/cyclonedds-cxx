@@ -1,0 +1,185 @@
+#include "org/eclipse/cyclonedds/topic/hash.hpp"
+
+namespace M
+{
+
+  size_t typedef_write_td_6(const td_6 &obj, void* data, size_t position)
+  {
+    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
+    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
+    position += _al1;  //moving position indicator
+    uint32_t _se1 = static_cast<uint32_t>(obj.size());  //number of entries in the sequence
+    *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se1;  //writing entries for member: obj
+    position += 4;  //moving position indicator
+    if (0 < obj.size()) memcpy(static_cast<char*>(data)+position,obj.data(),_se1*4); //writing bytes for member: obj
+    position += _se1*4;  //entries of sequence
+    return position;
+  }
+
+  size_t typedef_write_size_td_6(const td_6 &obj, size_t position)
+  {
+    position += (4 - (position&0x3))&0x3;  //alignment
+    uint32_t _se1 = static_cast<uint32_t>(obj.size());  //number of entries in the sequence
+    position += 4;  //bytes for sequence entries
+    position += _se1*4;  //entries of sequence
+    return position;
+  }
+
+  size_t typedef_max_size_td_6(const td_6 &obj, size_t position)
+  {
+    (void)obj;
+    (void)position;
+    return UINT_MAX;
+  }
+
+  size_t typedef_key_size_td_6(const td_6 &obj, size_t position)
+  {
+    position += (4 - (position&0x3))&0x3;  //alignment
+    uint32_t _se1 = static_cast<uint32_t>(obj.size());  //number of entries in the sequence
+    position += 4;  //bytes for sequence entries
+    position += _se1*4;  //entries of sequence
+    return position;
+  }
+
+  size_t typedef_key_max_size_td_6(const td_6 &obj, size_t position)
+  {
+    (void)obj;
+    (void)position;
+    return UINT_MAX;
+  }
+
+  size_t typedef_key_write_td_6(const td_6 &obj, void *data, size_t position)
+  {
+    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
+    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
+    position += _al1;  //moving position indicator
+    uint32_t _se1 = static_cast<uint32_t>(obj.size());  //number of entries in the sequence
+    *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se1;  //writing entries for member: obj
+    position += 4;  //moving position indicator
+    if (0 < obj.size()) memcpy(static_cast<char*>(data)+position,obj.data(),_se1*4); //writing bytes for member: obj
+    position += _se1*4;  //entries of sequence
+    return position;
+  }
+
+  size_t typedef_key_read_td_6(td_6 &obj, const void *data, size_t position)
+  {
+    position += (4 - (position&0x3))&0x3;  //alignment
+    uint32_t _se1 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
+    position += 4;  //moving position indicator
+    obj.assign(reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position),reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position)+_se1); //reading bytes for member: obj
+    position += _se1*4;  //entries of sequence
+    return position;
+  }
+
+  size_t typedef_read_td_6(td_6 &obj, const void* data, size_t position)
+  {
+    position += (4 - (position&0x3))&0x3;  //alignment
+    uint32_t _se1 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
+    position += 4;  //moving position indicator
+    obj.assign(reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position),reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position)+_se1); //reading bytes for member: obj
+    position += _se1*4;  //entries of sequence
+    return position;
+  }
+
+} //end namespace M
+
+namespace N
+{
+
+  size_t s::write_struct(void *data, size_t position) const
+  {
+    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
+    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
+    position += _al1;  //moving position indicator
+    *reinterpret_cast<int32_t*>(static_cast<char*>(data)+position) = mem_simple();  //writing bytes for member: mem_simple()
+    position += 4;  //moving position indicator
+    uint32_t _se1 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
+    *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se1;  //writing entries for member: mem()
+    position += 4;  //moving position indicator
+    for (size_t _i2 = 0; _i2 < _se1; _i2++) {
+      position = M::typedef_write_td_6(mem()[_i2], data, position);
+    }
+    return position;
+  }
+
+  size_t s::write_size(size_t position) const
+  {
+    position += (4 - (position&0x3))&0x3;  //alignment
+    position += 4;  //bytes for member: mem_simple()
+    uint32_t _se1 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
+    position += 4;  //bytes for sequence entries
+    for (size_t _i2 = 0; _i2 < _se1; _i2++) {
+      position = M::typedef_write_size_td_6(mem()[_i2], position);
+    }
+    return position;
+  }
+
+  size_t s::max_size(size_t position) const
+  {
+    (void)position;
+    return UINT_MAX;
+  }
+
+  size_t s::key_size(size_t position) const
+  {
+    return position;
+  }
+
+  size_t s::key_max_size(size_t position) const
+  {
+    return position;
+  }
+
+  size_t s::key_write(void *data, size_t position) const
+  {
+    (void)data;
+    return position;
+  }
+
+  bool s::key(ddsi_keyhash_t &hash) const
+  {
+    size_t sz = key_size(0);
+    size_t padding = 16 - sz%16;
+    if (sz != 0 && padding == 16) padding = 0;
+    std::vector<unsigned char> buffer(sz+padding);
+    memset(buffer.data()+sz,0x0,padding);
+    key_write(buffer.data(),0);
+    static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+    if (fptr == NULL)
+    {
+      if (key_max_size(0) <= 16)
+      {
+        //bind to unmodified function which just copies buffer into the keyhash
+        fptr = &org::eclipse::cyclonedds::topic::simple_key;
+      }
+      else
+      {
+        //bind to MD5 hash function
+        fptr = &org::eclipse::cyclonedds::topic::complex_key;
+      }
+    }
+    return (*fptr)(buffer,hash);
+  }
+
+  size_t s::key_read(const void *data, size_t position)
+  {
+    (void)data;
+    return position;
+  }
+
+  size_t s::read_struct(const void *data, size_t position)
+  {
+    position += (4 - (position&0x3))&0x3;  //alignment
+    mem_simple() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: mem_simple()
+    position += 4;  //moving position indicator
+    uint32_t _se1 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
+    position += 4;  //moving position indicator
+    mem().resize(_se1);
+    for (size_t _i2 = 0; _i2 < _se1; _i2++) {
+      position = M::typedef_read_td_6(mem()[_i2], data, position);
+    }
+    return position;
+  }
+
+} //end namespace N
+

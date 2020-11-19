@@ -468,7 +468,7 @@ void
 dds::pub::detail::DataWriter<T>::write_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
 {
     this->check();
-    AnyDataWriterDelegate::write_cdr((dds_entity_t)this->ddsc_entity,
+    AnyDataWriterDelegate::write_cdr(static_cast<dds_entity_t>(this->ddsc_entity),
                                   &sample,
                                   dds::core::InstanceHandle(dds::core::null),
                                   dds::core::Time::invalid());
@@ -481,7 +481,7 @@ dds::pub::detail::DataWriter<T>::write_cdr(
             const dds::core::Time& timestamp)
 {
     this->check();
-    AnyDataWriterDelegate::write_cdr((dds_entity_t)this->ddsc_entity,
+    AnyDataWriterDelegate::write_cdr(static_cast<dds_entity_t>(this->ddsc_entity),
                                   &sample,
                                   dds::core::InstanceHandle(dds::core::null),
                                   timestamp);
@@ -492,7 +492,7 @@ void
 dds::pub::detail::DataWriter<T>::dispose_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
 {
     this->check();
-    AnyDataWriterDelegate::dispose_cdr((dds_entity_t)this->ddsc_entity,
+    AnyDataWriterDelegate::dispose_cdr(static_cast<dds_entity_t>(this->ddsc_entity),
                                   &sample,
                                   dds::core::InstanceHandle(dds::core::null),
                                   dds::core::Time::invalid());
@@ -505,7 +505,7 @@ dds::pub::detail::DataWriter<T>::dispose_cdr(
             const dds::core::Time& timestamp)
 {
     this->check();
-    AnyDataWriterDelegate::dispose_cdr((dds_entity_t)this->ddsc_entity,
+    AnyDataWriterDelegate::dispose_cdr(static_cast<dds_entity_t>(this->ddsc_entity),
                                   &sample,
                                   dds::core::InstanceHandle(dds::core::null),
                                   timestamp);
@@ -516,7 +516,7 @@ void
 dds::pub::detail::DataWriter<T>::unregister_instance_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
 {
     this->check();
-    AnyDataWriterDelegate::unregister_instance_cdr((dds_entity_t)this->ddsc_entity,
+    AnyDataWriterDelegate::unregister_instance_cdr(static_cast<dds_entity_t>(this->ddsc_entity),
                                   &sample,
                                   dds::core::InstanceHandle(dds::core::null),
                                   dds::core::Time::invalid());
@@ -529,7 +529,7 @@ dds::pub::detail::DataWriter<T>::unregister_instance_cdr(
             const dds::core::Time& timestamp)
 {
     this->check();
-    AnyDataWriterDelegate::unregister_instance_cdr((dds_entity_t)this->ddsc_entity,
+    AnyDataWriterDelegate::unregister_instance_cdr(static_cast<dds_entity_t>(this->ddsc_entity),
                                   &sample,
                                   dds::core::InstanceHandle(dds::core::null),
                                   timestamp);

@@ -461,6 +461,8 @@ void sertopic_realloc_samples(
 {
   (void)d;
   (void)oldcount;
+  (void)old;
+  (void)count;
 
   /* For C++ we make one big assumption about the caller of this function:
    * it can only be invoked by the ddsi_sertopic_alloc_sample, and will therefore

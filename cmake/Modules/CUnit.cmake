@@ -235,6 +235,11 @@ function(add_cunit_executable TARGET)
           PROPERTY COMPILE_FLAGS -Wno-missing-field-initializers)
       endif()
 
+      #suppressing variadic macro arguments warning for unittests due to CUNIT using them in their test functions
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+        set_source_files_properties(${source} PROPERTIES COMPILE_OPTIONS "-Wno-gnu-zero-variadic-macro-arguments")
+      endif()
+
       foreach(suite ${suites})
         string(REPLACE ":" ";" suite ${suite})
         list(GET suite 2 clean)

@@ -29,6 +29,7 @@ struct idl_backend_ctx_s
   idl_ostream_t * ostream;
   const char    * target_file;
   void *          custom_context;
+  idl_walkAction * walk_fctn;
 };
 
 idl_backend_ctx
@@ -41,6 +42,7 @@ idl_backend_context_new(uint32_t indent_size, const char *target_file, void *cus
   ctx->ostream = create_idl_ostream(NULL);
   ctx->target_file = target_file;
   ctx->custom_context = custom_context;
+  ctx->walk_fctn = NULL;
   return ctx;
 }
 
@@ -137,6 +139,26 @@ idl_set_custom_context(idl_backend_ctx ctx, void *custom_context)
   assert(!ctx->custom_context);
   ctx->custom_context = custom_context;
   return IDL_RETCODE_OK;
+}
+
+idl_walkAction*
+idl_get_walk_function(idl_backend_ctx ctx)
+{
+  return ctx->walk_fctn;
+}
+
+idl_retcode_t
+idl_set_walk_function(idl_backend_ctx ctx, idl_walkAction* fctn)
+{
+  assert(!ctx->walk_fctn);
+  ctx->walk_fctn = fctn;
+  return IDL_RETCODE_OK;
+}
+
+void
+idl_reset_walk_function(idl_backend_ctx ctx)
+{
+  ctx->walk_fctn = NULL;
 }
 
 void
