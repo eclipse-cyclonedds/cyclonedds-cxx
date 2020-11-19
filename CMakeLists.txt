@@ -57,7 +57,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
   add_compile_options(
     -Wall -Wextra -Wconversion -Wstrict-prototypes
     -Wunused -Winfinite-recursion -Wassign-enum -Wcomma -Wdocumentation
-    -Wconditional-uninitialized -Wshadow)
+    -Wconditional-uninitialized -Wshadow -Wsign-conversion -Wpedantic)
+  add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-Wold-style-cast>")
   if(WERROR)
     add_compile_options(-Werror)
   endif()
@@ -66,7 +67,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_compile_options(
-    -Wall -Wextra -Wconversion)
+    -Wall -Wextra -Wconversion -Wsign-conversion -Wpedantic)
+  add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-Wold-style-cast>")
   if(WERROR)
     add_compile_options(-Werror)
   endif()

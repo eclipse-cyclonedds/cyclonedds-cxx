@@ -324,7 +324,7 @@ get_cpp11_templ_type_const_value(const idl_constval_t *constval)
     return NULL;
   assert(constval->value.str);
   len = strlen(constval->value.str);
-  if (!(str = malloc(len + 2 /* quotes */ + 1)))
+  if ((str = malloc(len + 2 /* quotes */ + 1)) == NULL)
     return NULL;
   str[0] = '"';
   memcpy(str + 1, constval->value.str, len);

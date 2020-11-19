@@ -128,7 +128,7 @@ generate_macro_call(idl_backend_ctx ctx, const idl_node_t *node)
 static idl_retcode_t
 find_topic_types(idl_backend_ctx ctx, const idl_node_t *node)
 {
-  idl_walkAction *action = (idl_walkAction*) idl_get_custom_context(ctx);
+  idl_walkAction *action = idl_get_walk_function(ctx);
 
   switch (node->mask & (IDL_MODULE | IDL_STRUCT))
   {
@@ -154,13 +154,13 @@ idl_backendGenerateTrait(idl_backend_ctx ctx, const idl_tree_t *parse_tree)
   idl_file_out_printf(ctx, "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n");
   idl_file_out_printf(ctx, "#include \"org/eclipse/cyclonedds/topic/datatopic.hpp\"\n\n");
   idl_file_out_printf(ctx, "namespace org { namespace eclipse { namespace cyclonedds { namespace topic {\n");
-  idl_set_custom_context(ctx, (void *) generate_traits);
+  idl_set_walk_function(ctx, generate_traits);
   result = idl_walk_node_list(ctx, parse_tree->root, find_topic_types, IDL_STRUCT | IDL_MODULE);
-  idl_reset_custom_context(ctx);
-  idl_set_custom_context(ctx, (void *) generate_macro_call);
+  idl_reset_walk_function(ctx);
+  idl_set_walk_function(ctx, generate_macro_call);
   idl_file_out_printf(ctx, "}}}}\n\n");
   result = idl_walk_node_list(ctx, parse_tree->root, find_topic_types, IDL_MODULE | IDL_STRUCT);
-  idl_reset_custom_context(ctx);
+  idl_reset_walk_function(ctx);
   idl_file_out_printf(ctx, "\n");
 
   return result;

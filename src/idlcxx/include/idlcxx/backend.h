@@ -110,6 +110,15 @@ typedef uint32_t idl_walkResult;
 typedef idl_retcode_t
 (idl_walkAction)(idl_backend_ctx ctx, const idl_node_t *node);
 
+IDLCXX_EXPORT
+idl_walkAction* idl_get_walk_function(idl_backend_ctx ctx);
+
+idl_retcode_t
+IDLCXX_EXPORT idl_set_walk_function(idl_backend_ctx ctx, idl_walkAction* fctn);
+
+void
+IDLCXX_EXPORT idl_reset_walk_function(idl_backend_ctx ctx);
+
 idl_retcode_t
 IDLCXX_EXPORT idl_walk_node_list(idl_backend_ctx ctx, const idl_node_t *starting_node, idl_walkAction, idl_mask_t mask);
 

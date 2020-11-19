@@ -222,14 +222,14 @@ AnyDataReaderDelegate::read_cdr(
       dds_return_t ret;
       /* The reader can also be a condition. */
       ret = dds_readcdr(reader,
-                          (struct ddsi_serdata **) c_sample_pointers,
+                          reinterpret_cast<struct ddsi_serdata **>(c_sample_pointers),
                           samples_to_read_cnt,
                           c_sample_infos,
                           ddsc_mask);
 
       if (ret > 0) {
         /* When > 0, ret represents the number of samples read. */
-          samples.set_length((uint32_t) ret);
+          samples.set_length(static_cast<uint32_t>(ret));
           samples.set_sample_infos(c_sample_infos);
       } else {
           samples.set_length(0);
@@ -270,14 +270,14 @@ AnyDataReaderDelegate::take_cdr(
       dds_return_t ret;
       /* The reader can also be a condition. */
       ret = dds_takecdr(reader,
-                          (struct ddsi_serdata **) c_sample_pointers,
+                          reinterpret_cast<struct ddsi_serdata **>(c_sample_pointers),
                           samples_to_read_cnt,
                           c_sample_infos,
                           ddsc_mask);
 
       if (ret > 0) {
         /* When > 0, ret represents the number of samples read. */
-          samples.set_length((uint32_t) ret);
+          samples.set_length(static_cast<uint32_t>(ret));
           samples.set_sample_infos(c_sample_infos);
       } else {
           samples.set_length(0);

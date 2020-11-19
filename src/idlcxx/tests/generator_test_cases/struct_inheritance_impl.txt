@@ -1,0 +1,168 @@
+#include "org/eclipse/cyclonedds/topic/hash.hpp"
+
+size_t I::write_struct(void *data, size_t position) const
+{
+  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment
+  memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
+  position += _al0;  //moving position indicator
+  *reinterpret_cast<int32_t*>(static_cast<char*>(data)+position) = inherited_member();  //writing bytes for member: inherited_member()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t s::write_struct(void *data, size_t position) const
+{
+  position = dynamic_cast<const I&>(*this).write_struct(data, position);
+  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment
+  memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
+  position += _al0;  //moving position indicator
+  *reinterpret_cast<int32_t*>(static_cast<char*>(data)+position) = new_member();  //writing bytes for member: new_member()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t I::write_size(size_t position) const
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  position += 4;  //bytes for member: inherited_member()
+  return position;
+}
+
+size_t s::write_size(size_t position) const
+{
+  position = dynamic_cast<const I&>(*this).write_size(position);
+  position += (4 - (position&0x3))&0x3;  //alignment
+  position += 4;  //bytes for member: new_member()
+  return position;
+}
+
+size_t I::max_size(size_t position) const
+{
+  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
+  if (position != UINT_MAX)   position += 4;  //bytes for member: inherited_member()
+  return position;
+}
+
+size_t s::max_size(size_t position) const
+{
+  if (position != UINT_MAX)   position = dynamic_cast<const I&>(*this).max_size(position);
+  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
+  if (position != UINT_MAX)   position += 4;  //bytes for member: new_member()
+  return position;
+}
+
+size_t I::key_size(size_t position) const
+{
+  return position;
+}
+
+size_t s::key_size(size_t position) const
+{
+  position = dynamic_cast<const I&>(*this).key_size(position);
+  return position;
+}
+
+size_t I::key_max_size(size_t position) const
+{
+  return position;
+}
+
+size_t s::key_max_size(size_t position) const
+{
+  if (position != UINT_MAX)   position = dynamic_cast<const I&>(*this).key_max_size(position);
+  return position;
+}
+
+size_t I::key_write(void *data, size_t position) const
+{
+  (void)data;
+  return position;
+}
+
+bool I::key(ddsi_keyhash_t &hash) const
+{
+  size_t sz = key_size(0);
+  size_t padding = 16 - sz%16;
+  if (sz != 0 && padding == 16) padding = 0;
+  std::vector<unsigned char> buffer(sz+padding);
+  memset(buffer.data()+sz,0x0,padding);
+  key_write(buffer.data(),0);
+  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+  if (fptr == NULL)
+  {
+    if (key_max_size(0) <= 16)
+    {
+      //bind to unmodified function which just copies buffer into the keyhash
+      fptr = &org::eclipse::cyclonedds::topic::simple_key;
+    }
+    else
+    {
+      //bind to MD5 hash function
+      fptr = &org::eclipse::cyclonedds::topic::complex_key;
+    }
+  }
+  return (*fptr)(buffer,hash);
+}
+
+size_t s::key_write(void *data, size_t position) const
+{
+  (void)data;
+  position = dynamic_cast<const I&>(*this).key_write(data, position);
+  return position;
+}
+
+bool s::key(ddsi_keyhash_t &hash) const
+{
+  size_t sz = key_size(0);
+  size_t padding = 16 - sz%16;
+  if (sz != 0 && padding == 16) padding = 0;
+  std::vector<unsigned char> buffer(sz+padding);
+  memset(buffer.data()+sz,0x0,padding);
+  key_write(buffer.data(),0);
+  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+  if (fptr == NULL)
+  {
+    if (key_max_size(0) <= 16)
+    {
+      //bind to unmodified function which just copies buffer into the keyhash
+      fptr = &org::eclipse::cyclonedds::topic::simple_key;
+    }
+    else
+    {
+      //bind to MD5 hash function
+      fptr = &org::eclipse::cyclonedds::topic::complex_key;
+    }
+  }
+  return (*fptr)(buffer,hash);
+}
+
+size_t I::key_read(const void *data, size_t position)
+{
+  (void)data;
+  return position;
+}
+
+size_t s::key_read(const void *data, size_t position)
+{
+  (void)data;
+  position = dynamic_cast<I&>(*this).key_read(data, position);
+  return position;
+}
+
+size_t I::read_struct(const void *data, size_t position)
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  inherited_member() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: inherited_member()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t s::read_struct(const void *data, size_t position)
+{
+  position = dynamic_cast<I&>(*this).read_struct(data, position);
+  position += (4 - (position&0x3))&0x3;  //alignment
+  new_member() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: new_member()
+  position += 4;  //moving position indicator
+  return position;
+}
+

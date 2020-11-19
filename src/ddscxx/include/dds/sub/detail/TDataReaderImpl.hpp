@@ -23,6 +23,7 @@
 #include <dds/sub/Query.hpp>
 #include <dds/sub/detail/SamplesHolder.hpp>
 #include <dds/domain/DomainParticipantListener.hpp>
+#include "dds/core/macros.hpp"
 
 
 
@@ -479,9 +480,11 @@ dds::sub::detail::DataReader<T>::common_constructor(
             dds::sub::DataReaderListener<T>* listener,
             const dds::core::status::StatusMask& mask)
 {
+    DDSCXX_WARNING_MSVC_OFF(4127)
     if (dds::topic::is_topic_type<T>::value == 0) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "DataReader cannot be created, topic information not found");
     }
+    DDSCXX_WARNING_MSVC_ON(4127)
 
     org::eclipse::cyclonedds::sub::qos::DataReaderQosDelegate drQos = qos_.delegate();
 
@@ -614,7 +617,7 @@ dds::sub::detail::DataReader<T>::read_cdr()
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> samples;
     dds::sub::detail::LoanedCDRSamplesHolder<org::eclipse::cyclonedds::topic::CDRBlob> holder(samples);
 
-    this->AnyDataReaderDelegate::read_cdr((dds_entity_t)(this->ddsc_entity), this->status_filter_, holder, (uint32_t)dds::core::LENGTH_UNLIMITED);
+    this->AnyDataReaderDelegate::read_cdr(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
     return samples;
 }
@@ -626,7 +629,7 @@ dds::sub::detail::DataReader<T>::take_cdr()
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> samples;
     dds::sub::detail::LoanedCDRSamplesHolder<org::eclipse::cyclonedds::topic::CDRBlob> holder(samples);
 
-    this->AnyDataReaderDelegate::take_cdr((dds_entity_t)(this->ddsc_entity), this->status_filter_, holder, (uint32_t)dds::core::LENGTH_UNLIMITED);
+    this->AnyDataReaderDelegate::take_cdr(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
     return samples;
 }

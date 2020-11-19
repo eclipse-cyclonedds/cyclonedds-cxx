@@ -21,50 +21,55 @@
 #include "idl/scope.h"
 #include "idl/string.h"
 
-#define format_ostream_indented(depth,ostr,...) \
-if (depth > 0) format_ostream(ostr, "%*c", depth, ' '); \
-format_ostream(ostr, __VA_ARGS__);
+static void format_ostream_indented(size_t depth, idl_ostream_t* ostr, const char *fmt, ...)
+{
+  if (depth > 0) format_ostream(ostr, "%*c", depth, ' ');
+  va_list args;
+  va_start(args, fmt);
+  format_ostream_va_args(ostr, fmt, args);
+  va_end(args);
+}
 
-#define format_header_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->str->head_stream, _str, ##__VA_ARGS__);
+#define format_header_stream(indent,ctx,...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->str->head_stream, __VA_ARGS__);
 
-#define format_impl_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->str->impl_stream, _str, ##__VA_ARGS__);
+#define format_impl_stream(indent,ctx, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->str->impl_stream, __VA_ARGS__);
 
-#define format_key_size_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_size_stream, _str, ##__VA_ARGS__);
+#define format_key_size_stream(indent,ctx, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_size_stream, __VA_ARGS__);
 
-#define format_key_max_size_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_max_size_stream, _str, ##__VA_ARGS__);
+#define format_key_max_size_stream(indent,ctx, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_max_size_stream, __VA_ARGS__);
 
-#define format_key_max_size_intermediate_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_max_size_intermediate_stream, _str, ##__VA_ARGS__);
+#define format_key_max_size_intermediate_stream(indent,ctx, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_max_size_intermediate_stream, __VA_ARGS__);
 
-#define format_key_write_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_write_stream, _str, ##__VA_ARGS__);
+#define format_key_write_stream(indent,ctx, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_write_stream, __VA_ARGS__);
 
-#define format_key_read_stream(indent,ctx,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_read_stream, _str, ##__VA_ARGS__);
+#define format_key_read_stream(indent,ctx, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->key_read_stream, __VA_ARGS__);
 
-#define format_max_size_stream(indent,ctx,key,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->max_size_stream, _str, ##__VA_ARGS__); \
-if (key) { format_key_max_size_stream(indent, ctx, _str, ##__VA_ARGS__); }
+#define format_max_size_stream(indent,ctx,key, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->max_size_stream, __VA_ARGS__); \
+if (key) { format_key_max_size_stream(indent, ctx, __VA_ARGS__); }
 
-#define format_max_size_intermediate_stream(indent,ctx,key,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->max_size_intermediate_stream, _str, ##__VA_ARGS__); \
-if (key) { format_key_max_size_intermediate_stream(indent, ctx, _str, ##__VA_ARGS__); }
+#define format_max_size_intermediate_stream(indent,ctx,key, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->max_size_intermediate_stream, __VA_ARGS__); \
+if (key) { format_key_max_size_intermediate_stream(indent, ctx, __VA_ARGS__); }
 
-#define format_write_stream(indent,ctx,key,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_stream, _str, ##__VA_ARGS__); \
-if (key) {format_key_write_stream(indent,ctx,_str, ##__VA_ARGS__);}
+#define format_write_stream(indent,ctx,key, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_stream, __VA_ARGS__); \
+if (key) {format_key_write_stream(indent,ctx, __VA_ARGS__);}
 
-#define format_write_size_stream(indent,ctx,key,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_size_stream, _str, ##__VA_ARGS__); \
-if (key) {format_key_size_stream(indent,ctx,_str, ##__VA_ARGS__);}
+#define format_write_size_stream(indent,ctx,key, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->write_size_stream, __VA_ARGS__); \
+if (key) {format_key_size_stream(indent,ctx, __VA_ARGS__);}
 
-#define format_read_stream(indent,ctx,key,_str,...) \
-format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, _str, ##__VA_ARGS__); \
-if (key) {format_key_read_stream(indent,ctx,_str, ##__VA_ARGS__);}
+#define format_read_stream(indent,ctx,key, ...) \
+format_ostream_indented(indent ? ctx->depth*2 : 0, ctx->read_stream, __VA_ARGS__); \
+if (key) {format_key_read_stream(indent,ctx, __VA_ARGS__);}
 
 #define namespace_declaration "namespace %s\n"
 #define namespace_closure "} //end " namespace_declaration "\n"
@@ -406,7 +411,7 @@ void close_context(context_t* ctx, idl_streamer_output_t* str)
       //move the contents to the parent
       format_header_stream(1, ctx->parent, namespace_declaration, ctx->context);
       format_header_stream(1, ctx->parent, open_block "\n");
-      format_header_stream(0, ctx->parent, "%s", get_ostream_buffer(ctx->str->head_stream));
+      transfer_ostream_buffer(ctx->str->head_stream, ctx->parent->str->head_stream);
       format_header_stream(1, ctx->parent, namespace_closure, ctx->context);
     }
     else if (str)
@@ -435,7 +440,7 @@ void close_context(context_t* ctx, idl_streamer_output_t* str)
       //move the contents to the parent
       format_impl_stream(1, ctx->parent, namespace_declaration, ctx->context);
       format_impl_stream(1, ctx->parent, open_block "\n");
-      format_impl_stream(0, ctx->parent, "%s", get_ostream_buffer(ctx->str->impl_stream));
+      transfer_ostream_buffer(ctx->str->impl_stream, ctx->parent->str->impl_stream);
       format_impl_stream(1, ctx->parent, namespace_closure, ctx->context);
     }
     else if (str)
@@ -782,38 +787,23 @@ idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
 
   if ((0 > ctx->streamer_funcs.currentalignment || bytewidth > ctx->streamer_funcs.currentalignment) && bytewidth != 1)
   {
-    format_write_stream(1, ctx, false, "  ");
-    if (!ctx->streamer_funcs.alignmentpresent)
-    {
-      format_write_stream(0, ctx, false, "size_t ");
-      ctx->streamer_funcs.alignmentpresent = true;
-    }
-    format_write_stream(0, ctx, false, alignmentbytes " = ", ctx->depth);
-    format_write_stream(0, ctx, false, buffer);
-    format_write_stream(0, ctx, false, align_comment);
+    format_write_stream(1, ctx, false, "  %s" alignmentbytes " = %s" align_comment, ctx->streamer_funcs.alignmentpresent ? "" : "size_t ", ctx->depth, buffer);
+    ctx->streamer_funcs.alignmentpresent = true;
     format_write_stream(1, ctx, false, primitive_write_func_alignment, ctx->depth);
     format_write_stream(1, ctx, false, position_incr_alignment incr_comment, ctx->depth);
 
-    format_write_size_stream(1, ctx, false, position_incr);
-    format_write_size_stream(0, ctx, false, buffer);
-    format_write_size_stream(0, ctx, false, align_comment);
+    format_write_size_stream(1, ctx, false, position_incr "%s" align_comment, buffer);
 
     if (ctx->in_union)
     {
-      format_max_size_intermediate_stream(1, ctx, false, max_size_check union_case_max_incr);
-      format_max_size_intermediate_stream(0, ctx, false, buffer);
-      format_max_size_intermediate_stream(0, ctx, false, align_comment);
+      format_max_size_intermediate_stream(1, ctx, false, max_size_check union_case_max_incr "%s" align_comment, buffer);
     }
     else
     {
-      format_max_size_intermediate_stream(1, ctx, false, max_size_check position_incr);
-      format_max_size_intermediate_stream(0, ctx, false, buffer);
-      format_max_size_intermediate_stream(0, ctx, false, align_comment);
+      format_max_size_intermediate_stream(1, ctx, false, max_size_check position_incr "%s" align_comment, buffer);
     }
 
-    format_read_stream(1, ctx, false, position_incr);
-    format_read_stream(0, ctx, false, buffer);
-    format_read_stream(0, ctx, false, align_comment);
+    format_read_stream(1, ctx, false, position_incr "%s" align_comment, buffer);
 
     ctx->streamer_funcs.accumulatedalignment = 0;
     ctx->streamer_funcs.currentalignment = bytewidth;
@@ -832,39 +822,23 @@ idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
   {
     if ((0 > ctx->key_funcs.currentalignment || bytewidth > ctx->key_funcs.currentalignment) && bytewidth != 1)
     {
-      format_key_write_stream(1, ctx, "  ");
-      if (!ctx->key_funcs.alignmentpresent)
-      {
-        format_key_write_stream(0, ctx, "size_t ");
-        ctx->key_funcs.alignmentpresent = true;
-      }
-      format_key_write_stream(0, ctx, alignmentbytes " = ", ctx->depth);
-
-      format_key_write_stream(0, ctx, buffer);
-      format_key_write_stream(0, ctx, align_comment);
+      format_key_write_stream(1, ctx, "  %s" alignmentbytes " = %s" align_comment, ctx->key_funcs.alignmentpresent ? "" : "size_t ", ctx->depth, buffer);
+      ctx->key_funcs.alignmentpresent = true;
       format_key_write_stream(1, ctx, primitive_write_func_alignment, ctx->depth);
       format_key_write_stream(1, ctx, position_incr_alignment incr_comment, ctx->depth);
 
-      format_key_size_stream(1, ctx, position_incr);
-      format_key_size_stream(0, ctx, buffer);
-      format_key_size_stream(0, ctx, align_comment);
-
-      format_key_read_stream(1, ctx, position_incr);
-      format_key_read_stream(0, ctx, buffer);
-      format_key_read_stream(0, ctx, align_comment);
+      format_key_size_stream(1, ctx, position_incr "%s" align_comment, buffer);
 
       if (ctx->in_union)
       {
-        format_key_max_size_intermediate_stream(1, ctx, max_size_check union_case_max_incr);
-        format_key_max_size_intermediate_stream(0, ctx, buffer);
-        format_key_max_size_intermediate_stream(0, ctx, align_comment);
+        format_key_max_size_intermediate_stream(1, ctx, max_size_check union_case_max_incr "%s" align_comment, buffer);
       }
       else
       {
-        format_key_max_size_intermediate_stream(1, ctx, max_size_check position_incr);
-        format_key_max_size_intermediate_stream(0, ctx, buffer);
-        format_key_max_size_intermediate_stream(0, ctx, align_comment);
+        format_key_max_size_intermediate_stream(1, ctx, max_size_check position_incr "%s" align_comment, buffer);
       }
+
+      format_key_read_stream(1, ctx, position_incr "%s" align_comment, buffer);
 
       ctx->key_funcs.accumulatedalignment = 0;
       ctx->key_funcs.currentalignment = bytewidth;
@@ -1293,12 +1267,12 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_key_write_stream(1, ctx, "    if (key_max_size(0) <= 16)\n");
     format_key_write_stream(1, ctx, "    {\n");
     format_key_write_stream(1, ctx, "      //bind to unmodified function which just copies buffer into the keyhash\n");
-    format_key_write_stream(1, ctx, "      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n")
+    format_key_write_stream(1, ctx, "      fptr = &org::eclipse::cyclonedds::topic::simple_key;\n");
     format_key_write_stream(1, ctx, "    }\n");
     format_key_write_stream(1, ctx, "    else\n");
     format_key_write_stream(1, ctx, "    {\n");
     format_key_write_stream(1, ctx, "      //bind to MD5 hash function\n");
-    format_key_write_stream(1, ctx, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n")
+    format_key_write_stream(1, ctx, "      fptr = &org::eclipse::cyclonedds::topic::complex_key;\n");
     format_key_write_stream(1, ctx, "    }\n");
     format_key_write_stream(1, ctx, "  }\n");
     format_key_write_stream(1, ctx, "  return (*fptr)(buffer,hash);\n");
@@ -1527,7 +1501,7 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
     }
     else if (idl_is_masked(ce, IDL_BOOL))
     {
-      if (!(buffer = idl_strdup(cv->value.bln ? "true" : "false")))
+      if ((idl_strdup(cv->value.bln ? "true" : "false")) == 0)
         return IDL_RETCODE_NO_MEMORY;
     }
     else if (idl_is_masked(ce, IDL_CHAR))

@@ -94,13 +94,13 @@ generate_types(
   if (idl_asprintf(&file, "%s%s%s.hpp", dir, sep, basename) == -1) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err;
-  } else if (!(inc = figure_guard(file))) {
+  } else if ((inc = figure_guard(file)) == NULL) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_guard;
-  } else if (!(ctx = idl_backend_context_new(2, tree->files->name, NULL))) {
+  } else if ((ctx = idl_backend_context_new(2, tree->files->name, NULL)) == NULL) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_context_new;
-  } else if (!(fh = fopen(file, "w"))) {
+  } else if ((fh = fopen(file, "w")) == NULL) {
     goto err_fopen;
   }
 
@@ -153,16 +153,16 @@ generate_streamers(
   } else if (idl_asprintf(&hdr, "%s%s%s.hpp", dir, sep, basename) == -1) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_hdr;
-  } else if (!(inc = figure_guard(hdr))) {
+  } else if ((inc = figure_guard(hdr)) == NULL) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_guard;
-  } else if (!(srcfh = fopen(src, "wb"))) {
+  } else if ((srcfh = fopen(src, "wb")) == NULL) {
     ret = IDL_RETCODE_CANNOT_OPEN_FILE;
     goto err_src_fopen;
-  } else if (!(hdrfh = fopen(hdr, "ab"))) {
+  } else if ((hdrfh = fopen(hdr, "ab")) == NULL) {
     ret = IDL_RETCODE_CANNOT_OPEN_FILE;
     goto err_hdr_fopen;
-  } else if (!(generated = create_idl_streamer_output())) {
+  } else if ((generated = create_idl_streamer_output()) == NULL) {
     ret = IDL_RETCODE_NO_MEMORY;
     goto err_create_streamer_output;
   }
@@ -248,7 +248,7 @@ generate(const idl_tree_t *tree, const char *path)
   dir = (!abs && sep) ? idl_strndup(path, (size_t)(sep-path)) : idl_strdup("");
   if (!dir) {
     return IDL_RETCODE_NO_MEMORY;
-  } else if (!(basename = idl_strndup(file, ext ? (size_t)(ext-file) : strlen(file)))) {
+  } else if ((basename = idl_strndup(file, ext ? (size_t)(ext-file) : strlen(file))) == NULL) {
     free(dir);
     return IDL_RETCODE_NO_MEMORY;
   }

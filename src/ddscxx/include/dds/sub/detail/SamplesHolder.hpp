@@ -117,7 +117,7 @@ public:
 
     void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
     {
-        struct ddsi_serdata **cdr_blobs = (struct ddsi_serdata **) c_sample_pointers;
+        struct ddsi_serdata **cdr_blobs = reinterpret_cast<struct ddsi_serdata **>(c_sample_pointers);
         for (uint32_t i = 0; i < this->index_; ++i)
         {
             ddsrt_iovec_t blob_content;
