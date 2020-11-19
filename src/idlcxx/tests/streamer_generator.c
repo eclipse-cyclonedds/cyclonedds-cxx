@@ -1589,6 +1589,30 @@ void test_bounded_sequence()
   idl_delete_tree(tree);
 }
 
+void test_bounded_sequence_of_structs()
+{
+  const char* str =
+    "struct s_sub {\n"\
+    "long l;\n"\
+    "};\n"\
+    "struct s {\n"\
+    "sequence<s_sub,20> mem;\n"\
+    "};\n"\
+    "#pragma keylist s mem";
+
+  idl_tree_t* tree = NULL;
+  idl_parse_string(str, 0u, &tree);
+
+  idl_streamer_output_t* generated = create_idl_streamer_output();
+  idl_streamers_generate(tree, generated);
+
+  CU_ASSERT_STRING_EQUAL(bounded_sequence_of_structs_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
+}
+
 void test_bounded_string()
 {
   const char* str =
@@ -1882,6 +1906,11 @@ CU_Test(streamer_generator, struct_inheritance)
 CU_Test(streamer_generator, bounded_sequence)
 {
   test_bounded_sequence();
+}
+
+CU_Test(streamer_generator, bounded_sequence_of_structs)
+{
+  test_bounded_sequence_of_structs();
 }
 
 CU_Test(streamer_generator, bounded_string)

@@ -1,0 +1,204 @@
+#include "org/eclipse/cyclonedds/topic/hash.hpp"
+
+size_t s_sub::write_struct(void *data, size_t position) const
+{
+  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment
+  memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
+  position += _al0;  //moving position indicator
+  *reinterpret_cast<int32_t*>(static_cast<char*>(data)+position) = l();  //writing bytes for member: l()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t s::write_struct(void *data, size_t position) const
+{
+  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment
+  memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
+  position += _al0;  //moving position indicator
+  uint32_t _se0 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
+  *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se0;  //writing entries for member: mem()
+  position += 4;  //moving position indicator
+  if (_se0 > 20) throw dds::core::InvalidArgumentError("attempt to assign entries to bounded member mem() in excess of maximum length 20");
+  for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position = mem()[_i1].write_struct(data, position);
+  }
+  return position;
+}
+
+size_t s_sub::write_size(size_t position) const
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  position += 4;  //bytes for member: l()
+  return position;
+}
+
+size_t s::write_size(size_t position) const
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  uint32_t _se0 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
+  position += 4;  //bytes for sequence entries
+  for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position = mem()[_i1].write_size(position);
+  }
+  return position;
+}
+
+size_t s_sub::max_size(size_t position) const
+{
+  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
+  if (position != UINT_MAX)   position += 4;  //bytes for member: l()
+  return position;
+}
+
+size_t s::max_size(size_t position) const
+{
+  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
+  if (position != UINT_MAX)   position += 4;  //bytes for sequence entries
+  for (size_t _i1 = 0; _i1 < 20; _i1++) {
+    if (position != UINT_MAX)   position = mem()[_i1].max_size(position);
+  }
+  return position;
+}
+
+size_t s_sub::key_size(size_t position) const
+{
+  return position;
+}
+
+size_t s::key_size(size_t position) const
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  uint32_t _se0 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
+  position += 4;  //bytes for sequence entries
+  for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position = mem()[_i1].write_size(position);
+  }
+  return position;
+}
+
+size_t s_sub::key_max_size(size_t position) const
+{
+  return position;
+}
+
+size_t s::key_max_size(size_t position) const
+{
+  if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
+  if (position != UINT_MAX)   position += 4;  //bytes for sequence entries
+  for (size_t _i1 = 0; _i1 < 20; _i1++) {
+    if (position != UINT_MAX)   position = mem()[_i1].max_size(position);
+  }
+  return position;
+}
+
+size_t s_sub::key_write(void *data, size_t position) const
+{
+  (void)data;
+  return position;
+}
+
+bool s_sub::key(ddsi_keyhash_t &hash) const
+{
+  size_t sz = key_size(0);
+  size_t padding = 16 - sz%16;
+  if (sz != 0 && padding == 16) padding = 0;
+  std::vector<unsigned char> buffer(sz+padding);
+  memset(buffer.data()+sz,0x0,padding);
+  key_write(buffer.data(),0);
+  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+  if (fptr == NULL)
+  {
+    if (key_max_size(0) <= 16)
+    {
+      //bind to unmodified function which just copies buffer into the keyhash
+      fptr = &org::eclipse::cyclonedds::topic::simple_key;
+    }
+    else
+    {
+      //bind to MD5 hash function
+      fptr = &org::eclipse::cyclonedds::topic::complex_key;
+    }
+  }
+  return (*fptr)(buffer,hash);
+}
+
+size_t s::key_write(void *data, size_t position) const
+{
+  (void)data;
+  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment
+  memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
+  position += _al0;  //moving position indicator
+  uint32_t _se0 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
+  *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se0;  //writing entries for member: mem()
+  position += 4;  //moving position indicator
+  if (_se0 > 20) throw dds::core::InvalidArgumentError("attempt to assign entries to bounded member mem() in excess of maximum length 20");
+  for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position = mem()[_i1].write_struct(data, position);
+  }
+  return position;
+}
+
+bool s::key(ddsi_keyhash_t &hash) const
+{
+  size_t sz = key_size(0);
+  size_t padding = 16 - sz%16;
+  if (sz != 0 && padding == 16) padding = 0;
+  std::vector<unsigned char> buffer(sz+padding);
+  memset(buffer.data()+sz,0x0,padding);
+  key_write(buffer.data(),0);
+  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t &) = NULL;
+  if (fptr == NULL)
+  {
+    if (key_max_size(0) <= 16)
+    {
+      //bind to unmodified function which just copies buffer into the keyhash
+      fptr = &org::eclipse::cyclonedds::topic::simple_key;
+    }
+    else
+    {
+      //bind to MD5 hash function
+      fptr = &org::eclipse::cyclonedds::topic::complex_key;
+    }
+  }
+  return (*fptr)(buffer,hash);
+}
+
+size_t s_sub::key_read(const void *data, size_t position)
+{
+  (void)data;
+  return position;
+}
+
+size_t s::key_read(const void *data, size_t position)
+{
+  (void)data;
+  position += (4 - (position&0x3))&0x3;  //alignment
+  uint32_t _se0 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
+  position += 4;  //moving position indicator
+  mem().resize(_se0);
+  for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position = mem()[_i1].read_struct(data, position);
+  }
+  return position;
+}
+
+size_t s_sub::read_struct(const void *data, size_t position)
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t s::read_struct(const void *data, size_t position)
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  uint32_t _se0 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
+  position += 4;  //moving position indicator
+  mem().resize(_se0);
+  for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position = mem()[_i1].read_struct(data, position);
+  }
+  return position;
+}
+
