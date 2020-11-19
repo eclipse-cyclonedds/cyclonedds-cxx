@@ -26,9 +26,8 @@ size_t s::write_size(size_t position) const
 size_t s::max_size(size_t position) const
 {
   if (position != UINT_MAX)   position += (4 - (position&0x3))&0x3;  //alignment
-  uint32_t _se0 = static_cast<uint32_t>(mem().size());  //number of entries in the sequence
   if (position != UINT_MAX)   position += 4;  //bytes for sequence entries
-  if (position != UINT_MAX)   position += _se0*4;  //entries of sequence
+  if (position != UINT_MAX)   position += 80;  //entries of sequence
   return position;
 }
 

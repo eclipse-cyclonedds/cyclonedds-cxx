@@ -114,11 +114,12 @@ if (key) {format_key_read_stream(indent,ctx, __VA_ARGS__);}
 #define bool_write_seq "  for (size_t _b = 0; _b < "seqentries"; _b++) *(static_cast<char*>(data)+position++) = (%s[_b] ? 0x1 : 0x0); //writing bytes for member: %s\n"
 #define bool_read_seq "  for (size_t _b = 0; _b < "seqentries"; _b++) %s[_b] = (*(static_cast<const char*>(data)+position++) ? 0x1 : 0x0); //reading bytes for member: %s\n"
 #define sequence_iterate "  for (size_t _i%d = 0; _i%d < "seqentries"; _i%d++) {\n"
+#define bound_iterate "  for (size_t _i%d = 0; _i%d < %"PRIu64"; _i%d++) {\n"
 #define seq_read_resize "  %s.resize("seqentries");\n"
 #define seq_length_exception "  if ("seqentries" > %"PRIu64") throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %"PRIu64"\");\n"
 #define seq_incr position_incr seqentries"*%d;"
 #define seq_inc_1 position_incr seqentries ";"
-#define max_size_incr_checked_multiple max_size_check seq_incr entries_of_sequence_comment
+#define max_size_incr_checked_multiple max_size_check primitive_incr_pos entries_of_sequence_comment
 #define array_iterate "  for (size_t _i%d = 0; _i%d < %"PRIu64"; _i%d++)  {\n"
 #define array_accessor "%s[_i%d]"
 #define instance_write_func position_set "%s.write_struct(data, position);\n"
@@ -1008,13 +1009,11 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
   format_read_stream(1, ctx, is_key, "  ");
   format_write_stream(1, ctx, is_key, "  ");
   format_write_size_stream(1, ctx, is_key, "  ");
-  format_max_size_intermediate_stream(1, ctx, is_key, "  ");
   if (!ctx->streamer_funcs.sequenceentriespresent)
   {
     format_read_stream(0, ctx, false, "uint32_t ");
     format_write_stream(0, ctx, false, "uint32_t ");
     format_write_size_stream(0, ctx, false, "uint32_t ");
-    format_max_size_intermediate_stream(0, ctx, false, "uint32_t ");
     ctx->streamer_funcs.sequenceentriespresent = true;
   }
 
@@ -1023,7 +1022,6 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
     format_key_read_stream(0, ctx, "uint32_t ");
     format_key_write_stream(0, ctx, "uint32_t ");
     format_key_size_stream(0, ctx, "uint32_t ");
-    format_key_max_size_intermediate_stream(0, ctx, "uint32_t ");
     ctx->key_funcs.sequenceentriespresent = true;
   }
 
@@ -1037,7 +1035,6 @@ idl_retcode_t process_sequence_entries(context_t* ctx, const char* accessor, boo
   format_write_size_stream(0, ctx, is_key, primitive_write_func_seq, ctx->depth, accessor, plusone ? "+1" : "");
   format_write_size_stream(1, ctx, is_key, primitive_incr_pos bytes_for_seq_entries_comment, (int)4);
 
-  format_max_size_intermediate_stream(0, ctx, is_key, primitive_write_func_seq, ctx->depth, accessor, plusone ? "+1" : "");
   if (ctx->in_union)
   {
     format_max_size_intermediate_stream(1, ctx, is_key, union_case_max_incr "4;\n");
@@ -1724,7 +1721,7 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
     format_write_size_stream(1, ctx, is_key, seq_incr entries_of_sequence_comment, ctx->depth, bytewidth);
     if (bound)
     {
-      format_max_size_intermediate_stream(1, ctx, is_key, max_size_incr_checked_multiple, ctx->depth, bytewidth);
+      format_max_size_intermediate_stream(1, ctx, is_key, max_size_incr_checked_multiple, (int)bound * bytewidth);
     }
 
     free(cast);
@@ -1737,7 +1734,7 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
     format_write_stream(1, ctx, is_key, sequence_iterate, ctx->depth + 1, ctx->depth + 1, ctx->depth, ctx->depth + 1);
     format_write_size_stream(1, ctx, is_key, sequence_iterate, ctx->depth + 1, ctx->depth + 1, ctx->depth, ctx->depth + 1);
     format_read_stream(1, ctx, is_key, sequence_iterate, ctx->depth + 1, ctx->depth + 1, ctx->depth, ctx->depth + 1);
-    format_max_size_intermediate_stream(1, ctx, is_key, sequence_iterate, ctx->depth + 1, ctx->depth + 1, ctx->depth, ctx->depth + 1);
+    format_max_size_intermediate_stream(1, ctx, is_key, bound_iterate, ctx->depth + 1, ctx->depth + 1, bound, ctx->depth + 1);
     ctx->depth++;
 
     bool locals[4];
