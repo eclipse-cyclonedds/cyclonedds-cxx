@@ -96,13 +96,7 @@ public:
      * @throw  dds::core::Exception
      */
     template <typename FUN>
-    TGuardCondition(FUN& functor);
-
-    /**
-     * @copydoc dds::core::cond::TGuardCondition::TGuardCondition(FUN& functor)
-     */
-    template <typename FUN>
-    TGuardCondition(const FUN& functor);
+    TGuardCondition(FUN functor);
 
     /** @cond */
     ~TGuardCondition();

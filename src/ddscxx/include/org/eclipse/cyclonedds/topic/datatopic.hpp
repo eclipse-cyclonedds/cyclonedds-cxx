@@ -461,11 +461,24 @@ void sertopic_realloc_samples(
 {
   (void)d;
   (void)oldcount;
-  auto msgs = static_cast<std::vector<T>*>(old);
-  msgs->resize(count);
-  size_t i = 0;
-  for (auto& msg : *msgs)
-    ptrs[i++] = &msg;
+
+  /* For C++ we make one big assumption about the caller of this function:
+   * it can only be invoked by the ddsi_sertopic_alloc_sample, and will therefore
+   * never be used to reallocate an existing sample collection. This is caused by
+   * the fact that the C++ API lets either the user specify the exact dimensions
+   * of his preallocated collection (in which case there is no need to realloc them),
+   * or if the user didn't preallocate any memory it peeks at the available
+   * samples prior to allocating the sample collection that is returned (so that
+   * again there is no need to reallocate it).
+   * Because of this, we can safely assume that sertopic_realloc_samples can only
+   * be invoked by ddsi_sertopic_alloc_sample, in which case oldCount is always 0,
+   * count is always 1 and the old pointer is always null.
+   */
+  assert(oldcount == 0);
+  assert(count == 1);
+  assert(old == nullptr);
+
+  ptrs[0] = new T();
 }
 
 template <typename T>
@@ -474,13 +487,29 @@ void sertopic_free_samples(
   dds_free_op_t op)
 {
   (void)d;
-  (void)ptrs;
   (void)count;
-  (void)op;
+
+  /* For C++ we make one big assumption about the caller of this function:
+   * it can only be invoked by the ddsi_sertopic_free_sample, and will therefore
+   * never be used to free an existing sample collection. This is caused by
+   * the fact that the C++ API lets either the user specify the exact dimensions
+   * of his preallocated collection (in which case there is no need to release
+   * it in the cyclone code base), or if the user didn't preallocate any memory it
+   * returns a collection of samples that will be owned by the user (in which case
+   * cyclone doesn't need to release the collection either).
+   * Because of this, we can safely assume that sertopic_free_samples can only
+   * be invoked by ddsi_sertopic_free_sample, in which case count is always 1,
+   * and the op flags can either be set to DDS_FREE_ALL_BIT, or to DDS_FREE_CONTENTS_BIT.
+   */
   assert(count == 1);
-  T* ptr = (T*)ptrs[0];
-  assert(ptr);
-  *ptr = T();
+
+  T* ptr = reinterpret_cast<T *>(ptrs[0]);
+  if (op & DDS_FREE_ALL_BIT) {
+    delete ptr;
+  } else {
+    assert(op & DDS_FREE_CONTENTS_BIT);
+    *ptr = T();
+  }
 }
 
 #if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH

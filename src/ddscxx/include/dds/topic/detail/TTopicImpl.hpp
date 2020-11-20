@@ -276,7 +276,7 @@ dds::topic::detail::Topic<T>::wrapper()
 {
 
     typename Topic::ref_type ref =
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<Topic<T> >(this->get_strong_ref());
+            ::std::dynamic_pointer_cast<Topic<T> >(this->get_strong_ref());
     dds::topic::Topic<T, dds::topic::detail::Topic> topic(ref);
 
     return topic;

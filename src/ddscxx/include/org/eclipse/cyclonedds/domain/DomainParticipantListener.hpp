@@ -31,6 +31,8 @@ namespace cyclonedds
 namespace domain
 {
 
+DDSCXX_WARNING_MSVC_OFF(4250)
+
 class OMG_DDS_API DomainParticipantListener :
     public virtual dds::domain::DomainParticipantListener,
     public virtual org::eclipse::cyclonedds::topic::AnyTopicListener
@@ -47,6 +49,8 @@ class OMG_DDS_API NoOpDomainParticipantListener :
 public:
     virtual ~NoOpDomainParticipantListener()  { }
 };
+
+DDSCXX_WARNING_MSVC_ON(4250)
 
 }
 }

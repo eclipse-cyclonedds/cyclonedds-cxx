@@ -90,7 +90,7 @@ dds::core::cond::TCondition<org::eclipse::cyclonedds::core::cond::ConditionDeleg
 org::eclipse::cyclonedds::core::cond::ConditionDelegate::wrapper()
 {
     org::eclipse::cyclonedds::core::cond::ConditionDelegate::ref_type ref =
-          OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<ConditionDelegate>
+          ::std::dynamic_pointer_cast<ConditionDelegate>
                                                       (this->get_strong_ref());
 
     dds::core::cond::TCondition<org::eclipse::cyclonedds::core::cond::ConditionDelegate>

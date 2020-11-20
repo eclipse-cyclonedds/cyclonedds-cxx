@@ -112,11 +112,7 @@ public:
      * @throw  dds::core::Exception
      */
     template <typename FUN>
-    TStatusCondition(const dds::core::Entity& e, FUN& functor);
-
-    /** @copydoc dds::core::cond::TStatusCondition::TStatusCondition(const dds::core::Entity& e, FUN& functor) */
-    template <typename FUN>
-    TStatusCondition(const dds::core::Entity& e, const FUN& functor);
+    TStatusCondition(const dds::core::Entity& e, FUN functor);
 
     /** @cond */
     ~TStatusCondition();

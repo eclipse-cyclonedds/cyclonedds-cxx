@@ -227,7 +227,6 @@ if(BUILD_DOCS)
   set(DOXYGEN_MACRO_EXPANSION YES)
   set(DOXYGEN_PREDEFINED
     "DOXYGEN_FOR_ISOCPP=1"
-    "OSPL_ISOCPP_IMPL_API="
     "OMG_DDS_API=")
   doxygen_add_docs(ddscxx_api_docs ${input_files})
 endif()

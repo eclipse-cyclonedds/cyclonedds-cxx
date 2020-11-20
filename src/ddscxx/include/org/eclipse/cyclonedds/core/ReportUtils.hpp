@@ -154,7 +154,7 @@ const int32_t null_reference_error_code        = 13;
 
 
 
-OSPL_ISOCPP_IMPL_API void
+OMG_DDS_API void
 report(
     int32_t code,
     int32_t reportType,
@@ -164,7 +164,7 @@ report(
     const char *format,
     ...);
 
-OSPL_ISOCPP_IMPL_API void
+OMG_DDS_API void
 throw_exception(
     int32_t code,
     const char *file,
@@ -173,7 +173,7 @@ throw_exception(
     const char *format,
     ...);
 
-OSPL_ISOCPP_IMPL_API void
+OMG_DDS_API void
 check_ddsc_result_and_throw_exception(
     dds_return_t code,
     const char *file,

@@ -46,6 +46,9 @@ namespace core
 {
 namespace cond
 {
+
+DDSCXX_WARNING_MSVC_OFF(4251)
+
     class OMG_DDS_API WaitSetDelegate :
         public org::eclipse::cyclonedds::core::DDScObjectDelegate
     {
@@ -83,6 +86,9 @@ namespace cond
     private:
         ConditionMap conditions_;
     };
+
+DDSCXX_WARNING_MSVC_ON(4251)
+
 }
 }
 }

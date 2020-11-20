@@ -44,7 +44,7 @@ org::eclipse::cyclonedds::core::EntitySet::contains(const dds::core::InstanceHan
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = it->lock();
         if (ref) {
             org::eclipse::cyclonedds::core::EntityDelegate::ref_type entity =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<EntityDelegate>(ref);
+                    ::std::dynamic_pointer_cast<EntityDelegate>(ref);
 
             /* Check if current entity is the one that is searched for. */
             contains = (entity->instance_handle() == handle);
@@ -67,7 +67,7 @@ org::eclipse::cyclonedds::core::EntitySet::all_close()
     for (vectorIterator it = vctr.begin(); it != vctr.end(); ++it) {
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = it->lock();
         if (ref) {
-            OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<EntityDelegate>(ref).get()->close();
+            ::std::dynamic_pointer_cast<EntityDelegate>(ref).get()->close();
         }
     }
 }
@@ -81,7 +81,7 @@ org::eclipse::cyclonedds::core::EntitySet::all_retain()
     for (vectorIterator it = vctr.begin(); it != vctr.end(); ++it) {
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = it->lock();
          if (ref) {
-             OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<EntityDelegate>(ref).get()->retain();
+             ::std::dynamic_pointer_cast<EntityDelegate>(ref).get()->retain();
          }
     }
 }
@@ -95,7 +95,7 @@ org::eclipse::cyclonedds::core::EntitySet::all_enable()
     for (vectorIterator it = vctr.begin(); it != vctr.end(); ++it) {
         org::eclipse::cyclonedds::core::ObjectDelegate::ref_type ref = it->lock();
          if (ref) {
-             OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<EntityDelegate>(ref).get()->close();
+             ::std::dynamic_pointer_cast<EntityDelegate>(ref).get()->close();
          }
     }
 }

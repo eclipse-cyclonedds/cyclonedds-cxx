@@ -35,8 +35,46 @@ namespace dds {
 namespace topic {
 namespace detail {
 
+class FunctorHolderBase
+{
+public:
+    FunctorHolderBase() { };
+
+    virtual ~FunctorHolderBase() { };
+
+    virtual bool check_sample(const void *sample) = 0;
+
+    static bool c99_check_sample(const void *sample, void *arg)
+    {
+        FunctorHolderBase *funcHolder = static_cast<FunctorHolderBase *>(arg);
+        return funcHolder->check_sample(sample);
+    }
+};
+
+template <typename FUN, typename T>
+class FunctorHolder : public FunctorHolderBase
+{
+public:
+    /* Remove const to be able to call non-const functors. */
+    FunctorHolder(FUN functor) : myFunctor(functor)
+    {
+    }
+
+    virtual ~FunctorHolder() { };
+
+    bool check_sample(const void *sample)
+    {
+        return myFunctor(*(reinterpret_cast<const T*>(sample)));
+    }
+
+private:
+    FUN myFunctor;
+};
+
 template <typename T>
-class ContentFilteredTopic  : public virtual org::eclipse::cyclonedds::topic::TopicDescriptionDelegate
+class ContentFilteredTopic  :
+    public virtual org::eclipse::cyclonedds::topic::TopicDescriptionDelegate,
+    public virtual org::eclipse::cyclonedds::core::DDScObjectDelegate
 {
 public:
     ContentFilteredTopic(
@@ -44,11 +82,11 @@ public:
         const std::string& name,
         const dds::topic::Filter& filter)
         : org::eclipse::cyclonedds::topic::TopicDescriptionDelegate(topic.domain_participant(), name, topic.type_name()),
+          org::eclipse::cyclonedds::core::DDScObjectDelegate(),
           myTopic(topic),
-          myFilter(filter)
+          myFilter(filter),
+          myFunctor(nullptr)
     {
-        ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
-        //@todo validate_filter();
         topic.delegate()->incrNrDependents();
         this->myParticipant.delegate()->add_cfTopic(*this);
         this->ser_topic_ = topic->get_ser_topic();
@@ -192,9 +230,30 @@ public:
     }
 #endif
 
+    template <typename Functor>
+    void filter_function(Functor func)
+    {
+        /* Make a private copy of the topic so my filter doesn't bother the original topic. */
+        dds_qos_t* ddsc_qos = myTopic.qos()->ddsc_qos();
+        ddsi_sertopic *st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerTopic(myTopic.name());
+        dds_entity_t cfTopic = dds_create_topic_generic(
+            myTopic.domain_participant().delegate()->get_ddsc_entity(), &st, ddsc_qos, NULL, NULL);
+        dds_delete_qos(ddsc_qos);
+        this->set_ddsc_entity(cfTopic);
+
+        org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
+        if (this->myFunctor)
+        {
+            delete this->myFunctor;
+        }
+        myFunctor = new FunctorHolder<Functor, T>(func);
+        dds_set_topic_filter_and_arg(cfTopic, FunctorHolderBase::c99_check_sample, myFunctor);
+    }
+
 private:
     dds::topic::Topic<T> myTopic;
     dds::topic::Filter myFilter;
+    FunctorHolderBase *myFunctor;
 };
 
 }

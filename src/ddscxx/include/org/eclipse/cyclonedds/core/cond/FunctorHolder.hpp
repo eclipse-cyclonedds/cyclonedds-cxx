@@ -56,8 +56,7 @@ template <typename FUN>
 class FunctorHolder : public FunctorHolderBase
 {
 public:
-    /* Remove const to be able to call non-const functors. */
-    FunctorHolder(FUN &functor) : myFunctor(functor)
+    FunctorHolder(FUN functor) : myFunctor(functor)
     {
     }
 
@@ -69,7 +68,7 @@ public:
     }
 
 private:
-    FUN &myFunctor;
+    FUN myFunctor;
 };
 
 }

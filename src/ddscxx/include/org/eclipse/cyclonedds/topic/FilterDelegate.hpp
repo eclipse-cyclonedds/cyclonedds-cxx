@@ -33,6 +33,9 @@ namespace cyclonedds
 {
 namespace topic
 {
+
+DDSCXX_WARNING_MSVC_OFF(4251)
+
 class OMG_DDS_API FilterDelegate
 {
 public:
@@ -92,6 +95,7 @@ private:
     std::vector<std::string> myParams;
 };
 
+DDSCXX_WARNING_MSVC_ON(4251)
 
 // End of implementation
 }

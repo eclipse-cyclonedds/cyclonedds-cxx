@@ -65,7 +65,7 @@ struct typed_finder<T, dds::topic::detail::ContentFilteredTopic<T> > {
 
         if (entity) {
             typename dds::topic::ContentFilteredTopic<T>::DELEGATE_REF_T topic_typed =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<typename dds::topic::ContentFilteredTopic<T>::DELEGATE_T>(entity);
+                    ::std::dynamic_pointer_cast<typename dds::topic::ContentFilteredTopic<T>::DELEGATE_T>(entity);
             topic = dds::topic::ContentFilteredTopic<T>(topic_typed);
         }
         return topic;
@@ -84,7 +84,7 @@ struct typed_finder<T, dds::topic::detail::Topic<T> > {
 
         if (entity) {
             typename dds::topic::Topic<T>::DELEGATE_REF_T topic_typed =
-                    OSPL_CXX11_STD_MODULE::dynamic_pointer_cast<typename dds::topic::Topic<T>::DELEGATE_T>(entity);
+                    ::std::dynamic_pointer_cast<typename dds::topic::Topic<T>::DELEGATE_T>(entity);
             topic = dds::topic::Topic<T>(topic_typed);
         }
         return topic;

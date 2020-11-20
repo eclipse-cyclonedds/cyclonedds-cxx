@@ -30,7 +30,7 @@ namespace cyclonedds
 namespace topic
 {
 
-class OMG_DDS_API TopicDescriptionDelegate : public virtual org::eclipse::cyclonedds::core::ObjectDelegate
+class OMG_DDS_API TopicDescriptionDelegate : public virtual org::eclipse::cyclonedds::core::DDScObjectDelegate
 {
 public:
     typedef ::dds::core::smart_ptr_traits< TopicDescriptionDelegate >::ref_type ref_type;
