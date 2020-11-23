@@ -253,7 +253,7 @@ size_t u::read_struct(const void *data, size_t position)
     {
       uint32_t _se2 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
       position += 4;  //moving position indicator
-      str().assign(reinterpret_cast<const char*>(static_cast<const char*>(data)+position),reinterpret_cast<const char*>(static_cast<const char*>(data)+position)+_se2); //reading bytes for member: str()
+      str().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se2-1); //reading bytes for member: str()
       position += _se2;  //entries of sequence
     }
     break;

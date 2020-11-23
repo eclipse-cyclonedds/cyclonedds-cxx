@@ -110,6 +110,7 @@ if (key) {format_key_read_stream(indent,ctx, __VA_ARGS__);}
 #define primitive_write_seq "memcpy(static_cast<char*>(data)+position,%s.data(),"seqentries"*%d); //writing bytes for member: %s\n"
 #define primitive_write_seq_checked "  if (0 < %s.size()) " primitive_write_seq
 #define primitive_read_seq "  %s.assign(reinterpret_cast<const %s*>(static_cast<const char*>(data)+position),reinterpret_cast<const %s*>(static_cast<const char*>(data)+position)+"seqentries"); //reading bytes for member: %s\n"
+#define read_str "  %s.assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+"seqentries"-1); //reading bytes for member: %s\n"
 #define string_write "  " primitive_write_seq
 #define bool_write_seq "  for (size_t _b = 0; _b < "seqentries"; _b++) *(static_cast<char*>(data)+position++) = (%s[_b] ? 0x1 : 0x0); //writing bytes for member: %s\n"
 #define bool_read_seq "  for (size_t _b = 0; _b < "seqentries"; _b++) %s[_b] = (*(static_cast<const char*>(data)+position++) ? 0x1 : 0x0); //reading bytes for member: %s\n"
@@ -1618,7 +1619,7 @@ idl_retcode_t process_string_impl(context_t* ctx, const char* accessor, idl_stri
   format_write_stream(1, ctx, is_key, seq_inc_1 entries_of_sequence_comment, ctx->depth);
   format_write_size_stream(1, ctx, is_key, seq_inc_1 entries_of_sequence_comment, ctx->depth);
 
-  format_read_stream(1, ctx, is_key, primitive_read_seq, accessor, "char", "char", ctx->depth, accessor);
+  format_read_stream(1, ctx, is_key, read_str, accessor, ctx->depth, accessor);
   format_read_stream(1, ctx, is_key, seq_inc_1 entries_of_sequence_comment, ctx->depth);
 
   if (bound)

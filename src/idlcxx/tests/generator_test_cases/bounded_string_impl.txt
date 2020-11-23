@@ -83,7 +83,7 @@ size_t s::read_struct(const void *data, size_t position)
   position += (4 - (position&0x3))&0x3;  //alignment
   uint32_t _se0 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
   position += 4;  //moving position indicator
-  mem().assign(reinterpret_cast<const char*>(static_cast<const char*>(data)+position),reinterpret_cast<const char*>(static_cast<const char*>(data)+position)+_se0); //reading bytes for member: mem()
+  mem().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se0-1); //reading bytes for member: mem()
   position += _se0;  //entries of sequence
   return position;
 }
