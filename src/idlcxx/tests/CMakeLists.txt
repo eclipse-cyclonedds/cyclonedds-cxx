@@ -13,47 +13,45 @@ include(CUnit)
 
 set(binary_dir "${CMAKE_CURRENT_BINARY_DIR}")
 set(source_dir "${CMAKE_CURRENT_SOURCE_DIR}")
+set(generator_dir "${source_dir}/generator")
 
-#the set of test case files which will be made into C code
-set(test_generator_files
-    ${source_dir}/generator_test_cases/bounded_sequence_impl.txt
-    ${source_dir}/generator_test_cases/bounded_sequence_of_structs_impl.txt
-    ${source_dir}/generator_test_cases/bounded_string_impl.txt
-    ${source_dir}/generator_test_cases/cross_call_impl.txt
-    ${source_dir}/generator_test_cases/keys_base_impl.txt
-    ${source_dir}/generator_test_cases/keys_struct_explicit_impl.txt
-    ${source_dir}/generator_test_cases/keys_struct_implicit_impl.txt
-    ${source_dir}/generator_test_cases/keys_typedef_impl.txt
-    ${source_dir}/generator_test_cases/keys_typedef_header.txt
-    ${source_dir}/generator_test_cases/keys_union_implicit_impl.txt
-    ${source_dir}/generator_test_cases/sequence_recursive_header.txt
-    ${source_dir}/generator_test_cases/sequence_recursive_impl.txt
-    ${source_dir}/generator_test_cases/struct_inheritance_impl.txt
-    ${source_dir}/generator_test_cases/typedef_resolution_header.txt
-    ${source_dir}/generator_test_cases/typedef_resolution_impl.txt)
-set(generated_test_file ${binary_dir}/generator_test_cases.h)
+set(sources
+  cpp11Backend.c
+  idl_ostream.c
+  streamer_generator.c)
 
-#convert the test case files to a C header file
-add_custom_command(
-  OUTPUT ${generated_test_file}
-  DEPENDS ${test_generator_files}
-  COMMAND ${CMAKE_COMMAND} -DINPUT="${test_generator_files}" -DOUTPUT="${generated_test_file}" -P ${source_dir}/text_to_c.cmake)
+add_cunit_executable(cunit_idlcxx ${sources})
 
-#generate a library of the test cases
-set(idlcxx_test_files "idlcxx_test_files")
-add_library(${idlcxx_test_files} SHARED ${generated_test_file})
-set_target_properties(${idlcxx_test_files} PROPERTIES LINKER_LANGUAGE C)
+set(xxd_input
+  ${generator_dir}/bounded_sequence_impl.cpp.in
+  ${generator_dir}/bounded_sequence_of_structs_impl.cpp.in
+  ${generator_dir}/bounded_string_impl.cpp.in
+  ${generator_dir}/cross_call_impl.cpp.in
+  ${generator_dir}/keys_base_impl.cpp.in
+  ${generator_dir}/keys_struct_explicit_impl.cpp.in
+  ${generator_dir}/keys_struct_implicit_impl.cpp.in
+  ${generator_dir}/keys_typedef_impl.cpp.in
+  ${generator_dir}/keys_typedef_header.cpp.in
+  ${generator_dir}/keys_union_implicit_impl.cpp.in
+  ${generator_dir}/sequence_recursive_header.cpp.in
+  ${generator_dir}/sequence_recursive_impl.cpp.in
+  ${generator_dir}/struct_inheritance_impl.cpp.in
+  ${generator_dir}/typedef_resolution_header.cpp.in
+  ${generator_dir}/typedef_resolution_impl.cpp.in)
 
-set(idlcxx_test_sources
-    "cpp11Backend.c"
-    "idl_ostream.c"
-    "streamer_generator.c")
+foreach(input ${xxd_input})
+  get_filename_component(name ${input} NAME_WE)
+  set(output "${binary_dir}/${name}.c")
+  add_custom_command(
+    OUTPUT ${output}
+    DEPENDS ${input}
+    COMMAND ${CMAKE_COMMAND}
+      ARGS -DINPUT="${input}" -DOUTPUT="${output}" -P ${source_dir}/xxd.cmake)
+  list(APPEND xxd_output ${output})
+endforeach()
 
-add_cunit_executable(cunit_idlcxx ${idlcxx_test_sources})
-target_link_libraries(cunit_idlcxx PRIVATE idlcxx ${idlcxx_test_files})
-
-#generated files (from function create_resources) are put here
-target_include_directories(cunit_idlcxx PUBLIC ${binary_dir})
+target_sources(cunit_idlcxx PRIVATE ${xxd_output})
+target_link_libraries(cunit_idlcxx PRIVATE idlcxx)
 
 # Add location of CycloneDDS::idl to LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, PATH
 get_target_property(lib CycloneDDS::idl LOCATION)

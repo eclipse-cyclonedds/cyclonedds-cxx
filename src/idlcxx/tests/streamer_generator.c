@@ -14,9 +14,24 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+extern const unsigned char bounded_sequence_impl_cpp_in[];
+extern const unsigned char bounded_sequence_of_structs_impl_cpp_in[];
+extern const unsigned char bounded_string_impl_cpp_in[];
+extern const unsigned char cross_call_impl_cpp_in[];
+extern const unsigned char keys_base_impl_cpp_in[];
+extern const unsigned char keys_struct_explicit_impl_cpp_in[];
+extern const unsigned char keys_struct_implicit_impl_cpp_in[];
+extern const unsigned char keys_typedef_impl_cpp_in[];
+extern const unsigned char keys_typedef_header_cpp_in[];
+extern const unsigned char keys_union_implicit_impl_cpp_in[];
+extern const unsigned char sequence_recursive_header_cpp_in[];
+extern const unsigned char sequence_recursive_impl_cpp_in[];
+extern const unsigned char struct_inheritance_impl_cpp_in[];
+extern const unsigned char typedef_resolution_header_cpp_in[];
+extern const unsigned char typedef_resolution_impl_cpp_in[];
+
 #include "idlcxx/streamer_generator.h"
 #include "idl/processor.h"
-#include "generator_test_cases.h"
 
 #include "CUnit/Theory.h"
 
@@ -1540,7 +1555,7 @@ void test_namespace_cross_call()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(cross_call_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(cross_call_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1562,7 +1577,7 @@ void test_struct_inheritance()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(struct_inheritance_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(struct_inheritance_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1582,7 +1597,7 @@ void test_bounded_sequence()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(bounded_sequence_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(bounded_sequence_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1606,7 +1621,7 @@ void test_bounded_sequence_of_structs()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(bounded_sequence_of_structs_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(bounded_sequence_of_structs_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1626,7 +1641,7 @@ void test_bounded_string()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(bounded_string_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(bounded_string_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1658,8 +1673,8 @@ void test_typedef_resolution()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(typedef_resolution_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(typedef_resolution_header_txt, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(typedef_resolution_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(typedef_resolution_header_cpp_in, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
   idl_delete_tree(tree);
@@ -1679,7 +1694,7 @@ void test_keys_base()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(keys_base_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(keys_base_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1710,7 +1725,7 @@ void test_keys_union_implicit()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(keys_union_implicit_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(keys_union_implicit_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1736,7 +1751,7 @@ void test_keys_struct_explicit()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(keys_struct_explicit_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(keys_struct_explicit_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1762,7 +1777,7 @@ void test_keys_struct_implicit()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(keys_struct_implicit_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(keys_struct_implicit_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
   CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
@@ -1784,8 +1799,8 @@ void test_keys_typedef()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(keys_typedef_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(keys_typedef_header_txt, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(keys_typedef_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(keys_typedef_header_cpp_in, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
   
   destruct_idl_streamer_output(generated);
   idl_delete_tree(tree);
@@ -1802,8 +1817,8 @@ void test_sequence_recursive()
   idl_streamer_output_t* generated = create_idl_streamer_output();
   idl_streamers_generate(tree, generated);
 
-  CU_ASSERT_STRING_EQUAL(sequence_recursive_impl_txt, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
-  CU_ASSERT_STRING_EQUAL(sequence_recursive_header_txt, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(sequence_recursive_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL(sequence_recursive_header_cpp_in, get_ostream_buffer(get_idl_streamer_head_buf(generated)));
 
   destruct_idl_streamer_output(generated);
   idl_delete_tree(tree);
