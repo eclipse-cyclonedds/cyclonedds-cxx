@@ -129,7 +129,7 @@ size_t typedef_key_read_recseq(recseq &obj, const void *data, size_t position)
       for (size_t _i3 = 0; _i3 < _se2; _i3++) {
         uint32_t _se3 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
         position += 4;  //moving position indicator
-        obj[_i1][_i2][_i3].assign(reinterpret_cast<const char*>(static_cast<const char*>(data)+position),reinterpret_cast<const char*>(static_cast<const char*>(data)+position)+_se3); //reading bytes for member: obj[_i1][_i2][_i3]
+        obj[_i1][_i2][_i3].assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se3-1); //reading bytes for member: obj[_i1][_i2][_i3]
         position += _se3;  //entries of sequence
       }
     }
@@ -154,7 +154,7 @@ size_t typedef_read_recseq(recseq &obj, const void* data, size_t position)
       for (size_t _i3 = 0; _i3 < _se2; _i3++) {
         uint32_t _se3 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
         position += 4;  //moving position indicator
-        obj[_i1][_i2][_i3].assign(reinterpret_cast<const char*>(static_cast<const char*>(data)+position),reinterpret_cast<const char*>(static_cast<const char*>(data)+position)+_se3); //reading bytes for member: obj[_i1][_i2][_i3]
+        obj[_i1][_i2][_i3].assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se3-1); //reading bytes for member: obj[_i1][_i2][_i3]
         position += _se3;  //entries of sequence
       }
     }

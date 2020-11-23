@@ -491,7 +491,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  uint32_t %s = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence\n", se);
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
-  format_ostream_indented(ns * 2, ostr, "  %s().assign(reinterpret_cast<const char*>(static_cast<const char*>(data)+position),reinterpret_cast<const char*>(static_cast<const char*>(data)+position)+%s); //reading bytes for member: %s()\n", in, se, in);
+  format_ostream_indented(ns * 2, ostr, "  %s().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+%s-1); //reading bytes for member: %s()\n", in, se, in);
   format_ostream_indented(ns * 2, ostr, "  position += %s;  //entries of sequence\n", se);
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
@@ -807,7 +807,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    {\n");
   format_ostream_indented(ns * 2, ostr, "      uint32_t %s = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence\n", se);
   format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
-  format_ostream_indented(ns * 2, ostr, "      str().assign(reinterpret_cast<const char*>(static_cast<const char*>(data)+position),reinterpret_cast<const char*>(static_cast<const char*>(data)+position)+%s); //reading bytes for member: str()\n", se);
+  format_ostream_indented(ns * 2, ostr, "      str().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+%s-1); //reading bytes for member: str()\n", se);
   format_ostream_indented(ns * 2, ostr, "      position += %s;  //entries of sequence\n", se);
   format_ostream_indented(ns * 2, ostr, "    }\n");
   format_ostream_indented(ns * 2, ostr, "    break;\n");
