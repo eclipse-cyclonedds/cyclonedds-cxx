@@ -66,22 +66,23 @@ org::eclipse::cyclonedds::core::cond::WaitSetDelegate::wait(
     const dds::core::Duration& timeout)
 {
     dds_duration_t c_timeout = org::eclipse::cyclonedds::core::convertDuration(timeout);
-    dds_attach_t * attach = new dds_attach_t[conditions_.size()];
-    memset (attach, 0, sizeof(dds_attach_t) * conditions_.size());
+    const size_t sz = conditions_.size();
+    dds_attach_t * attach = new dds_attach_t[sz];
+    memset (attach, 0, sizeof(dds_attach_t) * sz);
 
-    dds_return_t n_triggered = dds_waitset_wait(this->get_ddsc_entity(), attach, conditions_.size(), c_timeout);
+    dds_return_t n_triggered = dds_waitset_wait(this->get_ddsc_entity(), attach, sz, c_timeout);
 
     if (n_triggered == 0) {
         delete[] attach;
         ISOCPP_THROW_EXCEPTION(ISOCPP_TIMEOUT_ERROR, "dds::core::cond::WaitSet::wait() timed out.");
     } else if (n_triggered > 0) {
-        triggered.reserve(static_cast<size_t>(n_triggered));
+        const size_t nt = size_t(n_triggered);
+        triggered.reserve(nt);
 
-        for (int i = 0; i < n_triggered; i++) {
+        for (size_t i = 0; i < nt && i < sz; i++) {
             org::eclipse::cyclonedds::core::cond::ConditionDelegate *cd =
                 reinterpret_cast <org::eclipse::cyclonedds::core::cond::ConditionDelegate *>(attach[i]);
             assert(cd);
-            assert(cd->trigger_value());
             cd->dispatch();
             triggered.push_back(cd->wrapper());
         }
