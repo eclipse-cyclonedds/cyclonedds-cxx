@@ -58,6 +58,18 @@ TDomainParticipant<DELEGATE>::TDomainParticipant(uint32_t id,
 }
 
 template <typename DELEGATE>
+TDomainParticipant<DELEGATE>::TDomainParticipant(uint32_t id,
+        const dds::domain::qos::DomainParticipantQos& qos,
+        dds::domain::DomainParticipantListener* listener,
+        const dds::core::status::StatusMask& mask,
+        const ddsi_config& config) :
+    ::dds::core::Reference<DELEGATE>(new DELEGATE(id, qos, listener, mask, config))
+{
+    this->delegate()->init(this->impl_);
+    org::eclipse::cyclonedds::domain::DomainParticipantRegistry::insert(*this);
+}
+
+template <typename DELEGATE>
 TDomainParticipant<DELEGATE>::~TDomainParticipant() { }
 
 template <typename DELEGATE>
