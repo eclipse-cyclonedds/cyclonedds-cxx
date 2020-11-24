@@ -21,6 +21,7 @@
 
 #include <string>
 
+#include <dds/ddsi/ddsi_config.h>
 #include <dds/core/detail/conformance.hpp>
 #include <dds/core/types.hpp>
 #include <dds/core/Time.hpp>
@@ -140,6 +141,12 @@ public:
                        dds::domain::DomainParticipantListener*         listener = NULL,
                        const dds::core::status::StatusMask&            event_mask = dds::core::status::StatusMask::none(),
                        const std::string&                              config = std::string());
+
+    TDomainParticipant(uint32_t                                        id,
+                       const dds::domain::qos::DomainParticipantQos&   qos,
+                       dds::domain::DomainParticipantListener*         listener,
+                       const dds::core::status::StatusMask&            event_mask,
+                       const ddsi_config&                              config);
     /**
     * Copy assignment operator.
     *

@@ -58,6 +58,7 @@ public:
 
 public:
     DomainWrap(dds_domainid_t id, const std::string& config);
+    DomainWrap(dds_domainid_t id, const ddsi_config& config);
     ~DomainWrap();
 
 private:
