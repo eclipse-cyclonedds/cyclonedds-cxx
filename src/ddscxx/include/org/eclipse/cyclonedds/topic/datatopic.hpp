@@ -447,23 +447,15 @@ void sertopic_free(struct ddsi_sertopic* tpcmn)
 }
 
 template <typename T>
-void sertopic_zero_samples(const struct ddsi_sertopic* d, void* samples, size_t count)
+void sertopic_zero_samples(const struct ddsi_sertopic*, void*, size_t)
 {
-  (void)d;
-  (void)samples;
-  (void)count;
+  return;
 }
 
 template <typename T>
 void sertopic_realloc_samples(
-  void** ptrs, const struct ddsi_sertopic* d, void* old,
-  size_t oldcount, size_t count)
+  void** ptrs, const struct ddsi_sertopic*, void*, size_t, size_t)
 {
-  (void)d;
-  (void)oldcount;
-  (void)old;
-  (void)count;
-
   /* For C++ we make one big assumption about the caller of this function:
    * it can only be invoked by the ddsi_sertopic_alloc_sample, and will therefore
    * never be used to reallocate an existing sample collection. This is caused by
@@ -476,21 +468,13 @@ void sertopic_realloc_samples(
    * be invoked by ddsi_sertopic_alloc_sample, in which case oldCount is always 0,
    * count is always 1 and the old pointer is always null.
    */
-  assert(oldcount == 0);
-  assert(count == 1);
-  assert(old == nullptr);
-
   ptrs[0] = new T();
 }
 
 template <typename T>
 void sertopic_free_samples(
-  const struct ddsi_sertopic* d, void** ptrs, size_t count,
-  dds_free_op_t op)
+  const struct ddsi_sertopic*, void** ptrs, size_t, dds_free_op_t op)
 {
-  (void)d;
-  (void)count;
-
   /* For C++ we make one big assumption about the caller of this function:
    * it can only be invoked by the ddsi_sertopic_free_sample, and will therefore
    * never be used to free an existing sample collection. This is caused by
@@ -503,8 +487,6 @@ void sertopic_free_samples(
    * be invoked by ddsi_sertopic_free_sample, in which case count is always 1,
    * and the op flags can either be set to DDS_FREE_ALL_BIT, or to DDS_FREE_CONTENTS_BIT.
    */
-  assert(count == 1);
-
   T* ptr = reinterpret_cast<T *>(ptrs[0]);
   if (op & DDS_FREE_ALL_BIT) {
     delete ptr;
