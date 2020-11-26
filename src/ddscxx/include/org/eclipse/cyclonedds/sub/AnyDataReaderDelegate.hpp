@@ -107,7 +107,7 @@ public:
     virtual ~AnyDataReaderDelegate();
 
     static void copy_sample_infos(
-        dds_sample_info_t &from,
+        const dds_sample_info_t &from,
         dds::sub::SampleInfo &to);
 
 public:
