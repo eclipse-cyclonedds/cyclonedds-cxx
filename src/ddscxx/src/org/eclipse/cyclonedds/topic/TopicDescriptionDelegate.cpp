@@ -86,7 +86,7 @@ TopicDescriptionDelegate::hasDependents() const
 }
 
 ddsi_sertopic *
-TopicDescriptionDelegate::get_ser_topic()
+TopicDescriptionDelegate::get_ser_topic() const
 {
     return ser_topic_;
 }

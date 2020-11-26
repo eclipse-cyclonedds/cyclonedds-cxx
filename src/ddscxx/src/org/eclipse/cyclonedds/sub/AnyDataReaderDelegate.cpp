@@ -682,7 +682,7 @@ AnyDataReaderDelegate::remove_query(
 
 void
 AnyDataReaderDelegate::copy_sample_infos(
-    dds_sample_info_t &from,
+    const dds_sample_info_t &from,
     dds::sub::SampleInfo &to)
 {
     org::eclipse::cyclonedds::sub::SampleInfoImpl& info = to.delegate();
