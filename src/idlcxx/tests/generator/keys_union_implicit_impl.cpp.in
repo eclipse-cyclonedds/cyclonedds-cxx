@@ -1,3 +1,4 @@
+#include "org/eclipse/cyclonedds/topic/byteswapping.hpp"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
 size_t u::write_struct(void *data, size_t position) const
@@ -226,6 +227,24 @@ size_t ss::key_read(const void *data, size_t position)
   return position;
 }
 
+size_t u::key_read_swapped(const void *data, size_t position)
+{
+  (void)data;
+  clear();
+  return position;
+}
+
+size_t ss::key_read_swapped(const void *data, size_t position)
+{
+  (void)data;
+  position = u().read_struct_swapped(data, position);
+  position += (4 - (position&0x3))&0x3;  //alignment
+  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  org::eclipse::cyclonedds::topic::bswap_32(&l());
+  position += 4;  //moving position indicator
+  return position;
+}
+
 size_t u::read_struct(const void *data, size_t position)
 {
   clear();
@@ -274,6 +293,63 @@ size_t ss::read_struct(const void *data, size_t position)
   position = u().read_struct(data, position);
   position += (4 - (position&0x3))&0x3;  //alignment
   l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t u::read_struct_swapped(const void *data, size_t position)
+{
+  clear();
+  position += (4 - (position&0x3))&0x3;  //alignment
+  _d() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: _d()
+  org::eclipse::cyclonedds::topic::bswap_32(&_d());
+  position += 4;  //moving position indicator
+  switch (_d())
+  {
+    case 0:
+    case 1:
+    {
+      o() = *reinterpret_cast<const uint8_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: o()
+      position += 1;  //moving position indicator
+    }
+    break;
+    case 2:
+    case 3:
+    {
+      l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+      org::eclipse::cyclonedds::topic::bswap_32(&l());
+      position += 4;  //moving position indicator
+    }
+    break;
+    case 4:
+    case 5:
+    {
+      uint32_t _se2 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
+      org::eclipse::cyclonedds::topic::bswap_32(&_se2);
+      position += 4;  //moving position indicator
+      str().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se2-1); //reading bytes for member: str()
+      position += _se2;  //entries of sequence
+    }
+    break;
+    default:
+    {
+      f() = *reinterpret_cast<const float*>(static_cast<const char*>(data)+position);  //reading bytes for member: f()
+      org::eclipse::cyclonedds::topic::bswap_32(&f());
+      position += 4;  //moving position indicator
+    }
+    break;
+  }
+  return position;
+}
+
+size_t ss::read_struct_swapped(const void *data, size_t position)
+{
+  o() = *reinterpret_cast<const uint8_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: o()
+  position += 1;  //moving position indicator
+  position = u().read_struct_swapped(data, position);
+  position += (4 - (position&0x3))&0x3;  //alignment
+  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  org::eclipse::cyclonedds::topic::bswap_32(&l());
   position += 4;  //moving position indicator
   return position;
 }

@@ -1,3 +1,4 @@
+#include "org/eclipse/cyclonedds/topic/byteswapping.hpp"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
 size_t I::write_struct(void *data, size_t position) const
@@ -149,6 +150,19 @@ size_t s::key_read(const void *data, size_t position)
   return position;
 }
 
+size_t I::key_read_swapped(const void *data, size_t position)
+{
+  (void)data;
+  return position;
+}
+
+size_t s::key_read_swapped(const void *data, size_t position)
+{
+  (void)data;
+  position = dynamic_cast<I&>(*this).key_read_swapped(data, position);
+  return position;
+}
+
 size_t I::read_struct(const void *data, size_t position)
 {
   position += (4 - (position&0x3))&0x3;  //alignment
@@ -162,6 +176,25 @@ size_t s::read_struct(const void *data, size_t position)
   position = dynamic_cast<I&>(*this).read_struct(data, position);
   position += (4 - (position&0x3))&0x3;  //alignment
   new_member() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: new_member()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t I::read_struct_swapped(const void *data, size_t position)
+{
+  position += (4 - (position&0x3))&0x3;  //alignment
+  inherited_member() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: inherited_member()
+  org::eclipse::cyclonedds::topic::bswap_32(&inherited_member());
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t s::read_struct_swapped(const void *data, size_t position)
+{
+  position = dynamic_cast<I&>(*this).read_struct_swapped(data, position);
+  position += (4 - (position&0x3))&0x3;  //alignment
+  new_member() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: new_member()
+  org::eclipse::cyclonedds::topic::bswap_32(&new_member());
   position += 4;  //moving position indicator
   return position;
 }

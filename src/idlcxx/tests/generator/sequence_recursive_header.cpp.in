@@ -6,9 +6,13 @@ size_t typedef_max_size_recseq(const recseq &obj, size_t position);
 
 size_t typedef_read_recseq(recseq &obj, const void* data, size_t position);
 
+size_t typedef_read_swapped_recseq(recseq &obj, const void* data, size_t position);
+
 size_t typedef_key_write_recseq(const recseq &obj, void *data, size_t position);
 
 size_t typedef_key_read_recseq(recseq &obj, const void *data, size_t position);
+
+size_t typedef_key_read_swapped_recseq(recseq &obj, const void *data, size_t position);
 
 size_t typedef_key_size_recseq(const recseq &obj, size_t position);
 

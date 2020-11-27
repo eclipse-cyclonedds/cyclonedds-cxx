@@ -144,13 +144,20 @@ ddsi_serdata_t *serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
+  bool swap = (*static_cast<const char*>(calc_offset(d->data(), 1)) == 0x1) != (native_endianness() == endianness::little_endian);
   switch (kind)
   {
   case SDK_KEY:
-    d->getT().key_read(calc_offset(d->data(), 4), 0);
+    if (!swap)
+      d->getT().key_read(calc_offset(d->data(), 4), 0);
+    else
+      d->getT().key_read_swapped(calc_offset(d->data(), 4), 0);
     break;
   case SDK_DATA:
-    d->getT().read_struct(calc_offset(d->data(), 4), 0);
+    if (!swap)
+      d->getT().read_struct(calc_offset(d->data(), 4), 0);
+    else
+      d->getT().read_struct_swapped(calc_offset(d->data(), 4), 0);
     break;
   case SDK_EMPTY:
     assert(0);
@@ -184,13 +191,20 @@ ddsi_serdata_t *serdata_from_ser_iov(
     off += n_bytes;
   }
 
+  bool swap = (*static_cast<const char*>(calc_offset(d->data(), 1)) == 0x1) != (native_endianness() == endianness::little_endian);
   switch (kind)
   {
   case SDK_KEY:
-    d->getT().key_read(calc_offset(d->data(), 4), 0);
+    if (!swap)
+      d->getT().key_read(calc_offset(d->data(), 4), 0);
+    else
+      d->getT().key_read_swapped(calc_offset(d->data(), 4), 0);
     break;
   case SDK_DATA:
-    d->getT().read_struct(calc_offset(d->data(), 4), 0);
+    if (!swap)
+      d->getT().read_struct(calc_offset(d->data(), 4), 0);
+    else
+      d->getT().read_struct_swapped(calc_offset(d->data(), 4), 0);
     break;
   case SDK_EMPTY:
     assert(0);
@@ -306,7 +320,13 @@ bool serdata_to_sample(
   (void)bufptr;
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
-  (static_cast<T*>(sample))->read_struct(static_cast<char*>(ptr->data()) + 4, 0);
+
+  //is this necessary?
+  bool swap = (*static_cast<const char*>(calc_offset(ptr->data(), 1)) == 0x1) != (native_endianness() == endianness::little_endian);
+  if (!swap)
+    (static_cast<T*>(sample))->read_struct(static_cast<char*>(ptr->data()) + 4, 0);
+  else
+    (static_cast<T*>(sample))->read_struct_swapped(static_cast<char*>(ptr->data()) + 4, 0);
 
   return false;
 }
@@ -339,7 +359,7 @@ bool serdata_topicless_to_sample(
   (void)buflim;
 
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-
+  //swap or no swap?
   T* ptr = static_cast<T*>(sample);
   ptr->key_read(d->data(), 0);
 

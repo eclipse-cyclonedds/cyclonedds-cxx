@@ -1,3 +1,4 @@
+#include "org/eclipse/cyclonedds/topic/byteswapping.hpp"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
 namespace A_1
@@ -77,10 +78,25 @@ namespace A_1
       return position;
     }
 
+    size_t s_1::key_read_swapped(const void *data, size_t position)
+    {
+      (void)data;
+      return position;
+    }
+
     size_t s_1::read_struct(const void *data, size_t position)
     {
       position += (4 - (position&0x3))&0x3;  //alignment
       m_1() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: m_1()
+      position += 4;  //moving position indicator
+      return position;
+    }
+
+    size_t s_1::read_struct_swapped(const void *data, size_t position)
+    {
+      position += (4 - (position&0x3))&0x3;  //alignment
+      m_1() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: m_1()
+      org::eclipse::cyclonedds::topic::bswap_32(&m_1());
       position += 4;  //moving position indicator
       return position;
     }
@@ -160,9 +176,21 @@ namespace B_1
       return position;
     }
 
+    size_t s_2::key_read_swapped(const void *data, size_t position)
+    {
+      (void)data;
+      return position;
+    }
+
     size_t s_2::read_struct(const void *data, size_t position)
     {
       position = m_2().read_struct(data, position);
+      return position;
+    }
+
+    size_t s_2::read_struct_swapped(const void *data, size_t position)
+    {
+      position = m_2().read_struct_swapped(data, position);
       return position;
     }
 

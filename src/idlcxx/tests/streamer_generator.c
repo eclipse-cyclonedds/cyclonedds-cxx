@@ -113,6 +113,7 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   const char* al = als[ns];
   size_t width = cxx_width[n];
 
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -221,6 +222,12 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   if (width > 1)
@@ -239,6 +246,26 @@ void create_funcs_base(idl_ostream_t * ostr, size_t n, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  if (width > 1)
+  {
+    if (width == 2)
+    {
+      format_ostream_indented(ns * 2, ostr, "  position += position&0x1;  //alignment\n");
+    }
+    else
+    {
+      format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n", width, width - 1, width - 1);
+    }
+  }
+  format_ostream_indented(ns * 2, ostr, "  mem() = *reinterpret_cast<const %s*>(static_cast<const char*>(data)+position);  //reading bytes for member: mem()\n", tn);
+  if (width >= 2)
+    format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_%d(&mem());\n", width*8);
+  format_ostream_indented(ns * 2, ostr, "  position += %d;  //moving position indicator\n", width);
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   if (ns)
   {
     format_ostream_indented(0, ostr, "} //end namespace N\n\n");
@@ -249,6 +276,7 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
 {
   const char* al = als[ns];
 
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -392,6 +420,18 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t I::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
@@ -406,6 +446,21 @@ void create_funcs_instance(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t I::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()\n");
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&l());\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position = %s().read_struct_swapped(data, position);\n", in);
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   if (ns)
   {
     format_ostream_indented(0, ostr, "} //end namespace N\n\n");
@@ -417,6 +472,7 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
 {
   const char* al = als[ns];
 
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -501,10 +557,27 @@ void create_funcs_string(idl_ostream_t* ostr, const char* in, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  uint32_t %s = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence\n", se);
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  %s().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+%s-1); //reading bytes for member: %s()\n", in, se, in);
+  format_ostream_indented(ns * 2, ostr, "  position += %s;  //entries of sequence\n", se);
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  uint32_t %s = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence\n", se);
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&%s);\n", se);
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  %s().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+%s-1); //reading bytes for member: %s()\n", in, se, in);
   format_ostream_indented(ns * 2, ostr, "  position += %s;  //entries of sequence\n", se);
@@ -524,6 +597,7 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   const char* se = ses[ns];
   const char* al = als[ns];
 
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -623,6 +697,12 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
@@ -645,6 +725,36 @@ void create_funcs_sequence(idl_ostream_t* ostr, const char* seq_name, size_t n, 
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  uint32_t %s = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence\n", se);
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&%s);\n", se);
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  if (width > 4)
+  {
+    format_ostream_indented(ns * 2, ostr, "  position += (%d - (position&%#x))&%#x;  //alignment\n", width, width - 1, width - 1);
+  }
+  if (n == 2)
+  {
+    format_ostream_indented(ns * 2, ostr, "  %s().resize(%s);\n", seq_name, se);
+    format_ostream_indented(ns * 2, ostr, "  for (size_t _b = 0; _b < %s; _b++) %s()[_b] = (*(static_cast<const char*>(data)+position++) ? 0x1 : 0x0); //reading bytes for member: %s()\n", se, seq_name, seq_name);
+  }
+  else
+  {
+    format_ostream_indented(ns * 2, ostr, "  %s().assign(reinterpret_cast<const %s*>(static_cast<const char*>(data)+position),reinterpret_cast<const %s*>(static_cast<const char*>(data)+position)+%s); //reading bytes for member: %s()\n", seq_name, cast, cast, se, seq_name);
+    if (width >= 2)
+    {
+      int i = ns ? 2 : 1;
+      format_ostream_indented(ns * 2, ostr, "  for (size_t _i%d = 0; _i%d < %s; _i%d++) {\n", i, i, se, i);
+      format_ostream_indented(ns * 2, ostr, "    org::eclipse::cyclonedds::topic::bswap_%d(&%s()[_i%d]);\n", width * 8, seq_name, i);
+      format_ostream_indented(ns * 2, ostr, "  }\n");
+    }
+    format_ostream_indented(ns * 2, ostr, "  position += %s*%d;  //entries of sequence\n", se, width);
+  }
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   if (ns)
   {
     format_ostream_indented(0, ostr, "} //end namespace N\n\n");
@@ -656,6 +766,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   const char* se = ses[ns+2];
   const char* al = als[ns];
 
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -795,6 +906,13 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  clear();\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  clear();\n");
@@ -836,6 +954,51 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  clear();\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  _d() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: _d()\n");
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&_d());\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  switch (_d())\n");
+  format_ostream_indented(ns * 2, ostr, "  {\n");
+  format_ostream_indented(ns * 2, ostr, "    case 0:\n");
+  format_ostream_indented(ns * 2, ostr, "    case 1:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      o() = *reinterpret_cast<const uint8_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: o()\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 1;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    case 2:\n");
+  format_ostream_indented(ns * 2, ostr, "    case 3:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()\n");
+  format_ostream_indented(ns * 2, ostr, "      org::eclipse::cyclonedds::topic::bswap_32(&l());\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    case 4:\n");
+  format_ostream_indented(ns * 2, ostr, "    case 5:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      uint32_t %s = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence\n", se);
+  format_ostream_indented(ns * 2, ostr, "      org::eclipse::cyclonedds::topic::bswap_32(&%s);\n",se);
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "      str().assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+%s-1); //reading bytes for member: str()\n", se);
+  format_ostream_indented(ns * 2, ostr, "      position += %s;  //entries of sequence\n", se);
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "    default:\n");
+  format_ostream_indented(ns * 2, ostr, "    {\n");
+  format_ostream_indented(ns * 2, ostr, "      f() = *reinterpret_cast<const float*>(static_cast<const char*>(data)+position);  //reading bytes for member: f()\n");
+  format_ostream_indented(ns * 2, ostr, "      org::eclipse::cyclonedds::topic::bswap_32(&f());\n");
+  format_ostream_indented(ns * 2, ostr, "      position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "    }\n");
+  format_ostream_indented(ns * 2, ostr, "    break;\n");
+  format_ostream_indented(ns * 2, ostr, "  }\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   if (ns)
   {
     format_ostream_indented(0, ostr, "} //end namespace N\n\n");
@@ -845,6 +1008,7 @@ void generate_union_funcs(idl_ostream_t* ostr, bool ns)
 void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
 {
   const char* al = als[ns];
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -923,10 +1087,25 @@ void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  mem() = *reinterpret_cast<const %sE*>(static_cast<const char*>(data)+position);  //reading bytes for member: mem()\n", ns ? "N::" : "");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  mem() = *reinterpret_cast<const %sE*>(static_cast<const char*>(data)+position);  //reading bytes for member: mem()\n", ns ? "N::" : "");
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&mem());\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
@@ -941,6 +1120,7 @@ void generate_enum_funcs(idl_ostream_t* ostr, bool ns)
 void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
 {
   const char* al = als[ns];
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -1023,12 +1203,33 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t s::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
   format_ostream_indented(ns * 2, ostr, "  memcpy(mem().data(),static_cast<const char*>(data)+position,24);  //reading bytes for member: mem()\n");
   format_ostream_indented(ns * 2, ostr, "  position += 24;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  mem2() = *reinterpret_cast<const float*>(static_cast<const char*>(data)+position);  //reading bytes for member: mem2()\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  memcpy(mem().data(),static_cast<const char*>(data)+position,24);  //reading bytes for member: mem()\n");
+  int i = ns ? 2 : 1;
+  format_ostream_indented(ns * 2, ostr, "  for (size_t _i%d = 0; _i%d < 6; _i%d++)  {\n", i, i, i);
+  format_ostream_indented(ns * 2, ostr, "    org::eclipse::cyclonedds::topic::bswap_32(&mem()[_i%d]);\n", i);
+  format_ostream_indented(ns * 2, ostr, "  }\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 24;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  mem2() = *reinterpret_cast<const float*>(static_cast<const char*>(data)+position);  //reading bytes for member: mem2()\n");
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&mem2());\n");
   format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
@@ -1042,6 +1243,7 @@ void generate_array_base_funcs(idl_ostream_t* ostr, bool ns)
 
 void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
 {
+  format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/byteswapping.hpp\"\n");
   format_ostream_indented(0, ostr, "#include \"org/eclipse/cyclonedds/topic/hash.hpp\"\n\n");
 
   if (ns)
@@ -1197,6 +1399,18 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 
+  format_ostream_indented(ns * 2, ostr, "size_t I::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::key_read_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  (void)data;\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
   format_ostream_indented(ns * 2, ostr, "size_t I::read_struct(const void *data, size_t position)\n");
   format_ostream_indented(ns * 2, ostr, "{\n");
   format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
@@ -1211,6 +1425,24 @@ void generate_array_instance_funcs(idl_ostream_t* ostr, bool ns)
   format_ostream_indented(ns * 2, ostr, "    position = mem()[%s].read_struct(data, position);\n", it);
   format_ostream_indented(ns * 2, ostr, "  }\n");
   format_ostream_indented(ns * 2, ostr, "  position = mem2().read_struct(data, position);\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t I::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  position += (4 - (position&0x3))&0x3;  //alignment\n");
+  format_ostream_indented(ns * 2, ostr, "  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()\n");
+  format_ostream_indented(ns * 2, ostr, "  org::eclipse::cyclonedds::topic::bswap_32(&l());\n");
+  format_ostream_indented(ns * 2, ostr, "  position += 4;  //moving position indicator\n");
+  format_ostream_indented(ns * 2, ostr, "  return position;\n");
+  format_ostream_indented(ns * 2, ostr, "}\n\n");
+
+  format_ostream_indented(ns * 2, ostr, "size_t s::read_struct_swapped(const void *data, size_t position)\n");
+  format_ostream_indented(ns * 2, ostr, "{\n");
+  format_ostream_indented(ns * 2, ostr, "  for (size_t %s = 0; %s < 6; %s++)  {\n", it, it, it);
+  format_ostream_indented(ns * 2, ostr, "    position = mem()[%s].read_struct_swapped(data, position);\n", it);
+  format_ostream_indented(ns * 2, ostr, "  }\n");
+  format_ostream_indented(ns * 2, ostr, "  position = mem2().read_struct_swapped(data, position);\n");
   format_ostream_indented(ns * 2, ostr, "  return position;\n");
   format_ostream_indented(ns * 2, ostr, "}\n\n");
 

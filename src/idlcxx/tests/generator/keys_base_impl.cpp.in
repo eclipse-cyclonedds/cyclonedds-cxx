@@ -1,3 +1,4 @@
+#include "org/eclipse/cyclonedds/topic/byteswapping.hpp"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
 size_t s::write_struct(void *data, size_t position) const
@@ -87,12 +88,33 @@ size_t s::key_read(const void *data, size_t position)
   return position;
 }
 
+size_t s::key_read_swapped(const void *data, size_t position)
+{
+  (void)data;
+  position += (4 - (position&0x3))&0x3;  //alignment
+  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  org::eclipse::cyclonedds::topic::bswap_32(&l());
+  position += 4;  //moving position indicator
+  return position;
+}
+
 size_t s::read_struct(const void *data, size_t position)
 {
   o() = *reinterpret_cast<const uint8_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: o()
   position += 1;  //moving position indicator
   position += (4 - (position&0x3))&0x3;  //alignment
   l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  position += 4;  //moving position indicator
+  return position;
+}
+
+size_t s::read_struct_swapped(const void *data, size_t position)
+{
+  o() = *reinterpret_cast<const uint8_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: o()
+  position += 1;  //moving position indicator
+  position += (4 - (position&0x3))&0x3;  //alignment
+  l() = *reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position);  //reading bytes for member: l()
+  org::eclipse::cyclonedds::topic::bswap_32(&l());
   position += 4;  //moving position indicator
   return position;
 }

@@ -6,9 +6,13 @@ size_t typedef_max_size_td_1(const td_1 &obj, size_t position);
 
 size_t typedef_read_td_1(td_1 &obj, const void* data, size_t position);
 
+size_t typedef_read_swapped_td_1(td_1 &obj, const void* data, size_t position);
+
 size_t typedef_key_write_td_1(const td_1 &obj, void *data, size_t position);
 
 size_t typedef_key_read_td_1(td_1 &obj, const void *data, size_t position);
+
+size_t typedef_key_read_swapped_td_1(td_1 &obj, const void *data, size_t position);
 
 size_t typedef_key_size_td_1(const td_1 &obj, size_t position);
 
