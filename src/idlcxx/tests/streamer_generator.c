@@ -29,6 +29,7 @@ extern const unsigned char sequence_recursive_impl_cpp_in[];
 extern const unsigned char struct_inheritance_impl_cpp_in[];
 extern const unsigned char typedef_resolution_header_cpp_in[];
 extern const unsigned char typedef_resolution_impl_cpp_in[];
+extern const unsigned char re_alignment_impl_cpp_in[];
 
 #include "idlcxx/streamer_generator.h"
 #include "idl/processor.h"
@@ -1824,6 +1825,27 @@ void test_sequence_recursive()
   idl_delete_tree(tree);
 }
 
+void test_re_alignment()
+{
+  const char* str =
+    "struct s {\n"\
+    "string str;\n"\
+    "long l;\n"\
+    "};\n";
+
+  idl_tree_t* tree = NULL;
+  idl_parse_string(str, IDL_FLAG_ANNOTATIONS, &tree);
+
+  idl_streamer_output_t* generated = create_idl_streamer_output();
+  idl_streamers_generate(tree, generated);
+
+  CU_ASSERT_STRING_EQUAL(re_alignment_impl_cpp_in, get_ostream_buffer(get_idl_streamer_impl_buf(generated)));
+  CU_ASSERT_STRING_EQUAL("", get_ostream_buffer(get_idl_streamer_head_buf(generated)));
+
+  destruct_idl_streamer_output(generated);
+  idl_delete_tree(tree);
+}
+
 CU_Test(streamer_generator, base_types_namespace_absent)
 {
   for (size_t i = 0; i < sizeof(cxx_width) / sizeof(size_t); i++)
@@ -1966,4 +1988,9 @@ CU_Test(streamer_generator, key_typedef)
 CU_Test(streamer_generator, sequence_recursive)
 {
   test_sequence_recursive();
+}
+
+CU_Test(streamer_generator, re_alignment)
+{
+  test_re_alignment();
 }
