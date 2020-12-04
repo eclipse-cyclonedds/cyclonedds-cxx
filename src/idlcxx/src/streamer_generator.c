@@ -230,6 +230,7 @@ struct context
   const char* parsed_file;
 };
 
+static void reset_alignment(context_t* ctx, bool is_key);
 static uint64_t array_entries(idl_declarator_t* decl);
 static idl_retcode_t add_default_case(context_t* ctx);
 static idl_retcode_t process_node(context_t* ctx, idl_node_t* node);
@@ -298,6 +299,17 @@ static char* generatealignment(int alignto)
   }
   assert(returnval);
   return returnval;
+}
+
+void reset_alignment(context_t* ctx, bool is_key)
+{
+  ctx->streamer_funcs.currentalignment = -1;
+  ctx->streamer_funcs.accumulatedalignment = 0;
+  if (is_key)
+  {
+    ctx->key_funcs.currentalignment = -1;
+    ctx->key_funcs.accumulatedalignment = 0;
+  }
 }
 
 int determine_byte_width(idl_node_t* typespec)
@@ -766,14 +778,7 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, c
     }
   }
 
-  ctx->streamer_funcs.accumulatedalignment = 0;
-  ctx->streamer_funcs.currentalignment = -1;
-
-  if (is_key)
-  {
-    ctx->key_funcs.accumulatedalignment = 0;
-    ctx->key_funcs.currentalignment = -1;
-  }
+  reset_alignment(ctx, is_key);
 
   return IDL_RETCODE_OK;
 }
@@ -781,6 +786,11 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, c
 idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
 {
   assert(ctx);
+
+  if (ctx->streamer_funcs.currentalignment == bytewidth)
+    ctx->streamer_funcs.accumulatedalignment += bytewidth;
+  if (is_key && ctx->key_funcs.currentalignment == bytewidth)
+    ctx->key_funcs.accumulatedalignment += bytewidth;
 
   if (ctx->streamer_funcs.currentalignment == bytewidth && ctx->key_funcs.currentalignment == bytewidth)
     return IDL_RETCODE_OK;
@@ -1481,6 +1491,8 @@ idl_retcode_t process_typedef_instance_impl(context_t* ctx, const char* accessor
   }
   free(ns);
 
+  reset_alignment(ctx, is_key);
+
   return IDL_RETCODE_OK;
 }
 
@@ -1634,6 +1646,8 @@ idl_retcode_t process_string_impl(context_t* ctx, const char* accessor, idl_stri
     }
   }
 
+  reset_alignment(ctx, is_key);
+
   return IDL_RETCODE_OK;
 }
 
@@ -1772,6 +1786,8 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
     ctx->depth--;
     load_locals(ctx, locals);
   }
+
+  reset_alignment(ctx, is_key);
 
   return IDL_RETCODE_OK;
 }
