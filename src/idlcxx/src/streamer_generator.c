@@ -1504,20 +1504,51 @@ idl_retcode_t process_case_label(context_t* ctx, idl_case_label_t* label)
     char* buffer = NULL;
     idl_constval_t* cv = (idl_constval_t*)ce;
 
-    if (idl_is_masked(ce, IDL_INTEGER_TYPE))
+    switch (ce->mask % (IDL_BASE_TYPE * 2))
     {
-      if (idl_asprintf(&buffer, "%lu", cv->value.ullng) == -1)
+    case IDL_INT8:
+      if (idl_asprintf(&buffer, "%" PRId8, cv->value.int8) == -1)
         return IDL_RETCODE_NO_MEMORY;
-    }
-    else if (idl_is_masked(ce, IDL_BOOL))
-    {
-      if ((idl_strdup(cv->value.bln ? "true" : "false")) == 0)
+      break;
+    case IDL_OCTET:
+    case IDL_UINT8:
+      if (idl_asprintf(&buffer, "%" PRIu8, cv->value.uint8) == -1)
         return IDL_RETCODE_NO_MEMORY;
-    }
-    else if (idl_is_masked(ce, IDL_CHAR))
-    {
-      if (idl_asprintf(&buffer, "\'%s\'", cv->value.str) == -1)
+      break;
+    case IDL_INT16:
+      if (idl_asprintf(&buffer, "%" PRId16, cv->value.int16) == -1)
         return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_UINT16:
+      if (idl_asprintf(&buffer, "%" PRIu16, cv->value.uint16) == -1)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_INT32:
+      if (idl_asprintf(&buffer, "%" PRId32, cv->value.int32) == -1)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_UINT32:
+      if (idl_asprintf(&buffer, "%" PRIu32, cv->value.uint32) == -1)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_INT64:
+      if (idl_asprintf(&buffer, "%" PRId64, cv->value.int64) == -1)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_UINT64:
+      if (idl_asprintf(&buffer, "%" PRIu64, cv->value.uint64) == -1)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_BOOL:
+      if ((buffer = idl_strdup(cv->value.bln ? "true" : "false")) == NULL)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    case IDL_CHAR:
+      if (idl_asprintf(&buffer, "\'%c\'", cv->value.chr) == -1)
+        return IDL_RETCODE_NO_MEMORY;
+      break;
+    default:
+      assert(0);
     }
 
     if (buffer)
