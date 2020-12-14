@@ -9,6 +9,7 @@ size_t u::write_struct(void *data, size_t position) const
   position += 4;  //moving position indicator
   switch (_d())
   {
+    case -12345:
     case 0:
     case 1:
     {
@@ -62,6 +63,7 @@ size_t u::write_size(size_t position) const
   position += 4;  //bytes for member: _d()
   switch (_d())
   {
+    case -12345:
     case 0:
     case 1:
     {
@@ -234,6 +236,7 @@ size_t u::read_struct(const void *data, size_t position)
   position += 4;  //moving position indicator
   switch (_d())
   {
+    case -12345:
     case 0:
     case 1:
     {

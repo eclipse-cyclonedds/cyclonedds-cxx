@@ -1706,6 +1706,7 @@ void test_keys_union_implicit()
 {
   const char* str =
   "union u switch (long) {\n"\
+    "case -12345:\n"\
     "case 0:\n"\
     "case 1: octet o;\n"\
     "case 2:\n"\
