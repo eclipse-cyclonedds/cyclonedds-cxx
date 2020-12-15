@@ -118,6 +118,7 @@ if (key) {format_key_read_stream(indent,ctx, __VA_ARGS__);}
 #define bound_iterate "  for (size_t _i%d = 0; _i%d < %"PRIu64"; _i%d++) {\n"
 #define seq_read_resize "  %s.resize("seqentries");\n"
 #define seq_length_exception "  if ("seqentries" > %"PRIu64") throw dds::core::InvalidArgumentError(\"attempt to assign entries to bounded member %s in excess of maximum length %"PRIu64"\");\n"
+#define seq_read_past_bound_resize "  if ("seqentries" > %"PRIu64") %s.resize(%"PRIu64");\n"
 #define seq_incr position_incr seqentries"*%d;"
 #define seq_inc_1 position_incr seqentries ";"
 #define max_size_incr_checked_multiple max_size_check primitive_incr_pos entries_of_sequence_comment
@@ -1816,6 +1817,11 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
 
     ctx->depth--;
     load_locals(ctx, locals);
+  }
+
+  if (bound)
+  {
+    format_read_stream(1, ctx, is_key, seq_read_past_bound_resize, ctx->depth, bound, accessor, bound);
   }
 
   reset_alignment(ctx, is_key);
