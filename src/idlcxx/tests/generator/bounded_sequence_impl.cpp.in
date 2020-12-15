@@ -85,6 +85,7 @@ size_t s::read_struct(const void *data, size_t position)
   position += 4;  //moving position indicator
   mem().assign(reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position),reinterpret_cast<const int32_t*>(static_cast<const char*>(data)+position)+_se0); //reading bytes for member: mem()
   position += _se0*4;  //entries of sequence
+  if (_se0 > 20) mem().resize(20);
   return position;
 }
 

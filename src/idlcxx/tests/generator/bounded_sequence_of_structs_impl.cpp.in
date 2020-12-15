@@ -179,6 +179,7 @@ size_t s::key_read(const void *data, size_t position)
   for (size_t _i1 = 0; _i1 < _se0; _i1++) {
     position = mem()[_i1].read_struct(data, position);
   }
+  if (_se0 > 20) mem().resize(20);
   return position;
 }
 
@@ -199,6 +200,7 @@ size_t s::read_struct(const void *data, size_t position)
   for (size_t _i1 = 0; _i1 < _se0; _i1++) {
     position = mem()[_i1].read_struct(data, position);
   }
+  if (_se0 > 20) mem().resize(20);
   return position;
 }
 
