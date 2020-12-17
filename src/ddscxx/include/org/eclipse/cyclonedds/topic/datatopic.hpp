@@ -319,8 +319,14 @@ ddsi_serdata_t *serdata_to_topicless(const struct ddsi_serdata* dcmn)
   d1->topic = nullptr;
 
   auto t = d->getT();
-  d1->resize(t.key_size(0));
-  t.key_write(d1->data(), 0);
+  d1->resize(4 + t.key_size(0));
+
+  auto ptr = static_cast<unsigned char*>(d1->data());
+  memset(ptr, 0x0, 4);
+  if (native_endianness() == endianness::little_endian)
+    *(ptr + 1) = 0x1;
+
+  t.key_write(calc_offset(d1->data(), 4), 0);  //4 offset due to header field
   d1->key_md5_hashed() = t.key(d1->key());
   d1->hash = d->hash;
   d1->hash_populated = true;
@@ -341,7 +347,7 @@ bool serdata_topicless_to_sample(
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
   T* ptr = static_cast<T*>(sample);
-  ptr->key_read(d->data(), 0);
+  ptr->key_read(calc_offset(d->data(), 4), 0);  //4 offset due to header field
 
   return true;
 }
