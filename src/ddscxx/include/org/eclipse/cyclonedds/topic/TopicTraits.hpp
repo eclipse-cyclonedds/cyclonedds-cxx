@@ -63,9 +63,8 @@ public:
         return "ExampleName";
     }
 
-    static ddsi_sertopic *getSerTopic(const std::string& topic_name)
+    static ddsi_sertype *getSerType()
     {
-        (void)topic_name;
         return NULL;
     }
 

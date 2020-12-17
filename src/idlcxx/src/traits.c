@@ -62,10 +62,10 @@ emit_traits(
         "  {\n"
         "    return \"%2$s\";\n" /* skip preceeding "::" according to convention */
         "  }\n\n"
-        "  static ddsi_sertopic *getSerTopic(const std::string& topic_name)\n"
+        "  static ddsi_sertype *getSerType()\n"
         "  {\n"
-        "    auto *st = new ddscxx_sertopic<%1$s>(topic_name.c_str());\n"
-        "    return static_cast<ddsi_sertopic*>(st);\n"
+        "    auto *st = new ddscxx_sertype<%1$s>();\n"
+        "    return static_cast<ddsi_sertype*>(st);\n"
         "  }\n\n"
         "  static size_t getSampleSize()\n"
         "  {\n"
