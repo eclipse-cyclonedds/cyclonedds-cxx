@@ -21,6 +21,10 @@
 #include <string.h>
 #include <org/eclipse/cyclonedds/topic/DataRepresentation.hpp>
 
+#if ! DDS_HAS_DDSI_SERTYPE
+typedef ddsi_sertopic ddsi_sertype;
+#endif
+
 namespace org
 {
 namespace eclipse
@@ -63,7 +67,7 @@ public:
         return "ExampleName";
     }
 
-    static ddsi_sertopic *getSerTopic(const std::string& topic_name)
+    static ddsi_sertype *getSerType(const std::string& topic_name)
     {
         (void)topic_name;
         return NULL;

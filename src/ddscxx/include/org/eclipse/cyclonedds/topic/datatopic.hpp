@@ -21,7 +21,11 @@
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
-#include "dds/ddsi/ddsi_sertopic.h"
+
+#if ! DDS_HAS_DDSI_SERTYPE
+typedef ddsi_sertopic ddsi_sertype;
+typedef ddsi_sertopic_ops ddsi_sertype_ops;
+#endif
 
 typedef struct ddsi_serdata ddsi_serdata_t;
 
@@ -44,10 +48,10 @@ static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
 }
 
 template <typename T>
-class ddscxx_sertopic : public ddsi_sertopic {
+class ddscxx_sertype : public ddsi_sertype {
 public:
-  static const struct ddsi_sertopic_ops ddscxx_sertopic_ops;
-  ddscxx_sertopic(const char* topic_name, const char* type_name);
+  static const ddsi_sertype_ops ddscxx_sertype_ops;
+  ddscxx_sertype(const char* topic_name, const char* type_name);
 };
 
 template <typename T>
@@ -60,8 +64,8 @@ class ddscxx_serdata : public ddsi_serdata {
 
 public:
   bool hash_populated = false;
-  static const struct ddsi_serdata_ops ddscxx_serdata_ops;
-  ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
+  static const ddsi_serdata_ops ddscxx_serdata_ops;
+  ddscxx_serdata(const ddsi_sertype* type, ddsi_serdata_kind kind);
 
   void resize(size_t requested_size);
   size_t size() const { return m_size; }
@@ -100,7 +104,7 @@ void ddscxx_serdata<T>::populate_hash()
 }
 
 template <typename T>
-bool serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b)
+bool serdata_eqkey(const ddsi_serdata* a, const ddsi_serdata* b)
 {
   auto s_a = static_cast<const ddscxx_serdata<T>*>(a);
   auto s_b = static_cast<const ddscxx_serdata<T>*>(b);
@@ -109,18 +113,18 @@ bool serdata_eqkey(const struct ddsi_serdata* a, const struct ddsi_serdata* b)
 }
 
 template <typename T>
-uint32_t serdata_size(const struct ddsi_serdata* dcmn)
+uint32_t serdata_size(const ddsi_serdata* dcmn)
 {
   return static_cast<uint32_t>(static_cast<const ddscxx_serdata<T>*>(dcmn)->size());
 }
 
 template <typename T>
 ddsi_serdata_t *serdata_from_ser(
-  const struct ddsi_sertopic* topic,
+  const ddsi_sertype* type,
   enum ddsi_serdata_kind kind,
   const struct nn_rdata* fragchain, size_t size)
 {
-  auto d = new ddscxx_serdata<T>(topic, kind);
+  auto d = new ddscxx_serdata<T>(type, kind);
 
   uint32_t off = 0;
   assert(fragchain->min == 0);
@@ -161,16 +165,15 @@ ddsi_serdata_t *serdata_from_ser(
   return d;
 }
 
-#if DDSI_SERDATA_HAS_FROM_SER_IOV
 template <typename T>
 ddsi_serdata_t *serdata_from_ser_iov(
-  const struct ddsi_sertopic* topic,
+  const ddsi_sertype* type,
   enum ddsi_serdata_kind kind,
   ddsrt_msg_iovlen_t niov,
   const ddsrt_iovec_t* iov,
   size_t size)
 {
-  auto d = new ddscxx_serdata<T>(topic, kind);
+  auto d = new ddscxx_serdata<T>(type, kind);
   d->resize(size);
 
   size_t off = 0;
@@ -201,15 +204,14 @@ ddsi_serdata_t *serdata_from_ser_iov(
   return d;
 
 }
-#endif
 
 template <typename T>
 ddsi_serdata_t *serdata_from_keyhash(
-  const struct ddsi_sertopic* topic,
+  const ddsi_sertype* type,
   const struct ddsi_keyhash* keyhash)
 {
   (void)keyhash;
-  (void)topic;
+  (void)type;
   //replace with (if key_size_max <= 16) then populate the data class with the key hash (key_read)
   return nullptr;
 }
@@ -235,13 +237,13 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
 
 template <typename T>
 ddsi_serdata_t *serdata_from_sample(
-  const struct ddsi_sertopic* topiccmn,
+  const ddsi_sertype* typecmn,
   enum ddsi_serdata_kind kind,
   const void* sample)
 {
   try {
-    auto topic = static_cast<const ddscxx_sertopic<T>*>(topiccmn);
-    auto d = new ddscxx_serdata<T>(topic, kind);
+    auto type = static_cast<const ddscxx_sertype<T>*>(typecmn);
+    auto d = new ddscxx_serdata<T>(type, kind);
 
     auto msg = static_cast<const T*>(sample);
     size_t sz = 4 + (kind == SDK_KEY ? msg->key_size(0) : msg->write_size(0));  //4 bytes extra to also include the header
@@ -274,7 +276,7 @@ ddsi_serdata_t *serdata_from_sample(
 }
 
 template <typename T>
-void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
+void serdata_to_ser(const ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
   memcpy(buf, calc_offset(d->data(), static_cast<ptrdiff_t>(off)), sz);
@@ -282,7 +284,7 @@ void serdata_to_ser(const struct ddsi_serdata* dcmn, size_t off, size_t sz, void
 
 template <typename T>
 ddsi_serdata_t *serdata_to_ser_ref(
-  const struct ddsi_serdata* dcmn, size_t off,
+  const ddsi_serdata* dcmn, size_t off,
   size_t sz, ddsrt_iovec_t* ref)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
@@ -292,7 +294,7 @@ ddsi_serdata_t *serdata_to_ser_ref(
 }
 
 template <typename T>
-void serdata_to_ser_unref(struct ddsi_serdata* dcmn, const ddsrt_iovec_t* ref)
+void serdata_to_ser_unref(ddsi_serdata* dcmn, const ddsrt_iovec_t* ref)
 {
   static_cast<void>(ref);    // unused
   ddsi_serdata_unref(static_cast<ddscxx_serdata<T>*>(dcmn));
@@ -300,7 +302,7 @@ void serdata_to_ser_unref(struct ddsi_serdata* dcmn, const ddsrt_iovec_t* ref)
 
 template <typename T>
 bool serdata_to_sample(
-  const struct ddsi_serdata* dcmn, void* sample, void** bufptr,
+  const ddsi_serdata* dcmn, void* sample, void** bufptr,
   void* buflim)
 {
   (void)bufptr;
@@ -312,11 +314,16 @@ bool serdata_to_sample(
 }
 
 template <typename T>
-ddsi_serdata_t *serdata_to_topicless(const struct ddsi_serdata* dcmn)
+ddsi_serdata_t *serdata_to_untyped(const ddsi_serdata* dcmn)
 {
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+#if DDS_HAS_DDSI_SERTYPE
+  auto d1 = new ddscxx_serdata<T>(d->type, SDK_KEY);
+  d1->type = nullptr;
+#else
   auto d1 = new ddscxx_serdata<T>(d->topic, SDK_KEY);
   d1->topic = nullptr;
+#endif
 
   auto t = d->getT();
   d1->resize(t.key_size(0));
@@ -329,12 +336,12 @@ ddsi_serdata_t *serdata_to_topicless(const struct ddsi_serdata* dcmn)
 }
 
 template <typename T>
-bool serdata_topicless_to_sample(
-  const struct ddsi_sertopic* topic,
-  const struct ddsi_serdata* dcmn, void* sample,
+bool serdata_untyped_to_sample(
+  const ddsi_sertype* type,
+  const ddsi_serdata* dcmn, void* sample,
   void** bufptr, void* buflim)
 {
-  (void)topic;
+  (void)type;
   (void)bufptr;
   (void)buflim;
 
@@ -347,16 +354,15 @@ bool serdata_topicless_to_sample(
 }
 
 template <typename T>
-void serdata_free(struct ddsi_serdata* dcmn)
+void serdata_free(ddsi_serdata* dcmn)
 {
   auto* d = static_cast<const ddscxx_serdata<T>*>(dcmn);
   delete d;
 }
 
-#if DDSI_SERDATA_HAS_PRINT
 template <typename T>
 size_t serdata_print(
-  const struct ddsi_sertopic* tpcmn, const struct ddsi_serdata* dcmn, char* buf, size_t bufsize)
+  const ddsi_sertype* tpcmn, const ddsi_serdata* dcmn, char* buf, size_t bufsize)
 {
   (void)tpcmn;
   (void)dcmn;
@@ -365,12 +371,10 @@ size_t serdata_print(
     buf[0] = 0x0;
   return 0;
 }
-#endif
 
-#if DDSI_SERDATA_HAS_GET_KEYHASH
 template <typename T>
 void serdata_get_keyhash(
-  const struct ddsi_serdata* d, struct ddsi_keyhash* buf,
+  const ddsi_serdata* d, struct ddsi_keyhash* buf,
   bool force_md5)
 {
   auto ptr = static_cast<const ddscxx_serdata<T>*>(d);
@@ -387,104 +391,108 @@ void serdata_get_keyhash(
     memcpy(buf->value, ptr->key().value, 16);
   }
 }
-#endif
 
 template <typename T>
 const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
   &serdata_eqkey<T>,
   &serdata_size<T>,
   &serdata_from_ser<T>,
-#if DDSI_SERDATA_HAS_FROM_SER_IOV
   &serdata_from_ser_iov<T>,
-#endif
   &serdata_from_keyhash<T>,
   &serdata_from_sample<T>,
   &serdata_to_ser<T>,
   &serdata_to_ser_ref<T>,
   &serdata_to_ser_unref<T>,
   &serdata_to_sample<T>,
-  &serdata_to_topicless<T>,
-  &serdata_topicless_to_sample<T>,
-  &serdata_free<T>
-#if DDSI_SERDATA_HAS_PRINT
-  , &serdata_print<T>
-#endif
-#if DDSI_SERDATA_HAS_GET_KEYHASH
-  , &serdata_get_keyhash<T>
-#endif
+  &serdata_to_untyped<T>,
+  &serdata_untyped_to_sample<T>,
+  &serdata_free<T>,
+  &serdata_print<T>,
+  &serdata_get_keyhash<T>,
 };
 
 template <typename T>
-ddscxx_serdata<T>::ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind)
+ddscxx_serdata<T>::ddscxx_serdata(const ddsi_sertype* type, ddsi_serdata_kind kind)
   : ddsi_serdata{}
 {
   memset(m_key.value, 0x0, 16);
-  ddsi_serdata_init(this, topic, kind);
+  ddsi_serdata_init(this, type, kind);
 }
 
 template <typename T>
-ddscxx_sertopic<T>::ddscxx_sertopic(
-  const char* topic_name, const char* type_name) : ddsi_sertopic{}
+ddscxx_sertype<T>::ddscxx_sertype(
+  const char* topic_name, const char* type_name) : ddsi_sertype{}
 {
-  ddsi_sertopic_init(
-    static_cast<struct ddsi_sertopic*>(this),
-    topic_name,
+#if DDS_HAS_DDSI_SERTYPE
+  static_cast<void>(topic_name);
+  ddsi_sertype_init(
+    static_cast<ddsi_sertype*>(this),
     type_name,
-    &ddscxx_sertopic<T>::ddscxx_sertopic_ops,
+    &ddscxx_sertype<T>::ddscxx_sertype_ops,
     &ddscxx_serdata<T>::ddscxx_serdata_ops,
     org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless());
+#else
+  ddsi_sertopic_init(
+    static_cast<ddsi_sertype*>(this),
+    topic_name,
+    type_name,
+    &ddscxx_sertype<T>::ddscxx_sertype_ops,
+    &ddscxx_serdata<T>::ddscxx_serdata_ops,
+    org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless());
+#endif
 }
 
 template <typename T>
-void sertopic_free(struct ddsi_sertopic* tpcmn)
+void sertype_free(ddsi_sertype* tpcmn)
 {
-  auto tp = static_cast<ddscxx_sertopic<T>*>(tpcmn);
-#if DDSI_SERTOPIC_HAS_TOPICKIND_NO_KEY
+  auto tp = static_cast<ddscxx_sertype<T>*>(tpcmn);
+#if DDS_HAS_DDSI_SERTYPE
+  ddsi_sertype_fini(tpcmn);
+#else
   ddsi_sertopic_fini(tpcmn);
 #endif
-
   delete tp;
 }
 
 template <typename T>
-void sertopic_zero_samples(const struct ddsi_sertopic*, void*, size_t)
+void sertype_zero_samples(const ddsi_sertype*, void*, size_t)
 {
   return;
 }
 
 template <typename T>
-void sertopic_realloc_samples(
-  void** ptrs, const struct ddsi_sertopic*, void*, size_t, size_t)
+void sertype_realloc_samples(
+  void** ptrs, const ddsi_sertype*, void*, size_t, size_t)
 {
   /* For C++ we make one big assumption about the caller of this function:
-   * it can only be invoked by the ddsi_sertopic_alloc_sample, and will therefore
+   * it can only be invoked by the ddsi_sertype_alloc_sample, and will therefore
    * never be used to reallocate an existing sample collection. This is caused by
    * the fact that the C++ API lets either the user specify the exact dimensions
    * of his preallocated collection (in which case there is no need to realloc them),
    * or if the user didn't preallocate any memory it peeks at the available
    * samples prior to allocating the sample collection that is returned (so that
    * again there is no need to reallocate it).
-   * Because of this, we can safely assume that sertopic_realloc_samples can only
-   * be invoked by ddsi_sertopic_alloc_sample, in which case oldCount is always 0,
+   * Because of this, we can safely assume that sertype_realloc_samples can only
+   * be invoked by ddsi_sertype_alloc_sample, in which case oldCount is always 0,
    * count is always 1 and the old pointer is always null.
    */
   ptrs[0] = new T();
 }
 
 template <typename T>
-void sertopic_free_samples(
-  const struct ddsi_sertopic*, void** ptrs, size_t, dds_free_op_t op)
+void sertype_free_samples(
+  const ddsi_sertype*, void** ptrs, size_t, dds_free_op_t op)
 {
   /* For C++ we make one big assumption about the caller of this function:
-   * it can only be invoked by the ddsi_sertopic_free_sample, and will therefore
+   * it can only be invoked by the ddsi_sertype_free_sample, and will therefore
    * never be used to free an existing sample collection. This is caused by
    * the fact that the C++ API lets either the user specify the exact dimensions
    * of his preallocated collection (in which case there is no need to release
    * it in the cyclone code base), or if the user didn't preallocate any memory it
    * returns a collection of samples that will be owned by the user (in which case
    * cyclone doesn't need to release the collection either).
-   * Because of this, we can safely assume that sertopic_free_samples can only
-   * be invoked by ddsi_sertopic_free_sample, in which case count is always 1,
+   * Because of this, we can safely assume that sertype_free_samples can only
+   * be invoked by ddsi_sertype_free_sample, in which case count is always 1,
    * and the op flags can either be set to DDS_FREE_ALL_BIT, or to DDS_FREE_CONTENTS_BIT.
    */
   T* ptr = reinterpret_cast<T *>(ptrs[0]);
@@ -496,12 +504,11 @@ void sertopic_free_samples(
   }
 }
 
-#if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH
 template <typename T>
-bool sertopic_equal(
-  const struct ddsi_sertopic* acmn, const struct ddsi_sertopic* bcmn)
+bool sertype_equal(
+  const ddsi_sertype* acmn, const ddsi_sertype* bcmn)
 {
-  /* A bit of a guess: topics with the same name & type name are really the same if they have
+  /* A bit of a guess: types with the same name & type name are really the same if they have
    the same type support identifier as well */
   (void)acmn;
   (void)bcmn;
@@ -509,24 +516,31 @@ bool sertopic_equal(
 }
 
 template <typename T>
-uint32_t sertopic_hash(const struct ddsi_sertopic* tpcmn)
+uint32_t sertype_hash(const ddsi_sertype* tpcmn)
 {
   (void)tpcmn;
   return 0x0;
 }
 
 template <typename T>
-const ddsi_sertopic_ops ddscxx_sertopic<T>::ddscxx_sertopic_ops = {
-  &sertopic_free<T>,
-  &sertopic_zero_samples<T>,
-  &sertopic_realloc_samples<T>,
-  &sertopic_free_samples<T>
-#if DDSI_SERTOPIC_HAS_EQUAL_AND_HASH
-  , &sertopic_equal<T>,
-  &sertopic_hash<T>
+const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
+#if DDS_HAS_DDSI_SERTYPE
+  &ddsi_sertype_v0,
+  nullptr,
+#endif
+  &sertype_free<T>,
+  &sertype_zero_samples<T>,
+  &sertype_realloc_samples<T>,
+  &sertype_free_samples<T>,
+  &sertype_equal<T>,
+  &sertype_hash<T>
+#if DDS_HAS_DDSI_SERTYPE
+  , nullptr, // typeid_hash
+  nullptr,   // serialized_size
+  nullptr,   // serialize
+  nullptr,   // deserialize
+  nullptr    // assignable_from
 #endif
 };
-
-#endif
 
 #endif  // DDSCXXDATATOPIC_HPP_

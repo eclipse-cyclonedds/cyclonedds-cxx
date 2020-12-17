@@ -30,6 +30,10 @@
 
 #include <org/eclipse/cyclonedds/topic/CDRBlob.hpp>
 
+#if ! DDS_HAS_DDSI_SERTYPE
+typedef ddsi_sertopic ddsi_sertype;
+#endif
+
 namespace dds { namespace pub {
 template <typename DELEGATE>
 class TAnyDataWriter;

@@ -25,6 +25,10 @@
 
 #include <dds/dds.h>
 
+#if ! DDS_HAS_DDSI_SERTYPE
+typedef ddsi_sertopic ddsi_sertype;
+#endif
+
 #define MAX_TOPIC_NAME_LEN 1024
 
 // Implementation
@@ -173,10 +177,15 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
     dds_qos_t* ddsc_qos = tQos.ddsc_qos();
     dds_entity_t ddsc_par = dp.delegate()->get_ddsc_entity();
 
-    ser_topic_ = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerTopic(name);
+    ser_type_ = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType(name);
 
+#if DDS_HAS_DDSI_SERTYPE
+    dds_entity_t ddsc_topic = dds_create_topic_sertype(
+      ddsc_par, name.c_str(), &ser_type_, ddsc_qos, NULL, NULL);
+#else
     dds_entity_t ddsc_topic = dds_create_topic_generic(
-      ddsc_par, &ser_topic_, ddsc_qos, NULL, NULL);
+      ddsc_par, &ser_type_, ddsc_qos, NULL, NULL);
+#endif
 
     dds_delete_qos(ddsc_qos);
 

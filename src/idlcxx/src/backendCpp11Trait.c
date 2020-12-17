@@ -92,11 +92,11 @@ generate_traits(idl_backend_ctx ctx, const idl_node_t *node)
   idl_file_out_printf(ctx, "return \"%s\";\n", &struct_name[2] /* Skip preceeding "::" according to convention. */);
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "}\n\n");
-  idl_file_out_printf(ctx, "static ddsi_sertopic *getSerTopic(const std::string& topic_name)\n");
+  idl_file_out_printf(ctx, "static ddsi_sertype *getSerType(const std::string& topic_name)\n");
   idl_file_out_printf(ctx, "{\n");
   idl_indent_incr(ctx);
-  idl_file_out_printf(ctx, "auto *st = new ddscxx_sertopic<%s>(topic_name.c_str(), getTypeName());\n", struct_name);
-  idl_file_out_printf(ctx, "return static_cast<ddsi_sertopic*>(st);\n");
+  idl_file_out_printf(ctx, "auto *st = new ddscxx_sertype<%s>(topic_name.c_str(), getTypeName());\n", struct_name);
+  idl_file_out_printf(ctx, "return static_cast<ddsi_sertype*>(st);\n");
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "}\n\n");
   idl_file_out_printf(ctx, "static size_t getSampleSize()\n");
