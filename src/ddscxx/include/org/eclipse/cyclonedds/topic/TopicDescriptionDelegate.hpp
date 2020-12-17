@@ -70,14 +70,14 @@ public:
 
     //@todo virtual c_value *reader_parameters() const = 0;
 
-    ddsi_sertopic *get_ser_topic() const;
+    ddsi_sertype *get_ser_type() const;
 
 protected:
     dds::domain::DomainParticipant myParticipant;
     std::string myTopicName;
     std::string myTypeName;
     uint32_t nrDependents;
-    struct ddsi_sertopic *ser_topic_;
+    ddsi_sertype *ser_type_;
 };
 
 }

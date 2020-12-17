@@ -263,7 +263,7 @@ public:
     {
         topic.delegate()->incrNrDependents();
         this->myParticipant.delegate()->add_cfTopic(*this);
-        this->ser_topic_ = topic->get_ser_topic();
+        this->ser_type_ = topic->get_ser_type();
     }
 
     virtual ~ContentFilteredTopic()
@@ -437,9 +437,9 @@ private:
     {
         /* Make a private copy of the topic so my filter doesn't bother the original topic. */
         dds_qos_t* ddsc_qos = myTopic.qos()->ddsc_qos();
-        ddsi_sertopic *st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerTopic(myTopic.name());
-        dds_entity_t cfTopic = dds_create_topic_generic(
-            myTopic.domain_participant().delegate()->get_ddsc_entity(), &st, ddsc_qos, NULL, NULL);
+        ddsi_sertype *st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType();
+        dds_entity_t cfTopic = dds_create_topic_sertype(
+            myTopic.domain_participant().delegate()->get_ddsc_entity(), myTopic.name().c_str(), &st, ddsc_qos, NULL, NULL);
         dds_delete_qos(ddsc_qos);
         this->set_ddsc_entity(cfTopic);
 
