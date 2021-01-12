@@ -34,6 +34,7 @@ set(sources
     src/org/eclipse/cyclonedds/core/InstanceHandleDelegate.cpp
     src/org/eclipse/cyclonedds/core/EntitySet.cpp
     src/org/eclipse/cyclonedds/core/MiscUtils.cpp
+    src/org/eclipse/cyclonedds/core/DeferredDestruction.cpp
     src/org/eclipse/cyclonedds/core/cond/ConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/GuardConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/StatusConditionDelegate.cpp
