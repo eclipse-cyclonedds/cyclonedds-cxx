@@ -28,6 +28,7 @@
 #endif
 
 using HelloWorldData::Msg;
+using namespace dds;
 
 std::string generate_unique_topic_name(const std::string &prefix)
 {
@@ -39,7 +40,7 @@ std::string generate_unique_topic_name(const std::string &prefix)
 std::string topicName_ = generate_unique_topic_name("DeferredDestruction");
 
 template<typename T>
-class FakeDataReaderListener : public dds::sub::NoOpDataReaderListener<T>
+class FakeDataReaderListener : public sub::NoOpDataReaderListener<T>
 {
 public:
     FakeDataReaderListener()
@@ -47,14 +48,14 @@ public:
         std::cout << "Creating data reader listener for topic: " << topicName_ << std::endl;
     }
 
-    void on_subscription_matched([[maybe_unused]] dds::sub::DataReader<T>& reader,
-                                 [[maybe_unused]] const dds::core::status::SubscriptionMatchedStatus& status) override
+    void on_subscription_matched(sub::DataReader<T>&,
+                                 const core::status::SubscriptionMatchedStatus&)
     {
         std::cout << "topic: " << topicName_ << " data reader listener: on_subscription_matched called" << std::endl;
     }
 
-    void on_liveliness_changed([[maybe_unused]] dds::sub::DataReader<T>& reader,
-                               [[maybe_unused]] const dds::core::status::LivelinessChangedStatus& status) override
+    void on_liveliness_changed(sub::DataReader<T>&,
+                               const core::status::LivelinessChangedStatus& status)
     {
         std::cout << "topic: " << topicName_ << " data reader listener: on_liveliness_changed called "
                   << " alive count: " << status.alive_count() << " not alive count: " << status.not_alive_count()
@@ -62,14 +63,14 @@ public:
                   << " not alive count change: " << status.not_alive_count_change() << std::endl;
     }
 
-    void on_data_available([[maybe_unused]] dds::sub::DataReader<T>& reader) override
+    void on_data_available(sub::DataReader<T>&)
     {
         std::cout << "topic: " << topicName_ << " data reader listener: on_data_available called" << std::endl;
     }
 };
 
 template<typename T>
-class FakeDataWriterListener : public dds::pub::NoOpDataWriterListener<T>
+class FakeDataWriterListener : public pub::NoOpDataWriterListener<T>
 {
 public:
     FakeDataWriterListener()
@@ -77,67 +78,70 @@ public:
         std::cout << "Creating data writer listener for topic: " << topicName_ << std::endl;
     }
 
-    void on_publication_matched([[maybe_unused]] dds::pub::DataWriter<T>& writer,
-                                [[maybe_unused]] const dds::core::status::PublicationMatchedStatus& status) override
+    void on_publication_matched(pub::DataWriter<T>&,
+                                const core::status::PublicationMatchedStatus&)
     {
         std::cout << "topic: " << topicName_ << " data writer listener: on_publication_matched called" << std::endl;
     }
-    void on_liveliness_lost([[maybe_unused]] dds::pub::DataWriter<T>& writer,
-                            [[maybe_unused]] const dds::core::status::LivelinessLostStatus& status) override
+    void on_liveliness_lost(pub::DataWriter<T>&,
+                            const core::status::LivelinessLostStatus&)
     {
         std::cout << "topic: " << topicName_ << " data writer listener: on_liveliness_lost called" << std::endl;
     }
 };
 
 // This function could run into deadlock
-void multiReaderSingleWriter([[maybe_unused]] uint32_t readerCnt)
+void multiReaderSingleWriter(uint32_t readerCount)
 {
 
     // declare writer
-    dds::domain::DomainParticipant participant{0};
-    dds::topic::Topic<Msg> topic(participant, topicName_);
-    dds::pub::Publisher pub{participant};
-    dds::pub::qos::DataWriterQos writeQos{};
+    domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+    topic::Topic<Msg> topic(participant, topicName_);
+    pub::Publisher pub(participant);
     FakeDataWriterListener<Msg> writeListener;
-    dds::core::status::StatusMask mask{dds::core::status::StatusMask::all()};
-    DDSCXX_STD_IMPL::optional<dds::pub::DataWriter<Msg>> writer;
-    EXPECT_NO_THROW(writer.emplace(pub, topic, writeQos, &writeListener, mask));
+
+    DDSCXX_STD_IMPL::optional<pub::DataWriter<Msg>> writer;
+    EXPECT_NO_THROW(writer.emplace(pub, topic, pub::qos::DataWriterQos(), &writeListener, core::status::StatusMask::all()));
 
     // declare readers in multithreads
     std::vector<std::thread> threads;
-    for (uint32_t i = 0; i < readerCnt; i++) {
+    for (uint32_t i = 0; i < readerCount; i++) {
         threads.emplace_back(std::thread([&participant, &topic] {
             using namespace std::literals;
-            dds::sub::Subscriber sub{participant};
-            dds::sub::qos::DataReaderQos readQos{};
-            FakeDataReaderListener<Msg> readListener;
-            dds::core::status::StatusMask readMask{dds::core::status::StatusMask::none()};
-            auto reader = dds::sub::DataReader<Msg>{sub, topic, readQos, &readListener, readMask};
+
+            sub::Subscriber sub(participant);
+            auto reader = sub::DataReader<Msg>(sub, topic);
         }));
     }
 
+    //killing the writer on which callbacks are made
+    writer->listener(nullptr, dds::core::status::StatusMask::none());
     writer.reset();
 
-    for (auto&& t : threads) {
-        if (t.joinable()) {
-            t.join();
+    //waiting for the reader threads to complete
+    while (threads.size()) {
+        for (auto it = threads.begin(); it != threads.end();) {
+            if (it->joinable()) {
+                it->join();
+                it = threads.erase(it);
+            } else {
+                it++;
+            }
         }
     }
 }
 
 // This function could cause assertation to false on exit
-void multiWriterSingleReader([[maybe_unused]] uint32_t writerCount)
+void multiWriterSingleReader(uint32_t writerCount)
 {
     // declare reader
-    dds::domain::DomainParticipant participant{0};
-    dds::topic::Topic<Msg> topic(participant, topicName_);
+    domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+    topic::Topic<Msg> topic(participant, topicName_);
 
-    dds::sub::Subscriber sub{participant};
-    dds::sub::qos::DataReaderQos readQos{};
+    sub::Subscriber sub(participant);
     FakeDataReaderListener<Msg> readListener;
-    dds::core::status::StatusMask readMask{dds::core::status::StatusMask::all()};
-    DDSCXX_STD_IMPL::optional<dds::sub::DataReader<Msg>> reader;
-    EXPECT_NO_THROW(reader.emplace(sub, topic, readQos, &readListener, readMask));
+    DDSCXX_STD_IMPL::optional<sub::DataReader<Msg>> reader;
+    EXPECT_NO_THROW(reader.emplace(sub, topic, sub::qos::DataReaderQos(), &readListener, core::status::StatusMask::all()));
 
     // declare writers in multithreads
     std::vector<std::thread> threads;
@@ -145,19 +149,24 @@ void multiWriterSingleReader([[maybe_unused]] uint32_t writerCount)
         threads.emplace_back(std::thread([&participant, &topic] {
             using namespace std::literals;
 
-            dds::pub::Publisher pub{participant};
-            dds::pub::qos::DataWriterQos writeQos{};
-            FakeDataWriterListener<Msg> writeListener;
-            dds::core::status::StatusMask writeMask{dds::core::status::StatusMask::none()};
-            dds::pub::DataWriter<Msg> writer(pub, topic, writeQos, &writeListener, writeMask);
+            pub::Publisher pub(participant);
+            pub::DataWriter<Msg> writer(pub, topic);
         }));
     }
 
+    //killing the reader on which callbacks are made
+    reader->listener(nullptr, dds::core::status::StatusMask::none());
     reader.reset();
 
-    for (auto&& t : threads) {
-        if (t.joinable()) {
-            t.join();
+    //waiting for the writer threads to complete
+    while (threads.size()) {
+        for (auto it = threads.begin(); it != threads.end();) {
+            if (it->joinable()) {
+                it->join();
+                it = threads.erase(it);
+            } else {
+                it++;
+            }
         }
     }
 }
