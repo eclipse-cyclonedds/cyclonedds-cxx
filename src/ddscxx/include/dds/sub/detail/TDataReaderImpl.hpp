@@ -615,7 +615,7 @@ dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>
 dds::sub::detail::DataReader<T>::read_cdr()
 {
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> samples;
-    dds::sub::detail::LoanedCDRSamplesHolder<org::eclipse::cyclonedds::topic::CDRBlob> holder(samples);
+    dds::sub::detail::CDRSamplesHolder holder(samples);
 
     this->AnyDataReaderDelegate::read_cdr(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
@@ -627,7 +627,7 @@ dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>
 dds::sub::detail::DataReader<T>::take_cdr()
 {
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> samples;
-    dds::sub::detail::LoanedCDRSamplesHolder<org::eclipse::cyclonedds::topic::CDRBlob> holder(samples);
+    dds::sub::detail::CDRSamplesHolder holder(samples);
 
     this->AnyDataReaderDelegate::take_cdr(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
@@ -641,7 +641,7 @@ dds::sub::detail::DataReader<T>::read()
     dds::sub::LoanedSamples<T> samples;
     dds::sub::detail::LoanedSamplesHolder<T> holder(samples);
 
-    this->AnyDataReaderDelegate::read(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
+    this->AnyDataReaderDelegate::loaned_read(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
     return samples;
 }
@@ -653,7 +653,7 @@ dds::sub::detail::DataReader<T>::take()
     dds::sub::LoanedSamples<T> samples;
     dds::sub::detail::LoanedSamplesHolder<T> holder(samples);
 
-    this->AnyDataReaderDelegate::take(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
+    this->AnyDataReaderDelegate::loaned_take(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, static_cast<uint32_t>(dds::core::LENGTH_UNLIMITED));
 
     return samples;
 }
@@ -997,20 +997,20 @@ dds::sub::detail::DataReader<T>::read(const Selector& selector)
 
     switch(selector.mode) {
     case SELECT_MODE_READ:
-        this->AnyDataReaderDelegate::read(static_cast<dds_entity_t>(this->ddsc_entity),
+        this->AnyDataReaderDelegate::loaned_read(static_cast<dds_entity_t>(this->ddsc_entity),
                                           selector.state_filter_,
                                           holder,
                                           selector.max_samples_);
         break;
     case SELECT_MODE_READ_INSTANCE:
-        this->AnyDataReaderDelegate::read_instance(static_cast<dds_entity_t>(this->ddsc_entity),
+        this->AnyDataReaderDelegate::loaned_read_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                    selector.handle,
                                                    selector.state_filter_,
                                                    holder,
                                                    selector.max_samples_);
         break;
     case SELECT_MODE_READ_NEXT_INSTANCE:
-        this->AnyDataReaderDelegate::read_next_instance(static_cast<dds_entity_t>(this->ddsc_entity),
+        this->AnyDataReaderDelegate::loaned_read_next_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                         selector.handle,
                                                         selector.state_filter_,
                                                         holder,
@@ -1045,20 +1045,20 @@ dds::sub::detail::DataReader<T>::take(const Selector& selector)
 
     switch(selector.mode) {
     case SELECT_MODE_READ:
-        this->AnyDataReaderDelegate::take(static_cast<dds_entity_t>(this->ddsc_entity),
+        this->AnyDataReaderDelegate::loaned_take(static_cast<dds_entity_t>(this->ddsc_entity),
                                           selector.state_filter_,
                                           holder,
                                           selector.max_samples_);
         break;
     case SELECT_MODE_READ_INSTANCE:
-        this->AnyDataReaderDelegate::take_instance(static_cast<dds_entity_t>(this->ddsc_entity),
+        this->AnyDataReaderDelegate::loaned_take_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                    selector.handle,
                                                    selector.state_filter_,
                                                    holder,
                                                    selector.max_samples_);
         break;
     case SELECT_MODE_READ_NEXT_INSTANCE:
-        this->AnyDataReaderDelegate::take_next_instance(static_cast<dds_entity_t>(this->ddsc_entity),
+        this->AnyDataReaderDelegate::loaned_take_next_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                         selector.handle,
                                                         selector.state_filter_,
                                                         holder,

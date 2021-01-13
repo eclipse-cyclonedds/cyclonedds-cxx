@@ -1,5 +1,5 @@
-#ifndef OMG_DDS_PUB_DETAIL_SAMPLE_HPP_
-#define OMG_DDS_PUB_DETAIL_SAMPLE_HPP_
+#ifndef OMG_DDS_PUB_DETAIL_SAMPLEREF_HPP_
+#define OMG_DDS_PUB_DETAIL_SAMPLEREF_HPP_
 
 /* Copyright 2010, Object Management Group, Inc.
  * Copyright 2010, PrismTech, Corp.
@@ -27,11 +27,11 @@ namespace sub
 namespace detail
 {
 template <typename T>
-class Sample;
+class SampleRef;
 }}}
 
 #include <dds/sub/SampleInfo.hpp>
-//#include <dds/sub/detail/TSampleImpl.hpp>
+#include <org/eclipse/cyclonedds/topic/datatopic.hpp>
 
 namespace dds
 {
@@ -40,28 +40,36 @@ namespace sub
 namespace detail
 {
 template <typename T>
-class Sample
+class SampleRef
 {
 public:
-    Sample() { }
+    SampleRef()
+    {
+      this->data_ = nullptr;
+    }
 
-    Sample(const T& d, const dds::sub::SampleInfo& i)
+    SampleRef(ddscxx_serdata<T>* d, const dds::sub::SampleInfo& i)
     {
         this->data_ = d;
         this->info_ = i;
     }
 
-    Sample(const Sample& other)
+    SampleRef(const SampleRef& other)
     {
         copy(other);
     }
 
-    Sample& operator=(const Sample& other)
+    virtual ~SampleRef()
+    {
+        ddsi_serdata_unref(data_);
+    }
+
+    SampleRef& operator=(const SampleRef& other)
     {
         return copy(other);
     }
 
-    Sample& copy(const Sample& other)
+    SampleRef& copy(const SampleRef& other)
     {
         this->data_ = other.data_;
         this->info_ = other.info_;
@@ -72,17 +80,7 @@ public:
 public:
     const T& data() const
     {
-        return data_;
-    }
-
-    T& data()
-    {
-        return data_;
-    }
-
-    void data(const T& d)
-    {
-        data_ = d;
+        return *data_->getT();
     }
 
     const dds::sub::SampleInfo& info() const
@@ -95,24 +93,20 @@ public:
         return info_;
     }
 
-    void info(const dds::sub::SampleInfo& i)
-    {
-        info_ = i;
-    }
-
-    bool operator ==(const Sample& other) const
+    bool operator ==(const SampleRef& other) const
     {
         (void)other;
         return false;
     }
 
-    T* data_ptr()
+    ddscxx_serdata<T>* &data_ptr()
     {
-        return &this->data_;
+        return this->data_;
     }
 
+
 private:
-    T data_;
+    ddscxx_serdata<T>* data_;
     dds::sub::SampleInfo info_;
 };
 
@@ -120,4 +114,4 @@ private:
 }
 }
 
-#endif /* OMG_DDS_PUB_DETAIL_SAMPLE_HPP_ */
+#endif /* OMG_DDS_PUB_DETAIL_SAMPLEREF_HPP_ */
