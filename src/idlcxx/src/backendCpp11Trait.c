@@ -95,7 +95,7 @@ generate_traits(idl_backend_ctx ctx, const idl_node_t *node)
   idl_file_out_printf(ctx, "static ddsi_sertopic *getSerTopic(const std::string& topic_name)\n");
   idl_file_out_printf(ctx, "{\n");
   idl_indent_incr(ctx);
-  idl_file_out_printf(ctx, "auto *st = new ddscxx_sertopic<%s>(topic_name.c_str(), getTypeName());\n", struct_name);
+  idl_file_out_printf(ctx, "auto *st = new ddscxx_sertopic<%s>(topic_name.c_str());\n", struct_name);
   idl_file_out_printf(ctx, "return static_cast<ddsi_sertopic*>(st);\n");
   idl_indent_decr(ctx);
   idl_file_out_printf(ctx, "}\n\n");
