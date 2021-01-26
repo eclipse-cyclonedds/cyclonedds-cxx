@@ -23,7 +23,7 @@
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 #include <dds/dds.h>
 
-#include "dds/ddsi/ddsi_serdata.h"
+#include "dds/ddsi/ddsi_sertopic.h"
 #include "dds/ddsi/q_protocol.h"
 
 
@@ -108,7 +108,7 @@ AnyDataWriterDelegate::write_cdr(
 
     /* Now create a dedicated ser_data that contains both encoding and payload as contiguous memory. */
     ser_data = ddsi_serdata_from_ser_iov(
-        td_->get_ser_topic(),
+        ddsi_sertype_from_sertopic(td_->get_ser_topic()),
         static_cast<ddsi_serdata_kind>(data->kind()),
         2,
         blob_holders,
