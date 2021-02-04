@@ -34,14 +34,7 @@
 
 // Required for C++11
 #if __cplusplus == 201103L
-namespace std
-{
-template<bool cond, class T = void>
-using enable_if_t = typename std::enable_if<cond, T>::type;
-
-template<class T = void>
-using decay_t = typename std::decay<T>::type;
-}  // namespace std
+#include <org/eclipse/cyclonedds/core/Missing.hpp>
 #endif
 
 // meta-programming helpers
