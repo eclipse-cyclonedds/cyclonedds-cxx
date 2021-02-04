@@ -23,16 +23,40 @@
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "dds/ddsi/ddsi_sertopic.h"
+#include "basic_cdr_ser.hpp"
+#include "dds/ddsi/ddsi_keyhash.h"
+#include "org/eclipse/cyclonedds/topic/hash.hpp"
 
-typedef struct ddsi_serdata ddsi_serdata_t;
-
-enum class endianness
+template<class streamer, typename T>
+bool to_key(streamer& str, const T& tokey, ddsi_keyhash_t& hash)
 {
-  little_endian = DDSRT_LITTLE_ENDIAN,
-  big_endian = DDSRT_BIG_ENDIAN
-};
-
-constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
+  str.reset_position();
+  key_move(str, tokey);
+  size_t sz = str.position();
+  size_t padding = 16 - sz % 16;
+  if (sz != 0 && padding == 16) padding = 0;
+  std::vector<unsigned char> buffer(sz + padding);
+  memset(buffer.data() + sz, 0x0, padding);
+  str.set_buffer(buffer.data());
+  key_write(str, tokey);
+  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
+  if (fptr == NULL)
+  {
+    str.set_buffer(nullptr);
+    key_max(str, tokey);
+    if (str.position() <= 16)
+    {
+      //bind to unmodified function which just copies buffer into the keyhash
+      fptr = &org::eclipse::cyclonedds::topic::simple_key;
+    }
+    else
+    {
+      //bind to MD5 hash function
+      fptr = &org::eclipse::cyclonedds::topic::complex_key;
+    }
+  }
+  return (*fptr)(buffer, hash);
+}
 
 static inline void* calc_offset(void* ptr, ptrdiff_t n)
 {
@@ -81,13 +105,15 @@ public:
     T *t = m_t.load(std::memory_order_acquire);
     if (t == nullptr) {
       t = new T();
+      basic_cdr_stream str;
+      str.set_buffer(calc_offset(data(),4));
       switch (kind)
       {
       case SDK_KEY:
-        t->key_read(calc_offset(data(), 4), 0);
+        key_read(str,*t);
         break;
       case SDK_DATA:
-        t->read_struct(calc_offset(data(), 4), 0);
+        read(str,*t);
         break;
       case SDK_EMPTY:
         assert(0);
@@ -108,7 +134,8 @@ void ddscxx_serdata<T>::populate_hash()
   if (hash_populated)
     return;
 
-  key_md5_hashed() = getT()->key(key());
+  basic_cdr_stream str;
+  key_md5_hashed() = to_key(str, *getT(), key());
   if (!key_md5_hashed())
   {
     ddsi_keyhash_t buf;
@@ -172,18 +199,20 @@ ddsi_sertopic_serdata_t *serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
+  basic_cdr_stream str;
+  str.set_buffer(calc_offset(d->data(), 4));
   switch (kind)
   {
   case SDK_KEY:
-    d->getT()->key_read(calc_offset(d->data(), 4), 0);
+    key_read(str,*d->getT());
     break;
   case SDK_DATA:
-    d->getT()->read_struct(calc_offset(d->data(), 4), 0);
+    read(str,*d->getT());
     break;
   case SDK_EMPTY:
     assert(0);
   }
-  d->key_md5_hashed() = d->getT()->key(d->key());
+  d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
   d->populate_hash();
 
   return d;
@@ -212,18 +241,20 @@ ddsi_sertopic_serdata_t *serdata_from_ser_iov(
     off += n_bytes;
   }
 
+  basic_cdr_stream str;
+  str.set_buffer(calc_offset(d->data(), 4));
   switch (kind)
   {
   case SDK_KEY:
-    d->getT()->key_read(calc_offset(d->data(), 4), 0);
+    key_read(str, *d->getT());
     break;
   case SDK_DATA:
-    d->getT()->read_struct(calc_offset(d->data(), 4), 0);
+    read(str, *d->getT());
     break;
   case SDK_EMPTY:
     assert(0);
   }
-  d->key_md5_hashed() = d->getT()->key(d->key());
+  d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
   d->populate_hash();
 
   return d;
@@ -269,28 +300,35 @@ ddsi_sertopic_serdata_t *serdata_from_sample(
 {
   try {
     auto d = new ddscxx_serdata<T>(topiccmn, kind);
+    basic_cdr_stream str;
+    const auto& msg = *static_cast<const T*>(sample);
 
-    auto msg = static_cast<const T*>(sample);
-    size_t sz = 4 + (kind == SDK_KEY ? msg->key_size(0) : msg->write_size(0));  //4 bytes extra to also include the header
+    if (kind == SDK_KEY)
+      key_move(str, msg);
+    else
+      move(str, msg);
+    size_t sz = 4 + str.position();  //4 bytes extra to also include the header
     d->resize(sz);
     auto ptr = static_cast<unsigned char*>(d->data());
     memset(ptr, 0x0, 4);
-    if (native_endianness() == endianness::little_endian)
+    if (str.local_endianness() == endianness::little_endian)
       *(ptr + 1) = 0x1;
 
+    str.set_buffer(calc_offset(d->data(), 4));
     switch (kind)
     {
     case SDK_KEY:
-      msg->key_write(calc_offset(d->data(), 4), 0);
+      key_write(str, msg);
       break;
     case SDK_DATA:
-      msg->write_struct(calc_offset(d->data(), 4), 0);
+      write(str, msg);
       break;
     case SDK_EMPTY:
       assert(0);
     }
-    d->key_md5_hashed() = msg->key(d->key());
-    *(d->getT()) = *msg;
+    str.reset_position();
+    d->key_md5_hashed() = to_key(str,msg,d->key());
+    *d->getT() = msg;
     d->populate_hash();
 
     return d;
@@ -332,12 +370,12 @@ bool serdata_to_sample(
 {
   (void)bufptr;
   (void)buflim;
-  /* Cast away const: the serialized ddsi_serdata itself is not touched: only its C++ representation
-   * in the C++ wrapper may initialized if this was not done before. So conceptually the const for
-   * ddsi_serdata is not violated.
-   */
-  auto ptr = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
-  *(static_cast<T*>(sample)) = *ptr->getT();
+  auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
+
+  basic_cdr_stream str;
+  str.set_buffer(calc_offset(ptr->data(), 4));
+  auto& msg = *static_cast<T*>(sample);
+  read(str, msg);
 
   return false;
 }
@@ -353,16 +391,19 @@ ddsi_sertopic_serdata_t *serdata_to_topicless(const ddsi_sertopic_serdata_t* dcm
   auto d1 = new ddscxx_serdata<T>(d->topic, SDK_KEY);
   d1->topic = nullptr;
 
-  auto t = d->getT();
-  d1->resize(4 + t->key_size(0));
+  basic_cdr_stream str;
+  auto &t = *d->getT();
+  key_move(str, t);
+  d1->resize(4 + str.position());
 
   auto ptr = static_cast<unsigned char*>(d1->data());
   memset(ptr, 0x0, 4);
-  if (native_endianness() == endianness::little_endian)
+  if (str.stream_endianness() == endianness::little_endian)
     *(ptr + 1) = 0x1;
 
-  t->key_write(calc_offset(d1->data(), 4), 0);  //4 offset due to header field
-  d1->key_md5_hashed() = t->key(d1->key());
+  str.set_buffer(calc_offset(d1->data(), 4));
+  key_write(str, t);  //4 offset due to header field
+  d1->key_md5_hashed() = to_key(str, t, d1->key());
   d1->hash = d->hash;
   d1->hash_populated = true;
 
@@ -379,12 +420,12 @@ bool serdata_topicless_to_sample(
   (void)bufptr;
   (void)buflim;
 
-  /* Cast away const: the serialized ddsi_serdata itself is not touched: only its C++ representation
-   * in the C++ wrapper may initialized if this was not done before. So conceptually the const for
-   * ddsi_serdata is not violated.
-   */
-  auto ptr = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
-  *(static_cast<T*>(sample)) = *ptr->getT();
+  auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+
+  T* ptr = static_cast<T*>(sample);
+  basic_cdr_stream str;
+  str.set_buffer(calc_offset(d->data(), 4));
+  key_read(str, *ptr);
 
   return true;
 }

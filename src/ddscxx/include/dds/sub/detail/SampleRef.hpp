@@ -61,7 +61,7 @@ public:
 
     virtual ~SampleRef()
     {
-        ddsi_serdata_unref(data_);
+        ddsi_serdata_unref(reinterpret_cast<ddsi_serdata*>(data_));
     }
 
     SampleRef& operator=(const SampleRef& other)
@@ -71,7 +71,7 @@ public:
 
     SampleRef& copy(const SampleRef& other)
     {
-        static_cast<void>(ddsi_serdata_ref(other.data_));
+        static_cast<void>(ddsi_serdata_ref(reinterpret_cast<ddsi_serdata* const>(other.data_)));
         this->data_ = other.data_;
         this->info_ = other.info_;
 
