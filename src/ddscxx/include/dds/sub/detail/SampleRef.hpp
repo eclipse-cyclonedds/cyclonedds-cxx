@@ -71,6 +71,7 @@ public:
 
     SampleRef& copy(const SampleRef& other)
     {
+        static_cast<void>(ddsi_serdata_ref(other.data_));
         this->data_ = other.data_;
         this->info_ = other.info_;
 

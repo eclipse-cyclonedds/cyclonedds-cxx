@@ -16,6 +16,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <atomic>
 
 #include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
@@ -56,13 +57,13 @@ class ddscxx_serdata : public ddsi_serdata {
   std::unique_ptr<unsigned char[]> m_data{ nullptr };
   ddsi_keyhash_t m_key;
   bool m_key_md5_hashed = false;
-  T *m_t = nullptr;
+  std::atomic<T *> m_t = nullptr;
 
 public:
   bool hash_populated = false;
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
   ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
-  ~ddscxx_serdata() { delete m_t; }
+  ~ddscxx_serdata() { delete m_t.load(std::memory_order_acquire); }
 
   void resize(size_t requested_size);
   size_t size() const { return m_size; }
@@ -75,22 +76,27 @@ public:
 
   T* getT()
   {
-    if (!m_t)
-    {
-      m_t = new T();
+    T *t = m_t.load(std::memory_order_acquire);
+    if (t == nullptr) {
+      t = new T();
       switch (kind)
       {
       case SDK_KEY:
-        m_t->key_read(calc_offset(data(), 4), 0);
+        t->key_read(calc_offset(data(), 4), 0);
         break;
       case SDK_DATA:
-        m_t->read_struct(calc_offset(data(), 4), 0);
+        t->read_struct(calc_offset(data(), 4), 0);
         break;
       case SDK_EMPTY:
         assert(0);
       }
+      T* exp = nullptr;
+      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+        delete t;
+        t = exp;
+      }
     }
-    return m_t;
+    return t;
   }
 };
 
