@@ -57,7 +57,7 @@ class ddscxx_serdata : public ddsi_serdata {
   std::unique_ptr<unsigned char[]> m_data{ nullptr };
   ddsi_keyhash_t m_key;
   bool m_key_md5_hashed = false;
-  std::atomic<T *> m_t = nullptr;
+  std::atomic<T *> m_t{ nullptr };
 
 public:
   bool hash_populated = false;
