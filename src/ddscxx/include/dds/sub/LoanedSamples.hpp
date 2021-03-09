@@ -19,7 +19,7 @@
 #define OMG_DDS_SUB_TLOANED_SAMPLES_HPP_
 
 #include <dds/core/ref_traits.hpp>
-#include <dds/sub/Sample.hpp>
+#include <dds/sub/SampleRef.hpp>
 
 #include <dds/sub/detail/LoanedSamples.hpp>
 

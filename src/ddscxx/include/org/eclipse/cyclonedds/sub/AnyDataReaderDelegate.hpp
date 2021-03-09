@@ -72,10 +72,10 @@ public:
     virtual uint32_t get_length() const = 0;
     virtual SamplesHolder& operator++(int) = 0;
     virtual void *data() = 0;
-    virtual detail::SampleInfo* info() = 0;
+    virtual detail::SampleInfo& info() = 0;
     virtual void **cpp_sample_pointers() = 0;
     virtual dds_sample_info_t *cpp_info_pointers() = 0;
-    virtual void set_sample_infos(dds_sample_info_t *info) = 0;
+    virtual void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info) = 0;
     virtual void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos) = 0;
 };
 
@@ -176,6 +176,46 @@ public:
 
     void take_cdr(
             const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_read(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_take(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_read_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_take_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_read_next_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_take_next_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
             const dds::sub::status::DataState& mask,
             dds::sub::detail::SamplesHolder& samples,
             uint32_t max_samples);
