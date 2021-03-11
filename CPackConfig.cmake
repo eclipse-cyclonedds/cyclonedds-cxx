@@ -1,5 +1,5 @@
 #
-# Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+# Copyright(c) 2020 ADLINK Technology Limited and others
 #
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,10 +9,10 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-if(PACKAGING_INCLUDED)
+if(CPACK_CONFIG_INCLUDED)
   return()
 endif()
-set(PACKAGING_INCLUDED true)
+set(CPACK_CONFIG_INCLUDED true)
 
 include(GNUInstallDirs)
 
@@ -25,7 +25,7 @@ set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VENDOR "Eclipse Cyclone DDS project")
 set(CPACK_PACKAGE_CONTACT "https://github.com/eclipse-cyclonedds/cyclonedds-cxx")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Implementation of the OMG ISO/IEC C++ PSM")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Eclipse Cyclone DDS ISO IEC C++ PSM")
 
 # WiX requires a .txt file extension for CPACK_RESOURCE_FILE_LICENSE
 file(COPY "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_BINARY_DIR}")
@@ -53,6 +53,7 @@ set(CPACK_COMPONENT_IDLCXX_DISPLAY_NAME "${PROJECT_NAME_FULL} compiler plugin fo
 set(CPACK_COMPONENT_IDLCXX_DESCRIPTION  "Idl compiler plugin library for ${PROJECT_NAME_FULL}")
 
 if(WIN32 AND NOT UNIX)
+  
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(__arch "win64")
   else()
@@ -62,26 +63,24 @@ if(WIN32 AND NOT UNIX)
 
   set(CPACK_GENERATOR "WIX;ZIP;${CPACK_GENERATOR}" CACHE STRING "List of package generators")
   set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CPACK_PACKAGE_VERSION}-${__arch}")
-  set(PACKAGING_MODULE_DIR "${PROJECT_SOURCE_DIR}/cmake/Modules/Packaging")
+  set(WIX_DIR "${PROJECT_SOURCE_DIR}/Wix")
   set(CPACK_PACKAGE_INSTALL_DIRECTORY "${PROJECT_NAME_FULL}")
   set(CPACK_WIX_UI_REF "CustomUI_InstallDir")
-  set(CPACK_WIX_PATCH_FILE "${PACKAGING_MODULE_DIR}/Wix/env.xml")
-  set(CPACK_WIX_EXTRA_SOURCES "${PACKAGING_MODULE_DIR}/Wix/PathDlg.wxs" 
-                              "${PACKAGING_MODULE_DIR}/Wix/DialogOrder.wxs")
+  set(CPACK_WIX_PATCH_FILE "${WIX_DIR}/env.xml")
+  set(CPACK_WIX_EXTRA_SOURCES "${WIX_DIR}/PathDlg.wxs" 
+                              "${WIX_DIR}/DialogOrder.wxs")
   set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY "${PROJECT_NAME}")
-  set(CPACK_WIX_PRODUCT_ICON "${PACKAGING_MODULE_DIR}/Wix/CycloneDDS_icon.ico")
-  set(CPACK_WIX_UI_BANNER "${PACKAGING_MODULE_DIR}/Wix/CycloneDDS_banner.png")
-  set(CPACK_WIX_UI_DIALOG "${PACKAGING_MODULE_DIR}/Wix/CycloneDDS_dialog.png")
+  set(CPACK_WIX_PRODUCT_ICON "${WIX_DIR}/CycloneDDS_icon.ico")
+  set(CPACK_WIX_UI_BANNER "${WIX_DIR}/CycloneDDS_banner.png")
+  set(CPACK_WIX_UI_DIALOG "${WIX_DIR}/CycloneDDS_dialog.png")
+  # when updating the version number also generate a new GUID
+	set(CPACK_WIX_UPGRADE_GUID "0D106C1A-D499-4DD4-ABD5-BE77415C1E8B")
   
   include(InstallRequiredSystemLibraries)
+  set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  # CMake prior to v3.6 messes up the name of the packages. >= v3.6 understands CPACK_RPM/DEBIAN_<component>_FILE_NAME
-  cmake_minimum_required(VERSION 3.6)
-
   set(CPACK_COMPONENTS_GROUPING "IGNORE")
-
-  # FIXME: Requiring lsb_release to be installed may be a viable option.
 
   if(EXISTS "/etc/redhat-release")
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -91,14 +90,14 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     endif()
 
     set(CPACK_GENERATOR "RPM;TGZ;${CPACK_GENERATOR}" CACHE STRING "List of package generators")
-
+    set(CPACK_RPM_PACKAGE_LICENSE "Eclipse Public License v2.0  http://www.eclipse.org/legal/epl-2.0")
     set(CPACK_RPM_COMPONENT_INSTALL ON)
-    # FIXME: The package file name must be updated to include the distribution.
-    #        See Fedora and Red Hat packaging guidelines for details.
+    set(CPACK_RPM_PACKAGE_RELEASE 1)
+    set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
     set(CPACK_RPM_LIB_PACKAGE_NAME "${PROJECT_NAME_DASHED}")
-    set(CPACK_RPM_LIB_FILE_NAME "${CPACK_RPM_LIB_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${__arch}.rpm")
+    set(CPACK_RPM_LIB_FILE_NAME "${CPACK_RPM_LIB_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}-${__arch}.rpm")
     set(CPACK_RPM_DEV_PACKAGE_NAME "${CPACK_RPM_LIB_PACKAGE_NAME}-devel")
-    set(CPACK_RPM_DEV_FILE_NAME "${CPACK_RPM_DEV_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${__arch}.rpm")
+    set(CPACK_RPM_DEV_FILE_NAME "${CPACK_RPM_DEV_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}-${__arch}.rpm")
     set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${CPACK_PACKAGE_VERSION}")
   elseif(EXISTS "/etc/debian_version")
     set(CPACK_DEB_COMPONENT_INSTALL ON)
@@ -126,4 +125,3 @@ endif()
 
 # This must always be last!
 include(CPack)
-
