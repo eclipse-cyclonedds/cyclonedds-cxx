@@ -9,12 +9,15 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-if(CPACK_CONFIG_INCLUDED)
+if(CMAKECPACK_INCLUDED)
   return()
 endif()
-set(CPACK_CONFIG_INCLUDED true)
+set(CMAKECPACK_INCLUDED true)
 
 include(GNUInstallDirs)
+set(PROJECT_NAME_FULL "Eclipse Cyclone DDS ISO IEC C++ PSM")
+# Set some convenience variants of the project-name
+string(REPLACE " " "-" PROJECT_NAME_DASHED "${PROJECT_NAME_FULL}")
 
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
@@ -63,16 +66,16 @@ if(WIN32 AND NOT UNIX)
 
   set(CPACK_GENERATOR "WIX;ZIP;${CPACK_GENERATOR}" CACHE STRING "List of package generators")
   set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CPACK_PACKAGE_VERSION}-${__arch}")
-  set(WIX_DIR "${PROJECT_SOURCE_DIR}/Wix")
+  set(WIX_DIR "${PROJECT_SOURCE_DIR}/WiX")
   set(CPACK_PACKAGE_INSTALL_DIRECTORY "${PROJECT_NAME_FULL}")
   set(CPACK_WIX_UI_REF "CustomUI_InstallDir")
   set(CPACK_WIX_PATCH_FILE "${WIX_DIR}/env.xml")
   set(CPACK_WIX_EXTRA_SOURCES "${WIX_DIR}/PathDlg.wxs" 
                               "${WIX_DIR}/DialogOrder.wxs")
   set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY "${PROJECT_NAME}")
-  set(CPACK_WIX_PRODUCT_ICON "${WIX_DIR}/CycloneDDS_icon.ico")
-  set(CPACK_WIX_UI_BANNER "${WIX_DIR}/CycloneDDS_banner.png")
-  set(CPACK_WIX_UI_DIALOG "${WIX_DIR}/CycloneDDS_dialog.png")
+  set(CPACK_WIX_PRODUCT_ICON "${WIX_DIR}/icon.ico")
+  set(CPACK_WIX_UI_BANNER "${WIX_DIR}/banner.png")
+  set(CPACK_WIX_UI_DIALOG "${WIX_DIR}/dialog.png")
   # when updating the version number also generate a new GUID
 	set(CPACK_WIX_UPGRADE_GUID "0D106C1A-D499-4DD4-ABD5-BE77415C1E8B")
   

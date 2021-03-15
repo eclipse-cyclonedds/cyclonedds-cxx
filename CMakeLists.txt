@@ -12,11 +12,6 @@
 cmake_minimum_required(VERSION 3.7)
 project(CycloneDDS-CXX VERSION 0.1.0 LANGUAGES C CXX)
 
-set(PROJECT_NAME_FULL "Eclipse Cyclone DDS ISO IEC C++ PSM")
-
-# Set some convenience variants of the project-name
-string(REPLACE " " "-" PROJECT_NAME_DASHED "${PROJECT_NAME_FULL}")
-
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
 
 # Conan
@@ -195,4 +190,4 @@ if(BUILD_DOCS)
   add_subdirectory(docs)
 endif()
 
-include (${CMAKE_CURRENT_SOURCE_DIR}/CPackConfig.cmake)
+include(CmakeCPack.cmake)
