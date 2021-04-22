@@ -24,12 +24,10 @@ function(IDLCXX_GENERATE)
   foreach(_file ${IDLCXX_FILES})
     get_filename_component(_path ${_file} ABSOLUTE)
     get_filename_component(_name ${_file} NAME_WE)
-    set(_source "${_dir}/${_name}.cpp")
     set(_header "${_dir}/${_name}.hpp")
-    list(APPEND _sources "${_source}")
     list(APPEND _headers "${_header}")
     add_custom_command(
-      OUTPUT "${_source}" "${_header}"
+      OUTPUT "${_header}"
       COMMAND $<TARGET_FILE:CycloneDDS::idlc>
       ARGS -l $<TARGET_FILE:CycloneDDS-CXX::idlcxx> ${_path})
   endforeach()
