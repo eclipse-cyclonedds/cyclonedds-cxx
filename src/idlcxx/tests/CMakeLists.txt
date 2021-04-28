@@ -34,6 +34,7 @@ set(xxd_input
   ${generator_dir}/keys_typedef_header.cpp.in
   ${generator_dir}/keys_union_implicit_impl.cpp.in
   ${generator_dir}/re_alignment_impl.cpp.in
+  ${generator_dir}/re_alignment_2_impl.cpp.in
   ${generator_dir}/sequence_recursive_header.cpp.in
   ${generator_dir}/sequence_recursive_impl.cpp.in
   ${generator_dir}/struct_inheritance_impl.cpp.in
