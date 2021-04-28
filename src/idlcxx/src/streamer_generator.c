@@ -191,7 +191,6 @@ typedef struct context context_t;
 
 struct functioncontents {
   int currentalignment;
-  int accumulatedalignment;
   bool alignmentpresent;
   bool sequenceentriespresent;
 };
@@ -201,8 +200,7 @@ typedef struct functioncontents functioncontents_t;
 static void reset_function_contents(functioncontents_t* funcs)
 {
   assert(funcs);
-  funcs->currentalignment = -1;
-  funcs->accumulatedalignment = 0;
+  funcs->currentalignment = 1;
   funcs->alignmentpresent = false;
   funcs->sequenceentriespresent = false;
 }
@@ -254,7 +252,6 @@ static idl_retcode_t process_known_width_array(context_t* ctx, const char* acces
 static int determine_byte_width(idl_node_t* typespec);
 static char* determine_cast(idl_node_t* typespec);
 static idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key);
-static idl_retcode_t add_null(context_t* ctx, int nbytes, bool stream, bool is_key);
 static idl_retcode_t process_member(context_t* ctx, idl_member_t* mem);
 static idl_retcode_t process_module(context_t* ctx, idl_module_t* module);
 static idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node);
@@ -304,13 +301,9 @@ static char* generatealignment(int alignto)
 
 void reset_alignment(context_t* ctx, bool is_key)
 {
-  ctx->streamer_funcs.currentalignment = -1;
-  ctx->streamer_funcs.accumulatedalignment = 0;
+  ctx->streamer_funcs.currentalignment = 1;
   if (is_key)
-  {
-    ctx->key_funcs.currentalignment = -1;
-    ctx->key_funcs.accumulatedalignment = 0;
-  }
+    ctx->key_funcs.currentalignment = 1;
 }
 
 int determine_byte_width(idl_node_t* typespec)
@@ -788,17 +781,16 @@ idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
 {
   assert(ctx);
 
-  if (ctx->streamer_funcs.currentalignment == bytewidth)
-    ctx->streamer_funcs.accumulatedalignment += bytewidth;
-  if (is_key && ctx->key_funcs.currentalignment == bytewidth)
-    ctx->key_funcs.accumulatedalignment += bytewidth;
-
-  if (ctx->streamer_funcs.currentalignment == bytewidth && ctx->key_funcs.currentalignment == bytewidth)
+  if (ctx->streamer_funcs.currentalignment == bytewidth &&
+      (!is_key ||
+       (is_key && ctx->key_funcs.currentalignment == bytewidth)))
     return IDL_RETCODE_OK;
 
   char* buffer = generatealignment(bytewidth);
+  if (NULL == buffer)
+    return IDL_RETCODE_NO_MEMORY;
 
-  if ((0 > ctx->streamer_funcs.currentalignment || bytewidth > ctx->streamer_funcs.currentalignment) && bytewidth != 1)
+  if (bytewidth > ctx->streamer_funcs.currentalignment)
   {
     format_write_stream(1, ctx, false, "  %s" alignmentbytes " = %s" align_comment, ctx->streamer_funcs.alignmentpresent ? "" : "size_t ", ctx->depth, buffer);
     ctx->streamer_funcs.alignmentpresent = true;
@@ -817,23 +809,12 @@ idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
     }
 
     format_read_stream(1, ctx, false, position_incr "%s" align_comment, buffer);
-
-    ctx->streamer_funcs.accumulatedalignment = 0;
-    ctx->streamer_funcs.currentalignment = bytewidth;
   }
-  else
-  {
-    int missingbytes = (bytewidth - (ctx->streamer_funcs.accumulatedalignment % bytewidth)) % bytewidth;
-    if (0 != missingbytes)
-    {
-      add_null(ctx, missingbytes, true, false);
-      ctx->streamer_funcs.accumulatedalignment = 0;
-    }
-  }
+  ctx->streamer_funcs.currentalignment = bytewidth;
 
   if (is_key)
   {
-    if ((0 > ctx->key_funcs.currentalignment || bytewidth > ctx->key_funcs.currentalignment) && bytewidth != 1)
+    if (bytewidth > ctx->key_funcs.currentalignment)
     {
       format_key_write_stream(1, ctx, "  %s" alignmentbytes " = %s" align_comment, ctx->key_funcs.alignmentpresent ? "" : "size_t ", ctx->depth, buffer);
       ctx->key_funcs.alignmentpresent = true;
@@ -852,59 +833,11 @@ idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
       }
 
       format_key_read_stream(1, ctx, position_incr "%s" align_comment, buffer);
-
-      ctx->key_funcs.accumulatedalignment = 0;
-      ctx->key_funcs.currentalignment = bytewidth;
     }
-    else
-    {
-      int missingbytes = (bytewidth - (ctx->key_funcs.accumulatedalignment % bytewidth)) % bytewidth;
-      if (0 != missingbytes)
-      {
-        add_null(ctx, missingbytes,false,true);
-        ctx->key_funcs.accumulatedalignment = 0;
-      }
-    }
+    ctx->key_funcs.currentalignment = bytewidth;
   }
 
   free(buffer);
-
-  return IDL_RETCODE_OK;
-}
-
-idl_retcode_t add_null(context_t* ctx, int nbytes, bool stream, bool is_key)
-{
-  if (stream)
-  {
-    format_write_stream(1, ctx, false, primitive_write_func_padding, nbytes);
-    format_write_stream(1, ctx, false, primitive_incr_pos incr_comment, nbytes);
-    format_write_size_stream(1, ctx, false, primitive_incr_pos padding_comment, nbytes);
-    format_read_stream(1, ctx, false, primitive_incr_pos padding_comment, nbytes);
-    if (ctx->in_union)
-    {
-      format_max_size_intermediate_stream(1, ctx, false, union_case_max_incr " %d;" padding_comment, nbytes);
-    }
-    else
-    {
-      format_max_size_intermediate_stream(1, ctx, false, primitive_incr_pos padding_comment, nbytes);
-    }
-  }
-
-  if (is_key)
-  {
-    format_key_write_stream(1, ctx, primitive_write_func_padding, nbytes);
-    format_key_write_stream(1, ctx, primitive_incr_pos incr_comment, nbytes);
-    format_key_size_stream(1, ctx, primitive_incr_pos padding_comment, nbytes);
-    format_key_read_stream(1, ctx, primitive_incr_pos padding_comment, nbytes);
-    if (ctx->in_union)
-    {
-      format_key_max_size_intermediate_stream(1, ctx, union_case_max_incr " %d;" padding_comment, nbytes);
-    }
-    else
-    {
-      format_key_max_size_intermediate_stream(1, ctx, primitive_incr_pos padding_comment, nbytes);
-    }
-  }
 
   return IDL_RETCODE_OK;
 }
@@ -1070,7 +1003,6 @@ idl_retcode_t process_known_width_array(context_t* ctx, const char *accessor, ui
   int bytesinarray = bytewidth * (int)entries;
 
   check_alignment(ctx, bytewidth, is_key);
-  ctx->streamer_funcs.accumulatedalignment += (int)bytesinarray;
 
   format_write_stream(1, ctx, is_key, primitive_write_func_array, accessor, bytesinarray, accessor);
   format_write_stream(1, ctx, is_key, primitive_incr_pos incr_comment, bytesinarray);
@@ -1157,10 +1089,9 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
     format_key_read_stream(1, ctx, open_block);
     format_key_read_stream(1, ctx, "  (void)data;\n");
 
-    ctx->streamer_funcs.currentalignment = -1;
+    ctx->streamer_funcs.currentalignment = 1;
     ctx->streamer_funcs.alignmentpresent = false;
     ctx->streamer_funcs.sequenceentriespresent = false;
-    ctx->streamer_funcs.accumulatedalignment = 0;
 
     if (idl_is_struct(node))
     {
@@ -1216,10 +1147,8 @@ idl_retcode_t process_constructed(context_t* ctx, idl_node_t* node)
         ctx->depth--;
       }
 
-      ctx->streamer_funcs.currentalignment = -1;
-      ctx->streamer_funcs.accumulatedalignment = 0;
-      ctx->key_funcs.currentalignment = -1;
-      ctx->key_funcs.accumulatedalignment = 0;
+      ctx->streamer_funcs.currentalignment = 1;
+      ctx->key_funcs.currentalignment = 1;
       format_max_size_intermediate_stream(1, ctx, false, "  position = max(position,union_max);\n");
       ctx->in_union = false;
 
