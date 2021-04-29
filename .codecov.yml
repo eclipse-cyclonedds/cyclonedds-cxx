@@ -1,0 +1,3 @@
+ignore:
+  - src/ddscxx/tests/*.cpp
+  - src/idlcxx/tests/*.c
