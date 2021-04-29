@@ -22,6 +22,8 @@ target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
 
 add_library(${PROJECT_NAME}::idlcxx ALIAS idlcxx)
 
+add_coverage(idlcxx)
+
 install(
   TARGETS idlcxx
   EXPORT "${CMAKE_PROJECT_NAME}"
