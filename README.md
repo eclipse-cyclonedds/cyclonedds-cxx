@@ -122,15 +122,6 @@ that the CI build infrastructure also uses. In that case, install Conan and do:
 in the build directory prior to running `cmake`. This will automatically
 download and/or build Google Test.
 
-The Google Test Conan package is hosted in the Bincrafters Bintray repository.
-In case this repository was not added to your Conan remotes list yet (and the
-above mentioned install command failed because it could not find the
-Google Test package), you can add the Bintray repository by:
-
-    $ conan remote add <REMOTE> https://api.bintray.com/conan/bincrafters/public-conan
-
-Replace `<REMOTE>` with a name that identifies the repository (e.g. `bincrafters`).
-
 For Windows, depending on the generator, you might also need to add switches
 to select the architecture and build type, e.g.,
 
