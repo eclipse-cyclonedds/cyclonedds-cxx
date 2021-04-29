@@ -167,12 +167,11 @@ void max(basic_cdr_stream& str, const T& max_sz) {
 * (bound of 0 equals no bound present).
 * Writes length to str as a uint32_t type.
 */
-static void write_length(basic_cdr_stream& str, size_t length, size_t bound)
+static inline void write_length(basic_cdr_stream& str, size_t length, size_t bound)
 {
   //throw an exception if we attempt to write a length field in excess of the supplied bound
-  if (bound &&
-    length > bound)
-    throw 1;  //replace throw
+  if (bound && length > bound)
+    throw 1; // replace throw
 
   write(str, uint32_t(length));
 }
@@ -184,7 +183,7 @@ static void write_length(basic_cdr_stream& str, size_t length, size_t bound)
 * This is not bound checked, to prevent reading of spurious data, which the program has
 * no control over to result in program failure.
 */
-static void read_length(basic_cdr_stream& str, uint32_t& length)
+static inline void read_length(basic_cdr_stream& str, uint32_t& length)
 {
   read(str, length);
 }
@@ -197,12 +196,11 @@ static void read_length(basic_cdr_stream& str, uint32_t& length)
 * (bound of 0 equals no bound present).
 * Moves the stream cursor by a uint32_t representation of the length.
 */
-static void move_length(basic_cdr_stream& str, size_t length, size_t bound)
+static inline void move_length(basic_cdr_stream& str, size_t length, size_t bound)
 {
   //throw an exception if we attempt to move the cursor for a length field in excess of the supplied bound
-  if (bound &&
-    length > bound)
-    throw 2;  //replace throw
+  if (bound && length > bound)
+    throw 2; // replace throw
 
   move(str, uint32_t(length));
 }
@@ -387,7 +385,7 @@ void write(basic_cdr_stream& str, const idl_array<T, N>& towrite)
 * Primitive array move function.
 */
 template<typename T, size_t N, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
-void move(basic_cdr_stream& str, const idl_array<T, N>& toincr)
+void move(basic_cdr_stream& str, const idl_array<T, N>&)
 {
   str.align(sizeof(T), false);
 
@@ -583,7 +581,7 @@ void move(basic_cdr_stream& str, const idl_sequence<T, N>& toincr) {
 * Primitive sequence max function.
 */
 template<typename T, size_t N, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
-void max(basic_cdr_stream& str, const idl_sequence<T, N>& max_sz) {
+void max(basic_cdr_stream& str, const idl_sequence<T, N>&) {
   if (str.position() == SIZE_MAX)
     return;
 

@@ -46,7 +46,9 @@ static int makefmtp(
   do {
     if (tok) {
       if (str[src] == '}' && (num = istok(str+tok, src-tok, toks))) {
-        const char *flag = flags[num-1];
+        const char *flag;
+        assert(toks && flags);
+        flag = flags[num-1];
         len += (size_t)snprintf(buf, sizeof(buf), FMT, num, flag);
         tok = 0;
       } else if (str[src] == '}' || str[src] == '\0') {
@@ -69,7 +71,9 @@ static int makefmtp(
   do {
     if (tok) {
       if (str[src] == '}' && (num = istok(str+tok, src-tok, toks))) {
-        const char *flag = flags[num-1];
+        const char *flag;
+        assert(toks && flags);
+        flag = flags[num-1];
         dest += (size_t)snprintf(&fmt[dest], (len-dest)+1, FMT, num, flag);
         tok = 0;
       } else if (str[src] == '}' || str[src] == '\0') {
@@ -510,7 +514,6 @@ static idl_retcode_t print_guard_endif(FILE *fh, const char *guard)
 
 static idl_retcode_t print_includes(FILE *fh, const idl_source_t *source)
 {
-  idl_retcode_t ret;
   char *sep = NULL, *path;
   const idl_source_t *include;
 
@@ -525,7 +528,7 @@ static idl_retcode_t print_includes(FILE *fh, const idl_source_t *source)
   for (include = source->includes; include; include = include->next) {
     int cnt;
     char *ext, *relpath = NULL;
-    if ((ret = idl_relative_path(path, include->path->name, &relpath)))
+    if (idl_relative_path(path, include->path->name, &relpath))
       goto err_relpath;
     ext = relpath;
     for (char *ptr = ext; *ptr; ptr++) {
