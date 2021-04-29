@@ -32,16 +32,11 @@ following installed on your host:
  * [Git](https://git-scm.com/) version control system;
  * [CMake](https://cmake.org/download/), version 3.7 or later;
  * [Eclipse Cyclone DDS](https://github.com/eclipse-cyclonedds/cyclonedds/)
- * [CXX Idl compiler](https://github.com/ADLINK-IST/idlpp-cxx/)
 
-*Eclipse Cyclone DDS* and the *CXX Idl compiler* have dependencies of their
-own, most notably Java and Apache Maven. To build and install the respective
-projects, please consult their build instructions. Ensure both projects are
-installed into locations convenient for you by specifying
+*Eclipse Cyclone DDS* has dependencies of its own, most notably Bison. To
+build and install it, please consult the build instructions. Ensure the
+project is installed into a location convenient for you by specifying
 `CMAKE_INSTALL_PREFIX`.
-
-> The *CXX Idl compiler* is a temporary dependency, a new IDL compiler for
-> both Eclipse Cyclone DDS and Eclipse Cyclone DDS CXX is in the works.
 
 To obtain the C++ binding for Cyclone DDS, do
 
@@ -61,7 +56,7 @@ hand, and Windows on the other. For Linux or macOS:
 
     $ cd build
     $ cmake -DCMAKE_INSTALL_PREFIX=<install-location> \
-            -DCMAKE_PREFIX_PATH="<idlpp-cxx-install-location>;<cyclonedds-install-location>" \
+            -DCMAKE_PREFIX_PATH="<cyclonedds-install-location>" \
             ..
     $ cmake --build .
 
@@ -70,7 +65,7 @@ and for Windows:
     $ cd build
     $ cmake -G "<generator-name>" \
             -DCMAKE_INSTALL_PREFIX=<install-location> \
-            -DCMAKE_PREFIX_PATH="<idlpp-cxx-install-location>;<cyclonedds-install-location>" \
+            -DCMAKE_PREFIX_PATH="<cyclonedds-install-location>" \
             ..
     $ cmake --build .
 
