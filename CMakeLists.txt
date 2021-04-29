@@ -136,6 +136,7 @@ if(USE_SANITIZER)
 endif()
 
 find_package(codecov)
+include(Codecov)
 
 # Build all executables and libraries into the top-level /bin and /lib folders.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
