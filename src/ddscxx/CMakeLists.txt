@@ -78,6 +78,8 @@ set_target_properties(ddscxx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${P
 # those targets outside the regular Cyclone build-tree (i.e. the installed tree)
 add_library(${CMAKE_PROJECT_NAME}::ddscxx ALIAS ddscxx)
 
+add_coverage(ddscxx)
+
 target_include_directories(
   ddscxx
   PUBLIC
