@@ -48,13 +48,11 @@ public:
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 void read(basic_cdr_stream &str, T& toread)
 {
+  char *cursor = str.get_cursor();
   str.align(sizeof(T), false);
 
-  transfer_and_swap(
-    *(reinterpret_cast<const T*>(str.get_cursor())),
-    toread,
-    str.swap_endianness());
-
+  assert(cursor);
+  transfer_and_swap(*(reinterpret_cast<const T*>(cursor)), toread, str.swap_endianness());
   str.incr_position(sizeof(T));
 }
 
@@ -69,13 +67,11 @@ void read(basic_cdr_stream &str, T& toread)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 void write(basic_cdr_stream& str, const T& towrite)
 {
+  char *cursor = str.get_cursor();
   str.align(sizeof(T), true);
 
-  transfer_and_swap(
-    towrite,
-    *(reinterpret_cast<T*>(str.get_cursor())),
-    str.swap_endianness());
-
+  assert(cursor);
+  transfer_and_swap(towrite, *(reinterpret_cast<T*>(cursor)), str.swap_endianness());
   str.incr_position(sizeof(T));
 }
 
