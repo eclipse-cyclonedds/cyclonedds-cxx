@@ -16,6 +16,8 @@ tier-1 middleware for the Robot Operating System [ROS 2][6].
 [![Build Status](https://dev.azure.com/eclipse-cyclonedds/cyclonedds-cxx/_apis/build/status/Pull%20requests?branchName=master)](https://dev.azure.com/eclipse-cyclonedds/cyclonedds-cxx/_build/latest?definitionId=4&branchName=master)
 [![Coverity Status](https://scan.coverity.com/projects/21579/badge.svg)](https://scan.coverity.com/projects/eclipse-cyclonedds-cyclonedds-cxx)
 [![Codecov](https://codecov.io/gh/eclipse-cyclonedds/cyclonedds-cxx/branch/master/graphs/badge.svg?branch=master)](https://codecov.io/github/eclipse-cyclonedds/cyclonedds-cxx?branch=master)
+[![License](https://img.shields.io/badge/License-EPL%202.0-blue)](https://choosealicense.com/licenses/epl-2.0/)
+[![License](https://img.shields.io/badge/License-EDL%201.0-blue)](https://choosealicense.com/licenses/edl-1.0/)
 
 # Getting Started
 
