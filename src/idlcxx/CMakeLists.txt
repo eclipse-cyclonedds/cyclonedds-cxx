@@ -31,4 +31,9 @@ install(
   LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT idlcxx
   ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT idlcxx)
 
+install(
+  FILES Generate.cmake
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/idlcxx"
+  COMPONENT idlcxx)
+
 include(Generate.cmake)
