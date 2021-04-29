@@ -55,8 +55,7 @@ void transfer_and_swap(const T& from, T& to, bool sw) {
 
   to = from;
 
-  if (sw &&
-    sizeof(T) > 1)
+  if (sw && sizeof(T) > 1)
     byte_swap(to);
 }
 

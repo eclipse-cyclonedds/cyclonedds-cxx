@@ -716,6 +716,7 @@ idl_retcode_t
 generate_types(const idl_pstate_t *pstate, struct generator *generator)
 {
   idl_visitor_t visitor;
+  const char *sources[] = { NULL, NULL };
 
   memset(&visitor, 0, sizeof(visitor));
   visitor.visit = IDL_CONST | IDL_TYPEDEF | IDL_STRUCT | IDL_MODULE | IDL_ENUM | IDL_UNION;
@@ -726,7 +727,8 @@ generate_types(const idl_pstate_t *pstate, struct generator *generator)
   visitor.accept[IDL_ACCEPT_ENUM] = &emit_enum;
   visitor.accept[IDL_ACCEPT_MODULE] = &emit_module;
   if (pstate->sources)
-    visitor.sources = (const char *[]){ pstate->sources->path->name, NULL };
+    sources[0] = pstate->sources->path->name;
+  visitor.sources = sources;
 
   return idl_visit(pstate, pstate->root, &visitor, generator);
 }

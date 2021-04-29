@@ -509,6 +509,7 @@ generate_streamers(const idl_pstate_t* pstate, struct generator *gen)
   idl_retcode_t ret;
   struct streams streams;
   idl_visitor_t visitor;
+  const char *sources[] = { NULL, NULL };
 
   memset(&streams, 0, sizeof(streams));
   memset(&visitor, 0, sizeof(visitor));
@@ -523,7 +524,8 @@ generate_streamers(const idl_pstate_t* pstate, struct generator *gen)
   visitor.accept[IDL_ACCEPT_SWITCH_TYPE_SPEC] = &process_switch_type_spec;
   visitor.accept[IDL_ACCEPT_INHERIT_SPEC] = &process_inherit_spec;
   if (pstate->sources)
-    visitor.sources = (const char *[]){ pstate->sources->path->name, NULL };
+    sources[0] = pstate->sources->path->name;
+  visitor.sources = sources;
 
   if ((ret = idl_visit(pstate, pstate->root, &visitor, &streams)) == IDL_RETCODE_OK)
     ret = flush(gen, &streams);

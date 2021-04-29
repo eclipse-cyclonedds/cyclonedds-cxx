@@ -9,27 +9,29 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-
-#include <org/eclipse/cyclonedds/topic/cdr_stream.hpp>
 #include <cstring>
 #include <algorithm>
+#include <assert.h>
+
+#include <org/eclipse/cyclonedds/topic/cdr_stream.hpp>
 
 void cdr_stream::set_buffer(void* toset) {
   m_buffer = static_cast<char*>(toset);
   reset_position();
 }
 
-size_t cdr_stream::align(size_t newalignment, bool add_zeroes) {
+size_t cdr_stream::align(size_t newalignment, bool add_zeroes)
+{
   if (m_current_alignment == newalignment)
     return 0;
 
   m_current_alignment = std::min(newalignment, m_max_alignment);
 
+  char *cursor = get_cursor();
+  assert(cursor);
   size_t tomove = (m_current_alignment - m_position % m_current_alignment) % m_current_alignment;
-  if (tomove &&
-    add_zeroes &&
-    m_buffer)
-    memset(get_cursor(), 0, tomove);
+  if (tomove && add_zeroes && m_buffer)
+    memset(cursor, 0, tomove);
 
   m_position += tomove;
 

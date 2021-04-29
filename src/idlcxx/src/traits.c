@@ -113,6 +113,7 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   idl_retcode_t ret;
   idl_visitor_t visitor;
   const char *fmt;
+  const char *sources[] = { NULL, NULL };
 
   fmt = "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
         "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n"
@@ -127,7 +128,8 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   visitor.visit = IDL_STRUCT;
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_traits;
   if (pstate->sources)
-    visitor.sources = (const char *[]){ pstate->sources->path->name, NULL };
+    sources[0] = pstate->sources->path->name;
+  visitor.sources = sources;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 

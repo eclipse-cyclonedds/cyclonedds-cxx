@@ -33,8 +33,17 @@ namespace policy
 template <typename D>
 TQosPolicyCount<D>::TQosPolicyCount(QosPolicyId policy_id, int32_t count) : dds::core::Value<D>(policy_id, count) { }
 
+#if defined(__GNUC__) && (__GNUC__ >= 10)
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wanalyzer-null-dereference\"")
+#endif
+
 template <typename D>
 TQosPolicyCount<D>::TQosPolicyCount(const TQosPolicyCount& other) : dds::core::Value<D>(other.policy_id(), other.count()) { }
+
+#if defined(__GNUC__) && (__GNUC__ >= 10)
+_Pragma("GCC diagnostic pop")
+#endif
 
 template <typename D> QosPolicyId TQosPolicyCount<D>::policy_id() const
 {

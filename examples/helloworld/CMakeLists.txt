@@ -25,5 +25,14 @@ add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
 target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata)
 target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata)
 
+# Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
+# on Azure Pipelines
+if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ANALYZER STREQUAL "on")
+    target_compile_options(ddscxxHelloworldPublisher PRIVATE -fno-analyzer)
+    target_compile_options(ddscxxHelloworldSubscriber PRIVATE -fno-analyzer)
+  endif()
+endif()
+
 set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD 11)
 set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD 11)
