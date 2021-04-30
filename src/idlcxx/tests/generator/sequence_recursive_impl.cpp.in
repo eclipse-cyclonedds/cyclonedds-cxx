@@ -22,8 +22,17 @@ size_t typedef_write_recseq(const recseq &obj, void* data, size_t position)
         position += 4;  //moving position indicator
         memcpy(static_cast<char*>(data)+position,obj[_i1][_i2][_i3].data(),_se3*1); //writing bytes for member: obj[_i1][_i2][_i3]
         position += _se3;  //entries of sequence
+        size_t _al3 = (4 - (position&0x3))&0x3;  //alignment
+        memset(static_cast<char*>(data)+position,0x0,_al3);  //setting alignment bytes to 0x0
+        position += _al3;  //moving position indicator
       }
+      size_t _al2 = (4 - (position&0x3))&0x3;  //alignment
+      memset(static_cast<char*>(data)+position,0x0,_al2);  //setting alignment bytes to 0x0
+      position += _al2;  //moving position indicator
     }
+    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
+    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
+    position += _al1;  //moving position indicator
   }
   return position;
 }
@@ -43,8 +52,11 @@ size_t typedef_write_size_recseq(const recseq &obj, size_t position)
         uint32_t _se3 = static_cast<uint32_t>(obj[_i1][_i2][_i3].size()+1);  //number of entries in the sequence
         position += 4;  //bytes for sequence entries
         position += _se3;  //entries of sequence
+        position += (4 - (position&0x3))&0x3;  //alignment
       }
+      position += (4 - (position&0x3))&0x3;  //alignment
     }
+    position += (4 - (position&0x3))&0x3;  //alignment
   }
   return position;
 }
@@ -71,8 +83,11 @@ size_t typedef_key_size_recseq(const recseq &obj, size_t position)
         uint32_t _se3 = static_cast<uint32_t>(obj[_i1][_i2][_i3].size()+1);  //number of entries in the sequence
         position += 4;  //bytes for sequence entries
         position += _se3;  //entries of sequence
+        position += (4 - (position&0x3))&0x3;  //alignment
       }
+      position += (4 - (position&0x3))&0x3;  //alignment
     }
+    position += (4 - (position&0x3))&0x3;  //alignment
   }
   return position;
 }
@@ -106,8 +121,17 @@ size_t typedef_key_write_recseq(const recseq &obj, void *data, size_t position)
         position += 4;  //moving position indicator
         memcpy(static_cast<char*>(data)+position,obj[_i1][_i2][_i3].data(),_se3*1); //writing bytes for member: obj[_i1][_i2][_i3]
         position += _se3;  //entries of sequence
+        size_t _al3 = (4 - (position&0x3))&0x3;  //alignment
+        memset(static_cast<char*>(data)+position,0x0,_al3);  //setting alignment bytes to 0x0
+        position += _al3;  //moving position indicator
       }
+      size_t _al2 = (4 - (position&0x3))&0x3;  //alignment
+      memset(static_cast<char*>(data)+position,0x0,_al2);  //setting alignment bytes to 0x0
+      position += _al2;  //moving position indicator
     }
+    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
+    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
+    position += _al1;  //moving position indicator
   }
   return position;
 }
@@ -131,8 +155,11 @@ size_t typedef_key_read_recseq(recseq &obj, const void *data, size_t position)
         position += 4;  //moving position indicator
         obj[_i1][_i2][_i3].assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se3-1); //reading bytes for member: obj[_i1][_i2][_i3]
         position += _se3;  //entries of sequence
+        position += (4 - (position&0x3))&0x3;  //alignment
       }
+      position += (4 - (position&0x3))&0x3;  //alignment
     }
+    position += (4 - (position&0x3))&0x3;  //alignment
   }
   return position;
 }
@@ -156,8 +183,11 @@ size_t typedef_read_recseq(recseq &obj, const void* data, size_t position)
         position += 4;  //moving position indicator
         obj[_i1][_i2][_i3].assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se3-1); //reading bytes for member: obj[_i1][_i2][_i3]
         position += _se3;  //entries of sequence
+        position += (4 - (position&0x3))&0x3;  //alignment
       }
+      position += (4 - (position&0x3))&0x3;  //alignment
     }
+    position += (4 - (position&0x3))&0x3;  //alignment
   }
   return position;
 }
