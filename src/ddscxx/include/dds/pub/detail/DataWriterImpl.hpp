@@ -377,9 +377,11 @@ dds::pub::detail::DataWriter<T>::DataWriter(
     const dds::core::status::StatusMask& mask)
     : ::org::eclipse::cyclonedds::pub::AnyDataWriterDelegate(qos, topic), pub_(pub), topic_(topic)
 {
+    DDSCXX_WARNING_MSVC_OFF(6326)
     if (dds::topic::is_topic_type<T>::value == 0) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "DataWriter cannot be created, topic information not found");
     }
+    DDSCXX_WARNING_MSVC_ON(6326)
 
     org::eclipse::cyclonedds::pub::qos::DataWriterQosDelegate dwQos = qos.delegate();
 
