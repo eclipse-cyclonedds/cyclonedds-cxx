@@ -26,6 +26,7 @@ template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
 void byte_swap(T& toswap) {
     union { T a; uint16_t u2; uint32_t u4; uint64_t u8; } u;
     u.a = toswap;
+    DDSCXX_WARNING_MSVC_OFF(6326)
     switch (sizeof(T)) {
     case 1:
         break;
@@ -44,6 +45,7 @@ void byte_swap(T& toswap) {
     default:
         throw std::invalid_argument(std::string("attempted byteswap on variable of invalid size: ") + std::to_string(sizeof(T)));
     }
+    DDSCXX_WARNING_MSVC_ON(6326)
     toswap = u.a;
 }
 

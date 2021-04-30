@@ -481,9 +481,11 @@ dds::sub::detail::DataReader<T>::common_constructor(
             const dds::core::status::StatusMask& mask)
 {
     DDSCXX_WARNING_MSVC_OFF(4127)
+    DDSCXX_WARNING_MSVC_OFF(6326)
     if (dds::topic::is_topic_type<T>::value == 0) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "DataReader cannot be created, topic information not found");
     }
+    DDSCXX_WARNING_MSVC_ON(6326)
     DDSCXX_WARNING_MSVC_ON(4127)
 
     org::eclipse::cyclonedds::sub::qos::DataReaderQosDelegate drQos = qos_.delegate();

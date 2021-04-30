@@ -65,9 +65,13 @@ org::eclipse::cyclonedds::core::convertStringSeq(
     for(uint32_t i = 0; i < from.size(); i++)
     {
         size_t len = from[i].length();
+        DDSCXX_WARNING_MSVC_OFF(6386)
         to[i] = new char[len + 1];
+        DDSCXX_WARNING_MSVC_ON(6386)
         to[i][len] = '\0';
+        DDSCXX_WARNING_MSVC_OFF(6385)
         memcpy(to[i], from[i].c_str(), len);
+        DDSCXX_WARNING_MSVC_ON(6385)
     }
 }
 

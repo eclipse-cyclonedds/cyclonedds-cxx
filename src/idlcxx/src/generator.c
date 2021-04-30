@@ -635,6 +635,7 @@ idl_retcode_t generate(const idl_pstate_t *pstate)
   assert(pstate->paths);
   assert(pstate->paths->name);
   path = pstate->sources->path->name;
+  assert(path);
 
   /* use relative directory if user provided a relative path, use current
      word directory otherwise */
