@@ -61,26 +61,28 @@ public:
 
     virtual ~SampleRef()
     {
-        ddsi_serdata_unref(data_);
+        if (data_ != nullptr)
+        {
+            ddsi_serdata_unref(data_);
+        }
     }
 
     SampleRef& operator=(const SampleRef& other)
     {
-        return copy(other);
-    }
-
-    SampleRef& copy(const SampleRef& other)
-    {
-        static_cast<void>(ddsi_serdata_ref(other.data_));
-        this->data_ = other.data_;
-        this->info_ = other.info_;
-
-        return *this;
+      if (this != &other)
+      {
+          copy(other);
+      }
+      return *this;
     }
 
 public:
     const T& data() const
     {
+        if (data_ == nullptr)
+        {
+            throw dds::core::Error("Data is Null");
+        }
         return *data_->getT();
     }
 
@@ -107,6 +109,17 @@ public:
 
 
 private:
+    void copy(const SampleRef& other)
+    {
+        if (other.data_ == nullptr)
+        {
+            throw dds::core::Error("Other data is Null");
+        }
+        static_cast<void>(ddsi_serdata_ref(other.data_));
+        this->data_ = other.data_;
+        this->info_ = other.info_;
+    }
+
     ddscxx_serdata<T>* data_;
     dds::sub::SampleInfo info_;
 };
