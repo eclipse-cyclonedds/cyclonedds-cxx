@@ -227,7 +227,6 @@ struct context
   bool key_max_size_unlimited;
   bool max_size_unlimited;
   const char* parsed_file;
-  int entryalignment;
 };
 
 static void reset_alignment(context_t* ctx, bool is_key);
@@ -525,8 +524,10 @@ void start_array(context_t* ctx, uint64_t entries, bool is_key, bool* locals)
   format_read_stream(1, ctx, is_key, array_iterate, ctx->depth + 1, ctx->depth + 1, entries, ctx->depth + 1);
   format_max_size_intermediate_stream(1, ctx, is_key, array_iterate, ctx->depth + 1, ctx->depth + 1, entries, ctx->depth + 1);
 
-  //set first array entry alignment to -1
-  ctx->entryalignment = -1;
+  //force re-alignment at the start of each array entry
+  ctx->streamer_funcs.currentalignment = 1;
+  if (is_key)
+    ctx->key_funcs.currentalignment = 1;
 
   ctx->depth++;
 }
@@ -534,9 +535,6 @@ void start_array(context_t* ctx, uint64_t entries, bool is_key, bool* locals)
 void stop_array(context_t* ctx, bool is_key, bool* locals)
 {
   load_locals(ctx, locals);
-
-  //check alignment between the last entity for this entry in the array and the first entity of the next entry in the array
-  check_alignment(ctx, ctx->entryalignment, is_key);
 
   format_write_size_stream(1, ctx, is_key, close_block);
   format_write_stream(1, ctx, is_key, close_block);
@@ -787,13 +785,6 @@ idl_retcode_t write_instance_funcs(context_t* ctx, const char* write_accessor, c
 idl_retcode_t check_alignment(context_t* ctx, int bytewidth, bool is_key)
 {
   assert(ctx);
-
-  if (bytewidth == -1)
-    return IDL_RETCODE_OK;
-
-  //this happens when the an array or sequence is started, we "lock in" the first entity of each entry
-  if (ctx->entryalignment < 1)
-    ctx->entryalignment = bytewidth;
 
   if (ctx->streamer_funcs.currentalignment == bytewidth &&
       (!is_key ||
@@ -1718,7 +1709,10 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
   }
   else
   {
-    ctx->entryalignment = -1;
+    //force re-alignment at the start of each sequence entry
+    ctx->streamer_funcs.currentalignment = 1;
+    if (is_key)
+      ctx->key_funcs.currentalignment = 1;
 
     format_read_stream(1, ctx, is_key, seq_read_resize, accessor, ctx->depth);
 
@@ -1753,9 +1747,6 @@ idl_retcode_t process_sequence_impl(context_t* ctx, const char* accessor, idl_se
       process_typedef_instance_impl(ctx, entryaccess, ispec, is_key);
     }
     free(entryaccess);
-
-    //check alignment between the last entity for this entry in the sequence and the first entity of the next entry in the sequence
-    check_alignment(ctx, ctx->entryalignment, is_key);
 
     //close loop
     format_write_size_stream(1, ctx, is_key, close_block);

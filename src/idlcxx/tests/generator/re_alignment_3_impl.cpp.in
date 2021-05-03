@@ -11,22 +11,22 @@ size_t s::write_struct(void *data, size_t position) const
     position += 4;  //moving position indicator
     memcpy(static_cast<char*>(data)+position,string_arr()[_i1].data(),_se1*1); //writing bytes for member: string_arr()[_i1]
     position += _se1;  //entries of sequence
-    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
-    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
-    position += _al1;  //moving position indicator
   }
+  size_t _al0 = (4 - (position&0x3))&0x3;  //alignment
+  memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
+  position += _al0;  //moving position indicator
   uint32_t _se0 = static_cast<uint32_t>(string_seq().size());  //number of entries in the sequence
   *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se0;  //writing entries for member: string_seq()
   position += 4;  //moving position indicator
   for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
+    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
+    position += _al1;  //moving position indicator
     uint32_t _se1 = static_cast<uint32_t>(string_seq()[_i1].size()+1);  //number of entries in the sequence
     *reinterpret_cast<uint32_t*>(static_cast<char*>(data) + position) = _se1;  //writing entries for member: string_seq()[_i1]
     position += 4;  //moving position indicator
     memcpy(static_cast<char*>(data)+position,string_seq()[_i1].data(),_se1*1); //writing bytes for member: string_seq()[_i1]
     position += _se1;  //entries of sequence
-    size_t _al1 = (4 - (position&0x3))&0x3;  //alignment
-    memset(static_cast<char*>(data)+position,0x0,_al1);  //setting alignment bytes to 0x0
-    position += _al1;  //moving position indicator
   }
   _al0 = (4 - (position&0x3))&0x3;  //alignment
   memset(static_cast<char*>(data)+position,0x0,_al0);  //setting alignment bytes to 0x0
@@ -46,15 +46,15 @@ size_t s::write_size(size_t position) const
     uint32_t _se1 = static_cast<uint32_t>(string_arr()[_i1].size()+1);  //number of entries in the sequence
     position += 4;  //bytes for sequence entries
     position += _se1;  //entries of sequence
-    position += (4 - (position&0x3))&0x3;  //alignment
   }
+  position += (4 - (position&0x3))&0x3;  //alignment
   uint32_t _se0 = static_cast<uint32_t>(string_seq().size());  //number of entries in the sequence
   position += 4;  //bytes for sequence entries
   for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position += (4 - (position&0x3))&0x3;  //alignment
     uint32_t _se1 = static_cast<uint32_t>(string_seq()[_i1].size()+1);  //number of entries in the sequence
     position += 4;  //bytes for sequence entries
     position += _se1;  //entries of sequence
-    position += (4 - (position&0x3))&0x3;  //alignment
   }
   position += (4 - (position&0x3))&0x3;  //alignment
   _se0 = static_cast<uint32_t>(long_seq().size());  //number of entries in the sequence
@@ -124,17 +124,17 @@ size_t s::read_struct(const void *data, size_t position)
     position += 4;  //moving position indicator
     string_arr()[_i1].assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se1-1); //reading bytes for member: string_arr()[_i1]
     position += _se1;  //entries of sequence
-    position += (4 - (position&0x3))&0x3;  //alignment
   }
+  position += (4 - (position&0x3))&0x3;  //alignment
   uint32_t _se0 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
   position += 4;  //moving position indicator
   string_seq().resize(_se0);
   for (size_t _i1 = 0; _i1 < _se0; _i1++) {
+    position += (4 - (position&0x3))&0x3;  //alignment
     uint32_t _se1 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
     position += 4;  //moving position indicator
     string_seq()[_i1].assign(static_cast<const char*>(data)+position,static_cast<const char*>(data)+position+_se1-1); //reading bytes for member: string_seq()[_i1]
     position += _se1;  //entries of sequence
-    position += (4 - (position&0x3))&0x3;  //alignment
   }
   position += (4 - (position&0x3))&0x3;  //alignment
   _se0 = *reinterpret_cast<const uint32_t*>(static_cast<const char*>(data)+position);  //number of entries in the sequence
