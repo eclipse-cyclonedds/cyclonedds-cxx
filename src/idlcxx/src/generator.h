@@ -29,6 +29,15 @@ struct generator {
   char *union_format;
   char *union_getter_format;
   const char *union_include;
+  bool uses_array;
+  bool uses_sequence;
+  bool uses_bounded_sequence;
+  bool uses_string;
+  bool uses_bounded_string;
+  bool uses_union;
+#if 0
+  bool uses_optional;
+#endif
   struct {
     FILE *handle;
     char *path;

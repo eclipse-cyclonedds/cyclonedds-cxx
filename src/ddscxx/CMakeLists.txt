@@ -87,7 +87,7 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ddscxx>)
 
-set_property(TARGET ddscxx PROPERTY CXX_STANDARD 11)
+set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
 target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 
 generate_export_header(

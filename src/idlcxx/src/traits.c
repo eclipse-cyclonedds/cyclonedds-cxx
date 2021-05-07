@@ -127,8 +127,8 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   memset(&visitor, 0, sizeof(visitor));
   visitor.visit = IDL_STRUCT;
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_traits;
-  if (pstate->sources)
-    sources[0] = pstate->sources->path->name;
+  assert(pstate->sources);
+  sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;

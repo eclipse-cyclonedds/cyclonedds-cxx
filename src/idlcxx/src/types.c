@@ -364,19 +364,6 @@ emit_const(
   return IDL_RETCODE_OK;
 }
 
-typedef enum
-{
-  idl_no_dep                = 0x0,
-  idl_string_bounded_dep    = 0x01 << 0,
-  idl_string_unbounded_dep  = 0x01 << 1,
-  idl_array_dep             = 0x01 << 2,
-  idl_vector_bounded_dep    = 0x01 << 3,
-  idl_vector_unbounded_dep  = 0x01 << 4,
-  idl_variant_dep           = 0x01 << 5,
-  idl_optional_dep          = 0x01 << 6,
-  idl_all_dep               = (idl_optional_dep*2-1)
-} idl_include_dep;
-
 static idl_retcode_t
 emit_variant(
   const idl_pstate_t *pstate,
@@ -386,16 +373,18 @@ emit_variant(
   void *user_data)
 {
   struct generator *gen = user_data;
-  const char *name, *sep;
-  const idl_case_t *branch = node;
+  char *type = NULL;
+  const char *sep;
+  const idl_case_t *_case = node;
 
   (void)pstate;
   (void)revisit;
   (void)path;
 
-  sep = !idl_previous(branch) ? "" : ", ";
-  name = get_cpp11_name(branch->declarator);
-  if (idl_fprintf(gen->header.handle, "%s%s", sep, name) < 0)
+  sep = !idl_previous(_case) ? "" : ", ";
+  if (IDL_PRINTA(&type, get_cpp11_type, _case->type_spec, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+  if (idl_fprintf(gen->header.handle, "%s%s", sep, type) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -424,7 +413,7 @@ emit_case(
     return IDL_VISIT_REVISIT;
   if (IDL_PRINTA(&value, get_cpp11_value, branch->labels->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, "        return %s;\n") < 0)
+  if (idl_fprintf(gen->header.handle, "        return %s;\n", value) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
@@ -462,7 +451,8 @@ emit_discriminator_methods(
   void *user_data)
 {
   struct generator *gen = user_data;
-  const char *type, *fmt;
+  const char *fmt;
+  char *type;
   const idl_type_spec_t *type_spec;
 
   (void)pstate;
@@ -470,8 +460,8 @@ emit_discriminator_methods(
   (void)path;
 
   type_spec = ((const idl_switch_type_spec_t *)node)->type_spec;
-  type = get_cpp11_name(type_spec);
-
+  if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
   fmt = "  %1$s _d() const\n"
         "  {\n"
         "    return m__d;\n"
@@ -479,7 +469,7 @@ emit_discriminator_methods(
         "  void _d(%1$s d)\n"
         "  {\n"
         "    if (!_is_compatible_discriminator(m__d, d)) {\n"
-        "      throw dds::core::InvalidArgumentError("
+        "      throw dds::core::InvalidArgumentError(\n"
         "        \"Discriminator value does not match current discriminator\");\n"
         "    }\n"
         "    m__d = d;\n"
@@ -500,9 +490,10 @@ emit_branch_methods(
 {
   struct generator *gen = user_data;
   bool simple, single;
-  char *type, *value, *discriminator = "foobar";
+  char *type, *value, *discr_type;
   const idl_case_t *branch = node;
   const char *name, *fmt;
+  const idl_union_t *_union = idl_parent(branch);
 
   (void)pstate;
   (void)revisit;
@@ -517,7 +508,7 @@ emit_branch_methods(
     "  }\n\n";
 
   static const char *setter =
-    "    if (!_is_compatible_discriminator(m__d, d)) {\n"
+    "    if (!_is_compatible_discriminator(%1$s, d)) {\n"
     "      throw dds::core::InvalidArgumentError(\n"
     "        \"Discriminator does not match current discriminator\");\n"
     "    }\n"
@@ -528,6 +519,8 @@ emit_branch_methods(
   name = get_cpp11_name(branch->declarator);
   if (IDL_PRINTA(&type, get_cpp11_type, branch->type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
+  if (IDL_PRINTA(&discr_type, get_cpp11_type, _union->switch_type_spec->type_spec, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
   if (IDL_PRINTA(&value, get_cpp11_value, branch->labels->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -535,50 +528,50 @@ emit_branch_methods(
   single = (idl_degree(branch->labels) == 1);
 
   /* const-getter */
-  fmt = simple ? "  %1$s %2$s() const\n"
-               : "  const %1$s &%2$s() const\n";
+  fmt = simple ? "  %1$s %2$s() const\n  {\n"
+               : "  const %1$s &%2$s() const\n  {\n";
   if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, getter, value, "std::variant", type) < 0)
+  if (idl_fprintf(gen->header.handle, getter, value, gen->union_getter_format, type) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* ref-getter */
-  fmt = "  %1$s& %2$s()\n";
+  fmt = "  %1$s& %2$s()\n  {\n";
   if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, getter, value, "std::variant", type) < 0)
+  if (idl_fprintf(gen->header.handle, getter, value, gen->union_getter_format, type) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* setter */
   if (single)
-    fmt = simple ? "  void %1$s(%2$s _u)\n"
+    fmt = simple ? "  void %1$s(%2$s u)\n"
                    "  {\n"
                    "    const %3$s d = %4$s;\n"
-                 : "  void %1$s(const %2$s& _u)\n"
+                 : "  void %1$s(const %2$s& u)\n"
                    "  {\n"
                    "    const %3$s d = %4$s;\n";
   else
     fmt = simple ? "  void %1$s(%2$s u, %3$s d = %4$s)\n"
                    "  {\n"
-                 : "  void %1$s(const %2$s& _u, %3$s d = %4$s)\n"
+                 : "  void %1$s(const %2$s& u, %3$s d = %4$s)\n"
                    "  {\n";
-  if (idl_fprintf(gen->header.handle, fmt, name, type, discriminator, value) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, name, type, discr_type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, setter) < 0)
+  if (idl_fprintf(gen->header.handle, setter, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   if (simple)
     return IDL_RETCODE_OK;
 
   /* setter with move semantics */
-  fmt = single ? "  void %1$s(%2$s&& _u)\n"
+  fmt = single ? "  void %1$s(%2$s&& u)\n"
                  "  {\n"
-                 "    const %3$s d = %4$s\n"
-               : "  void %1$s(%2$s&& _u, %3$s d = %4$s)\n"
+                 "    const %3$s d = %4$s;\n"
+               : "  void %1$s(%2$s&& u, %3$s d = %4$s)\n"
                  "  {\n";
-  if (idl_fprintf(gen->header.handle, fmt, name, type, discriminator, value) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, name, type, discr_type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, setter) < 0)
+  if (idl_fprintf(gen->header.handle, setter, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
@@ -601,6 +594,7 @@ emit_union(
 
   (void)revisit;
   (void)path;
+  memset(&visitor, 0, sizeof(visitor));
 
   _union = node;
   type_spec = _union->switch_type_spec->type_spec;
@@ -608,29 +602,29 @@ emit_union(
   name = get_cpp11_name(_union);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (IDL_PRINTA(&value, get_cpp11_value, _union->default_discriminator.const_expr, gen) < 0)
+  if (IDL_PRINTA(&value, get_cpp11_value, _union->default_case->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  fmt = "class %1$d\n"
+  fmt = "class %1$s\n"
         "{\n"
-        "  private:\n"
-        "    %2$s m__d;\n\n"
-        "    std::variant<";
-  if (idl_fprintf(gen->header.handle, fmt, name, type) < 0)
+        "private:\n"
+        "  %2$s m__d;\n\n"
+        "  %3$s<";
+  if (idl_fprintf(gen->header.handle, fmt, name, type, gen->union_format) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* variant */
   visitor.visit = IDL_CASE;
   visitor.accept[IDL_ACCEPT_CASE] = emit_variant;
-  if ((ret = idl_visit(pstate, _union->branches, &visitor, user_data)))
+  if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
   fmt = "> m__u;\n\n";
   if (idl_fprintf(gen->header.handle, fmt) < 0)
     return ret;
 
   /**/
-  fmt = "  %1$s _default_discriminator = %2$s;\n\n"
-        "  %1$s _is_discriminator(%1$s d)\n"
+  fmt = "  static const %1$s _default_discriminator = %2$s;\n\n"
+        "  static %1$s _is_discriminator(const %1$s d)\n"
         "  {\n"
         "    switch (d) {\n";
   if (idl_fprintf(gen->header.handle, fmt, type, value) < 0)
@@ -639,10 +633,10 @@ emit_union(
   visitor.visit = IDL_CASE | IDL_CASE_LABEL;
   visitor.accept[IDL_ACCEPT_CASE] = emit_case;
   visitor.accept[IDL_ACCEPT_CASE_LABEL] = emit_case_label;
-  if ((ret = idl_visit(pstate, _union->branches, &visitor, user_data)))
+  if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
   /* generate default case */
-  if (_union->default_discriminator.condition != IDL_FIRST_DISCRIMINANT) {
+  if (idl_mask(_union->default_case) != IDL_CASE_LABEL) {
     fmt = "      default:\n"
           "        break;\n";
     if (fputs(fmt, gen->header.handle) < 0)
@@ -652,7 +646,7 @@ emit_union(
   fmt = "    }\n"
         "    return _default_discriminator;\n"
         "  }\n\n"
-        "  bool _is_compatible_discriminator(%1$s d1, %2$s d2)\n"
+        "  static bool _is_compatible_discriminator(const %1$s d1, const %1$s d2)\n"
         "  {\n"
         "    return _is_discriminator(d1) == _is_discriminator(d2);\n"
         "  }\n\n";
@@ -665,14 +659,14 @@ emit_union(
         "      m__d(%2$s)";
   if (idl_fprintf(gen->header.handle, fmt, name, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (_union->default_discriminator.condition != IDL_IMPLICIT_DEFAULT) {
-    const idl_case_t *branch = _union->default_discriminator.branch;
+  if (idl_mask(_union->default_case) != IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
+    const idl_case_t *_case = idl_parent(_union->default_case);
 
     /* set value explicitly if no default case exists */
-    if (_union->default_discriminator.condition == IDL_DEFAULT_CASE)
+    if (idl_mask(_union->default_case) == IDL_DEFAULT_CASE_LABEL)
       name = "m__u()";
     else
-      name = get_cpp11_name(branch->declarator);
+      name = get_cpp11_name(_case->declarator);
     fmt = ",\n"
           "      %1$s()";
     if (idl_fprintf(gen->header.handle, fmt, name) < 0)
@@ -685,16 +679,17 @@ emit_union(
   visitor.visit = IDL_SWITCH_TYPE_SPEC | IDL_CASE;
   visitor.accept[IDL_ACCEPT_SWITCH_TYPE_SPEC] = emit_discriminator_methods;
   visitor.accept[IDL_ACCEPT_CASE] = emit_branch_methods;
-  if ((ret = idl_visit(pstate, _union->branches, &visitor, user_data)))
+  if ((ret = idl_visit(pstate, _union->switch_type_spec, &visitor, user_data)))
+    return ret;
+  if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
 
   /* implicit default setter */
-  if (idl_mask(_union->default_discriminator.branch) == IDL_IMPLICIT_DEFAULT) {
-    // FIXME: implement
-    //if (_union->unused_labels)
-    //  fmt = "  void _default(%s d = %s)\n"
-    //        "  {\n";
-    //else
+  if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
+    if (_union->unused_labels)
+      fmt = "  void _default(%s d = %s)\n"
+            "  {\n";
+    else
       fmt = "  void _default()\n"
             "  {\n"
             "    const %s d = %s;\n";
@@ -726,8 +721,8 @@ generate_types(const idl_pstate_t *pstate, struct generator *generator)
   visitor.accept[IDL_ACCEPT_UNION] = &emit_union;
   visitor.accept[IDL_ACCEPT_ENUM] = &emit_enum;
   visitor.accept[IDL_ACCEPT_MODULE] = &emit_module;
-  if (pstate->sources)
-    sources[0] = pstate->sources->path->name;
+  assert(pstate->sources);
+  sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
 
   return idl_visit(pstate, pstate->root, &visitor, generator);
