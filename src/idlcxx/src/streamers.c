@@ -152,48 +152,93 @@ process_case(
 {
   struct streams *streams = user_data;
   const idl_case_t* _case = (const idl_case_t*)node;
-  char *type = NULL;
+  char *type, *value = "";
   const char *name;
+  bool simple, single;
 
+  const char *readfmt;
   static const char writefmt[] =
-    "  write(instance.%s());\n"
-    "  break;\n";
-  static const char readfmt[] =
-    "{\n"
-    "  %1$s obj;\n"
-    "  read(str, obj);\n"
-    "  %2$s(obj, _disc_temp);\n"
-    "}\n"
-    "  break;\n";
+    "      write(str, instance.%s());\n"
+    "      break;\n";
   static const char movefmt[] =
-    "  move(str, instance.%s());\n"
-    "  break;\n";
+    "      move(str, instance.%s());\n"
+    "      break;\n";
   static const char maxfmt[] =
-    "{\n"
-    "  size_t pos = str.position();\n"
-    "  size_t alignment = str.alignment();\n"
-    "  max(str, instance.%s());\n"
-    "  union_max = std::max(str.position(),union_max);\n"
-    "  str.position(pos);\n"
-    "  str.alignment(alignment);\n"
-    "}\n";
+    "  {\n"
+    "    size_t pos = str.position();\n"
+    "    size_t alignment = str.alignment();\n"
+    "    max(str, instance.%s());\n"
+    "    if (union_max < str.position()) {\n"
+    "      union_max = str.position();\n"
+    "      alignment_max = str.alignment();\n"
+    "    }\n"
+    "    str.position(pos);\n"
+    "    str.alignment(alignment);\n"
+    "  }\n";
 
   (void)pstate;
   (void)path;
 
-  /* process case labels first */
-  if (!revisit)
+  single = (idl_degree(_case->labels) == 1);
+  simple = idl_is_base_type(_case->type_spec);
+
+  if (single)
+    readfmt = simple ? "    {\n"
+                       "      %1$s obj = %3$s;\n"
+                       "      read(str, obj);\n"
+                       "      instance.%2$s(obj);\n"
+                       "    }\n"
+                       "      break;\n"
+                     : "    {\n"
+                       "      %1$s obj;\n"
+                       "      read(str, obj);\n"
+                       "      instance.%2$s(obj);\n"
+                       "    }\n"
+                       "      break;";
+  else
+    readfmt = simple ? "    {\n"
+                       "      %1$s obj = %3$s;\n"
+                       "      read(str, obj);\n"
+                       "      instance.%2$s(obj, d);\n"
+                       "    }\n"
+                       "      break;"
+                     : "    {\n"
+                       "      %1$s obj;\n"
+                       "      read(str, obj);\n"
+                       "      instance.%2$s(obj, d);\n"
+                       "    }\n"
+                       "      break;";
+
+  if (revisit) {
+    const char *fmt = "  }\n";
+    name = get_cpp11_name(_case->declarator);
+    if (IDL_PRINTA(&type, get_cpp11_type, _case->type_spec, streams->generator) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+    if (simple && IDL_PRINTA(&value, get_cpp11_default_value, _case->type_spec, streams->generator) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+
+    if (putf(&streams->write, writefmt, name)
+     || putf(&streams->read, readfmt, type, name, value)
+     || putf(&streams->move, movefmt, name)
+     || putf(&streams->max, maxfmt, name))
+      return IDL_RETCODE_NO_MEMORY;
+
+    if (idl_next(_case))
+      return IDL_RETCODE_OK;
+    if (putf(&streams->write, fmt)
+     || putf(&streams->read, fmt)
+     || putf(&streams->move, fmt))
+      return IDL_RETCODE_NO_MEMORY;
+  } else {
+    const char *fmt = "  switch(d)\n  {\n";
+    if (idl_previous(_case))
+      return IDL_VISIT_REVISIT;
+    if (putf(&streams->write, fmt)
+     || putf(&streams->read, fmt)
+     || putf(&streams->move, fmt))
+      return IDL_RETCODE_NO_MEMORY;
     return IDL_VISIT_REVISIT;
-
-  name = get_cpp11_name(_case->declarator);
-  if (IDL_PRINTA(&type, get_cpp11_type, _case->type_spec, streams->generator) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
-  if (putf(&streams->write, writefmt, name)
-   || putf(&streams->read, readfmt, type, name)
-   || putf(&streams->move, movefmt, name)
-   || putf(&streams->max, maxfmt, name))
-    return IDL_RETCODE_NO_MEMORY;
+  }
 
   return IDL_RETCODE_OK;
 }
@@ -353,65 +398,45 @@ process_switch_type_spec(
   void *user_data)
 {
   static const char writefmt[] =
-    "  write(str, %1$s);\n"
-    "  switch(%1$s)\n{\n";
+    "  auto d = instance._d();\n"
+    "  write(str, d);\n";
   static const char readfmt[] =
-    "  %1$s %2$s;\n"
-    "  read(str, %2$s);\n"
-    "  switch(%2$s)\n{\n";
+    "  auto d = instance._d();\n"
+    "  read(str, d);\n";
   static const char movefmt[] =
-    "  move(str, %1$s);\n"
-    "  switch(%1$s)\n{\n";
+    "  auto d = instance._d();\n"
+    "  move(str, d);\n";
   static const char maxfmt[] =
-    "  max(str, %1$s);\n"
-    "  size_t union_max = str.position();\n";
-  static const char key_writefmt[] =
-    "  write(str, %1$s);\n";
-  static const char key_readfmt[] =
-    "  %1$s %2$s;\n"
-    "  read(str, %2$s);\n";
-  static const char key_movefmt[] =
-    "  move(str, %1$s);\n";
+    "  max(str, instance._d());\n"
+    "  size_t union_max = str.position();\n"
+    "  size_t alignment_max = str.alignment();\n";
   static const char key_maxfmt[] =
-    "  max(str, %1$s);\n";
+    "  max(str, instance._d());\n";
 
   struct streams *streams = user_data;
   const idl_switch_type_spec_t *switch_type_spec = node;
-  const idl_type_spec_t *type_spec = switch_type_spec->type_spec;
-  char *cast = NULL;
-  const char *accessor = "_d()";
 
   (void)pstate;
+  (void)revisit;
   (void)path;
 
-  if (revisit) {
-    if (putf(&streams->write, "  }\n")
-     || putf(&streams->read, "  }\n")
-     || putf(&streams->move, "  }\n")
-     || putf(&streams->max, "  str.position(union_max);\n"))
-      return IDL_RETCODE_NO_MEMORY;
-    return IDL_RETCODE_OK;
-  }
-
-  if (IDL_PRINTA(&cast, get_cpp11_type, type_spec, streams->generator) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-  if (putf(&streams->write, writefmt, accessor)
-   || putf(&streams->read, readfmt, cast, accessor)
-   || putf(&streams->move, movefmt, accessor)
-   || putf(&streams->max, maxfmt, accessor))
+  if (putf(&streams->write, writefmt)
+   || putf(&streams->read, readfmt)
+   || putf(&streams->move, movefmt)
+   || putf(&streams->max, maxfmt))
     return IDL_RETCODE_NO_MEMORY;
 
   /* short-circuit if switch type specifier is not a key */
   if (switch_type_spec->key != IDL_TRUE)
-    return IDL_VISIT_REVISIT;
+    return IDL_RETCODE_OK;
 
-  if (putf(&streams->write, key_writefmt, accessor)
-   || putf(&streams->read, key_readfmt, cast, accessor)
-   || putf(&streams->move, key_movefmt, accessor)
-   || putf(&streams->max, key_maxfmt, accessor))
+  if (putf(&streams->key_write, writefmt)
+   || putf(&streams->key_read, readfmt)
+   || putf(&streams->key_move, movefmt)
+   || putf(&streams->key_max, key_maxfmt))
     return IDL_RETCODE_NO_MEMORY;
 
-  return IDL_VISIT_REVISIT;
+  return IDL_RETCODE_OK;
 }
 
 static idl_retcode_t
@@ -422,10 +447,16 @@ process_union(
   const void* node,
   void* user_data)
 {
+  struct streams *streams = user_data;
+
   (void)pstate;
   (void)path;
 
   if (revisit) {
+    static const char fmt[] = "  str.position(union_max);\n"
+                              "  str.alignment(alignment_max);\n";
+    if (putf(&streams->max, fmt))
+      return IDL_RETCODE_NO_MEMORY;
     if (print_constructed_type_close(user_data, node))
       return IDL_RETCODE_NO_MEMORY;
     return IDL_RETCODE_OK;
@@ -445,17 +476,18 @@ process_case_label(
   void* user_data)
 {
   struct streams *streams = user_data;
-  const idl_literal_t *literal;
+  const idl_literal_t *literal = ((const idl_case_label_t *)node)->const_expr;
   char *value = "";
-  const char *casefmt = "default:\n";
+  const char *casefmt;
 
   (void)pstate;
   (void)revisit;
   (void)path;
 
-  literal = ((const idl_case_label_t *)node)->const_expr;
-  if (literal) {
-    casefmt = "case %s:\n";
+  if (idl_mask(node) == IDL_DEFAULT_CASE_LABEL) {
+    casefmt = "    default:\n";
+  } else {
+    casefmt = "    case %s:\n";
     if (IDL_PRINTA(&value, get_cpp11_value, literal, streams->generator) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
@@ -523,8 +555,8 @@ generate_streamers(const idl_pstate_t* pstate, struct generator *gen)
   visitor.accept[IDL_ACCEPT_CASE_LABEL] = &process_case_label;
   visitor.accept[IDL_ACCEPT_SWITCH_TYPE_SPEC] = &process_switch_type_spec;
   visitor.accept[IDL_ACCEPT_INHERIT_SPEC] = &process_inherit_spec;
-  if (pstate->sources)
-    sources[0] = pstate->sources->path->name;
+  assert(pstate->sources);
+  sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
 
   if ((ret = idl_visit(pstate, pstate->root, &visitor, &streams)) == IDL_RETCODE_OK)

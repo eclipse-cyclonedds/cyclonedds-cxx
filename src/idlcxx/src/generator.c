@@ -20,6 +20,7 @@
 #include "idl/processor.h"
 #include "idl/string.h"
 #include "idl/stream.h"
+#include "idl/visit.h"
 #include "idlc/generator.h"
 
 #include "generator.h"
@@ -422,7 +423,9 @@ static int get_cpp11_base_type_const_value(
     case IDL_LDOUBLE:
       return idl_snprintf(str, size, "%Lf", literal->value.ldbl);
     case IDL_CHAR:
-      return idl_snprintf(str, size, "\'%c\'", literal->value.chr);
+      if (idl_isprint(literal->value.chr))
+        return idl_snprintf(str, size, "\'%c\'", literal->value.chr);
+      return idl_snprintf(str, size, "0x%X", literal->value.chr);
     case IDL_STRING:
       return idl_snprintf(str, size, "\"%s\"", literal->value.str);
     default:
@@ -512,10 +515,106 @@ static idl_retcode_t print_guard_endif(FILE *fh, const char *guard)
   return IDL_RETCODE_OK;
 }
 
-static idl_retcode_t print_includes(FILE *fh, const idl_source_t *source)
+static idl_retcode_t
+register_union(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
 {
+  struct generator *gen = user_data;
+  const idl_location_t *loc;
+  const char *src = NULL;
+
+  (void)revisit;
+  (void)path;
+  loc = idl_location(node);
+  assert(loc);
+  if (pstate->sources)
+    src = pstate->sources->path->name;
+  /* do not include headers if required by types in includes */
+  if (src && strcmp(loc->first.source->path->name, src) == 0)
+    gen->uses_union = true;
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+register_types(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
+{
+  struct generator *gen = user_data;
+  const idl_type_spec_t *type_spec;
+  const idl_location_t *loc;
+  const char *src = NULL;
+
+  (void)pstate;
+  (void)revisit;
+  (void)path;
+
+  type_spec = idl_unalias(idl_type_spec(node), 0);
+  loc = idl_location(type_spec);
+  assert(type_spec && loc);
+  if (pstate->sources)
+    src = pstate->sources->path->name;
+  /* do not include headers if required by types in includes */
+  if (src && strcmp(loc->first.source->path->name, src) != 0)
+    return IDL_VISIT_DONT_RECURSE;
+
+  if (idl_is_array(type_spec))
+    gen->uses_array = true;
+
+  type_spec = idl_unalias(idl_type_spec(node), IDL_UNALIAS_IGNORE_ARRAY);
+  loc = idl_location(type_spec);
+  assert(type_spec && loc);
+  /* do not include headers if required by types in includes */
+  if (src && strcmp(loc->first.source->path->name, src) != 0)
+    return IDL_VISIT_DONT_RECURSE;
+
+  if (idl_is_sequence(type_spec)) {
+    if (idl_is_bounded(type_spec))
+      gen->uses_bounded_sequence = true;
+    else
+      gen->uses_sequence = true;
+    return IDL_VISIT_TYPE_SPEC;
+  } else if (idl_is_string(type_spec)) {
+    if (idl_is_bounded(type_spec))
+      gen->uses_bounded_string = true;
+    else
+      gen->uses_string = true;
+  } else if (idl_is_union(type_spec)) {
+    gen->uses_union = true;
+  }
+
+  /* FIXME: add support for @optional */
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+generate_includes(const idl_pstate_t *pstate, struct generator *generator)
+{
+  idl_retcode_t ret;
+  idl_visitor_t visitor;
+  bool inc = false;
   char *sep = NULL, *path;
-  const idl_source_t *include;
+  const char *sources[] = { NULL, NULL };
+  const idl_source_t *include, *source = pstate->sources;
+
+  /* determine which "system" headers to include */
+  memset(&visitor, 0, sizeof(visitor));
+  visitor.visit = IDL_DECLARATOR | IDL_UNION;
+  visitor.accept[IDL_ACCEPT_DECLARATOR] = &register_types;
+  visitor.accept[IDL_ACCEPT_UNION] = &register_union;
+  assert(pstate->sources);
+  sources[0] = pstate->sources->path->name;
+  visitor.sources = sources;
+  if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
+    return ret;
 
   if (!(path = idl_strdup(source->path->name)))
     goto err_path;
@@ -538,15 +637,46 @@ static idl_retcode_t print_includes(FILE *fh, const idl_source_t *source)
     if (ext > relpath && idl_strcasecmp(ext, ".idl") == 0) {
       const char *fmt = "#include \"%.*s.h\"\n";
       int len = (int)(ext - relpath);
-      cnt = idl_fprintf(fh, fmt, len, relpath);
+      cnt = idl_fprintf(generator->header.handle, fmt, len, relpath);
     } else {
       const char *fmt = "#include \"%s\"\n";
-      cnt = idl_fprintf(fh, fmt, relpath);
+      cnt = idl_fprintf(generator->header.handle, fmt, relpath);
     }
     free(relpath);
-    if (cnt < 0 || fputs("\n", fh) < 0)
+    if (cnt < 0 || fputs("\n", generator->header.handle) < 0)
       goto err_relpath;
+    inc = true;
   }
+
+  { int len = 0;
+    const char *incs[6];
+
+    if (generator->uses_array)
+      incs[len++] = generator->array_include;
+    if (generator->uses_sequence)
+      incs[len++] = generator->sequence_include;
+    if (generator->uses_bounded_sequence)
+      incs[len++] = generator->bounded_sequence_include;
+    if (generator->uses_string)
+      incs[len++] = generator->string_include;
+    if (generator->uses_bounded_string)
+      incs[len++] = generator->bounded_string_include;
+    if (generator->uses_union)
+      incs[len++] = generator->union_include;
+
+    for (int i=0, j; i < len; i++) {
+      for (j=0; j < i && strcmp(incs[i], incs[j]) != 0; j++) ;
+      if (j < i)
+        continue;
+      const char *fmt = "#include %s\n";
+      if (idl_fprintf(generator->header.handle, fmt, incs[i]) < 0)
+        goto err_relpath;
+      inc = true;
+    }
+  }
+
+  if (inc && fputs("\n", generator->header.handle) < 0)
+    goto err_relpath;
 
   free(path);
   return IDL_RETCODE_OK;
@@ -570,7 +700,7 @@ idl_retcode_t generate_nosetup(const idl_pstate_t *pstate, struct generator *gen
     goto err_print;
   if ((ret = print_guard_if(gen->header.handle, guard)))
     goto err_print;
-  if ((ret = print_includes(gen->header.handle, pstate->sources)))
+  if ((ret = generate_includes(pstate, gen)))
     goto err_print;
   if ((ret = generate_types(pstate, gen)))
     goto err_print;
