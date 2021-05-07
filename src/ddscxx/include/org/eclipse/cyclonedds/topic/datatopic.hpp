@@ -61,6 +61,7 @@ class ddscxx_serdata : public ddsi_serdata {
 
 public:
   bool hash_populated = false;
+  bool sample_filled = false;
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
   ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
   ~ddscxx_serdata() { delete m_t.load(std::memory_order_acquire); }
@@ -74,21 +75,25 @@ public:
   const bool& key_md5_hashed() const { return m_key_md5_hashed; }
   void populate_hash();
 
-  T* getT()
+  T* getT(bool fill_sample = true)
   {
     T *t = m_t.load(std::memory_order_acquire);
     if (t == nullptr) {
       t = new T();
-      switch (kind)
+      if (!sample_filled && fill_sample)
       {
-      case SDK_KEY:
-        t->key_read(calc_offset(data(), 4), 0);
-        break;
-      case SDK_DATA:
-        t->read_struct(calc_offset(data(), 4), 0);
-        break;
-      case SDK_EMPTY:
-        assert(0);
+        sample_filled = true;
+        switch (kind)
+        {
+        case SDK_KEY:
+          t->key_read(calc_offset(data(), 4), 0);
+          break;
+        case SDK_DATA:
+          t->read_struct(calc_offset(data(), 4), 0);
+          break;
+        case SDK_EMPTY:
+          assert(0);
+        }
       }
       T* exp = nullptr;
       if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
@@ -172,14 +177,15 @@ ddsi_serdata_t *serdata_from_ser(
   switch (kind)
   {
   case SDK_KEY:
-    d->getT()->key_read(calc_offset(d->data(), 4), 0);
+    d->getT(false)->key_read(calc_offset(d->data(), 4), 0);
     break;
   case SDK_DATA:
-    d->getT()->read_struct(calc_offset(d->data(), 4), 0);
+    d->getT(false)->read_struct(calc_offset(d->data(), 4), 0);
     break;
   case SDK_EMPTY:
     assert(0);
   }
+  d->sample_filled = true;
   d->key_md5_hashed() = d->getT()->key(d->key());
   d->populate_hash();
 
@@ -212,14 +218,15 @@ ddsi_serdata_t *serdata_from_ser_iov(
   switch (kind)
   {
   case SDK_KEY:
-    d->getT()->key_read(calc_offset(d->data(), 4), 0);
+    d->getT(false)->key_read(calc_offset(d->data(), 4), 0);
     break;
   case SDK_DATA:
-    d->getT()->read_struct(calc_offset(d->data(), 4), 0);
+    d->getT(false)->read_struct(calc_offset(d->data(), 4), 0);
     break;
   case SDK_EMPTY:
     assert(0);
   }
+  d->sample_filled = true;
   d->key_md5_hashed() = d->getT()->key(d->key());
   d->populate_hash();
 
@@ -288,7 +295,8 @@ ddsi_serdata_t *serdata_from_sample(
       assert(0);
     }
     d->key_md5_hashed() = msg->key(d->key());
-    *(d->getT()) = *msg;
+    *(d->getT(false)) = *msg;
+    d->sample_filled = true;
     d->populate_hash();
 
     return d;
