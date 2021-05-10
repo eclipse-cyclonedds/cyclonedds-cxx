@@ -97,6 +97,23 @@ public:
   const bool& key_md5_hashed() const { return m_key_md5_hashed; }
   void populate_hash();
 
+  T* setT(const T* toset)
+  {
+    assert(toset);
+    T* t = m_t.load(std::memory_order_acquire);
+    if (t == nullptr) {
+      t = new T(*toset);
+      T* exp = nullptr;
+      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+        delete t;
+        t = exp;
+      }
+    } else {
+      *t = *toset;
+    }
+    return t;
+  }
+
   T* getT()
   {
     T *t = m_t.load(std::memory_order_acquire);
@@ -198,17 +215,6 @@ ddsi_serdata *serdata_from_ser(
 
   basic_cdr_stream str;
   str.set_buffer(calc_offset(d->data(), 4));
-  switch (kind)
-  {
-  case SDK_KEY:
-    key_read(str,*d->getT());
-    break;
-  case SDK_DATA:
-    read(str,*d->getT());
-    break;
-  case SDK_EMPTY:
-    assert(0);
-  }
   d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
   d->populate_hash();
 
@@ -239,17 +245,6 @@ ddsi_serdata *serdata_from_ser_iov(
 
   basic_cdr_stream str;
   str.set_buffer(calc_offset(d->data(), 4));
-  switch (kind)
-  {
-  case SDK_KEY:
-    key_read(str, *d->getT());
-    break;
-  case SDK_DATA:
-    read(str, *d->getT());
-    break;
-  case SDK_EMPTY:
-    assert(0);
-  }
   d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
   d->populate_hash();
 
@@ -323,7 +318,7 @@ ddsi_serdata *serdata_from_sample(
     }
     str.reset_position();
     d->key_md5_hashed() = to_key(str,msg,d->key());
-    *d->getT() = msg;
+    d->setT(&msg);
     d->populate_hash();
 
     return d;
