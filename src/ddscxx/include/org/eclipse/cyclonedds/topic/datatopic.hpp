@@ -61,7 +61,6 @@ class ddscxx_serdata : public ddsi_serdata {
 
 public:
   bool hash_populated = false;
-  bool sample_filled = false;
   static const struct ddsi_serdata_ops ddscxx_serdata_ops;
   ddscxx_serdata(const ddsi_sertopic* topic, ddsi_serdata_kind kind);
   ~ddscxx_serdata() { delete m_t.load(std::memory_order_acquire); }
@@ -75,25 +74,38 @@ public:
   const bool& key_md5_hashed() const { return m_key_md5_hashed; }
   void populate_hash();
 
-  T* getT(bool fill_sample = true)
+  T* setT(const T* toset)
+  {
+    assert(toset);
+    T* t = m_t.load(std::memory_order_acquire);
+    if (t == nullptr) {
+      t = new T(*toset);
+      T* exp = nullptr;
+      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+        delete t;
+        t = exp;
+      }
+    } else {
+      *t = *toset;
+    }
+    return t;
+  }
+
+  T* getT()
   {
     T *t = m_t.load(std::memory_order_acquire);
     if (t == nullptr) {
       t = new T();
-      if (!sample_filled && fill_sample)
+      switch (kind)
       {
-        sample_filled = true;
-        switch (kind)
-        {
-        case SDK_KEY:
-          t->key_read(calc_offset(data(), 4), 0);
-          break;
-        case SDK_DATA:
-          t->read_struct(calc_offset(data(), 4), 0);
-          break;
-        case SDK_EMPTY:
-          assert(0);
-        }
+      case SDK_KEY:
+        t->key_read(calc_offset(data(), 4), 0);
+        break;
+      case SDK_DATA:
+        t->read_struct(calc_offset(data(), 4), 0);
+        break;
+      case SDK_EMPTY:
+        assert(0);
       }
       T* exp = nullptr;
       if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
@@ -174,18 +186,7 @@ ddsi_serdata_t *serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
-  switch (kind)
-  {
-  case SDK_KEY:
-    d->getT(false)->key_read(calc_offset(d->data(), 4), 0);
-    break;
-  case SDK_DATA:
-    d->getT(false)->read_struct(calc_offset(d->data(), 4), 0);
-    break;
-  case SDK_EMPTY:
-    assert(0);
-  }
-  d->sample_filled = true;
+  //deserialization of sample is done in getT call
   d->key_md5_hashed() = d->getT()->key(d->key());
   d->populate_hash();
 
@@ -215,18 +216,7 @@ ddsi_serdata_t *serdata_from_ser_iov(
     off += n_bytes;
   }
 
-  switch (kind)
-  {
-  case SDK_KEY:
-    d->getT(false)->key_read(calc_offset(d->data(), 4), 0);
-    break;
-  case SDK_DATA:
-    d->getT(false)->read_struct(calc_offset(d->data(), 4), 0);
-    break;
-  case SDK_EMPTY:
-    assert(0);
-  }
-  d->sample_filled = true;
+  //deserialization of sample is done in getT call
   d->key_md5_hashed() = d->getT()->key(d->key());
   d->populate_hash();
 
@@ -295,8 +285,7 @@ ddsi_serdata_t *serdata_from_sample(
       assert(0);
     }
     d->key_md5_hashed() = msg->key(d->key());
-    *(d->getT(false)) = *msg;
-    d->sample_filled = true;
+    d->setT(msg);
     d->populate_hash();
 
     return d;
