@@ -740,18 +740,6 @@ static const char *bnd_seq_flags[] = { "s", PRIu32, NULL };
 static const char *bnd_str_toks[] = { "BOUND", NULL };
 static const char *bnd_str_flags[] = { PRIu32, NULL };
 
-static FILE *open_file(const char *pathname, const char *mode)
-{
-#if _WIN32
-  FILE *handle = NULL;
-  if (fopen_s(&handle, pathname, mode) != 0)
-    return NULL;
-  return handle;
-#else
-  return fopen(pathname, mode);
-#endif
-}
-
 #if _WIN32
 __declspec(dllexport)
 #endif
@@ -797,7 +785,7 @@ idl_retcode_t generate(const idl_pstate_t *pstate)
   sep = dir[0] == '\0' ? "" : "/";
   if (idl_asprintf(&gen.header.path, "%s%s%s.hpp", dir, sep, basename) < 0)
     goto err_hdr;
-  if (!(gen.header.handle = open_file(gen.header.path, "wb")))
+  if (!(gen.header.handle = idl_fopen(gen.header.path, "wb")))
     goto err_hdr_fh;
 
   /* generate format strings from templates */
