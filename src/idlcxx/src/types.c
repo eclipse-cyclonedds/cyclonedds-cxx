@@ -148,7 +148,7 @@ emit_member_methods(
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (idl_mask(type_spec) & IDL_BASE_TYPE)
+  if (idl_mask(type_spec) & (IDL_BASE_TYPE | IDL_ENUM))
     fmt = "  %1$s %2$s() const { return this->%2$s_; }\n"
           "  %1$s& %2$s() { return this->%2$s_; }\n"
           "  void %2$s(%1$s _val_) { this->%2$s_ = _val_; }\n";
@@ -161,6 +161,29 @@ emit_member_methods(
   if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+emit_member_comparison_operator(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
+{
+  struct generator *gen = user_data;
+  const char *name, *fmt, *sep;
+
+  (void)pstate;
+  (void)revisit;
+  (void)path;
+
+  name = get_cpp11_name(node);
+  sep = is_first(node) ? "" : " &&\n      ";
+  fmt = "%2$s%1$s_ == _other.%1$s_";
+  if (idl_fprintf(gen->header.handle, fmt, name, sep) < 0)
+    return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
 
@@ -234,6 +257,25 @@ emit_struct(
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member_methods;
   if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
     return ret;
+
+  /* comparison operators */
+  fmt = "\n"
+        "  bool operator==(const %s& _other) const\n"
+        "  {\n"
+        "    return ";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+  visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member_comparison_operator;
+  if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
+    return ret;
+  fmt = ";\n"
+        "  }\n\n"
+        "  bool operator!=(const %s& _other) const\n"
+        "  {\n"
+        "    return !(*this == _other);\n"
+        "  }\n";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
 
   if (fputs("\n};\n\n", gen->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -481,7 +523,7 @@ emit_discriminator_methods(
 }
 
 static idl_retcode_t
-emit_branch_methods(
+emit_case_methods(
   const idl_pstate_t *pstate,
   bool revisit,
   const idl_path_t *path,
@@ -678,11 +720,13 @@ emit_union(
   /* getters and setters */
   visitor.visit = IDL_SWITCH_TYPE_SPEC | IDL_CASE;
   visitor.accept[IDL_ACCEPT_SWITCH_TYPE_SPEC] = emit_discriminator_methods;
-  visitor.accept[IDL_ACCEPT_CASE] = emit_branch_methods;
+  visitor.accept[IDL_ACCEPT_CASE] = emit_case_methods;
   if ((ret = idl_visit(pstate, _union->switch_type_spec, &visitor, user_data)))
     return ret;
   if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
+
+  /* comparison operators */
 
   /* implicit default setter */
   if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
