@@ -291,7 +291,7 @@ DataReader<T, DELEGATE>::DataReader(
 #endif /* OMG_DDS_MULTI_TOPIC_SUPPORT */
 
 template <typename T, template <typename Q> class DELEGATE>
-DataReader<T, DELEGATE>::~DataReader() { }
+DataReader<T, DELEGATE>::~DataReader<T, DELEGATE>() { }
 
 template <typename T, template <typename Q> class DELEGATE>
 dds::sub::status::DataState
@@ -514,7 +514,7 @@ dds::sub::detail::DataReader<T>::common_constructor(
 }
 
 template <typename T>
-dds::sub::detail::DataReader<T>::~DataReader()
+dds::sub::detail::DataReader<T>::~DataReader<T>()
 {
     if (!this->closed) {
         try {

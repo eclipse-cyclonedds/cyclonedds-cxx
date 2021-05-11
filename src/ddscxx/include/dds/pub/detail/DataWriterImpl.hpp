@@ -62,7 +62,7 @@ DataWriter<T, DELEGATE>::DataWriter(const dds::pub::Publisher& pub,
 }
 
 template <typename T, template <typename Q> class DELEGATE>
-DataWriter<T, DELEGATE>::~DataWriter()
+DataWriter<T, DELEGATE>::~DataWriter<T, DELEGATE>()
 {
 }
 
@@ -405,7 +405,7 @@ dds::pub::detail::DataWriter<T>::DataWriter(
 }
 
 template <typename T>
-dds::pub::detail::DataWriter<T>::~DataWriter()
+dds::pub::detail::DataWriter<T>::~DataWriter<T>()
 {
     if (!this->closed) {
         try {
