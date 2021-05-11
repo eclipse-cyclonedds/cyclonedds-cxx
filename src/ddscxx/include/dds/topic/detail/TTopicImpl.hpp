@@ -205,7 +205,7 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
 
 
 template <typename T>
-dds::topic::detail::Topic<T>::~Topic()
+dds::topic::detail::Topic<T>::~Topic<T>()
 {
     if (!closed) {
         try {
