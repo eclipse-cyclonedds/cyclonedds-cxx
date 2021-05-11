@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,17 +9,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
+#include <gtest/gtest.h>
+
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
-
-
-
+#include "Space.hpp"
 
 /**
  * Fixture for the DataReader tests
  */
-class ddscxx_DataReaderSelector : public ::testing::Test
+class DataReaderSelector : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -31,7 +29,7 @@ public:
 
     dds::sub::status::DataState already_read;
 
-    ddscxx_DataReaderSelector() :
+    DataReaderSelector() :
         participant(dds::core::null),
         subscriber(dds::core::null),
         publisher(dds::core::null),
@@ -94,7 +92,7 @@ public:
     void WriteData(const std::vector<Space::Type1>& samples)
     {
         for (size_t i = 0; i < samples.size(); i++) {
-            this->writer.write(samples[(size_t)i]);
+            this->writer.write(samples[i]);
         }
     }
 
@@ -152,16 +150,14 @@ public:
         this->subscriber = dds::core::null;
         this->participant = dds::core::null;
     }
-
 };
-
 
 
 /**
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, reader_null)
+TEST_F(DataReaderSelector, reader_null)
 {
     dds::sub::DataReader<Space::Type1> null_reader = dds::core::null;
     ASSERT_THROW({
@@ -169,8 +165,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, reader_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit)
+TEST_F(DataReaderSelector, implicit)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> write_samples;
@@ -193,8 +188,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit)
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_instance)
+TEST_F(DataReaderSelector, implicit_instance)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -220,8 +214,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_instance)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_next_instance)
+TEST_F(DataReaderSelector, implicit_next_instance)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected2_samples;
@@ -261,8 +254,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_state)
+TEST_F(DataReaderSelector, implicit_state)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -290,8 +282,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_state)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_content)
+TEST_F(DataReaderSelector, implicit_content)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -323,8 +314,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_max_samples)
+TEST_F(DataReaderSelector, implicit_max_samples)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -347,8 +337,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_multiple)
+TEST_F(DataReaderSelector, implicit_multiple)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -376,8 +365,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, implicit_multiple)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples)
+TEST_F(DataReaderSelector, read_LoanedSamples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -401,8 +389,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples)
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_instance)
+TEST_F(DataReaderSelector, read_LoanedSamples_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -430,8 +417,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_instance)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_next_instance)
+TEST_F(DataReaderSelector, read_LoanedSamples_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -473,8 +459,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_state)
+TEST_F(DataReaderSelector, read_LoanedSamples_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -504,8 +489,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_state)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_content)
+TEST_F(DataReaderSelector, read_LoanedSamples_content)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -539,8 +523,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_max_samples)
+TEST_F(DataReaderSelector, read_LoanedSamples_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -565,8 +548,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_multiple)
+TEST_F(DataReaderSelector, read_LoanedSamples_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -597,8 +579,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_LoanedSamples_multiple)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator)
+TEST_F(DataReaderSelector, read_FWIterator)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> write_samples;
@@ -613,20 +594,19 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator)
 
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > read_samples(write_samples.size());
-    cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+    cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
     ASSERT_EQ(cnt, write_samples.size());
 
     /* Check result. */
     this->CheckData(read_samples, write_samples);
 
     /* A second time should work as well. */
-    cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+    cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
     ASSERT_EQ(cnt, write_samples.size());
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_instance)
+TEST_F(DataReaderSelector, read_FWIterator_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -649,15 +629,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_instance)
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > read_samples(expected_samples.size());
     selector.instance(ih);
-    cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+    cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
     ASSERT_EQ(cnt, read_samples.size());
 
     /* Check result. */
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_next_instance)
+TEST_F(DataReaderSelector, read_FWIterator_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected2_samples;
@@ -685,7 +664,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_next_instance)
         /* Read through the Selector. */
         std::vector<dds::sub::Sample<Space::Type1> > read_samples2(expected2_samples.size());
         selector.next_instance(ih);
-        cnt = selector.read(read_samples2.begin(), (uint32_t)read_samples2.size());
+        cnt = selector.read(read_samples2.begin(), static_cast<uint32_t>(read_samples2.size()));
         ASSERT_EQ(cnt, read_samples2.size());
 
         /* Check result. */
@@ -695,7 +674,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_next_instance)
 
         /* Read through the Selector. */
         std::vector<dds::sub::Sample<Space::Type1> > read_samples3(expected3_samples.size());
-        cnt = selector.read(read_samples3.begin(), (uint32_t)read_samples3.size());
+        cnt = selector.read(read_samples3.begin(), static_cast<uint32_t>(read_samples3.size()));
         ASSERT_EQ(cnt, read_samples3.size());
 
         /* Check result. */
@@ -703,8 +682,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_state)
+TEST_F(DataReaderSelector, read_FWIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -729,15 +707,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_state)
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > read_samples(expected_samples.size());
     selector.state(this->already_read);
-    cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+    cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
     ASSERT_EQ(cnt, read_samples.size());
 
     /* Check result. */
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_content)
+TEST_F(DataReaderSelector, read_FWIterator_content)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -765,7 +742,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_content)
         /* Read through the Selector. */
         std::vector<dds::sub::Sample<Space::Type1> > read_samples(expected_samples.size());
         selector.content(query);
-        cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+        cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
         ASSERT_EQ(cnt, read_samples.size());
 
         /* Check result. */
@@ -773,8 +750,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_max_samples)
+TEST_F(DataReaderSelector, read_FWIterator_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -794,15 +770,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_max_samples)
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > read_samples(expected_samples.size());
     selector.max_samples(3);
-    cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+    cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
     ASSERT_EQ(cnt, read_samples.size());
 
     /* Check result. */
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_multiple)
+TEST_F(DataReaderSelector, read_FWIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -828,15 +803,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_FWIterator_multiple)
     std::vector<dds::sub::Sample<Space::Type1> > read_samples(expected_samples.size());
     selector.max_samples(3);
     selector.state(this->already_read);
-    cnt = selector.read(read_samples.begin(), (uint32_t)read_samples.size());
+    cnt = selector.read(read_samples.begin(), static_cast<uint32_t>(read_samples.size()));
     ASSERT_EQ(cnt, read_samples.size());
 
     /* Check result. */
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator)
+TEST_F(DataReaderSelector, read_BIIterator)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> write_samples;
@@ -866,8 +840,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator)
     this->CheckData(read_samples2, write_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_instance)
+TEST_F(DataReaderSelector, read_BIIterator_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -898,8 +871,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_instance)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_next_instance)
+TEST_F(DataReaderSelector, read_BIIterator_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected2_samples;
@@ -947,8 +919,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_state)
+TEST_F(DataReaderSelector, read_BIIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -981,8 +952,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_state)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_content)
+TEST_F(DataReaderSelector, read_BIIterator_content)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1019,8 +989,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_max_samples)
+TEST_F(DataReaderSelector, read_BIIterator_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1048,8 +1017,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_multiple)
+TEST_F(DataReaderSelector, read_BIIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1083,8 +1051,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, read_BIIterator_multiple)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples)
+TEST_F(DataReaderSelector, take_LoanedSamples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1108,8 +1075,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples)
     this->CheckData(take_samples, std::vector<Space::Type1>());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_instance)
+TEST_F(DataReaderSelector, take_LoanedSamples_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1137,8 +1103,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_instance)
     this->CheckData(take_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_next_instance)
+TEST_F(DataReaderSelector, take_LoanedSamples_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1180,8 +1145,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_state)
+TEST_F(DataReaderSelector, take_LoanedSamples_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1211,8 +1175,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_state)
     this->CheckData(take_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_content)
+TEST_F(DataReaderSelector, take_LoanedSamples_content)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1246,8 +1209,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_max_samples)
+TEST_F(DataReaderSelector, take_LoanedSamples_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1272,8 +1234,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_max_samples)
     this->CheckData(take_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_multiple)
+TEST_F(DataReaderSelector, take_LoanedSamples_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1304,8 +1265,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_LoanedSamples_multiple)
     this->CheckData(take_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator)
+TEST_F(DataReaderSelector, take_FWIterator)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> write_samples;
@@ -1320,19 +1280,18 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator)
 
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > take_samples(write_samples.size());
-    cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+    cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
     ASSERT_EQ(cnt, take_samples.size());
 
     /* Check result. */
     this->CheckData(take_samples, write_samples);
 
     /* A second time should return nothing. */
-    cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+    cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_instance)
+TEST_F(DataReaderSelector, take_FWIterator_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1355,15 +1314,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_instance)
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > take_samples(expected_samples.size());
     selector.instance(ih);
-    cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+    cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
     ASSERT_EQ(cnt, take_samples.size());
 
     /* Check result. */
     this->CheckData(take_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_next_instance)
+TEST_F(DataReaderSelector, take_FWIterator_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected2_samples;
@@ -1391,7 +1349,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_next_instance)
         /* Read through the Selector. */
         std::vector<dds::sub::Sample<Space::Type1> > take_samples2(expected2_samples.size());
         selector.next_instance(ih);
-        cnt = selector.take(take_samples2.begin(), (uint32_t)take_samples2.size());
+        cnt = selector.take(take_samples2.begin(), static_cast<uint32_t>(take_samples2.size()));
         ASSERT_EQ(cnt, take_samples2.size());
 
         /* Check result. */
@@ -1401,7 +1359,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_next_instance)
 
         /* Read through the Selector. */
         std::vector<dds::sub::Sample<Space::Type1> > take_samples3(expected3_samples.size());
-        cnt = selector.take(take_samples3.begin(), (uint32_t)take_samples3.size());
+        cnt = selector.take(take_samples3.begin(), static_cast<uint32_t>(take_samples3.size()));
         ASSERT_EQ(cnt, take_samples3.size());
 
         /* Check result. */
@@ -1409,8 +1367,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_state)
+TEST_F(DataReaderSelector, take_FWIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1435,15 +1392,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_state)
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > take_samples(expected_samples.size());
     selector.state(this->already_read);
-    cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+    cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
     ASSERT_EQ(cnt, take_samples.size());
 
     /* Check result. */
     this->CheckData(take_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_content)
+TEST_F(DataReaderSelector, take_FWIterator_content)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1471,7 +1427,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_content)
         /* Read through the Selector. */
         std::vector<dds::sub::Sample<Space::Type1> > take_samples(expected_samples.size());
         selector.content(query);
-        cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+        cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
         ASSERT_EQ(cnt, take_samples.size());
 
         /* Check result. */
@@ -1479,8 +1435,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_max_samples)
+TEST_F(DataReaderSelector, take_FWIterator_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1500,15 +1455,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_max_samples)
     /* Read through the Selector. */
     std::vector<dds::sub::Sample<Space::Type1> > take_samples(expected_samples.size());
     selector.max_samples(3);
-    cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+    cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
     ASSERT_EQ(cnt, take_samples.size());
 
     /* Check result. */
     this->CheckData(take_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_multiple)
+TEST_F(DataReaderSelector, take_FWIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1534,15 +1488,14 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_FWIterator_multiple)
     std::vector<dds::sub::Sample<Space::Type1> > take_samples(expected_samples.size());
     selector.max_samples(3);
     selector.state(this->already_read);
-    cnt = selector.take(take_samples.begin(), (uint32_t)take_samples.size());
+    cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
     ASSERT_EQ(cnt, take_samples.size());
 
     /* Check result. */
     this->CheckData(take_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator)
+TEST_F(DataReaderSelector, take_BIIterator)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> write_samples;
@@ -1572,8 +1525,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator)
     this->CheckData(take_samples2, std::vector<Space::Type1>());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_instance)
+TEST_F(DataReaderSelector, take_BIIterator_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1604,8 +1556,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_instance)
     this->CheckData(take_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_next_instance)
+TEST_F(DataReaderSelector, take_BIIterator_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected2_samples;
@@ -1653,8 +1604,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_state)
+TEST_F(DataReaderSelector, take_BIIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1687,8 +1637,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_state)
     this->CheckData(take_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_content)
+TEST_F(DataReaderSelector, take_BIIterator_content)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1725,8 +1674,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_max_samples)
+TEST_F(DataReaderSelector, take_BIIterator_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     std::vector<Space::Type1> expected_samples;
@@ -1754,8 +1702,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_max_samples)
     this->CheckData(take_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderSelector, take_BIIterator_multiple)
+TEST_F(DataReaderSelector, take_BIIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;

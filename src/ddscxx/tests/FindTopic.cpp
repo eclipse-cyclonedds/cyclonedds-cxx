@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "Space.hpp"
 
 #include <iostream>
 
@@ -30,7 +30,7 @@
 /**
  * Fixture for the Topic finding and discovering tests
  */
-class ddscxx_FindTopic : public ::testing::Test
+class FindTopic : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant dp = dds::core::null;
@@ -112,7 +112,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_FindTopic, find_with_null)
+TEST_F(FindTopic, find_with_null)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     ASSERT_THROW({
@@ -120,16 +120,14 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_with_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_with_empty)
+TEST_F(FindTopic, find_with_empty)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     found = dds::topic::find<dds::topic::Topic<Space::Type1> >(this->dp, std::string(TOPIC1_NAME_1));
     ASSERT_EQ(found, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_with_other_type)
+TEST_F(FindTopic, find_with_other_type)
 {
     dds::topic::Topic<Space::Type2> found = dds::core::null;
     this->CreateTopics();
@@ -137,8 +135,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_with_other_type)
     ASSERT_TRUE(found.is_nil());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_nonexisting)
+TEST_F(FindTopic, find_nonexisting)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -146,8 +143,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_nonexisting)
     ASSERT_EQ(found, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_first)
+TEST_F(FindTopic, find_first)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -156,8 +152,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_first)
     ASSERT_EQ(found, this->topic1);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_last)
+TEST_F(FindTopic, find_last)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -166,8 +161,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_last)
     ASSERT_EQ(found, this->topic3);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_any)
+TEST_F(FindTopic, find_any)
 {
     dds::topic::AnyTopic found = dds::core::null;
     this->CreateTopics();
@@ -176,8 +170,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_any)
     ASSERT_EQ(found, this->topic2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, find_description)
+TEST_F(FindTopic, find_description)
 {
     dds::topic::TopicDescription found = dds::core::null;
     this->CreateTopics();
@@ -186,8 +179,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, find_description)
     ASSERT_EQ(found, this->topic2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_with_null)
+TEST_F(FindTopic, discover_with_null)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     ASSERT_THROW({
@@ -195,16 +187,14 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_with_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_with_empty)
+TEST_F(FindTopic, discover_with_empty)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     found = dds::topic::discover<dds::topic::Topic<Space::Type1> >(this->dp, std::string(TOPIC1_NAME_1));
     ASSERT_EQ(found, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_with_other_type)
+TEST_F(FindTopic, discover_with_other_type)
 {
     dds::topic::Topic<Space::Type2> found = dds::core::null;
     this->CreateTopics();
@@ -212,8 +202,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_with_other_type)
     ASSERT_TRUE(found.is_nil());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_nonexisting)
+TEST_F(FindTopic, discover_nonexisting)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -221,8 +210,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_nonexisting)
     ASSERT_EQ(found, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_first)
+TEST_F(FindTopic, discover_first)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -234,8 +222,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_first)
     ASSERT_STREQ(found.name().c_str(), this->topic1.name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_last)
+TEST_F(FindTopic, discover_last)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -247,8 +234,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_last)
     ASSERT_STREQ(found.name().c_str(), this->topic3.name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_any)
+TEST_F(FindTopic, discover_any)
 {
     dds::topic::AnyTopic found = dds::core::null;
     this->CreateTopics();
@@ -259,8 +245,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_any)
     ASSERT_STREQ(found.name().c_str(), this->topic2.name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_description)
+TEST_F(FindTopic, discover_description)
 {
     dds::topic::TopicDescription found = dds::core::null;
     this->CreateTopics();
@@ -271,19 +256,17 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_description)
     ASSERT_STREQ(found.name().c_str(), this->topic2.name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_list_with_null)
+TEST_F(FindTopic, discover_list_with_null)
 {
     ASSERT_THROW({
         (void)dds::topic::discover<dds::topic::Topic<Space::Type1> >
                                                 (dds::core::null,
                                                  this->topicList.begin(),
-                                                 (uint32_t)this->topicList.size());
+                                                 static_cast<uint32_t>(this->topicList.size()));
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, discover_list)
+TEST_F(FindTopic, discover_list)
 {
     /* TODO: This has to be implemented.
      * When implemented, more tests have to be added. */
@@ -291,13 +274,12 @@ DDSCXX_TEST_F(ddscxx_FindTopic, discover_list)
         (void)dds::topic::discover<dds::topic::Topic<Space::Type1> >
                                                 (this->dp,
                                                  this->topicList.begin(),
-                                                 (uint32_t)this->topicList.size());
+                                                 static_cast<uint32_t>(this->topicList.size()));
     }, dds::core::UnsupportedError);
 }
 
-
 /* Disabled because dds_find_topic changed behaviour. */
-DDSCXX_TEST_F(ddscxx_FindTopic, DISABLED_discover_on_2nd)
+TEST_F(FindTopic, DISABLED_discover_on_2nd)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -310,8 +292,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, DISABLED_discover_on_2nd)
     ASSERT_STREQ(found.name().c_str(), this->topic3.name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, DISABLED_discover_any_on_2nd)
+TEST_F(FindTopic, DISABLED_discover_any_on_2nd)
 {
     dds::topic::AnyTopic found = dds::core::null;
     this->CreateTopics();
@@ -323,8 +304,7 @@ DDSCXX_TEST_F(ddscxx_FindTopic, DISABLED_discover_any_on_2nd)
     ASSERT_STREQ(found.name().c_str(), this->topic2.name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindTopic, DISABLED_discover_description_on_2nd)
+TEST_F(FindTopic, DISABLED_discover_description_on_2nd)
 {
     dds::topic::TopicDescription found = dds::core::null;
     this->CreateTopics();
@@ -335,4 +315,3 @@ DDSCXX_TEST_F(ddscxx_FindTopic, DISABLED_discover_description_on_2nd)
     /* With the same name. */
     ASSERT_STREQ(found.name().c_str(), this->topic2.name().c_str());
 }
-

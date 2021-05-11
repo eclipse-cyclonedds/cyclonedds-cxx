@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,26 +10,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "dds/ddsrt/environ.h"
-#include "HelloWorldData_DCPS.hpp"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "HelloWorldData.hpp"
+#include "Space.hpp"
 
-namespace ddscxx { namespace tests { namespace Subscriber {
+class TestSubscriberListener : public virtual dds::sub::NoOpSubscriberListener { };
 
-class TestSubscriberListener : public virtual dds::sub::NoOpSubscriberListener
-{ };
-
-} } }
-
-ddscxx::tests::Subscriber::TestSubscriberListener subscriberListener;
+TestSubscriberListener subscriberListener;
 
 
 
 /**
  * Fixture for the DataReader tests
  */
-class ddscxx_Subscriber : public ::testing::Test
+class Subscriber : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -39,7 +33,7 @@ public:
 
     dds::sub::qos::SubscriberQos partition_qos;
 
-    ddscxx_Subscriber() :
+    Subscriber() :
         participant(dds::core::null),
         subscriber(dds::core::null),
         partition("Subscriber_test")
@@ -78,7 +72,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_Subscriber, null)
+TEST_F(Subscriber, null)
 {
     dds::sub::Subscriber subscriber1(dds::core::null);
     dds::sub::Subscriber subscriber2 = dds::core::null;
@@ -86,7 +80,7 @@ DDSCXX_TEST_F(ddscxx_Subscriber, null)
     ASSERT_EQ(subscriber2, dds::core::null);
 }
 
-DDSCXX_TEST_F(ddscxx_Subscriber, create_multiple)
+TEST_F(Subscriber, create_multiple)
 {
     dds::sub::Subscriber subscriber1 = dds::core::null;
     dds::sub::Subscriber subscriber2 = dds::core::null;
@@ -98,7 +92,7 @@ DDSCXX_TEST_F(ddscxx_Subscriber, create_multiple)
     ASSERT_NE(subscriber2, dds::core::null);
 }
 
-DDSCXX_TEST_F(ddscxx_Subscriber, non_default_constructor)
+TEST_F(Subscriber, non_default_constructor)
 {
     dds::sub::Subscriber subscriber = dds::core::null;
     dds::core::status::StatusMask statusMask;
@@ -112,20 +106,20 @@ DDSCXX_TEST_F(ddscxx_Subscriber, non_default_constructor)
     ASSERT_NE(subscriber, dds::core::null);
 }
 
-DDSCXX_TEST_F(ddscxx_Subscriber, participant)
+TEST_F(Subscriber, participant)
 {
     this->CreateSubscriber();
     ASSERT_EQ(this->subscriber.participant(), this->participant);
 }
 
-DDSCXX_TEST_F(ddscxx_Subscriber, default__qos)
+TEST_F(Subscriber, default_qos)
 {
     dds::sub::qos::DataReaderQos wQos;
     this->CreateSubscriber();
     this->subscriber.default_datareader_qos(wQos);
 }
 
-DDSCXX_TEST_F(ddscxx_Subscriber, use_after_close)
+TEST_F(Subscriber, use_after_close)
 {
     /* Get closed subscriber. */
     this->CreateSubscriber();
@@ -177,7 +171,7 @@ DDSCXX_TEST_F(ddscxx_Subscriber, use_after_close)
     }, dds::core::AlreadyClosedError);
 }
 
-DDSCXX_TEST_F(ddscxx_Subscriber, use_after_deletion)
+TEST_F(Subscriber, use_after_deletion)
 {
     /* Get deleted subscriber. */
     this->CreateSubscriber();
@@ -233,12 +227,10 @@ DDSCXX_TEST_F(ddscxx_Subscriber, use_after_deletion)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Subscriber, builtin)
+TEST_F(Subscriber, builtin)
 {
     this->CreateSubscriber();
     ASSERT_THROW({
         dds::sub::builtin_subscriber(this->participant);
     }, dds::core::UnsupportedError);
 }
-

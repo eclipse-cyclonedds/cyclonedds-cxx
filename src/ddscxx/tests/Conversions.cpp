@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,11 +9,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-#include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "dds/ddsrt/environ.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
 
+#include "dds/dds.hpp"
+#include "Space.hpp"
 
 /*
  * For some reason, implicit casting can cause invalid castings on some
@@ -105,7 +104,7 @@ private:
 /**
  * Fixture for the Topic tests
  */
-class ddscxx_Conversions : public ::testing::Test
+class Conversions : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -115,7 +114,7 @@ public:
     dds::pub::DataWriter<Space::Type1> writer;
     dds::sub::DataReader<Space::Type1> reader;
 
-    ddscxx_Conversions() :
+    Conversions() :
         participant(dds::core::null),
         publisher(dds::core::null),
         subscriber(dds::core::null),
@@ -189,7 +188,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_to)
+TEST_F(Conversions, participant_entity_to)
 {
     this->CreateParticipant();
 
@@ -210,8 +209,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_from)
+TEST_F(Conversions, participant_entity_from)
 {
     this->CreateParticipant();
     dds::core::Entity entity(this->participant);
@@ -233,8 +231,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_null)
+TEST_F(Conversions, participant_entity_null)
 {
     /* Constructor */
     {
@@ -264,8 +261,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_invalid)
+TEST_F(Conversions, participant_entity_invalid)
 {
     this->CreateParticipant();
     dds::core::Entity entity(this->participant);
@@ -282,9 +278,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, participant_entity_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_participant_entity_implicit)
+TEST_F(Conversions, DISABLED_participant_entity_implicit)
 {
     this->CreateParticipant();
 
@@ -306,8 +301,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_participant_entity_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_to)
+TEST_F(Conversions, publisher_entity_to)
 {
     this->CreatePublisher();
 
@@ -328,8 +322,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_from)
+TEST_F(Conversions, publisher_entity_from)
 {
     this->CreatePublisher();
     dds::core::Entity entity(this->publisher);
@@ -351,8 +344,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_null)
+TEST_F(Conversions, publisher_entity_null)
 {
     /* Constructor */
     {
@@ -382,8 +374,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_invalid)
+TEST_F(Conversions, publisher_entity_invalid)
 {
     this->CreatePublisher();
     dds::core::Entity entity(this->publisher);
@@ -400,9 +391,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, publisher_entity_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_publisher_entity_implicit)
+TEST_F(Conversions, DISABLED_publisher_entity_implicit)
 {
     this->CreatePublisher();
 
@@ -424,8 +414,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_publisher_entity_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_to)
+TEST_F(Conversions, subscriber_entity_to)
 {
     this->CreateSubscriber();
 
@@ -446,8 +435,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_from)
+TEST_F(Conversions, subscriber_entity_from)
 {
     this->CreateSubscriber();
     dds::core::Entity entity(this->subscriber);
@@ -469,8 +457,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_null)
+TEST_F(Conversions, subscriber_entity_null)
 {
     /* Constructor */
     {
@@ -500,8 +487,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_invalid)
+TEST_F(Conversions, subscriber_entity_invalid)
 {
     this->CreateSubscriber();
     dds::core::Entity entity(this->subscriber);
@@ -518,9 +504,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, subscriber_entity_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_subscriber_entity_implicit)
+TEST_F(Conversions, DISABLED_subscriber_entity_implicit)
 {
     this->CreateSubscriber();
 
@@ -542,8 +527,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_subscriber_entity_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_any_to)
+TEST_F(Conversions, topic_any_to)
 {
     this->CreateTopic();
 
@@ -564,8 +548,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_any_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_any_from)
+TEST_F(Conversions, topic_any_from)
 {
     this->CreateTopic();
     dds::topic::AnyTopic any(this->topic);
@@ -587,8 +570,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_any_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_any_null)
+TEST_F(Conversions, topic_any_null)
 {
     /* Constructor */
     {
@@ -618,8 +600,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_any_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_any_invalid)
+TEST_F(Conversions, topic_any_invalid)
 {
     this->CreateTopic();
     dds::topic::AnyTopic any(this->topic);
@@ -636,9 +617,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_any_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_topic_any_implicit)
+TEST_F(Conversions, DISABLED_topic_any_implicit)
 {
     this->CreateTopic();
 
@@ -660,8 +640,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_topic_any_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_description_to)
+TEST_F(Conversions, topic_description_to)
 {
     this->CreateTopic();
     //dds::topic::TopicDescription
@@ -682,8 +661,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_description_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_description_from)
+TEST_F(Conversions, topic_description_from)
 {
     this->CreateTopic();
     dds::topic::TopicDescription desc(this->topic);
@@ -705,8 +683,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_description_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_description_null)
+TEST_F(Conversions, topic_description_null)
 {
     /* Constructor */
     {
@@ -736,8 +713,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_description_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_description_invalid)
+TEST_F(Conversions, topic_description_invalid)
 {
     this->CreateTopic();
     dds::topic::TopicDescription desc(this->topic);
@@ -754,9 +730,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_description_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_topic_description_implicit)
+TEST_F(Conversions, DISABLED_topic_description_implicit)
 {
     this->CreateTopic();
 
@@ -778,8 +753,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_topic_description_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_to)
+TEST_F(Conversions, topic_entity_to)
 {
     this->CreateTopic();
 
@@ -800,8 +774,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_from)
+TEST_F(Conversions, topic_entity_from)
 {
     this->CreateTopic();
     dds::core::Entity entity(this->topic);
@@ -823,8 +796,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_null)
+TEST_F(Conversions, topic_entity_null)
 {
     /* Constructor */
     {
@@ -854,8 +826,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_invalid)
+TEST_F(Conversions, topic_entity_invalid)
 {
     this->CreateTopic();
     dds::core::Entity entity(this->topic);
@@ -872,9 +843,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, topic_entity_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_topic_entity_implicit)
+TEST_F(Conversions, DISABLED_topic_entity_implicit)
 {
     this->CreateTopic();
 
@@ -896,8 +866,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_topic_entity_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_any_to)
+TEST_F(Conversions, writer_any_to)
 {
     this->CreateWriter();
 
@@ -918,8 +887,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_any_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_any_from)
+TEST_F(Conversions, writer_any_from)
 {
     this->CreateWriter();
     dds::pub::AnyDataWriter any(this->writer);
@@ -941,8 +909,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_any_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_any_null)
+TEST_F(Conversions, writer_any_null)
 {
     /* Constructor */
     {
@@ -972,8 +939,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_any_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_any_invalid)
+TEST_F(Conversions, writer_any_invalid)
 {
     this->CreateWriter();
     dds::pub::AnyDataWriter any(this->writer);
@@ -990,9 +956,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_any_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_writer_any_implicit)
+TEST_F(Conversions, DISABLED_writer_any_implicit)
 {
     this->CreateWriter();
 
@@ -1014,8 +979,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_writer_any_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_to)
+TEST_F(Conversions, writer_entity_to)
 {
     this->CreateWriter();
 
@@ -1036,8 +1000,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_from)
+TEST_F(Conversions, writer_entity_from)
 {
     this->CreateWriter();
     dds::core::Entity entity(this->writer);
@@ -1059,8 +1022,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_null)
+TEST_F(Conversions, writer_entity_null)
 {
     /* Constructor */
     {
@@ -1090,8 +1052,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_invalid)
+TEST_F(Conversions, writer_entity_invalid)
 {
     this->CreateWriter();
     dds::core::Entity entity(this->writer);
@@ -1108,9 +1069,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, writer_entity_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_writer_entity_implicit)
+TEST_F(Conversions, DISABLED_writer_entity_implicit)
 {
     this->CreateWriter();
 
@@ -1132,8 +1092,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_writer_entity_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_any_to)
+TEST_F(Conversions, reader_any_to)
 {
     this->CreateReader();
 
@@ -1154,8 +1113,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_any_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_any_from)
+TEST_F(Conversions, reader_any_from)
 {
     this->CreateReader();
     dds::sub::AnyDataReader any(this->reader);
@@ -1177,8 +1135,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_any_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_any_null)
+TEST_F(Conversions, reader_any_null)
 {
     /* Constructor */
     {
@@ -1208,8 +1165,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_any_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_any_invalid)
+TEST_F(Conversions, reader_any_invalid)
 {
     this->CreateReader();
     dds::sub::AnyDataReader any(this->reader);
@@ -1226,9 +1182,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_any_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_reader_any_implicit)
+TEST_F(Conversions, DISABLED_reader_any_implicit)
 {
     this->CreateReader();
 
@@ -1250,8 +1205,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_reader_any_implicit)
     }, dds::core::IllegalOperationError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_to)
+TEST_F(Conversions, reader_entity_to)
 {
     this->CreateReader();
 
@@ -1272,8 +1226,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_to)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_from)
+TEST_F(Conversions, reader_entity_from)
 {
     this->CreateReader();
     dds::core::Entity entity(this->reader);
@@ -1295,8 +1248,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_from)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_null)
+TEST_F(Conversions, reader_entity_null)
 {
     /* Constructor */
     {
@@ -1326,8 +1278,7 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_null)
     }
 }
 
-
-DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_invalid)
+TEST_F(Conversions, reader_entity_invalid)
 {
     this->CreateReader();
     dds::core::Entity entity(this->reader);
@@ -1344,9 +1295,8 @@ DDSCXX_TEST_F(ddscxx_Conversions, reader_entity_invalid)
     }, dds::core::IllegalOperationError);
 }
 
-
 /* Please see comment at top of the file why this test is disabled. */
-DDSCXX_TEST_F(ddscxx_Conversions, DISABLED_reader_entity_implicit)
+TEST_F(Conversions, DISABLED_reader_entity_implicit)
 {
     this->CreateReader();
 

@@ -1,23 +1,28 @@
+/*
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+ * v. 1.0 which is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+ */
 #include <chrono>
 #include <thread>
 
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-
-#include "dds/ddsrt/cdtors.h"
-#include "dds/ddsrt/misc.h"
-#include "dds/ddsrt/process.h"
 #include "dds/ddsrt/sync.h"
 #include "dds/ddsrt/threads.h"
 
-#include "HelloWorldData_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "HelloWorldData.hpp"
 
 #define MAX_WRITERS 20
 #define MAX_READERS 50
 
 static ddsrt_mutex_t g_mutex;
-
-namespace lite { namespace ddscxx { namespace tests { namespace listener_stress {
 
 class TestDomainParticipantListener : public virtual dds::domain::NoOpDomainParticipantListener
 {
@@ -25,10 +30,7 @@ public:
     TestDomainParticipantListener() { }
 
 protected:
-    virtual void on_data_available(dds::sub::AnyDataReader& reader)
-    {
-        (void)reader;
-    }
+    virtual void on_data_available(dds::sub::AnyDataReader& ) { }
 };
 
 class TestSubscriberListener : public virtual dds::sub::NoOpSubscriberListener
@@ -37,10 +39,7 @@ public:
     TestSubscriberListener() { }
 
 protected:
-    virtual void on_data_available(dds::sub::AnyDataReader& reader)
-    {
-        (void)reader;
-    }
+    virtual void on_data_available(dds::sub::AnyDataReader& ) { }
 };
 
 class TestDataReaderListener : public virtual dds::sub::NoOpDataReaderListener<HelloWorldData::Msg>
@@ -49,13 +48,8 @@ public:
     TestDataReaderListener() { }
 
 protected:
-    virtual void on_data_available(dds::sub::DataReader<HelloWorldData::Msg>& reader)
-    {
-        (void)reader;
-    }
+    virtual void on_data_available(dds::sub::DataReader<HelloWorldData::Msg>& ) { }
 };
-
-} } } }
 
 
 static bool stop_writer_thread = false;
@@ -64,7 +58,7 @@ static std::vector< dds::pub::DataWriter<HelloWorldData::Msg> > writers;
 
 static uint32_t writer_thread(void *arg)
 {
-    uint32_t i = (uint32_t)(uintptr_t)arg;
+    uintptr_t i = reinterpret_cast<uintptr_t>(arg);
 
     ddsrt_mutex_lock(&g_mutex);
     dds::pub::DataWriter<HelloWorldData::Msg> writer = writers[i];
@@ -91,7 +85,7 @@ static uint32_t writer_thread(void *arg)
 /**
  * Fixture for listener stress tests
  */
-class ddscxx_listener_stress : public ::testing::Test
+class listener_stress : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant dp;
@@ -99,14 +93,14 @@ public:
     dds::pub::Publisher pub;
     dds::sub::Subscriber sub;
 
-    lite::ddscxx::tests::listener_stress::TestDomainParticipantListener participantListener;
-    lite::ddscxx::tests::listener_stress::TestSubscriberListener subListener;
+    TestDomainParticipantListener participantListener;
+    TestSubscriberListener subListener;
 
     ddsrt_thread_t threadId[MAX_WRITERS];
     ddsrt_threadattr_t threadAttr;
     dds_duration_t delay = 200000000;  // 200ms
 
-    ddscxx_listener_stress() :
+    listener_stress() :
         dp(dds::core::null),
         topic(dds::core::null),
         pub(dds::core::null),
@@ -136,33 +130,31 @@ public:
         ASSERT_NE(sub, dds::core::null);
 
         // Create writer threads
-        uint32_t i;
-        for (i = 0; i < MAX_WRITERS; i++) {
+        for (uintptr_t i = 0; i < MAX_WRITERS; i++) {
             ddsrt_mutex_lock(&g_mutex);
             writers.push_back(dds::pub::DataWriter<HelloWorldData::Msg>(pub, topic));
-            (void)ddsrt_thread_create(&threadId[i], "writer_thread",
-                            &threadAttr, writer_thread, (void*)(uintptr_t)i);
+            (void)ddsrt_thread_create(
+                &threadId[i], "writer_thread", &threadAttr, writer_thread, reinterpret_cast<void*>(i));
             ddsrt_mutex_unlock(&g_mutex);
         }
 
         dds_sleepfor(delay);
     }
 
-    void create_readers(dds::sub::Subscriber& sub, dds::topic::Topic<HelloWorldData::Msg>& topic, bool withListener)
+    void create_readers(dds::sub::Subscriber& sub_, dds::topic::Topic<HelloWorldData::Msg>& topic_, bool withListener)
     {
         uint32_t i;
-        dds_duration_t delay = 2000000;
-        lite::ddscxx::tests::listener_stress::TestDataReaderListener readerListener;
+        TestDataReaderListener readerListener;
         dds::sub::DataReader<HelloWorldData::Msg> reader = dds::core::null;
 
         // Create readers
         for (i = 0; i < MAX_READERS; i++) {
             try {
                 if (withListener) {
-                    reader = dds::sub::DataReader<HelloWorldData::Msg>(sub, topic, sub.default_datareader_qos(),
+                    reader = dds::sub::DataReader<HelloWorldData::Msg>(sub_, topic_, sub.default_datareader_qos(),
                             &readerListener, dds::core::status::StatusMask::data_available());
                 } else {
-                    reader = dds::sub::DataReader<HelloWorldData::Msg>(sub, topic);
+                    reader = dds::sub::DataReader<HelloWorldData::Msg>(sub_, topic_);
                 }
                 if (reader != dds::core::null) {
                     dds_sleepfor(delay);
@@ -203,12 +195,12 @@ public:
 // TODO: disabled because test fails for current API implementation, as there is no
 // ref to the entity on which the callback is called during callback execution, and
 // therefore the check in EntityDelegate destructor fails.
-DDSCXX_TEST_F(ddscxx_listener_stress, DISABLED_data_available_reader)
+TEST_F(listener_stress, DISABLED_data_available_reader)
 {
     create_readers(sub, topic, true);
 }
 
-DDSCXX_TEST_F(ddscxx_listener_stress, DISABLED_data_available_subscriber)
+TEST_F(listener_stress, DISABLED_data_available_subscriber)
 {
     // Add listener on subscriber
     sub.listener(&subListener, dds::core::status::StatusMask::data_available());
@@ -217,7 +209,7 @@ DDSCXX_TEST_F(ddscxx_listener_stress, DISABLED_data_available_subscriber)
     create_readers(sub, topic, false);
 }
 
-DDSCXX_TEST_F(ddscxx_listener_stress, DISABLED_data_available_participant)
+TEST_F(listener_stress, DISABLED_data_available_participant)
 {
     // Add listener on participant
     dp.listener(&participantListener, dds::core::status::StatusMask::data_available());

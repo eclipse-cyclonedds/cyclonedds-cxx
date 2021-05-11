@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,10 +10,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
 
+#include <gtest/gtest.h>
 
-DDSCXX_TEST(ddscxx_Exception, Error)
+TEST(Exception, Error)
 {
     std::string msg("Test dds::core::Error");
     dds::core::Error e_by_msg(msg);
@@ -22,8 +22,7 @@ DDSCXX_TEST(ddscxx_Exception, Error)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, InvalidDataError)
+TEST(Exception, InvalidDataError)
 {
     std::string msg("Test dds::core::InvalidDataError");
     dds::core::InvalidDataError e_by_msg(msg);
@@ -32,8 +31,7 @@ DDSCXX_TEST(ddscxx_Exception, InvalidDataError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, PreconditionNotMetError)
+TEST(Exception, PreconditionNotMetError)
 {
     std::string msg("Test dds::core::PreconditionNotMetError");
     dds::core::PreconditionNotMetError e_by_msg(msg);
@@ -42,8 +40,7 @@ DDSCXX_TEST(ddscxx_Exception, PreconditionNotMetError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, UnsupportedError)
+TEST(Exception, UnsupportedError)
 {
     std::string msg("Test dds::core::UnsupportedError");
     dds::core::UnsupportedError e_by_msg(msg);
@@ -52,8 +49,7 @@ DDSCXX_TEST(ddscxx_Exception, UnsupportedError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, NotEnabledError)
+TEST(Exception, NotEnabledError)
 {
     std::string msg("Test dds::core::NotEnabledError");
     dds::core::NotEnabledError e_by_msg(msg);
@@ -62,8 +58,7 @@ DDSCXX_TEST(ddscxx_Exception, NotEnabledError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, InconsistentPolicyError)
+TEST(Exception, InconsistentPolicyError)
 {
     std::string msg("Test dds::core::InconsistentPolicyError");
     dds::core::InconsistentPolicyError e_by_msg(msg);
@@ -72,8 +67,7 @@ DDSCXX_TEST(ddscxx_Exception, InconsistentPolicyError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, ImmutablePolicyError)
+TEST(Exception, ImmutablePolicyError)
 {
     std::string msg("Test dds::core::ImmutablePolicyError");
     dds::core::ImmutablePolicyError e_by_msg(msg);
@@ -82,8 +76,7 @@ DDSCXX_TEST(ddscxx_Exception, ImmutablePolicyError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, AlreadyClosedError)
+TEST(Exception, AlreadyClosedError)
 {
     std::string msg("Test dds::core::AlreadyClosedError");
     dds::core::AlreadyClosedError e_by_msg(msg);
@@ -92,8 +85,7 @@ DDSCXX_TEST(ddscxx_Exception, AlreadyClosedError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, IllegalOperationError)
+TEST(Exception, IllegalOperationError)
 {
     std::string msg("Test dds::core::IllegalOperationError");
     dds::core::IllegalOperationError e_by_msg(msg);
@@ -102,8 +94,7 @@ DDSCXX_TEST(ddscxx_Exception, IllegalOperationError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, OutOfResourcesError)
+TEST(Exception, OutOfResourcesError)
 {
     std::string msg("Test dds::core::OutOfResourcesError");
     dds::core::OutOfResourcesError e_by_msg(msg);
@@ -112,8 +103,7 @@ DDSCXX_TEST(ddscxx_Exception, OutOfResourcesError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, TimeoutError)
+TEST(Exception, TimeoutError)
 {
     std::string msg("Test dds::core::TimeoutError");
     dds::core::TimeoutError e_by_msg(msg);
@@ -122,8 +112,7 @@ DDSCXX_TEST(ddscxx_Exception, TimeoutError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, InvalidDowncastError)
+TEST(Exception, InvalidDowncastError)
 {
     std::string msg("Test dds::core::InvalidDowncastError");
     dds::core::InvalidDowncastError e_by_msg(msg);
@@ -132,8 +121,7 @@ DDSCXX_TEST(ddscxx_Exception, InvalidDowncastError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, NullReferenceError)
+TEST(Exception, NullReferenceError)
 {
     std::string msg("Test dds::core::NullReferenceError");
     dds::core::NullReferenceError e_by_msg(msg);
@@ -142,8 +130,7 @@ DDSCXX_TEST(ddscxx_Exception, NullReferenceError)
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
 
-
-DDSCXX_TEST(ddscxx_Exception, InvalidArgumentError)
+TEST(Exception, InvalidArgumentError)
 {
     std::string msg("Test dds::core::InvalidArgumentError");
     dds::core::InvalidArgumentError e_by_msg(msg);
@@ -151,7 +138,3 @@ DDSCXX_TEST(ddscxx_Exception, InvalidArgumentError)
     ASSERT_STREQ(e_by_msg.what(), msg.c_str());
     ASSERT_STREQ(e_by_cpy.what(), msg.c_str());
 }
-
-
-
-

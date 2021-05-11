@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,10 +9,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-#include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
 
+#include "dds/dds.hpp"
+#include "Space.hpp"
 
 /* Class to test implicit conversion from any Condition to Condition and vice versa. */
 class ConditionStore
@@ -76,14 +76,13 @@ public:
     void operator ()(const dds::sub::cond::ReadCondition &cond) {
         dds::sub::DataReader<Space::Type1> reader = cond.data_reader();
         dds::sub::LoanedSamples<Space::Type1> samples = reader.take();
-        ASSERT_GT(samples.length(), 0) << "No samples returned";
+        ASSERT_GT(samples.length(), 0u) << "No samples returned";
         ASSERT_EQ((*samples.begin()).data(), expectedSample) << "The returned sample is incorrect";
     }
 
 private:
     const Space::Type1 &expectedSample;
 };
-
 
 // Disabled because QueryCondition currently not supported
 // class FunctorQueryCondition {
@@ -112,13 +111,13 @@ void wait_for_data(dds::sub::DataReader<T> dr)
 
     // Reset enabled statuses
     readerStatus.enabled_statuses(status);
-};
+}
 
 
 /**
  * Fixture for the tests
  */
-class ddscxx_Condition : public ::testing::Test
+class Condition : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -136,7 +135,7 @@ public:
     bool handlerExecuted;
     FunctorCondition functor_cond;
 
-    ddscxx_Condition() :
+    Condition() :
         participant(dds::core::null),
         publisher(dds::core::null),
         subscriber(dds::core::null),
@@ -192,13 +191,10 @@ public:
     }
 };
 
-
-
-
 /**
  * Test creating conditions (status, guard and read)
  */
-DDSCXX_TEST_F(ddscxx_Condition, create)
+TEST_F(Condition, create)
 {
     dds::core::cond::StatusCondition status_cond = dds::core::null;
     dds::core::cond::GuardCondition guard_cond = dds::core::null;
@@ -220,7 +216,7 @@ DDSCXX_TEST_F(ddscxx_Condition, create)
 /**
  * Test handlers for conditions (tested on GuardCondition)
  */
-DDSCXX_TEST_F(ddscxx_Condition, handler)
+TEST_F(Condition, handler)
 {
     dds::core::cond::GuardCondition guard_cond = dds::core::null;
     dds::core::cond::GuardCondition guard_cond2 = dds::core::null;
@@ -269,7 +265,7 @@ DDSCXX_TEST_F(ddscxx_Condition, handler)
 /**
  * Test StatusCondition
  */
-DDSCXX_TEST_F(ddscxx_Condition, status_condition)
+TEST_F(Condition, status_condition)
 {
     dds::core::cond::StatusCondition reader_status_cond = dds::core::null;
 
@@ -307,7 +303,7 @@ DDSCXX_TEST_F(ddscxx_Condition, status_condition)
 /**
  * Test creating status condition on all entities
  */
-DDSCXX_TEST_F(ddscxx_Condition, status_condition_entity)
+TEST_F(Condition, status_condition_entity)
 {
     dds::core::cond::StatusCondition status_cond = dds::core::null;
 
@@ -337,11 +333,10 @@ DDSCXX_TEST_F(ddscxx_Condition, status_condition_entity)
     ASSERT_EQ(status_cond.entity(), writer) << "Entity (writer) on condition is not equal to condition used in constructor";
 }
 
-
 /**
  * Test GuardCondition
  */
-DDSCXX_TEST_F(ddscxx_Condition, guard_condition)
+TEST_F(Condition, guard_condition)
 {
     dds::core::cond::GuardCondition guard_cond = dds::core::null;
     guard_cond = dds::core::cond::GuardCondition();
@@ -363,11 +358,10 @@ DDSCXX_TEST_F(ddscxx_Condition, guard_condition)
     ASSERT_EQ(conds[0], guard_cond) << "Attached condition is not the expected GuardCondition";
 }
 
-
 /**
  * Test ReadCondition
  */
-DDSCXX_TEST_F(ddscxx_Condition, read_condition)
+TEST_F(Condition, read_condition)
 {
     dds::sub::status::DataState state_filter;
     dds::sub::cond::ReadCondition read_cond = dds::core::null;
@@ -413,7 +407,7 @@ DDSCXX_TEST_F(ddscxx_Condition, read_condition)
 /**
  * Test read condition functor
  */
-DDSCXX_TEST_F(ddscxx_Condition, read_condition_functor)
+TEST_F(Condition, read_condition_functor)
 {
     dds::sub::status::DataState state_filter;
     dds::sub::cond::ReadCondition read_cond = dds::core::null;
@@ -435,7 +429,7 @@ DDSCXX_TEST_F(ddscxx_Condition, read_condition_functor)
     ASSERT_TRUE(read_cond.trigger_value()) << "The trigger_value is not correct (false)";
 
     dds::sub::LoanedSamples<Space::Type1> samples = reader.take();
-    ASSERT_GT(samples.length(), 0) << "FAILED";
+    ASSERT_GT(samples.length(), 0u) << "FAILED";
 
     // Dispatch to functor
     ASSERT_NO_THROW({
@@ -446,7 +440,7 @@ DDSCXX_TEST_F(ddscxx_Condition, read_condition_functor)
 /**
  * Test query condition
  */
-DDSCXX_TEST_F(ddscxx_Condition, query_condition)
+TEST_F(Condition, query_condition)
 {
     dds::sub::cond::QueryCondition query_cond = dds::core::null;
 
@@ -461,11 +455,10 @@ DDSCXX_TEST_F(ddscxx_Condition, query_condition)
     }, dds::core::UnsupportedError);
 }
 
-
 /**
  * Test conversion of null condition objects
  */
-DDSCXX_TEST_F(ddscxx_Condition, conversion_null)
+TEST_F(Condition, conversion_null)
 {
     dds::core::cond::StatusCondition status_cond = dds::core::null;
     dds::core::cond::GuardCondition guard_cond = dds::core::null;
@@ -584,7 +577,7 @@ DDSCXX_TEST_F(ddscxx_Condition, conversion_null)
 /**
  * Test conversion of condition objects
  */
-DDSCXX_TEST_F(ddscxx_Condition, conversion)
+TEST_F(Condition, conversion)
 {
     dds::core::cond::StatusCondition status_cond = dds::core::null;
     dds::core::cond::GuardCondition guard_cond = dds::core::null;
@@ -724,7 +717,7 @@ DDSCXX_TEST_F(ddscxx_Condition, conversion)
 /**
  * Test invalid conversion
  */
-DDSCXX_TEST_F(ddscxx_Condition, conversion_invalid)
+TEST_F(Condition, conversion_invalid)
 {
     dds::core::cond::StatusCondition status_cond = dds::core::null;
     dds::core::cond::GuardCondition guard_cond = dds::core::null;
@@ -784,4 +777,3 @@ DDSCXX_TEST_F(ddscxx_Condition, conversion_invalid)
     //     dds::sub::cond::QueryCondition tmp = cond;
     // }, dds::core::IllegalOperationError) << "Conversion from StatusCondition to QueryCondition did not throw an exception";
 }
-

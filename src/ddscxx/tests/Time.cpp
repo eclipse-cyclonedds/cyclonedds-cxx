@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
+#include <gtest/gtest.h>
 
 /* Various values to check what happens when comparing Times that have
  * larger seconds, but lower nanoseconds or vice versa or other. */
@@ -25,8 +25,7 @@ static dds::core::Time time_4s4ns(4, 4);
 static dds::core::Time time_4s5ns(4, 5);
 static dds::core::Time time_4s6ns(4, 6);
 
-
-DDSCXX_TEST(ddscxx_Time, plus)
+TEST(Time, plus)
 {
     dds::core::Time t;
     dds::core::Time t1(10, 10);
@@ -41,8 +40,7 @@ DDSCXX_TEST(ddscxx_Time, plus)
     ASSERT_EQ(t.nanosec(), 30);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, plus_is)
+TEST(Time, plus_is)
 {
     dds::core::Time t(10, 10);
     dds::core::Duration d1(10, 10);
@@ -57,8 +55,7 @@ DDSCXX_TEST(ddscxx_Time, plus_is)
     ASSERT_EQ(t.nanosec(), 19);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, minus)
+TEST(Time, minus)
 {
     dds::core::Time t;
 
@@ -90,8 +87,7 @@ DDSCXX_TEST(ddscxx_Time, minus)
     }, dds::core::Error);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, minus_is)
+TEST(Time, minus_is)
 {
     dds::core::Time t;
 
@@ -129,8 +125,7 @@ DDSCXX_TEST(ddscxx_Time, minus_is)
     }, dds::core::Error);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, nanosec)
+TEST(Time, nanosec)
 {
     dds::core::Time t;
 
@@ -144,8 +139,7 @@ DDSCXX_TEST(ddscxx_Time, nanosec)
     }, dds::core::Error);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, microsec)
+TEST(Time, microsec)
 {
     dds::core::Time t;
     int64_t micros = dds::core::Time(10,1000).to_microsecs();
@@ -155,8 +149,7 @@ DDSCXX_TEST(ddscxx_Time, microsec)
     ASSERT_EQ(t.nanosec(), 1000);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, millisec)
+TEST(Time, millisec)
 {
     dds::core::Time t;
     int64_t millis = dds::core::Time(10,1000000).to_millisecs();
@@ -166,8 +159,7 @@ DDSCXX_TEST(ddscxx_Time, millisec)
     ASSERT_EQ(t.nanosec(), 1000000);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, sec)
+TEST(Time, sec)
 {
     dds::core::Time t;
     double secs = dds::core::Time(10,500000000).to_secs();
@@ -182,8 +174,7 @@ DDSCXX_TEST(ddscxx_Time, sec)
     }, dds::core::Error);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, greater)
+TEST(Time, greater)
 {
     ASSERT_TRUE((time_2s4ns > time_3s5ns_base) == false);
     ASSERT_TRUE((time_2s5ns > time_3s5ns_base) == false);
@@ -196,8 +187,7 @@ DDSCXX_TEST(ddscxx_Time, greater)
     ASSERT_TRUE((time_4s6ns > time_3s5ns_base) == true);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, greater_then)
+TEST(Time, greater_then)
 {
     ASSERT_TRUE((time_2s4ns >= time_3s5ns_base) == false);
     ASSERT_TRUE((time_2s5ns >= time_3s5ns_base) == false);
@@ -210,8 +200,7 @@ DDSCXX_TEST(ddscxx_Time, greater_then)
     ASSERT_TRUE((time_4s6ns >= time_3s5ns_base) == true);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, equals)
+TEST(Time, equals)
 {
     ASSERT_TRUE((time_2s4ns == time_3s5ns_base) == false);
     ASSERT_TRUE((time_2s5ns == time_3s5ns_base) == false);
@@ -224,8 +213,7 @@ DDSCXX_TEST(ddscxx_Time, equals)
     ASSERT_TRUE((time_4s6ns == time_3s5ns_base) == false);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, not_equals)
+TEST(Time, not_equals)
 {
     ASSERT_TRUE((time_2s4ns != time_3s5ns_base) == true);
     ASSERT_TRUE((time_2s5ns != time_3s5ns_base) == true);
@@ -238,8 +226,7 @@ DDSCXX_TEST(ddscxx_Time, not_equals)
     ASSERT_TRUE((time_4s6ns != time_3s5ns_base) == true);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, less_then)
+TEST(Time, less_then)
 {
     ASSERT_TRUE((time_2s4ns <= time_3s5ns_base) == true);
     ASSERT_TRUE((time_2s5ns <= time_3s5ns_base) == true);
@@ -252,8 +239,7 @@ DDSCXX_TEST(ddscxx_Time, less_then)
     ASSERT_TRUE((time_4s6ns <= time_3s5ns_base) == false);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, less)
+TEST(Time, less)
 {
     ASSERT_TRUE((time_2s4ns < time_3s5ns_base) == true);
     ASSERT_TRUE((time_2s5ns < time_3s5ns_base) == true);
@@ -266,8 +252,7 @@ DDSCXX_TEST(ddscxx_Time, less)
     ASSERT_TRUE((time_4s6ns < time_3s5ns_base) == false);
 }
 
-
-DDSCXX_TEST(ddscxx_Time, compare)
+TEST(Time, compare)
 {
     ASSERT_EQ(time_3s5ns_base.compare(time_2s4ns),  1);
     ASSERT_EQ(time_3s5ns_base.compare(time_2s5ns),  1);

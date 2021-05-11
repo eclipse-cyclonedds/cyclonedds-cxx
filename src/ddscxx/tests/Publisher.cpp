@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,26 +10,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "dds/ddsrt/environ.h"
-#include "HelloWorldData_DCPS.hpp"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "HelloWorldData.hpp"
+#include "Space.hpp"
 
-namespace ddscxx { namespace tests { namespace Publisher {
 
-class TestPublisherListener : public virtual dds::pub::NoOpPublisherListener
-{ };
+class TestPublisherListener : public virtual dds::pub::NoOpPublisherListener { };
 
-} } }
-
-ddscxx::tests::Publisher::TestPublisherListener publisherListener;
+TestPublisherListener publisherListener;
 
 
 
 /**
  * Fixture for the DataWriter tests
  */
-class ddscxx_Publisher : public ::testing::Test
+class Publisher : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -39,7 +34,7 @@ public:
 
     dds::pub::qos::PublisherQos partition_qos;
 
-    ddscxx_Publisher() :
+    Publisher() :
         participant(dds::core::null),
         publisher(dds::core::null),
         partition("Publisher_test")
@@ -78,7 +73,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_Publisher, null)
+TEST_F(Publisher, null)
 {
     dds::pub::Publisher publisher1(dds::core::null);
     dds::pub::Publisher publisher2 = dds::core::null;
@@ -86,7 +81,7 @@ DDSCXX_TEST_F(ddscxx_Publisher, null)
     ASSERT_EQ(publisher2, dds::core::null);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, create_multiple)
+TEST_F(Publisher, create_multiple)
 {
     dds::pub::Publisher publisher1 = dds::core::null;
     dds::pub::Publisher publisher2 = dds::core::null;
@@ -98,7 +93,7 @@ DDSCXX_TEST_F(ddscxx_Publisher, create_multiple)
     ASSERT_NE(publisher2, dds::core::null);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, non_default_constructor)
+TEST_F(Publisher, non_default_constructor)
 {
     dds::pub::Publisher publisher = dds::core::null;
     dds::core::status::StatusMask statusMask;
@@ -112,7 +107,7 @@ DDSCXX_TEST_F(ddscxx_Publisher, non_default_constructor)
     ASSERT_NE(publisher, dds::core::null);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, wait_for_acknowledgments)
+TEST_F(Publisher, wait_for_acknowledgments)
 {
     this->CreatePublisher();
 
@@ -122,20 +117,20 @@ DDSCXX_TEST_F(ddscxx_Publisher, wait_for_acknowledgments)
     }, dds::core::UnsupportedError);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, participant)
+TEST_F(Publisher, participant)
 {
     this->CreatePublisher();
     ASSERT_EQ(this->publisher.participant(), this->participant);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, default__qos)
+TEST_F(Publisher, default__qos)
 {
     dds::pub::qos::DataWriterQos wQos;
     this->CreatePublisher();
     this->publisher.default_datawriter_qos(wQos);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, use_after_close)
+TEST_F(Publisher, use_after_close)
 {
     /* Get closed publisher. */
     this->CreatePublisher();
@@ -191,7 +186,7 @@ DDSCXX_TEST_F(ddscxx_Publisher, use_after_close)
     }, dds::core::AlreadyClosedError);
 }
 
-DDSCXX_TEST_F(ddscxx_Publisher, use_after_deletion)
+TEST_F(Publisher, use_after_deletion)
 {
     /* Get deleted publisher. */
     this->CreatePublisher();
@@ -250,4 +245,3 @@ DDSCXX_TEST_F(ddscxx_Publisher, use_after_deletion)
         this->publisher.participant();
     }, dds::core::NullReferenceError);
 }
-

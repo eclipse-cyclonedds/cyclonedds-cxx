@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,23 +9,20 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-#include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
-
 #include <iostream>
+#include <gtest/gtest.h>
 
+#include "dds/dds.hpp"
+#include "Space.hpp"
 
 #define TOPIC1_NAME    "findreader_Type1"
 #define TOPIC2_NAME    "findreader_Type2"
 #define TOPIC3_NAME    "findreader_Type3"
 
-
-
 /**
  * Fixture for the Topic finding and discovering tests
  */
-class ddscxx_FindDataReader : public ::testing::Test
+class FindDataReader : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant = dds::core::null;
@@ -60,13 +57,11 @@ public:
     }
 };
 
-
-
 /**
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_with_empty)
+TEST_F(FindDataReader, BinIterator_tname_find_with_empty)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found;
     uint32_t cnt;
@@ -82,8 +77,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_with_empty)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_with_other_type)
+TEST_F(FindDataReader, BinIterator_tname_find_with_other_type)
 {
     std::vector<dds::sub::DataReader<Space::Type2> > found;
     uint32_t cnt;
@@ -101,8 +95,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_with_other_type)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_nonexisting)
+TEST_F(FindDataReader, BinIterator_tname_find_nonexisting)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found;
     uint32_t cnt;
@@ -120,8 +113,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_nonexisting)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find)
+TEST_F(FindDataReader, BinIterator_tname_find)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found;
     uint32_t cnt;
@@ -142,8 +134,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find)
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_any)
+TEST_F(FindDataReader, BinIterator_tname_find_any)
 {
     std::vector<dds::sub::AnyDataReader> found;
     uint32_t cnt;
@@ -163,8 +154,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tname_find_any)
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find_with_empty)
+TEST_F(FindDataReader, BinIterator_tdesc_find_with_empty)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found;
     uint32_t cnt;
@@ -180,8 +170,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find_with_empty)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find_with_other_type)
+TEST_F(FindDataReader, BinIterator_tdesc_find_with_other_type)
 {
     std::vector<dds::sub::DataReader<Space::Type2> > found;
     uint32_t cnt;
@@ -199,8 +188,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find_with_other_type)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find)
+TEST_F(FindDataReader, BinIterator_tdesc_find)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found;
     uint32_t cnt;
@@ -221,8 +209,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find)
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find_any)
+TEST_F(FindDataReader, BinIterator_tdesc_find_any)
 {
     std::vector<dds::sub::AnyDataReader> found;
     uint32_t cnt;
@@ -242,8 +229,7 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, BinIterator_tdesc_find_any)
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_with_empty)
+TEST_F(FindDataReader, FwdIterator_tname_find_with_empty)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -254,13 +240,12 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_with_empty)
             this->subscriber,
             std::string(TOPIC1_NAME),
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_with_other_type)
+TEST_F(FindDataReader, FwdIterator_tname_find_with_other_type)
 {
     std::vector<dds::sub::DataReader<Space::Type2> > found(5, dds::core::null);
     uint32_t cnt;
@@ -273,13 +258,12 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_with_other_type)
             this->subscriber,
             std::string(TOPIC1_NAME),  // <- not matching Space::Type2
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_nonexisting)
+TEST_F(FindDataReader, FwdIterator_tname_find_nonexisting)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -292,13 +276,12 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_nonexisting)
             this->subscriber,
             std::string("non-existing"),
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find)
+TEST_F(FindDataReader, FwdIterator_tname_find)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -312,15 +295,14 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find)
             this->subscriber,
             std::string(TOPIC1_NAME),
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 2);
     ASSERT_TRUE((found[0] == this->reader1A) || (found[0] == this->reader1B));
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_any)
+TEST_F(FindDataReader, FwdIterator_tname_find_any)
 {
     std::vector<dds::sub::AnyDataReader> found(5, dds::core::null);
     uint32_t cnt;
@@ -334,14 +316,13 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tname_find_any)
             this->subscriber,
             std::string(TOPIC2_NAME),
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 1);
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find_with_empty)
+TEST_F(FindDataReader, FwdIterator_tdesc_find_with_empty)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -352,13 +333,12 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find_with_empty)
             this->subscriber,
             this->topic1,
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find_with_other_type)
+TEST_F(FindDataReader, FwdIterator_tdesc_find_with_other_type)
 {
     std::vector<dds::sub::DataReader<Space::Type2> > found(5, dds::core::null);
     uint32_t cnt;
@@ -371,13 +351,12 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find_with_other_type)
             this->subscriber,
             this->topic1,  // <- not matching Space::Type2
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find)
+TEST_F(FindDataReader, FwdIterator_tdesc_find)
 {
     std::vector<dds::sub::DataReader<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -391,15 +370,14 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find)
             this->subscriber,
             this->topic1,
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 2);
     ASSERT_TRUE((found[0] == this->reader1A) || (found[0] == this->reader1B));
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find_any)
+TEST_F(FindDataReader, FwdIterator_tdesc_find_any)
 {
     std::vector<dds::sub::AnyDataReader> found(5, dds::core::null);
     uint32_t cnt;
@@ -413,14 +391,13 @@ DDSCXX_TEST_F(ddscxx_FindDataReader, FwdIterator_tdesc_find_any)
             this->subscriber,
             this->topic2,
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 1);
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataReader, ignore)
+TEST_F(FindDataReader, ignore)
 {
     this->CreateReaders();
     ASSERT_THROW({

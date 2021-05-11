@@ -2,16 +2,15 @@
 #include <thread>
 
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
 
-#include "HelloWorldData_DCPS.hpp"
+#include <gtest/gtest.h>
 
-
+#include "HelloWorldData.hpp"
 
 /**
  * Fixture for entity status tests
  */
-class ddscxx_EntityStatus : public ::testing::Test
+class EntityStatus : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant par;
@@ -19,7 +18,7 @@ public:
     dds::sub::Subscriber sub;
     dds::topic::Topic<HelloWorldData::Msg> topic;
 
-    ddscxx_EntityStatus() :
+    EntityStatus() :
         par(dds::core::null),
         pub(dds::core::null),
         sub(dds::core::null),
@@ -49,11 +48,7 @@ public:
     }
 };
 
-
-
-
-
-DDSCXX_TEST_F(ddscxx_EntityStatus, publication_matched)
+TEST_F(EntityStatus, publication_matched)
 {
     dds::core::status::PublicationMatchedStatus status;
     const dds_duration_t interval = DDS_MSECS(5);
@@ -133,8 +128,7 @@ DDSCXX_TEST_F(ddscxx_EntityStatus, publication_matched)
     writer = dds::core::null;
 }
 
-
-DDSCXX_TEST_F(ddscxx_EntityStatus, subscription_matched)
+TEST_F(EntityStatus, subscription_matched)
 {
     dds::core::status::SubscriptionMatchedStatus status;
     const dds_duration_t interval = DDS_MSECS(5);
@@ -214,8 +208,7 @@ DDSCXX_TEST_F(ddscxx_EntityStatus, subscription_matched)
     reader = dds::core::null;
 }
 
-
-DDSCXX_TEST_F(ddscxx_EntityStatus, incompatible_qos)
+TEST_F(EntityStatus, incompatible_qos)
 {
     dds::core::status::RequestedIncompatibleQosStatus r_status;
     dds::core::status::OfferedIncompatibleQosStatus w_status;
@@ -278,8 +271,7 @@ DDSCXX_TEST_F(ddscxx_EntityStatus, incompatible_qos)
     writer = dds::core::null;
 }
 
-
-DDSCXX_TEST_F(ddscxx_EntityStatus, sample_lost)
+TEST_F(EntityStatus, sample_lost)
 {
     dds::core::status::SampleLostStatus status;
     const dds_duration_t interval = DDS_MSECS(5);
@@ -334,8 +326,7 @@ DDSCXX_TEST_F(ddscxx_EntityStatus, sample_lost)
     writer = dds::core::null;
 }
 
-
-DDSCXX_TEST_F(ddscxx_EntityStatus, sample_rejected)
+TEST_F(EntityStatus, sample_rejected)
 {
     dds::core::status::SampleRejectedStatus status;
     const dds_duration_t interval = DDS_MSECS(5);
@@ -394,8 +385,7 @@ DDSCXX_TEST_F(ddscxx_EntityStatus, sample_rejected)
     writer = dds::core::null;
 }
 
-
-DDSCXX_TEST_F(ddscxx_EntityStatus, liveliness_changed)
+TEST_F(EntityStatus, liveliness_changed)
 {
     dds::core::status::LivelinessChangedStatus status;
     const dds_duration_t interval = DDS_MSECS(5);
