@@ -92,7 +92,8 @@ template <typename DELEGATE>
 TCondition<DELEGATE>&
 TCondition<DELEGATE>::operator=(const dds::sub::cond::TReadCondition<org::eclipse::cyclonedds::sub::cond::ReadConditionDelegate>& rhs)
 {
-    if (this != static_cast<TCondition*>(&rhs)) {
+    const TCondition<DELEGATE> &t = rhs;
+    if (this != &t) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */
