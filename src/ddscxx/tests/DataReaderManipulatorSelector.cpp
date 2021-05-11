@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,17 +9,15 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
+#include <gtest/gtest.h>
+
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
-
-
-
+#include "Space.hpp"
 
 /**
  * Fixture for the DataReader tests
  */
-class ddscxx_DataReaderManipulatorSelector : public ::testing::Test
+class DataReaderManipulatorSelector : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -31,7 +29,7 @@ public:
 
     dds::sub::status::DataState already_read;
 
-    ddscxx_DataReaderManipulatorSelector() :
+    DataReaderManipulatorSelector() :
         participant(dds::core::null),
         subscriber(dds::core::null),
         publisher(dds::core::null),
@@ -94,7 +92,7 @@ public:
     void WriteData(const std::vector<Space::Type1>& samples)
     {
         for (size_t i = 0; i < samples.size(); i++) {
-            this->writer.write(samples[(size_t)i]);
+            this->writer.write(samples[i]);
         }
     }
 
@@ -120,8 +118,7 @@ public:
         }
     }
 
-    void
-    CheckData (
+    void CheckData (
         const std::vector<dds::sub::Sample<Space::Type1> > &samples,
         const std::vector<Space::Type1>& test_data,
         const dds::sub::status::DataState& test_state =
@@ -152,7 +149,6 @@ public:
         this->subscriber = dds::core::null;
         this->participant = dds::core::null;
     }
-
 };
 
 
@@ -161,7 +157,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, reader_null)
+TEST_F(DataReaderManipulatorSelector, reader_null)
 {
     dds::sub::DataReader<Space::Type1> null_reader = dds::core::null;
     ASSERT_THROW({
@@ -169,8 +165,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, reader_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_read)
+TEST_F(DataReaderManipulatorSelector, implicit_read)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> write_samples;
@@ -193,8 +188,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_read)
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_take)
+TEST_F(DataReaderManipulatorSelector, implicit_take)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> write_samples;
@@ -217,8 +211,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_take)
     this->CheckData(read_samples, std::vector<Space::Type1>());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_instance)
+TEST_F(DataReaderManipulatorSelector, implicit_instance)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -244,8 +237,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_instance)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_next_instance)
+TEST_F(DataReaderManipulatorSelector, implicit_next_instance)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected2_samples;
@@ -285,8 +277,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_state)
+TEST_F(DataReaderManipulatorSelector, implicit_state)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -314,8 +305,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_state)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_content)
+TEST_F(DataReaderManipulatorSelector, implicit_content)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -347,8 +337,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_max_samples)
+TEST_F(DataReaderManipulatorSelector, implicit_max_samples)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -371,8 +360,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_multiple)
+TEST_F(DataReaderManipulatorSelector, implicit_multiple)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -403,8 +391,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, implicit_multiple)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_read)
+TEST_F(DataReaderManipulatorSelector, explicit_read)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -429,8 +416,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_read)
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_take)
+TEST_F(DataReaderManipulatorSelector, explicit_take)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -455,8 +441,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_take)
     this->CheckData(read_samples, std::vector<Space::Type1>());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_instance)
+TEST_F(DataReaderManipulatorSelector, explicit_instance)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -484,8 +469,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_instance)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_next_instance)
+TEST_F(DataReaderManipulatorSelector, explicit_next_instance)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -528,8 +512,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_state)
+TEST_F(DataReaderManipulatorSelector, explicit_state)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -559,8 +542,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_state)
     this->CheckData(read_samples, expected_samples, this->already_read);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_content)
+TEST_F(DataReaderManipulatorSelector, explicit_content)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -595,8 +577,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_content)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_max_samples)
+TEST_F(DataReaderManipulatorSelector, explicit_max_samples)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -621,8 +602,7 @@ DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataReaderManipulatorSelector, explicit_multiple)
+TEST_F(DataReaderManipulatorSelector, explicit_multiple)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;

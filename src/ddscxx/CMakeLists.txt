@@ -110,6 +110,10 @@ install(
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ddscxx"
   COMPONENT dev)
 
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
+
 # Preprocess headers to make the documentation more readable. The steps
 # involved have been converted from a Python script into CMake logic. This is
 # better solved in another way, but it will have to do for now.

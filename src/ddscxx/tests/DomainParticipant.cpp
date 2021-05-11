@@ -10,25 +10,26 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
+#include <gtest/gtest.h>
 #include "dds/ddsrt/environ.h"
-#include "dds/version.h"
-#include "HelloWorldData_DCPS.hpp"
-#include "Space_DCPS.hpp"
+//#include "dds/version.h"
+#include "HelloWorldData.hpp"
+#include "Space.hpp"
 
-#include "config_env.hpp"
 
-namespace ddscxx { namespace tests { namespace DomainParticipant {
+static const char *simple_config_uri =
+    "file://config_simple.xml";
+
+static const std::string simple_config =
+    "<CycloneDDS><Domain><Id>any</Id></Domain></CycloneDDS>";
 
 class TestDomainParticipantListener : public virtual dds::domain::NoOpDomainParticipantListener
 { };
 
-} } }
-
-ddscxx::tests::DomainParticipant::TestDomainParticipantListener participantListener;
+TestDomainParticipantListener participantListener;
 
 /* Check various null initializations. */
-DDSCXX_TEST(ddscxx_DomainParticipant, null)
+TEST(DomainParticipant, null)
 {
     dds::domain::DomainParticipant participant1(dds::core::null);
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -36,233 +37,227 @@ DDSCXX_TEST(ddscxx_DomainParticipant, null)
     ASSERT_EQ(participant2, dds::core::null);
 }
 
-/* Try creating a domain participant with an configuration. */
-DDSCXX_TEST(ddscxx_DomainParticipant, create_with_conf)
+/* Try creating a domain participant with a configuration. */
+TEST(DomainParticipant, create_with_conf)
 {
-    dds::domain::DomainParticipant participant1 = dds::core::null;
-    dds::domain::DomainParticipant participant2 = dds::core::null;
-    uint32_t valid_domain = 3;
-    uint32_t domain_id;
+    dds::domain::DomainParticipant dp1 = dds::core::null;
+    dds::domain::DomainParticipant dp2 = dds::core::null;
+    uint32_t domain_id = 3;
     dds_return_t ret;
 
-    ret = ddsrt_setenv(DDS_PROJECT_NAME_NOSPACE_CAPS"_URI", CONFIG_ENV_SIMPLE);
+    ret = ddsrt_setenv("CYCLONEDDS_URI", simple_config_uri);
     ASSERT_EQ(ret, DDS_RETCODE_OK);
 
     /* Valid specific domain value. */
-    participant1 = dds::domain::DomainParticipant(valid_domain);
-    ASSERT_NE(participant1, dds::core::null);
-    domain_id = participant1.domain_id();
-    ASSERT_EQ(domain_id, valid_domain);
+    dp1 = dds::domain::DomainParticipant(domain_id);
+    ASSERT_NE(dp1, dds::core::null);
+    ASSERT_EQ(dp1.domain_id(), domain_id);
 
     /* Default domain value. */
-    participant2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participant2, dds::core::null);
-    domain_id = participant2.domain_id();
-    ASSERT_EQ(domain_id, valid_domain);
+    dp2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp2, dds::core::null);
+    ASSERT_EQ(dp2.domain_id(), domain_id);
+
+    ret = ddsrt_unsetenv("CYCLONEDDS_URI");
+    ASSERT_EQ(ret, DDS_RETCODE_OK);
 }
 
 /* Try creating a domain participant with an configuration. */
-DDSCXX_TEST(ddscxx_DomainParticipant, create_with_str_conffile)
+TEST(DomainParticipant, create_with_str_conffile)
 {
-    dds::domain::DomainParticipant participant1 = dds::core::null;
-    dds::domain::DomainParticipant participant2 = dds::core::null;
-    uint32_t valid_domain = 3;
-    uint32_t domain_id;
+    dds::domain::DomainParticipant dp1 = dds::core::null;
+    dds::domain::DomainParticipant dp2 = dds::core::null;
+    uint32_t domain_id = 3;
 
     /* Valid specific domain value. */
-    participant1 = dds::domain::DomainParticipant(valid_domain,
-                                                  org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                  NULL,
-                                                  dds::core::status::StatusMask::none(),
-                                                  CONFIG_ENV_SIMPLE);
-    ASSERT_NE(participant1, dds::core::null);
-    domain_id = participant1.domain_id();
-    ASSERT_EQ(domain_id, valid_domain);
+    dp1 = dds::domain::DomainParticipant(
+        domain_id,
+        dds::domain::DomainParticipant::default_participant_qos(),
+        0,
+        dds::core::status::StatusMask::none(),
+        simple_config_uri);
+    ASSERT_NE(dp1, dds::core::null);
+    ASSERT_EQ(dp1.domain_id(), domain_id);
 
     /* Default domain value. */
-    participant2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participant2, dds::core::null);
-    domain_id = participant2.domain_id();
-    ASSERT_EQ(domain_id, valid_domain);
+    dp2 = dds::domain::DomainParticipant(
+        org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp2, dds::core::null);
+    ASSERT_EQ(dp2.domain_id(), domain_id);
 }
 
-DDSCXX_TEST(ddscxx_DomainParticipant, create_with_str_conf)
+TEST(DomainParticipant, create_with_str_conf)
 {
-    dds::domain::DomainParticipant participant7 = dds::core::null;
-    dds::domain::DomainParticipant participant8 = dds::core::null;
-    dds::domain::DomainParticipant participantD1 = dds::core::null;
-    dds::domain::DomainParticipant participantD2 = dds::core::null;
-    uint32_t domain7 = 7;
-    uint32_t domain8 = 8;
-    uint32_t domain_id;
+    dds::domain::DomainParticipant dp1 = dds::core::null;
+    dds::domain::DomainParticipant dp2 = dds::core::null;
+    dds::domain::DomainParticipant dp3 = dds::core::null;
+    dds::domain::DomainParticipant dp4 = dds::core::null;
 
-    participant7 = dds::domain::DomainParticipant(domain7,
-                                                  org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                  NULL,
-                                                  dds::core::status::StatusMask::none(),
-                                                  "<" DDS_PROJECT_NAME "><Domain><Id>any</Id></Domain></" DDS_PROJECT_NAME ">");
-    ASSERT_NE(participant7, dds::core::null);
-    domain_id = participant7.domain_id();
-    ASSERT_EQ(domain_id, domain7);
+    dp1 = dds::domain::DomainParticipant(
+        7,
+        dds::domain::DomainParticipant::default_participant_qos(),
+        0,
+        dds::core::status::StatusMask::none(),
+        simple_config);
+    ASSERT_NE(dp1, dds::core::null);
+    ASSERT_EQ(dp1.domain_id(), 7);
 
-    participantD1 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participantD1, dds::core::null);
-    domain_id = participantD1.domain_id();
-    ASSERT_EQ(domain_id, domain7);
+    dp2 = dds::domain::DomainParticipant(
+        org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp2, dds::core::null);
+    ASSERT_EQ(dp2.domain_id(), 7);
 
-    participant8 = dds::domain::DomainParticipant(domain8,
-                                                  org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                  NULL,
-                                                  dds::core::status::StatusMask::none(),
-                                                  "<" DDS_PROJECT_NAME "><Domain><Id>any</Id></Domain></" DDS_PROJECT_NAME ">");
-    ASSERT_NE(participant8, dds::core::null);
-    domain_id = participant8.domain_id();
-    ASSERT_EQ(domain_id, domain8);
+    dp3 = dds::domain::DomainParticipant(
+        8,
+        dds::domain::DomainParticipant::default_participant_qos(),
+        0,
+        dds::core::status::StatusMask::none(),
+        simple_config);
+    ASSERT_NE(dp3, dds::core::null);
+    ASSERT_EQ(dp3.domain_id(), 8);
 
-    participantD2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participantD2, dds::core::null);
-    domain_id = participantD2.domain_id();
-    ASSERT_EQ(domain_id, domain7);
+    dp4 = dds::domain::DomainParticipant(
+        org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp4, dds::core::null);
+    ASSERT_EQ(dp4.domain_id(), 7);
 }
 
-DDSCXX_TEST(ddscxx_DomainParticipant, recreate_with_str_conf)
+TEST(DomainParticipant, recreate_with_str_conf)
 {
-    dds::domain::DomainParticipant participant = dds::core::null;
-    uint32_t domain_req = 3;
-    uint32_t domain_set;
+    dds::domain::DomainParticipant dp = dds::core::null;
+    uint32_t domain_id = 3;
 
-    participant = dds::domain::DomainParticipant(domain_req,
-                                                 org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                 NULL,
-                                                 dds::core::status::StatusMask::none(),
-                                                 "<" DDS_PROJECT_NAME "><Domain><Id>any</Id></Domain></" DDS_PROJECT_NAME ">");
-    ASSERT_NE(participant, dds::core::null);
-    domain_set = participant.domain_id();
-    ASSERT_EQ(domain_set, domain_req);
+    dp = dds::domain::DomainParticipant(
+        domain_id,
+        dds::domain::DomainParticipant::default_participant_qos(),
+        0,
+        dds::core::status::StatusMask::none(),
+        simple_config);
+    ASSERT_NE(dp, dds::core::null);
+    ASSERT_EQ(dp.domain_id(), domain_id);
 
-    participant = dds::core::null;
+    dp = dds::core::null;
 
-
-    participant = dds::domain::DomainParticipant(domain_req,
-                                                 org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                 NULL,
-                                                 dds::core::status::StatusMask::none(),
-                                                 "<" DDS_PROJECT_NAME "><Domain><Id>any</Id></Domain></" DDS_PROJECT_NAME ">");
-    ASSERT_NE(participant, dds::core::null);
-    domain_set = participant.domain_id();
-    ASSERT_EQ(domain_set, domain_req);
+    dp = dds::domain::DomainParticipant(
+        domain_id,
+        dds::domain::DomainParticipant::default_participant_qos(),
+        0,
+        dds::core::status::StatusMask::none(),
+        simple_config);
+    ASSERT_NE(dp, dds::core::null);
+    ASSERT_EQ(dp.domain_id(), domain_id);
 }
 
-DDSCXX_TEST(ddscxx_DomainParticipant, create_with_str_conf_default)
+TEST(DomainParticipant, create_with_str_conf_default)
 {
-    dds::domain::DomainParticipant participant = dds::core::null;
+    dds::domain::DomainParticipant dp = dds::core::null;
 
     ASSERT_THROW({
-        participant = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id(),
-                                                     org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                     NULL,
-                                                     dds::core::status::StatusMask::none(),
-                                                     "<" DDS_PROJECT_NAME "><Domain><Id>any</Id></Domain></" DDS_PROJECT_NAME ">");
+        dp = dds::domain::DomainParticipant(
+            org::eclipse::cyclonedds::domain::default_id(),
+            dds::domain::DomainParticipant::default_participant_qos(),
+            0,
+            dds::core::status::StatusMask::none(),
+            simple_config);
     }, dds::core::InvalidArgumentError);
 }
 
-DDSCXX_TEST(ddscxx_DomainParticipant, create_with_str_conf_invalid)
+TEST(DomainParticipant, create_with_str_conf_invalid)
 {
-    dds::domain::DomainParticipant participant = dds::core::null;
+    dds::domain::DomainParticipant dp = dds::core::null;
+    std::string bad_config = "<CycloneDDS incorrect XML";
 
     ASSERT_THROW({
-        participant = dds::domain::DomainParticipant(1,
-                                                     org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos(),
-                                                     NULL,
-                                                     dds::core::status::StatusMask::none(),
-                                                     "<CycloneDDS incorrect XML");
+        dp = dds::domain::DomainParticipant(
+            1,
+            dds::domain::DomainParticipant::default_participant_qos(),
+            NULL,
+            dds::core::status::StatusMask::none(),
+            bad_config);
     }, dds::core::Error);
 }
 
 /* Try creating a domain participant without an configuration. */
-DDSCXX_TEST(ddscxx_DomainParticipant, create_without_conf)
+TEST(DomainParticipant, create_without_conf)
 {
-    dds::domain::DomainParticipant participant1 = dds::core::null;
-    dds::domain::DomainParticipant participant2 = dds::core::null;
-    uint32_t valid_domain = 3;
-    uint32_t domain_id;
+    dds::domain::DomainParticipant dp1 = dds::core::null;
+    dds::domain::DomainParticipant dp2 = dds::core::null;
+    uint32_t domain_id = 3;
     dds_return_t ret;
 
-    ret = ddsrt_unsetenv(DDS_PROJECT_NAME_NOSPACE_CAPS"_URI");
+    ret = ddsrt_unsetenv("CYCLONEDDS__URI");
     ASSERT_EQ(ret, DDS_RETCODE_OK);
 
     /* When giving a domain, that specific domain should be used. */
-    participant1 = dds::domain::DomainParticipant(valid_domain);
-    ASSERT_NE(participant1, dds::core::null);
-    domain_id = participant1.domain_id();
-    ASSERT_EQ(domain_id, valid_domain);
+    dp1 = dds::domain::DomainParticipant(domain_id);
+    ASSERT_NE(dp1, dds::core::null);
+    ASSERT_EQ(dp1.domain_id(), domain_id);
 
     /* The default should slave the set domain. */
-    participant2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participant2, dds::core::null);
-    domain_id = participant2.domain_id();
-    ASSERT_EQ(domain_id, valid_domain);
+    dp2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp2, dds::core::null);
+    ASSERT_EQ(dp2.domain_id(), domain_id);
 }
 
 /* Try creating multiple domain participants at the same time. */
-DDSCXX_TEST(ddscxx_DomainParticipant, create_multiple)
+TEST(DomainParticipant, create_multiple)
 {
-    dds::domain::DomainParticipant participant1 = dds::core::null;
-    dds::domain::DomainParticipant participant2 = dds::core::null;
+    dds::domain::DomainParticipant dp1 = dds::core::null;
+    dds::domain::DomainParticipant dp2 = dds::core::null;
 
-    participant1 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::any_id());
-    ASSERT_NE(participant1, dds::core::null);
+    dp1 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::any_id());
+    ASSERT_NE(dp1, dds::core::null);
 
-    participant2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::any_id());
-    ASSERT_NE(participant2, dds::core::null);
+    dp2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::any_id());
+    ASSERT_NE(dp2, dds::core::null);
 }
 
 /* Try creating multiple domain participants at the same time. */
-DDSCXX_TEST(ddscxx_DomainParticipant, create_invalid)
+TEST(DomainParticipant, create_invalid)
 {
-    dds::domain::DomainParticipant participant = dds::core::null;
+    dds::domain::DomainParticipant dp = dds::core::null;
 
     /* Maximum id is 230. */
     ASSERT_THROW({
-        participant = dds::domain::DomainParticipant(231);
+        dp = dds::domain::DomainParticipant(231);
     }, dds::core::InvalidArgumentError);
 }
 
 /* Try re-creating domain participant after last one was deleted. */
-DDSCXX_TEST(ddscxx_DomainParticipant, recreate_after_delete)
+TEST(DomainParticipant, recreate_after_delete)
 {
     {
-        dds::domain::DomainParticipant participant = dds::core::null;
-        participant = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-        ASSERT_NE(participant, dds::core::null);
+        dds::domain::DomainParticipant dp = dds::core::null;
+        dp = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
+        ASSERT_NE(dp, dds::core::null);
         /* Out of scope means deletion. */
     }
 
     {
         /* Re-create. */
-        dds::domain::DomainParticipant participant = dds::core::null;
-        participant = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-        ASSERT_NE(participant, dds::core::null);
+        dds::domain::DomainParticipant dp = dds::core::null;
+        dp = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
+        ASSERT_NE(dp, dds::core::null);
     }
 }
 
 /* Try re-creating domain participant after last one was closed. */
-DDSCXX_TEST(ddscxx_DomainParticipant, recreate_after_close)
+TEST(DomainParticipant, recreate_after_close)
 {
-    dds::domain::DomainParticipant participant1 = dds::core::null;
-    dds::domain::DomainParticipant participant2 = dds::core::null;
+    dds::domain::DomainParticipant dp1 = dds::core::null;
+    dds::domain::DomainParticipant dp2 = dds::core::null;
 
-    participant1 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participant1, dds::core::null);
+    dp1 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp1, dds::core::null);
 
-    participant1.close();
+    dp1.close();
 
-    participant2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
-    ASSERT_NE(participant2, dds::core::null);
+    dp2 = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
+    ASSERT_NE(dp2, dds::core::null);
 }
 
 /* Check exception thrown by usage after close. */
-DDSCXX_TEST(ddscxx_DomainParticipant, use_after_close)
+TEST(DomainParticipant, use_after_close)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
 
@@ -338,7 +333,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, use_after_close)
 }
 
 /* Check exception thrown by usage after deletion. */
-DDSCXX_TEST(ddscxx_DomainParticipant, use_after_deletion)
+TEST(DomainParticipant, use_after_deletion)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
 
@@ -414,7 +409,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, use_after_deletion)
 }
 
 /* Find non-created DomainParticipant. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_none)
+TEST(DomainParticipant, find_none)
 {
     dds::domain::DomainParticipant found = dds::core::null;
     found = dds::domain::find(0);
@@ -422,7 +417,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_none)
 }
 
 /* Find unknown DomainParticipant. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_wrong)
+TEST(DomainParticipant, find_wrong)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::domain::DomainParticipant found = dds::core::null;
@@ -437,7 +432,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_wrong)
 }
 
 /* Find deleted DomainParticipant. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_deleted)
+TEST(DomainParticipant, find_deleted)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::domain::DomainParticipant found = dds::core::null;
@@ -455,7 +450,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_deleted)
 }
 
 /* Find created DomainParticipant. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_one)
+TEST(DomainParticipant, find_one)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::domain::DomainParticipant found = dds::core::null;
@@ -471,7 +466,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_one)
 }
 
 /* Find one of created DomainParticipants. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_multiple)
+TEST(DomainParticipant, find_multiple)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -495,7 +490,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_multiple)
 }
 
 /* Find the DomainParticipant that isn't deleted. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_first)
+TEST(DomainParticipant, find_first)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -522,7 +517,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_first)
 }
 
 /* Find the DomainParticipant that isn't deleted. */
-DDSCXX_TEST(ddscxx_DomainParticipant, find_second)
+TEST(DomainParticipant, find_second)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -549,7 +544,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, find_second)
 }
 
 /* Try to set null DomainParticipant to be ignored during discovery. */
-DDSCXX_TEST(ddscxx_DomainParticipant, ignore_none)
+TEST(DomainParticipant, ignore_none)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::core::InstanceHandle hdl = dds::core::null;
@@ -560,7 +555,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, ignore_none)
 }
 
 /* Set a DomainParticipant to be ignored during discovery. */
-DDSCXX_TEST(ddscxx_DomainParticipant, ignore_one)
+TEST(DomainParticipant, ignore_one)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::core::InstanceHandle hdl = dds::core::null;
@@ -575,7 +570,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, ignore_one)
 }
 
 /* Check if a DomainParticipant can be created with a non default constructor. */
-DDSCXX_TEST(ddscxx_DomainParticipant, non_default_constructor)
+TEST(DomainParticipant, non_default_constructor)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::core::status::StatusMask statusMask;
@@ -590,7 +585,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, non_default_constructor)
 }
 
 /* Check if a DomainParticipant returns current time. */
-DDSCXX_TEST(ddscxx_DomainParticipant, current_time)
+TEST(DomainParticipant, current_time)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
     dds::core::Time par_time1;
@@ -607,7 +602,7 @@ DDSCXX_TEST(ddscxx_DomainParticipant, current_time)
 
 
 /* Check setting a default QoS does not trigger an exception. */
-DDSCXX_TEST(ddscxx_DomainParticipant, default__qos)
+TEST(DomainParticipant, default__qos)
 {
     dds::domain::DomainParticipant participant = dds::core::null;
 
@@ -636,7 +631,7 @@ topic. This has to be implemented before contains_entity() can be tested.
 */
 
 /* Check if a DomainParticipant contains and entity that was created on it. */
-DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_subscriber)
+XFAIL(DomainParticipant, contains_subscriber)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -665,7 +660,7 @@ DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_subscriber)
 }
 
 /* Check if a DomainParticipant contains and entity that was created on it. */
-DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_publisher)
+XFAIL(DomainParticipant, contains_publisher)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -694,7 +689,7 @@ DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_publisher)
 }
 
 /* Check if a DomainParticipant contains and entity that was created on it. */
-DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_topic)
+XFAIL(DomainParticipant, contains_topic)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;
@@ -723,7 +718,7 @@ DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_topic)
 }
 
 /* Check if a DomainParticipant contains and entity that was created on it. */
-DDSCXX_XFAIL(ddscxx_DomainParticipant, contains_writer)
+XFAIL(DomainParticipant, contains_writer)
 {
     dds::domain::DomainParticipant participant1 = dds::core::null;
     dds::domain::DomainParticipant participant2 = dds::core::null;

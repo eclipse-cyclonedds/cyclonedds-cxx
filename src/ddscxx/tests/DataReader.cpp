@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,11 +9,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
+#include <gtest/gtest.h>
+
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
-
-
+#include "Space.hpp"
 
 /**
  * Trying to use the operator>> to get the QoS, causes a compile error because
@@ -26,17 +25,16 @@
 /**
  * Dummy listener for the DataWriter tests
  */
-namespace ddscxx { namespace tests { namespace DataReader {
-    class TestReader1Listener : public virtual dds::sub::NoOpDataReaderListener<Space::Type1>{ };
-} } }
-static ddscxx::tests::DataReader::TestReader1Listener reader1Listener;
+class TestReader1Listener : public virtual dds::sub::NoOpDataReaderListener<Space::Type1>{ };
+
+static TestReader1Listener reader1Listener;
 
 
 
 /**
  * Fixture for the DataReader tests
  */
-class ddscxx_DataReader : public ::testing::Test
+class DataReader : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -51,7 +49,7 @@ public:
 
     std::string partition;
 
-    ddscxx_DataReader() :
+    DataReader() :
         participant(dds::core::null),
         subscriber(dds::core::null),
         publisher(dds::core::null),
@@ -139,13 +137,13 @@ public:
         }
         this->SetupCommunication();
         for (size_t i = 0; i < samples.size(); i++) {
-            this->writer.write(samples[(size_t)i]);
+            this->writer.write(samples[i]);
         }
         return samples;
     }
 
     void ReadFirstSamples(uint32_t cnt) {
-        std::vector<dds::sub::Sample<Space::Type1> > samples((size_t)cnt);
+        std::vector<dds::sub::Sample<Space::Type1> > samples(cnt);
         this->reader.read(samples.begin(), cnt);
     }
 
@@ -211,7 +209,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_DataReader, null)
+TEST_F(DataReader, null)
 {
     dds::sub::DataReader<Space::Type1> reader1(dds::core::null);
     dds::sub::DataReader<Space::Type1> reader2 = dds::core::null;
@@ -220,7 +218,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, null)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, create_subscriber_null)
+TEST_F(DataReader, create_subscriber_null)
 {
     this->CreateTopic();
     dds::sub::DataReader<Space::Type1> treader = dds::core::null;
@@ -231,7 +229,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, create_subscriber_null)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, create_topic_null)
+TEST_F(DataReader, create_topic_null)
 {
     this->SetupReader();
     dds::topic::Topic<Space::Type1> null_topic = dds::core::null;
@@ -243,7 +241,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, create_topic_null)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, create_cftopic_null)
+TEST_F(DataReader, create_cftopic_null)
 {
     this->SetupReader();
     dds::topic::ContentFilteredTopic<Space::Type1> null_topic = dds::core::null;
@@ -255,7 +253,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, create_cftopic_null)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, create)
+TEST_F(DataReader, create)
 {
     this->SetupReader();
     dds::sub::DataReader<Space::Type1> treader = dds::core::null;
@@ -264,7 +262,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, create)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, subscriber)
+TEST_F(DataReader, subscriber)
 {
     this->CreateReader();
     dds::sub::Subscriber tsub = this->reader.subscriber();
@@ -273,7 +271,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, subscriber)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, topic_description)
+TEST_F(DataReader, topic_description)
 {
     this->CreateReader();
     dds::topic::TopicDescription tdesc = this->reader.topic_description();
@@ -282,7 +280,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, topic_description)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_default)
+TEST_F(DataReader, qos_default)
 {
 #ifdef TEST_QOS_SHIFT_OUT
     dds::sub::qos::DataReaderQos shift_qos;
@@ -301,7 +299,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_default)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_nondefault_constructor)
+TEST_F(DataReader, qos_nondefault_constructor)
 {
 #ifdef TEST_QOS_SHIFT_OUT
     dds::sub::qos::DataReaderQos shift_qos;
@@ -327,7 +325,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_nondefault_constructor)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_immutable_constructor)
+TEST_F(DataReader, qos_immutable_constructor)
 {
     this->CreateReader();
     dds::sub::DataReader<Space::Type1> rdr = dds::core::null;
@@ -344,7 +342,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_immutable_constructor)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_nondefault_set)
+TEST_F(DataReader, qos_nondefault_set)
 {
     this->CreateReader();
     this->reader.qos(this->timebased_qos);
@@ -353,7 +351,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_nondefault_set)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_immutable_set)
+TEST_F(DataReader, qos_immutable_set)
 {
     this->CreateReader();
     ASSERT_THROW({
@@ -362,7 +360,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_immutable_set)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_nondefault_shift)
+TEST_F(DataReader, qos_nondefault_shift)
 {
     this->CreateReader();
     this->reader << this->timebased_qos;
@@ -371,7 +369,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_nondefault_shift)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, qos_immutable_shift)
+TEST_F(DataReader, qos_immutable_shift)
 {
     this->CreateReader();
     ASSERT_THROW({
@@ -380,7 +378,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, qos_immutable_shift)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read)
+TEST_F(DataReader, read)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -394,7 +392,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_no_data)
+TEST_F(DataReader, read_no_data)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
 
@@ -407,7 +405,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_no_data)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_shift_LoanedSamples)
+TEST_F(DataReader, read_shift_LoanedSamples)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -421,7 +419,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_shift_LoanedSamples)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_SamplesFWIterator)
+TEST_F(DataReader, read_SamplesFWIterator)
 {
     static const uint32_t MAX_INSTANCES = 5;
     std::vector<dds::sub::Sample<Space::Type1> > samples(MAX_INSTANCES);
@@ -438,7 +436,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_SamplesFWIterator)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_SamplesBIIterator)
+TEST_F(DataReader, read_SamplesBIIterator)
 {
     std::vector<dds::sub::Sample<Space::Type1> > samples;
     std::back_insert_iterator< std::vector<dds::sub::Sample<Space::Type1> > > biter(samples);
@@ -455,7 +453,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_SamplesBIIterator)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_read)
+TEST_F(DataReader, read_default_filter_read)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -483,7 +481,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_read)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_read)
+TEST_F(DataReader, read_default_filter_not_read)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -508,7 +506,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_read)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_new_view)
+TEST_F(DataReader, read_default_filter_new_view)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -533,7 +531,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_new_view)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_new_view)
+TEST_F(DataReader, read_default_filter_not_new_view)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -561,7 +559,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_new_view)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_alive)
+TEST_F(DataReader, read_default_filter_alive)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -579,7 +577,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_alive)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_alive_disposed)
+TEST_F(DataReader, read_default_filter_not_alive_disposed)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -609,7 +607,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_alive_disposed)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_alive_no_writers)
+TEST_F(DataReader, read_default_filter_not_alive_no_writers)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -639,7 +637,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, read_default_filter_not_alive_no_writers)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take)
+TEST_F(DataReader, take)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -653,7 +651,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_no_data)
+TEST_F(DataReader, take_no_data)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
 
@@ -666,7 +664,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_no_data)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_SamplesFWIterator)
+TEST_F(DataReader, take_SamplesFWIterator)
 {
     static const uint32_t MAX_INSTANCES = 5;
     std::vector<dds::sub::Sample<Space::Type1> > samples(MAX_INSTANCES);
@@ -683,7 +681,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_SamplesFWIterator)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_SamplesBIIterator)
+TEST_F(DataReader, take_SamplesBIIterator)
 {
     std::vector<dds::sub::Sample<Space::Type1> > samples;
     std::back_insert_iterator< std::vector<dds::sub::Sample<Space::Type1> > > biter(samples);
@@ -700,7 +698,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_SamplesBIIterator)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_read)
+TEST_F(DataReader, take_default_filter_read)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -728,7 +726,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_read)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_read)
+TEST_F(DataReader, take_default_filter_not_read)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -753,7 +751,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_read)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_new_view)
+TEST_F(DataReader, take_default_filter_new_view)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -778,7 +776,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_new_view)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_new_view)
+TEST_F(DataReader, take_default_filter_not_new_view)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -806,7 +804,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_new_view)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_alive)
+TEST_F(DataReader, take_default_filter_alive)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -824,7 +822,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_alive)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_alive_disposed)
+TEST_F(DataReader, take_default_filter_not_alive_disposed)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -854,7 +852,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_alive_disposed)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_alive_no_writers)
+TEST_F(DataReader, take_default_filter_not_alive_no_writers)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -884,7 +882,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, take_default_filter_not_alive_no_writers)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, readtake1)
+TEST_F(DataReader, readtake1)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -908,7 +906,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, readtake1)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, readtake2)
+TEST_F(DataReader, readtake2)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -932,7 +930,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, readtake2)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, lookup_instance)
+TEST_F(DataReader, lookup_instance)
 {
     static const uint32_t MAX_INSTANCES = 7;
     dds::sub::LoanedSamples<Space::Type1> samples;
@@ -956,7 +954,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, lookup_instance)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, key_value_by_sample)
+TEST_F(DataReader, key_value_by_sample)
 {
     static const uint32_t MAX_INSTANCES = 6;
     dds::sub::LoanedSamples<Space::Type1> samples;
@@ -983,7 +981,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, key_value_by_sample)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, key_value_by_topic)
+TEST_F(DataReader, key_value_by_topic)
 {
     static const uint32_t MAX_INSTANCES = 6;
     dds::sub::LoanedSamples<Space::Type1> samples;
@@ -1011,7 +1009,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, key_value_by_topic)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, use_after_close)
+TEST_F(DataReader, use_after_close)
 {
     /* Get a closed DataReader. */
     this->CreateReader();
@@ -1105,7 +1103,7 @@ DDSCXX_TEST_F(ddscxx_DataReader, use_after_close)
 }
 
 
-DDSCXX_TEST_F(ddscxx_DataReader, use_after_deletion)
+TEST_F(DataReader, use_after_deletion)
 {
     /* Get a deleted DataReader. */
     this->CreateReader();

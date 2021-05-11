@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,25 +10,24 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "Space.hpp"
 
 
 
 /**
  * Dummy listener for the DataWriter tests
  */
-namespace ddscxx { namespace tests { namespace DataWriter {
-    class TestWriter1Listener : public virtual dds::pub::NoOpDataWriterListener<Space::Type1>{ };
-} } }
-static ddscxx::tests::DataWriter::TestWriter1Listener writer1Listener;
+class TestWriter1Listener : public virtual dds::pub::NoOpDataWriterListener<Space::Type1>{ };
+
+static TestWriter1Listener writer1Listener;
 
 
 
 /**
  * Fixture for the DataWriter tests
  */
-class ddscxx_DataWriter : public ::testing::Test
+class DataWriter : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -43,7 +42,7 @@ public:
 
     std::string partition;
 
-    ddscxx_DataWriter() :
+    DataWriter() :
         participant(dds::core::null),
         subscriber(dds::core::null),
         publisher(dds::core::null),
@@ -234,7 +233,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_DataWriter, null)
+TEST_F(DataWriter, null)
 {
     dds::pub::DataWriter<Space::Type1> writer1(dds::core::null);
     dds::pub::DataWriter<Space::Type1> writer2 = dds::core::null;
@@ -242,8 +241,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, null)
     ASSERT_EQ(writer2, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, create_publisher_null)
+TEST_F(DataWriter, create_publisher_null)
 {
     this->CreateTopic(false);
     dds::pub::DataWriter<Space::Type1> twriter = dds::core::null;
@@ -253,8 +251,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, create_publisher_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, create_topic_null)
+TEST_F(DataWriter, create_topic_null)
 {
     this->SetupWriter(false);
     dds::pub::DataWriter<Space::Type1> twriter = dds::core::null;
@@ -264,8 +261,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, create_topic_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, create)
+TEST_F(DataWriter, create)
 {
     this->SetupWriter(false);
     dds::pub::DataWriter<Space::Type1> twriter = dds::core::null;
@@ -273,8 +269,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, create)
     ASSERT_NE(twriter, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, publisher)
+TEST_F(DataWriter, publisher)
 {
     this->CreateWriter(false);
     dds::pub::Publisher tpub = this->writer.publisher();
@@ -282,8 +277,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, publisher)
     ASSERT_EQ(tpub, this->publisher);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, topic_description)
+TEST_F(DataWriter, topic_description)
 {
     this->CreateWriter(false);
     dds::topic::TopicDescription tdesc = this->writer.topic_description();
@@ -291,8 +285,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, topic_description)
     ASSERT_EQ(tdesc, this->topic);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_default)
+TEST_F(DataWriter, qos_default)
 {
     dds::pub::qos::DataWriterQos shift_qos;
     dds::pub::qos::DataWriterQos dflt_qos;
@@ -306,8 +299,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_default)
     ASSERT_NE(get_qos, this->besteffort_qos);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_nondefault_constructor)
+TEST_F(DataWriter, qos_nondefault_constructor)
 {
     this->SetupWriter(false);
     dds::pub::qos::DataWriterQos shift_qos;
@@ -328,8 +320,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_nondefault_constructor)
     ASSERT_NE(get_qos, this->publisher.default_datawriter_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_immutable_constructor)
+TEST_F(DataWriter, qos_immutable_constructor)
 {
     this->SetupWriter(false);
     dds::pub::DataWriter<Space::Type1> wtr = dds::core::null;
@@ -345,8 +336,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_immutable_constructor)
     ASSERT_NE(wtr.qos(), this->publisher.default_datawriter_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_nondefault_set)
+TEST_F(DataWriter, qos_nondefault_set)
 {
     this->CreateWriter(false);
     this->writer.qos(this->lifespan_qos);
@@ -354,8 +344,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_nondefault_set)
     ASSERT_NE(this->writer.qos(), this->publisher.default_datawriter_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_immutable_set)
+TEST_F(DataWriter, qos_immutable_set)
 {
     this->CreateWriter(false);
     ASSERT_THROW({
@@ -363,8 +352,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_immutable_set)
     }, dds::core::ImmutablePolicyError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_nondefault_shift)
+TEST_F(DataWriter, qos_nondefault_shift)
 {
     this->CreateWriter(false);
     this->writer << this->lifespan_qos;
@@ -372,8 +360,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_nondefault_shift)
     ASSERT_NE(this->writer.qos(), this->publisher.default_datawriter_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, qos_immutable_shift)
+TEST_F(DataWriter, qos_immutable_shift)
 {
     this->CreateWriter(false);
     ASSERT_THROW({
@@ -381,8 +368,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, qos_immutable_shift)
     }, dds::core::ImmutablePolicyError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_data)
+TEST_F(DataWriter, write_data)
 {
     Space::Type1 testData(0,1,2);
     this->SetupCommunication(false);
@@ -397,8 +383,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_data)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_InstanceHandle)
+TEST_F(DataWriter, write_InstanceHandle)
 {
     Space::Type1 testInstance(1,0,0);
     Space::Type1 testData(1,2,3);
@@ -418,8 +403,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_InstanceHandle)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_TopicInstance)
+TEST_F(DataWriter, write_TopicInstance)
 {
     dds::topic::TopicInstance<Space::Type1> ti;
     Space::Type1 testInstance(1,0,0);
@@ -441,8 +425,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_TopicInstance)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_iter)
+TEST_F(DataWriter, write_iter)
 {
     dds::sub::status::DataState notReadState(
                         dds::sub::status::SampleState::not_read(),
@@ -461,8 +444,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_iter)
     ReadAndCheckSampleType1(samples[1], notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_data_with_timestamp)
+TEST_F(DataWriter, write_data_with_timestamp)
 {
     Space::Type1 testData1(1,1,1);
     Space::Type1 testData2(1,2,2);
@@ -497,8 +479,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_data_with_timestamp)
     ReadAndCheckSampleType1(testData3, viewedState,    true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_InstanceHandle_with_timestamp)
+TEST_F(DataWriter, write_InstanceHandle_with_timestamp)
 {
     Space::Type1 testInstance(1,0,0);
     Space::Type1 testData(1,2,3);
@@ -518,8 +499,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_InstanceHandle_with_timestamp)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_TopicInstance_with_timestamp)
+TEST_F(DataWriter, write_TopicInstance_with_timestamp)
 {
     dds::topic::TopicInstance<Space::Type1> ti;
     Space::Type1 testInstance(1,0,0);
@@ -541,8 +521,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_TopicInstance_with_timestamp)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, write_iter_with_timestamp)
+TEST_F(DataWriter, write_iter_with_timestamp)
 {
     dds::core::Time past;
 
@@ -593,8 +572,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, write_iter_with_timestamp)
     ReadAndCheckSampleType1(samplesC[1], viewedState,    true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, writedispose)
+TEST_F(DataWriter, writedispose)
 {
     Space::Type1 testData0(0,0,0);
     Space::Type1 testData1(1,1,1);
@@ -629,8 +607,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, writedispose)
     ReadAndCheckSampleType1(testData3, viewedDisposedState,  true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance)
+TEST_F(DataWriter, dispose_instance)
 {
     static const int32_t MAX_INSTANCES =  5;
     static const int32_t SAMPLES_CNT   = 30;
@@ -646,16 +623,16 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance)
 
     /* Write instances multiple times. */
     for (i = 0; i < SAMPLES_CNT; i++) {
-        this->writer.write(testDataList[i % MAX_INSTANCES]);
+        this->writer.write(testDataList[static_cast<uint32_t>(i % MAX_INSTANCES)]);
         /* Dispose half already. */
         if ((i % 2) == 0) {
-            this->writer.dispose_instance(testDataList[i % MAX_INSTANCES]);
+            this->writer.dispose_instance(testDataList[static_cast<uint32_t>(i % MAX_INSTANCES)]);
         }
     }
 
     /* Dispose all remaining instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.dispose_instance(testDataList[(size_t)i]);
+        this->writer.dispose_instance(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Check result. */
@@ -665,8 +642,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance)
     this->ReadAndCheckAllType1(testDataList, disposedState, false);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_2nd)
+TEST_F(DataWriter, dispose_instance_2nd)
 {
     static const int32_t MAX_INSTANCES = 5;
     int32_t i;
@@ -685,12 +661,12 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_2nd)
 
     /* Write instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.write(testDataList[(size_t)i]);
+        this->writer.write(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Dispose all instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.dispose_instance(testDataList[(size_t)i]);
+        this->writer.dispose_instance(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Check result by reading. */
@@ -698,16 +674,15 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_2nd)
 
     /* Re-dispose instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.write(testDataList[(size_t)i]);
-        this->writer.dispose_instance(testDataList[(size_t)i]);
+        this->writer.write(testDataList[static_cast<uint32_t>(i)]);
+        this->writer.dispose_instance(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Check result. */
     this->ReadAndCheckAllType1(testDataList, notReadDisposedState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_after_read)
+TEST_F(DataWriter, dispose_instance_after_read)
 {
     static const int32_t MAX_INSTANCES = 5;
     int32_t i;
@@ -722,12 +697,12 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_after_read)
 
     /* Write instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.write(testDataList[(size_t)i]);
+        this->writer.write(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Dispose all instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.dispose_instance(testDataList[(size_t)i]);
+        this->writer.dispose_instance(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Check result by reading. */
@@ -739,7 +714,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_after_read)
 
     /* Re-dispose instances. */
     for (i = 0; i < MAX_INSTANCES; i++) {
-        this->writer.dispose_instance(testDataList[(size_t)i]);
+        this->writer.dispose_instance(testDataList[static_cast<uint32_t>(i)]);
     }
 
     /* Check result. */
@@ -750,8 +725,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, dispose_instance_after_read)
     this->ReadAndCheckAllType1(testDataList, readDisposedState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, matched_subscriptions_sequence)
+TEST_F(DataWriter, matched_subscriptions_sequence)
 {
     this->SetupCommunication(false);
 
@@ -763,8 +737,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, matched_subscriptions_sequence)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, matched_subscriptions_array)
+TEST_F(DataWriter, matched_subscriptions_array)
 {
     this->SetupCommunication(false);
 
@@ -776,8 +749,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, matched_subscriptions_array)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, shift_sample)
+TEST_F(DataWriter, shift_sample)
 {
     Space::Type1 testData(0,1,2);
     this->SetupCommunication(false);
@@ -792,8 +764,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, shift_sample)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, shift_pair_timestamp)
+TEST_F(DataWriter, shift_pair_timestamp)
 {
     Space::Type1 testData1(1,1,1);
     Space::Type1 testData2(1,2,2);
@@ -828,8 +799,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, shift_pair_timestamp)
     ReadAndCheckSampleType1(testData3, viewedState,    true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, shift_pair_InstanceHandle)
+TEST_F(DataWriter, shift_pair_InstanceHandle)
 {
     Space::Type1 testInstance(9,0,0);
     Space::Type1 testData(9,8,7);
@@ -849,8 +819,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, shift_pair_InstanceHandle)
     ReadAndCheckSampleType1(testData, notReadState, true);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, lookup_instance)
+TEST_F(DataWriter, lookup_instance)
 {
     Space::Type1 testData1(101,100,200);
     Space::Type1 testData2(102,100,200);
@@ -881,8 +850,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, lookup_instance)
     ASSERT_EQ(ih_found2, ih_registered2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance)
+TEST_F(DataWriter, unregister_instance)
 {
     Space::Type1 testData(201,100,200);
     dds::core::InstanceHandle ih;
@@ -897,8 +865,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance)
     this->writer.unregister_instance(testData);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance_InstanceHandle)
+TEST_F(DataWriter, unregister_instance_InstanceHandle)
 {
     Space::Type1 testData(301,100,200);
     dds::core::InstanceHandle ih;
@@ -913,8 +880,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance_InstanceHandle)
     this->writer.unregister_instance(ih);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance_with_timestamp)
+TEST_F(DataWriter, unregister_instance_with_timestamp)
 {
     Space::Type1 testData(401,100,200);
     dds::core::InstanceHandle ih;
@@ -929,8 +895,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance_with_timestamp)
     this->writer.unregister_instance(testData, this->participant.current_time());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance_InstanceHandle_with_timestamp)
+TEST_F(DataWriter, unregister_instance_InstanceHandle_with_timestamp)
 {
     Space::Type1 testData(501,100,200);
     dds::core::InstanceHandle ih;
@@ -945,8 +910,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, unregister_instance_InstanceHandle_with_timesta
     this->writer.unregister_instance(ih, this->participant.current_time());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, register_instance_with_timestamp)
+TEST_F(DataWriter, register_instance_with_timestamp)
 {
     Space::Type1 testData1(0,1,2);
     dds::core::InstanceHandle ih;
@@ -959,8 +923,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, register_instance_with_timestamp)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, key_value_ti)
+TEST_F(DataWriter, key_value_ti)
 {
     dds::topic::TopicInstance<Space::Type1> dummy;
     dds::topic::TopicInstance<Space::Type1> ti;
@@ -978,8 +941,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, key_value_ti)
     ASSERT_EQ(key.long_1(), testData.long_1());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, key_value_sample)
+TEST_F(DataWriter, key_value_sample)
 {
     dds::topic::TopicInstance<Space::Type1> ti;
     Space::Type1 testData(43,43,43);
@@ -994,15 +956,13 @@ DDSCXX_TEST_F(ddscxx_DataWriter, key_value_sample)
     ASSERT_EQ(key.long_1(), testData.long_1());
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, topic)
+TEST_F(DataWriter, topic)
 {
     this->CreateWriter(false);
     ASSERT_EQ(this->writer.topic(), this->topic);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, use_after_close)
+TEST_F(DataWriter, use_after_close)
 {
     dds::topic::TopicInstance<Space::Type1> ti;
     dds::core::InstanceHandle ih;
@@ -1124,7 +1084,6 @@ DDSCXX_TEST_F(ddscxx_DataWriter, use_after_close)
 
     ASSERT_THROW({
         dds::topic::TopicInstance<Space::Type1> dummy;
-        dds::topic::TopicInstance<Space::Type1> ti;
         ti = this->writer.key_value(dummy, ih);
     }, dds::core::AlreadyClosedError);
 
@@ -1139,8 +1098,7 @@ DDSCXX_TEST_F(ddscxx_DataWriter, use_after_close)
     }, dds::core::AlreadyClosedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_DataWriter, use_after_deletion)
+TEST_F(DataWriter, use_after_deletion)
 {
     dds::topic::TopicInstance<Space::Type1> ti;
     dds::core::InstanceHandle ih;
@@ -1262,7 +1220,6 @@ DDSCXX_TEST_F(ddscxx_DataWriter, use_after_deletion)
 
     ASSERT_THROW({
         dds::topic::TopicInstance<Space::Type1> dummy;
-        dds::topic::TopicInstance<Space::Type1> ti;
         ti = this->writer.key_value(dummy, ih);
     }, dds::core::NullReferenceError);
 
@@ -1276,5 +1233,3 @@ DDSCXX_TEST_F(ddscxx_DataWriter, use_after_deletion)
         this->writer.topic();
     }, dds::core::NullReferenceError);
 }
-
-

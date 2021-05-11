@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,25 +10,24 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "Space.hpp"
 
 
 
 /**
  * Dummy listener for the Topic tests
  */
-namespace ddscxx { namespace tests { namespace Topic {
-    class TestTopic1Listener : public virtual dds::topic::NoOpTopicListener<Space::Type1>{ };
-} } }
-ddscxx::tests::Topic::TestTopic1Listener topic1Listener;
+class TestTopic1Listener : public virtual dds::topic::NoOpTopicListener<Space::Type1>{ };
+
+TestTopic1Listener topic1Listener;
 
 
 
 /**
  * Fixture for the Topic tests
  */
-class ddscxx_Topic : public ::testing::Test
+class Topic : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -40,7 +39,7 @@ public:
     dds::topic::qos::TopicQos reliable_qos;
     dds::topic::qos::TopicQos lifespan_qos;
 
-    ddscxx_Topic() :
+    Topic() :
         participant(dds::core::null),
         topic(dds::core::null),
         topic1A(dds::core::null),
@@ -96,7 +95,7 @@ public:
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_Topic, null)
+TEST_F(Topic, null)
 {
     dds::topic::Topic<Space::Type1> topic1(dds::core::null);
     dds::topic::Topic<Space::Type2> topic2 = dds::core::null;
@@ -104,8 +103,7 @@ DDSCXX_TEST_F(ddscxx_Topic, null)
     ASSERT_EQ(topic2, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, create_null)
+TEST_F(Topic, create_null)
 {
     dds::domain::DomainParticipant participant = dds::core::null;;
     dds::topic::Topic<Space::Type1> ttopic = dds::core::null;
@@ -115,16 +113,14 @@ DDSCXX_TEST_F(ddscxx_Topic, create_null)
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, create)
+TEST_F(Topic, create)
 {
     dds::topic::Topic<Space::Type1> ttopic = dds::core::null;
     ttopic = dds::topic::Topic<Space::Type1>(this->participant, "ttopic");
     ASSERT_NE(ttopic, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, create_same)
+TEST_F(Topic, create_same)
 {
     dds::topic::Topic<Space::Type1> ttopic1A = dds::core::null;
     dds::topic::Topic<Space::Type1> ttopic1B = dds::core::null;
@@ -136,8 +132,7 @@ DDSCXX_TEST_F(ddscxx_Topic, create_same)
     ASSERT_STREQ(ttopic1A.type_name().c_str(), ttopic1B.type_name().c_str());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, create_conflict)
+TEST_F(Topic, create_conflict)
 {
     dds::topic::Topic<Space::Type1> ttopic1 = dds::core::null;
     dds::topic::Topic<Space::Type2> ttopic2 = dds::core::null;
@@ -150,8 +145,7 @@ DDSCXX_TEST_F(ddscxx_Topic, create_conflict)
     }, dds::core::PreconditionNotMetError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, name)
+TEST_F(Topic, name)
 {
     this->CreateTopics();
     ASSERT_STREQ(this->topic1A.name().c_str(), "topic1A");
@@ -160,8 +154,7 @@ DDSCXX_TEST_F(ddscxx_Topic, name)
     ASSERT_STREQ(this->topic2B.name().c_str(), "topic2B");
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, type_name_default)
+TEST_F(Topic, type_name_default)
 {
     this->CreateTopics();
     ASSERT_STREQ(this->topic1A.type_name().c_str(), "Space::Type1");
@@ -170,8 +163,7 @@ DDSCXX_TEST_F(ddscxx_Topic, type_name_default)
     ASSERT_STREQ(this->topic2B.type_name().c_str(), "Space::Type2");
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, type_name_nondefault)
+TEST_F(Topic, type_name_nondefault)
 {
     /* TODO: Implement. For now it throws unsupported. */
 
@@ -196,15 +188,13 @@ DDSCXX_TEST_F(ddscxx_Topic, type_name_nondefault)
     }, dds::core::UnsupportedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, domain_participant)
+TEST_F(Topic, domain_participant)
 {
     this->CreateTopic();
     ASSERT_EQ(this->topic.domain_participant(), this->participant);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_default)
+TEST_F(Topic, qos_default)
 {
     dds::topic::qos::TopicQos shift_qos;
     dds::topic::qos::TopicQos dflt_qos;
@@ -218,8 +208,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_default)
     ASSERT_NE(get_qos, this->reliable_qos);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_nondefault_constructor)
+TEST_F(Topic, qos_nondefault_constructor)
 {
     dds::topic::qos::TopicQos shift_qos;
     dds::topic::qos::TopicQos get_qos;
@@ -239,8 +228,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_nondefault_constructor)
     ASSERT_NE(get_qos, this->participant.default_topic_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_immutable_constructor)
+TEST_F(Topic, qos_immutable_constructor)
 {
     dds::topic::Topic<Space::Type1> ttopic = dds::core::null;
     dds::core::status::StatusMask mask;
@@ -255,8 +243,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_immutable_constructor)
     ASSERT_NE(ttopic.qos(), this->participant.default_topic_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_nondefault_set)
+TEST_F(Topic, qos_nondefault_set)
 {
     this->CreateTopic();
     this->topic.qos(this->lifespan_qos);
@@ -264,8 +251,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_nondefault_set)
     ASSERT_NE(this->topic.qos(), this->participant.default_topic_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_immutable_set)
+TEST_F(Topic, qos_immutable_set)
 {
     this->CreateTopic();
     ASSERT_THROW({
@@ -273,8 +259,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_immutable_set)
     }, dds::core::ImmutablePolicyError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_nondefault_shift)
+TEST_F(Topic, qos_nondefault_shift)
 {
     this->CreateTopic();
     this->topic << this->lifespan_qos;
@@ -282,8 +267,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_nondefault_shift)
     ASSERT_NE(this->topic.qos(), this->participant.default_topic_qos());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, qos_immutable_shift)
+TEST_F(Topic, qos_immutable_shift)
 {
     this->CreateTopic();
     ASSERT_THROW({
@@ -291,8 +275,7 @@ DDSCXX_TEST_F(ddscxx_Topic, qos_immutable_shift)
     }, dds::core::ImmutablePolicyError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, inconsistent_topic_status)
+TEST_F(Topic, inconsistent_topic_status)
 {
     this->CreateTopic();
     dds::core::status::InconsistentTopicStatus itStatus =
@@ -301,8 +284,7 @@ DDSCXX_TEST_F(ddscxx_Topic, inconsistent_topic_status)
     ASSERT_EQ(itStatus.total_count_change(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, close_busy)
+TEST_F(Topic, close_busy)
 {
     dds::sub::Subscriber sub = dds::core::null;
     dds::sub::DataReader<Space::Type1> reader = dds::core::null;
@@ -324,8 +306,7 @@ DDSCXX_TEST_F(ddscxx_Topic, close_busy)
     this->topic.close();
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, traits)
+TEST_F(Topic, traits)
 {
     ASSERT_NE(dds::topic::is_topic_type<Space::Type1>::value, 0);
     ASSERT_STREQ(dds::topic::topic_type_name<Space::Type1>::value().c_str(), "Space::Type1");
@@ -333,8 +314,7 @@ DDSCXX_TEST_F(ddscxx_Topic, traits)
     ASSERT_STREQ(dds::topic::topic_type_name<Space::Type2>::value().c_str(), "Space::Type2");
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, use_after_close)
+TEST_F(Topic, use_after_close)
 {
     /* Get a closed topic. */
     this->CreateTopic();
@@ -379,8 +359,7 @@ DDSCXX_TEST_F(ddscxx_Topic, use_after_close)
     }, dds::core::AlreadyClosedError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Topic, use_after_deletion)
+TEST_F(Topic, use_after_deletion)
 {
     /* Get a deleted topic. */
     this->CreateTopic();

@@ -145,7 +145,7 @@ if(ANALYZER)
       if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "10")
         message(STATUS "Enabling analyzer: GCC")
         # -Wanalyzer-malloc-leak generates lots of false positives
-        add_compile_options(-fanalyzer -Wno-analyzer-malloc-leak)
+        add_compile_options(-fanalyzer -Wno-analyzer-malloc-leak -Wno-analyzer-null-dereference)
       endif()
     elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
       message(STATUS "Enabling analyzer: MSVC")

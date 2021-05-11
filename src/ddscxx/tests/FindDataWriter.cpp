@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,22 +9,19 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-#include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
-
 #include <iostream>
+#include <gtest/gtest.h>
 
+#include "dds/dds.hpp"
+#include "Space.hpp"
 
 #define TOPIC1_NAME    "findwriter_Type1"
 #define TOPIC2_NAME    "findwriter_Type2"
 
-
-
 /**
  * Fixture for the Topic finding and discovering tests
  */
-class ddscxx_FindDataWriter : public ::testing::Test
+class FindDataWriter : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant = dds::core::null;
@@ -60,13 +57,11 @@ public:
     }
 };
 
-
-
 /**
  * Tests
  */
 
-DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_with_empty)
+TEST_F(FindDataWriter, BinIterator_find_with_empty)
 {
     std::vector<dds::pub::DataWriter<Space::Type1> > found;
     uint32_t cnt;
@@ -82,8 +77,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_with_empty)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_with_other_type)
+TEST_F(FindDataWriter, BinIterator_find_with_other_type)
 {
     std::vector<dds::pub::DataWriter<Space::Type2> > found;
     uint32_t cnt;
@@ -101,8 +95,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_with_other_type)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_nonexisting)
+TEST_F(FindDataWriter, BinIterator_find_nonexisting)
 {
     std::vector<dds::pub::DataWriter<Space::Type1> > found;
     uint32_t cnt;
@@ -120,8 +113,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_nonexisting)
     ASSERT_EQ(found.size(), 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find)
+TEST_F(FindDataWriter, BinIterator_find)
 {
     std::vector<dds::pub::DataWriter<Space::Type1> > found;
     uint32_t cnt;
@@ -149,8 +141,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find)
 #endif
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_any)
+TEST_F(FindDataWriter, BinIterator_find_any)
 {
     std::vector<dds::pub::AnyDataWriter> found;
     uint32_t cnt;
@@ -170,8 +161,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, BinIterator_find_any)
     ASSERT_TRUE(found[0] == this->writer2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_with_empty)
+TEST_F(FindDataWriter, FwdIterator_find_with_empty)
 {
     std::vector<dds::pub::DataWriter<Space::Type1> > found(5, dds::core::null);
     std::insert_iterator<std::vector<dds::pub::DataWriter<Space::Type1> > > iter(found, found.begin());
@@ -183,13 +173,12 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_with_empty)
             this->publisher,
             TOPIC1_NAME,
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_with_other_type)
+TEST_F(FindDataWriter, FwdIterator_find_with_other_type)
 {
     std::vector<dds::pub::DataWriter<Space::Type2> > found(5, dds::core::null);
     uint32_t cnt;
@@ -202,13 +191,12 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_with_other_type)
             this->publisher,
             TOPIC1_NAME,  // <- not matching Space::Type2
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_nonexisting)
+TEST_F(FindDataWriter, FwdIterator_find_nonexisting)
 {
     std::vector<dds::pub::DataWriter<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -221,13 +209,12 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_nonexisting)
             this->publisher,
             std::string("non-existing"),
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 0);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find)
+TEST_F(FindDataWriter, FwdIterator_find)
 {
     std::vector<dds::pub::DataWriter<Space::Type1> > found(5, dds::core::null);
     uint32_t cnt;
@@ -241,7 +228,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find)
             this->publisher,
             TOPIC1_NAME,
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
 #if 1
     /* Currently, the find() will only return 1 writer. */
@@ -254,8 +241,7 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find)
 #endif
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_any)
+TEST_F(FindDataWriter, FwdIterator_find_any)
 {
     std::vector<dds::pub::AnyDataWriter> found(5, dds::core::null);
     uint32_t cnt;
@@ -269,18 +255,16 @@ DDSCXX_TEST_F(ddscxx_FindDataWriter, FwdIterator_find_any)
             this->publisher,
             TOPIC2_NAME,
             found.begin(),
-            (uint32_t)found.size());
+            static_cast<uint32_t>(found.size()));
 
     ASSERT_EQ(cnt, 1);
     ASSERT_TRUE(found[0] == this->writer2);
 }
 
-
-DDSCXX_TEST_F(ddscxx_FindDataWriter, ignore)
+TEST_F(FindDataWriter, ignore)
 {
     this->CreateWriters();
     ASSERT_THROW({
         dds::pub::ignore(this->participant, dds::core::InstanceHandle());
     }, dds::core::UnsupportedError);
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,8 +10,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
+#include "Space.hpp"
 
 
 
@@ -19,7 +19,7 @@
 /**
  * Fixture for the DataReader tests
  */
-class ddscxx_Query : public ::testing::Test
+class Query : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -31,7 +31,7 @@ public:
     std::string expression;
 
 
-    ddscxx_Query() :
+    Query() :
         participant(dds::core::null),
         subscriber(dds::core::null),
         topic(dds::core::null),
@@ -88,8 +88,7 @@ public:
 /**
  * Tests
  */
-
-DDSCXX_TEST_F(ddscxx_Query, null)
+TEST_F(Query, null)
 {
     dds::sub::Query query1 = dds::core::null;
     dds::sub::Query query2(dds::core::null);
@@ -97,24 +96,21 @@ DDSCXX_TEST_F(ddscxx_Query, null)
     ASSERT_EQ(query2, dds::core::null);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, create_reader_null)
+TEST_F(Query, create_reader_null)
 {
     ASSERT_THROW({
         dds::sub::Query query(dds::core::null, this->expression, this->params);
     }, dds::core::NullReferenceError);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, create_params_none)
+TEST_F(Query, create_params_none)
 {
     dds::sub::Query query(this->reader,
                           this->expression);
     this->check(query, this->expression, std::vector<std::string>());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, create_params_vector)
+TEST_F(Query, create_params_vector)
 {
     dds::sub::Query query(this->reader,
                           this->expression,
@@ -122,8 +118,7 @@ DDSCXX_TEST_F(ddscxx_Query, create_params_vector)
     this->check(query, this->expression, this->params);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, create_params_iter)
+TEST_F(Query, create_params_iter)
 {
     dds::sub::Query query(this->reader,
                           this->expression,
@@ -132,8 +127,7 @@ DDSCXX_TEST_F(ddscxx_Query, create_params_iter)
     this->check(query, this->expression, this->params);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, expression)
+TEST_F(Query, expression)
 {
     dds::sub::Query query(this->reader,
                           this->expression);
@@ -142,8 +136,7 @@ DDSCXX_TEST_F(ddscxx_Query, expression)
     this->check(query, new_expr, std::vector<std::string>());
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, add_parameter)
+TEST_F(Query, add_parameter)
 {
     std::vector<std::string> plist;
     dds::sub::Query query(this->reader,
@@ -160,8 +153,7 @@ DDSCXX_TEST_F(ddscxx_Query, add_parameter)
     this->check(query, this->expression, plist);
 }
 
-
-DDSCXX_TEST_F(ddscxx_Query, parameters)
+TEST_F(Query, parameters)
 {
     std::vector<std::string> plist;
     dds::sub::Query query(this->reader,
@@ -179,4 +171,3 @@ DDSCXX_TEST_F(ddscxx_Query, parameters)
     query.parameters(params2.begin(), params2.end());
     this->check(query, this->expression, plist);
 }
-

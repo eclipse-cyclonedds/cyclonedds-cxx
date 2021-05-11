@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
 #include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
+#include <gtest/gtest.h>
 
 using namespace dds::pub::qos;
 using namespace dds::sub::qos;
@@ -98,9 +98,7 @@ WriterDataLifecycle tmpWdLifecycle;
 TimeBasedFilter     tmpTbFilter;
 ReaderDataLifecycle tmpRdLifecycle;
 
-
-
-DDSCXX_TEST(ddscxx_Qos, DomainParticipant)
+TEST(Qos, DomainParticipant)
 {
     DomainParticipantQos dpQosDefault;
 
@@ -129,8 +127,7 @@ DDSCXX_TEST(ddscxx_Qos, DomainParticipant)
     ASSERT_EQ(nonDefaultEntityFactory, dpQosConstructed.policy<EntityFactory>());
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, Topic)
+TEST(Qos, Topic)
 {
     TopicQos tQosDefault;
 
@@ -208,8 +205,7 @@ DDSCXX_TEST(ddscxx_Qos, Topic)
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, Publisher)
+TEST(Qos, Publisher)
 {
     PublisherQos pQosDefault;
 
@@ -246,8 +242,7 @@ DDSCXX_TEST(ddscxx_Qos, Publisher)
     ASSERT_EQ(nonDefaultGdata,         pQosConstructed.policy<GroupData>());
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, Subscriber)
+TEST(Qos, Subscriber)
 {
     SubscriberQos sQosDefault;
 
@@ -284,8 +279,7 @@ DDSCXX_TEST(ddscxx_Qos, Subscriber)
     ASSERT_EQ(nonDefaultGdata,         sQosConstructed.policy<GroupData>());
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, DataWriter)
+TEST(Qos, DataWriter)
 {
     DataWriterQos dwQosDefault;
 
@@ -395,8 +389,7 @@ DDSCXX_TEST(ddscxx_Qos, DataWriter)
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, DataReader)
+TEST(Qos, DataReader)
 {
     DataReaderQos drQosDefault;
 
@@ -493,8 +486,7 @@ DDSCXX_TEST(ddscxx_Qos, DataReader)
     ASSERT_EQ(nonDefaultRdLifecycle, drQosRConstructed.policy<ReaderDataLifecycle>());
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, invalid_values)
+TEST(Qos, invalid_values)
 {
     History        invalidHistory;
     ResourceLimits invalidResources;
@@ -511,8 +503,7 @@ DDSCXX_TEST(ddscxx_Qos, invalid_values)
     }, dds::core::InvalidArgumentError);
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, invalid_policies)
+TEST(Qos, invalid_policies)
 {
     TopicQos             tQos;
     DataWriterQos        dwQos;
@@ -552,8 +543,7 @@ DDSCXX_TEST(ddscxx_Qos, invalid_policies)
     }, dds::core::InvalidArgumentError);
 }
 
-
-DDSCXX_TEST(ddscxx_Qos, policy_name)
+TEST(Qos, policy_name)
 {
     ASSERT_EQ(dds::core::policy::policy_name<UserData>::name(),            "UserData");
     ASSERT_EQ(dds::core::policy::policy_name<Durability>::name(),          "Durability");

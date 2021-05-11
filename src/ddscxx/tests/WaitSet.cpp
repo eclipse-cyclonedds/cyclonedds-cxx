@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2018 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,13 +9,14 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
-#include "dds/dds.hpp"
-#include "dds/ddscxx/test.h"
-#include "Space_DCPS.hpp"
+#include <gtest/gtest.h>
 
+#include "dds/dds.hpp"
+#include "dds/ddsrt/process.h"
 #include "dds/ddsrt/threads.h"
 #include "dds/ddsrt/sync.h"
 
+#include "Space.hpp"
 
 #define TA_ATTACH_REMOVE_CONDITION "attach_remove_condition"
 #define TA_ATTACH_CLOSE_READER     "close_reader"
@@ -155,7 +156,7 @@ void test_sem_post(test_semaphore *sem)
 
 static uint32_t guard_thread(void *arg)
 {
-    guard_thread_args * args = (guard_thread_args *)arg;
+    guard_thread_args * args = static_cast<guard_thread_args *>(arg);
 
     try {
         dds_sleepfor(args->delay);
@@ -171,7 +172,7 @@ static uint32_t guard_thread(void *arg)
 
 static uint32_t writer_thread(void *arg)
 {
-    writer_thread_args * args = (writer_thread_args *)arg;
+    writer_thread_args * args = static_cast<writer_thread_args *>(arg);
 
     try {
         dds_sleepfor(args->delay);
@@ -189,7 +190,7 @@ static uint32_t writer_thread(void *arg)
 
 static uint32_t test_action_thread(void *arg)
 {
-    action_thread_args * args = (action_thread_args *)arg;
+    action_thread_args * args = static_cast<action_thread_args *>(arg);
 
     try
     {
@@ -257,7 +258,7 @@ static uint32_t test_action_thread(void *arg)
 /**
  * Fixture for the tests
  */
-class ddscxx_WaitSet : public ::testing::Test
+class WaitSet : public ::testing::Test
 {
 public:
     dds::domain::DomainParticipant participant;
@@ -288,7 +289,7 @@ public:
     test_semaphore start_sem;
     test_semaphore ready_sem;
 
-    ddscxx_WaitSet() :
+    WaitSet() :
         participant(dds::core::null),
         publisher(dds::core::null),
         subscriber(dds::core::null),
@@ -307,6 +308,9 @@ public:
 
     void SetUp()
     {
+        char buf[32];
+        ddsrt_pid_t pid = ddsrt_getpid();
+
         this->participant = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
         ASSERT_NE(this->participant, dds::core::null);
 
@@ -316,7 +320,8 @@ public:
         this->subscriber = dds::sub::Subscriber(this->participant);
         ASSERT_NE(this->subscriber, dds::core::null);
 
-        this->topic = dds::topic::Topic<Space::Type1>(this->participant, "waitset_test_topic");
+        snprintf(buf, sizeof(buf), "waitset_test_topic_%" PRIdPID, pid);
+        this->topic = dds::topic::Topic<Space::Type1>(this->participant, buf);
         ASSERT_NE(this->topic, dds::core::null);
 
         this->reader = dds::sub::DataReader<Space::Type1>(this->subscriber, this->topic);
@@ -352,7 +357,6 @@ public:
         actionThreadArgs.semReady = &ready_sem;
 
         ddsrt_threadattr_init(&threadAttr);
-
     }
 
     void TearDown()
@@ -374,7 +378,7 @@ public:
 /**
  * Test null assignment for WaitSets
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, null)
+TEST_F(WaitSet, null)
 {
     dds::core::cond::WaitSet waitSet1 = dds::core::null;
     dds::core::cond::WaitSet waitSet2(dds::core::null);
@@ -385,7 +389,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, null)
 /**
  * Test creating WaitSet
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, create)
+TEST_F(WaitSet, create)
 {
     dds::core::cond::WaitSet waitSet1 = dds::core::cond::WaitSet();
     dds::core::cond::WaitSet waitSet2 = dds::core::cond::WaitSet();
@@ -397,7 +401,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, create)
 /**
  * Test attach condition to WaitSet
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, attach_conditions)
+TEST_F(WaitSet, attach_conditions)
 {
     waitSet = dds::core::cond::WaitSet();
     ASSERT_NE(waitSet, dds::core::null);
@@ -425,7 +429,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, attach_conditions)
 /**
  * Test wait() timeout
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, wait_timeout)
+TEST_F(WaitSet, wait_timeout)
 {
     waitSet = dds::core::cond::WaitSet();
     waitSet += readerStatus;
@@ -442,7 +446,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, wait_timeout)
 /**
  * Test waiting for StatusCondition
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, wait_reader_status)
+TEST_F(WaitSet, wait_reader_status)
 {
     waitSet = dds::core::cond::WaitSet();
     waitSet += readerStatus;
@@ -450,7 +454,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, wait_reader_status)
     // write some data
     writerThreadArgs.delay = DDS_MSECS(100);
     ddsrt_thread_create(&threadId, "writer_thread",
-                &threadAttr, writer_thread, (void*)&writerThreadArgs);
+                &threadAttr, writer_thread, &writerThreadArgs);
 
     // wait for status condition
     ASSERT_NO_THROW({
@@ -470,7 +474,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, wait_reader_status)
 /**
  * Test timeout when waiting for StatusCondition
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, wait_reader_timeout)
+TEST_F(WaitSet, wait_reader_timeout)
 {
     dds::core::cond::WaitSet::ConditionSeq conditionList;
     dds::core::Duration waitTimeout;
@@ -481,7 +485,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, wait_reader_timeout)
     // Write data
     writerThreadArgs.delay = DDS_MSECS(100);
     ddsrt_thread_create(&threadId, "writer_thread",
-                &threadAttr, writer_thread, (void*)&writerThreadArgs);
+                &threadAttr, writer_thread, &writerThreadArgs);
 
     // Wait and expect being triggered
     ASSERT_NO_THROW({
@@ -510,7 +514,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, wait_reader_timeout)
 /**
  * Test GuardCondition trigger during wait
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, guard_trigger_during_wait)
+TEST_F(WaitSet, guard_trigger_during_wait)
 {
     dds::core::cond::WaitSet::ConditionSeq conditionList;
     dds::core::Duration waitTimeout;
@@ -521,7 +525,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, guard_trigger_during_wait)
     // Trigger the guard condition during wait
     guardThreadArgs.delay = DDS_MSECS(100);
     ddsrt_thread_create(&threadId, "guard_trigger_thread",
-                &threadAttr, guard_thread, (void*)&guardThreadArgs);
+                &threadAttr, guard_thread, &guardThreadArgs);
 
     // wait for the GuardCondition to trigger
     ASSERT_NO_THROW({
@@ -541,7 +545,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, guard_trigger_during_wait)
 /**
  * Test GuardCondition trigger before wait
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, guard_trigger_before_wait)
+TEST_F(WaitSet, guard_trigger_before_wait)
 {
     dds::core::cond::WaitSet::ConditionSeq conditionList;
     dds::core::Duration waitTimeout;
@@ -568,7 +572,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, guard_trigger_before_wait)
 /**
  * Test adding multiple conditions to WaitSet
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, multiple_conditions)
+TEST_F(WaitSet, multiple_conditions)
 {
     // Create read condition
     dds::sub::status::DataState anyDataState;
@@ -624,7 +628,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, multiple_conditions)
  * Add multiple conditions to a WaitSet and check if all handlers functors are
  * executed with a dispatch
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, multiple_conditions_handlers)
+TEST_F(WaitSet, multiple_conditions_handlers)
 {
     bool readHandlerExecuted = false;
     ReadCondHandler readCondHandler(readHandlerExecuted);
@@ -663,7 +667,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, multiple_conditions_handlers)
 /**
  * Test the time-out for WaitSet dispatch function
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, dispatch_timeout)
+TEST_F(WaitSet, dispatch_timeout)
 {
     waitSet = dds::core::cond::WaitSet();
     waitSet += readerStatus;
@@ -674,11 +678,10 @@ DDSCXX_TEST_F(ddscxx_WaitSet, dispatch_timeout)
     }, dds::core::TimeoutError) << "WaitSet did not throw TimeoutError";
 }
 
-
 /**
  * Check the same condition can be added more than once
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, multiple_conditions_same)
+TEST_F(WaitSet, multiple_conditions_same)
 {
     waitSet = dds::core::cond::WaitSet();
     waitSet += guard;
@@ -701,7 +704,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, multiple_conditions_same)
 /**
  * Check that a remove of a not attached condition returns false
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, detach_condition_nonexisting)
+TEST_F(WaitSet, detach_condition_nonexisting)
 {
     bool result = false;
     waitSet = dds::core::cond::WaitSet();
@@ -716,7 +719,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, detach_condition_nonexisting)
 /**
  * Check that it is possible to remove and attach conditions while waiting
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, attach_detach_during_wait)
+TEST_F(WaitSet, attach_detach_during_wait)
 {
     waitSet = dds::core::cond::WaitSet();
 
@@ -726,7 +729,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, attach_detach_during_wait)
 
     actionThreadArgs.action = TA_ATTACH_REMOVE_CONDITION;
     ddsrt_thread_create(&threadId, "test_action_thread",
-                &threadAttr, test_action_thread, (void*)&actionThreadArgs);
+                &threadAttr, test_action_thread, &actionThreadArgs);
 
     dds::core::Duration waitTimeout (1, 0);
     dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
@@ -748,11 +751,10 @@ DDSCXX_TEST_F(ddscxx_WaitSet, attach_detach_during_wait)
     ddsrt_thread_join(threadId, NULL);
 }
 
-
 /**
  * Remove and add guard conditions while waiting
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, attach_detach_guard_during_wait)
+TEST_F(WaitSet, attach_detach_guard_during_wait)
 {
     waitSet = dds::core::cond::WaitSet();
 
@@ -762,7 +764,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, attach_detach_guard_during_wait)
 
     actionThreadArgs.action = TA_ADD_GUARD_CONDITION;
     ddsrt_thread_create(&threadId, "test_action_thread",
-                &threadAttr, test_action_thread, (void*)&actionThreadArgs);
+                &threadAttr, test_action_thread, &actionThreadArgs);
 
     dds::core::Duration waitTimeout (1, 0);
     dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
@@ -784,11 +786,10 @@ DDSCXX_TEST_F(ddscxx_WaitSet, attach_detach_guard_during_wait)
     ddsrt_thread_join(threadId, NULL);
 }
 
-
 /**
  * Check if the waitset destructor does not deadlock
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, destructor)
+TEST_F(WaitSet, destructor)
 {
     dds_duration_t timeout = DDS_MSECS(1000);
     bool result;
@@ -798,7 +799,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, destructor)
 
     actionThreadArgs.action = TA_WAITSET_DESTRUCTOR;
     ddsrt_thread_create(&threadId, "test_action_thread",
-                &threadAttr, test_action_thread, (void*)&actionThreadArgs);
+                &threadAttr, test_action_thread, &actionThreadArgs);
 
     result = test_sem_wait(&start_sem, timeout);
     ASSERT_TRUE(result) << "Failed to start test thread";
@@ -814,7 +815,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, destructor)
  *
  * TODO: disabled because the conditions are currently not removed from the waitset
  */
-DDSCXX_TEST_F(ddscxx_WaitSet, DISABLED_attach_detach_multiple_during_wait)
+TEST_F(WaitSet, DISABLED_attach_detach_multiple_during_wait)
 {
     reader.take();
     waitSet = dds::core::cond::WaitSet();
@@ -842,7 +843,7 @@ DDSCXX_TEST_F(ddscxx_WaitSet, DISABLED_attach_detach_multiple_during_wait)
     // conditions from the WaitSet. Next the thread triggers the guard condition
     actionThreadArgs.action = TA_ATTACH_CLOSE_READER;
     ddsrt_thread_create(&threadId, "test_action_thread",
-                &threadAttr, test_action_thread, (void*)&actionThreadArgs);
+                &threadAttr, test_action_thread, &actionThreadArgs);
 
     // Wait
     dds::core::Duration waitTimeout(1, 0);
@@ -866,4 +867,3 @@ DDSCXX_TEST_F(ddscxx_WaitSet, DISABLED_attach_detach_multiple_during_wait)
 
     ddsrt_thread_join(threadId, NULL);
 }
-
