@@ -154,6 +154,8 @@ typename Topic<T, DELEGATE>::Listener* Topic<T, DELEGATE>::listener() const
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
 #include <org/eclipse/cyclonedds/core/ListenerDispatcher.hpp>
 
+#include "dds/ddsi/ddsi_sertype.h"
+
 template <typename T>
 dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
       const std::string& name,
@@ -180,7 +182,11 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
 
     dds_delete_qos(ddsc_qos);
 
-    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_topic, "Could not create topic.");
+    if (ddsc_topic < 0) {
+      ddsi_sertype_unref(ser_type_);
+      ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_topic, "Could not create topic.");
+    }
+
     this->set_ddsc_entity(ddsc_topic);
 
     this->listener(listener, mask);
