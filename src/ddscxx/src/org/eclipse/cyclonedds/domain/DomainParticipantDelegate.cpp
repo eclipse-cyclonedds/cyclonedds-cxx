@@ -62,7 +62,6 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
 
     /* Validate the qos and get the corresponding ddsc qos. */
     qos.delegate().check();
-    ddsc_qos = qos.delegate().ddsc_qos();
 
     dds_entity_t ddsc_par;
 
@@ -85,6 +84,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
         }
     }
 
+    ddsc_qos = qos.delegate().ddsc_qos();
     ddsc_par = dds_create_participant(static_cast<dds_domainid_t>(domain_id_), ddsc_qos, NULL);
 
     dds_delete_qos (ddsc_qos);
