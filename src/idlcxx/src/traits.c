@@ -34,7 +34,11 @@ emit_traits(
   (void)revisit;
   (void)path;
 
-  fmt = "template <>\n"
+  fmt = "namespace org {\n"
+        "namespace eclipse {\n"
+        "namespace cyclonedds {\n"
+        "namespace topic {\n"
+        "template <>\n"
         "class TopicTraits<%1$s>\n"
         "{\n"
         "public:\n"
@@ -71,7 +75,19 @@ emit_traits(
         "  {\n"
         "    return sizeof(%1$s);\n"
         "  }\n"
-        "};\n";
+        "};\n"
+        "}\n}\n}\n}\n\n"
+        "namespace dds {\n"
+        "namespace topic {\n"
+        "template <>\n"
+        "struct topic_type_name<%1$s>\n"
+        "{\n"
+        "    static std::string value()\n"
+        "    {\n"
+        "      return org::eclipse::cyclonedds::topic::TopicTraits<%1$s>::getTypeName();\n"
+        "    }\n"
+        "};\n"
+        "}\n}\n\n";
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
   if (!idl_is_keyless(node, pstate->flags & IDL_FLAG_KEYLIST))
@@ -116,11 +132,7 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   const char *sources[] = { NULL, NULL };
 
   fmt = "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
-        "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n"
-        "namespace org {\n"
-        "namespace eclipse {\n"
-        "namespace cyclonedds {\n"
-        "namespace topic {\n";
+        "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n";
   if (idl_fprintf(generator->header.handle, fmt) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -133,8 +145,6 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
-  if (fputs("}\n}\n}\n}\n\n", generator->header.handle) < 0)
-    return IDL_RETCODE_NO_MEMORY;
 
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_register_topic_type;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
