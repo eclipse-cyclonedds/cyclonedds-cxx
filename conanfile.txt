@@ -7,3 +7,4 @@ cmake
 
 [options]
 cunit:shared=True
+gtest:shared=True
