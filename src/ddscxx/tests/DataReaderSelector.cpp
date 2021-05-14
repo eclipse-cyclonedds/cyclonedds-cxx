@@ -188,7 +188,7 @@ TEST_F(DataReaderSelector, implicit)
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-TEST_F(DataReaderSelector, implicit_instance)
+TEST_F(DataReaderSelector, DISABLED_implicit_instance)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -254,7 +254,7 @@ TEST_F(DataReaderSelector, implicit_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, implicit_state)
+TEST_F(DataReaderSelector, DISABLED_implicit_state)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -337,7 +337,7 @@ TEST_F(DataReaderSelector, implicit_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, implicit_multiple)
+TEST_F(DataReaderSelector, DISABLED_implicit_multiple)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -389,7 +389,7 @@ TEST_F(DataReaderSelector, read_LoanedSamples)
     this->CheckData(read_samples, write_samples, this->already_read);
 }
 
-TEST_F(DataReaderSelector, read_LoanedSamples_instance)
+TEST_F(DataReaderSelector, DISABLED_read_LoanedSamples_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -459,7 +459,7 @@ TEST_F(DataReaderSelector, read_LoanedSamples_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, read_LoanedSamples_state)
+TEST_F(DataReaderSelector, DISABLED_read_LoanedSamples_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -548,7 +548,7 @@ TEST_F(DataReaderSelector, read_LoanedSamples_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, read_LoanedSamples_multiple)
+TEST_F(DataReaderSelector, DISABLED_read_LoanedSamples_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -682,7 +682,7 @@ TEST_F(DataReaderSelector, read_FWIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, read_FWIterator_state)
+TEST_F(DataReaderSelector, DISABLED_read_FWIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -777,7 +777,7 @@ TEST_F(DataReaderSelector, read_FWIterator_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, read_FWIterator_multiple)
+TEST_F(DataReaderSelector, DISABLED_read_FWIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -919,7 +919,7 @@ TEST_F(DataReaderSelector, read_BIIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, read_BIIterator_state)
+TEST_F(DataReaderSelector, DISABLED_read_BIIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1017,7 +1017,7 @@ TEST_F(DataReaderSelector, read_BIIterator_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, read_BIIterator_multiple)
+TEST_F(DataReaderSelector, DISABLED_read_BIIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1075,7 +1075,7 @@ TEST_F(DataReaderSelector, take_LoanedSamples)
     this->CheckData(take_samples, std::vector<Space::Type1>());
 }
 
-TEST_F(DataReaderSelector, take_LoanedSamples_instance)
+TEST_F(DataReaderSelector, DISABLED_take_LoanedSamples_instance)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1145,7 +1145,7 @@ TEST_F(DataReaderSelector, take_LoanedSamples_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, take_LoanedSamples_state)
+TEST_F(DataReaderSelector, DISABLED_take_LoanedSamples_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1234,7 +1234,7 @@ TEST_F(DataReaderSelector, take_LoanedSamples_max_samples)
     this->CheckData(take_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, take_LoanedSamples_multiple)
+TEST_F(DataReaderSelector, DISABLED_take_LoanedSamples_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> take_samples;
@@ -1367,7 +1367,7 @@ TEST_F(DataReaderSelector, take_FWIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, take_FWIterator_state)
+TEST_F(DataReaderSelector, DISABLED_take_FWIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1462,7 +1462,7 @@ TEST_F(DataReaderSelector, take_FWIterator_max_samples)
     this->CheckData(take_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, take_FWIterator_multiple)
+TEST_F(DataReaderSelector, DISABLED_take_FWIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1604,7 +1604,7 @@ TEST_F(DataReaderSelector, take_BIIterator_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderSelector, take_BIIterator_state)
+TEST_F(DataReaderSelector, DISABLED_take_BIIterator_state)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -1702,7 +1702,7 @@ TEST_F(DataReaderSelector, take_BIIterator_max_samples)
     this->CheckData(take_samples, expected_samples);
 }
 
-TEST_F(DataReaderSelector, take_BIIterator_multiple)
+TEST_F(DataReaderSelector, DISABLED_take_BIIterator_multiple)
 {
     dds::sub::DataReader<Space::Type1>::Selector selector(this->reader);
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
