@@ -160,6 +160,15 @@ function(__gtest_import_library _target _var _config)
         if(WIN32 AND ${_var}_TYPE STREQUAL SHARED)
             set_target_properties(${_target} PROPERTIES
                 IMPORTED_IMPLIB${_config_suffix} "${_lib}")
+            # Locate the dynamic link library
+            get_filename_component(_basedir "${_lib}" PATH)
+            get_filename_component(_basename "${_lib}" NAME_WE)
+            get_filename_component(_prefix "${_basedir}" PATH)
+            find_program(_dll "${_basename}.dll" HINTS ${_prefix} PATH_SUFFIXES bin NO_DEFAULT_PATH)
+            if (EXISTS "${_dll}")
+                set_target_properties(${_target} PROPERTIES
+                    IMPORTED_LOCATION${_config_suffix} "${_dll}")
+            endif()
         else()
             set_target_properties(${_target} PROPERTIES
                 IMPORTED_LOCATION${_config_suffix} "${_lib}")
