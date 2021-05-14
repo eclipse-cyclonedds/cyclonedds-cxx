@@ -74,7 +74,7 @@ See :module:`GoogleTest` for information on the :command:`gtest_add_tests`
 and :command:`gtest_discover_tests` commands.
 #]=======================================================================]
 
-include(${CMAKE_CURRENT_LIST_DIR}/GoogleTest.cmake)
+include(GoogleTest)
 
 function(__gtest_append_debugs _endvar _library)
     if(${_library} AND ${_library}_DEBUG)
@@ -108,7 +108,7 @@ function(__gtest_find_library_configuration _name _lib _cfg_suffix)
     __gtest_find_library(${_name} ${_libs})
 endfunction()
 
-include(${CMAKE_CURRENT_LIST_DIR}/SelectLibraryConfigurations.cmake)
+include(SelectLibraryConfigurations)
 function(__gtest_find_and_select_library_configurations _basename _lib)
     __gtest_find_library_configuration(${_basename}_LIBRARY_RELEASE ${_lib} "")
     __gtest_find_library_configuration(${_basename}_LIBRARY_DEBUG   ${_lib} "d")
@@ -217,7 +217,7 @@ if(NOT GTEST_MAIN_LIBRARY)
     __gtest_find_and_select_library_configurations(GTEST_MAIN gtest_main)
 endif()
 
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(GTest DEFAULT_MSG GTEST_LIBRARY GTEST_INCLUDE_DIR GTEST_MAIN_LIBRARY)
 
 if(GTEST_FOUND)
