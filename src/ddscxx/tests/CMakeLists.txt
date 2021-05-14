@@ -40,11 +40,6 @@ set(sources
   Qos.cpp
   Condition.cpp)
 
-if(CMAKE_VERSION LESS "3.20")
-    add_library(GTest::gtest ALIAS GTest::gtest)
-    add_library(GTest::gtest_main ALIAS GTest::Main)
-endif()
-
 add_executable(ddscxx_tests ${sources})
 
 # Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
@@ -56,5 +51,47 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
 endif()
 
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD 17)
-target_link_libraries(ddscxx_tests CycloneDDS-CXX::ddscxx ddscxx_test_types GTest::gtest GTest::gtest_main)
-gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources})
+target_link_libraries(ddscxx_tests CycloneDDS-CXX::ddscxx ddscxx_test_types GTest::GTest GTest::Main)
+gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources} TEST_LIST tests)
+
+# Ensure shared libraries are found
+if(WIN32)
+  set(sep ";")
+  set(var "PATH")
+elseif(APPLE)
+  set(sep ":")
+  set(var "DYLD_LIBRARY_PATH")
+else()
+  set(sep ":")
+  set(var "LD_LIBRARY_PATH")
+endif()
+
+get_target_property(cyclone_lib CycloneDDS::ddsc LOCATION)
+get_target_property(gtest_lib GTest::GTest IMPORTED_LOCATION)
+get_target_property(gtest_main_lib GTest::Main IMPORTED_LOCATION)
+
+foreach(lib ${cyclone_lib} ${gtest_lib} ${gtest_main_lib})
+  get_filename_component(libdir "${lib}" PATH)
+  file(TO_NATIVE_PATH "${libdir}" libdir)
+
+  foreach(test ${tests})
+    get_property(envvars TEST ${test} PROPERTY ENVIRONMENT)
+    list(LENGTH envvars n)
+    set(add TRUE)
+    foreach(i RANGE 0 ${n})
+      list(GET envvars ${i} envvar)
+      if(envvar MATCHES "^${var}=")
+        list(REMOVE_AT envvars ${i})
+        set_property(TEST ${test} PROPERTY ENVIRONMENT "${envvars}")
+        string(REGEX REPLACE "^${var}=" "" paths "${envvar}")
+        string(REPLACE ";" "\\;" paths "${var}=${libdir}${sep}${paths}")
+        set_property(TEST ${test} APPEND PROPERTY ENVIRONMENT "${paths}")
+        set(add FALSE)
+        break()
+      endif()
+    endforeach()
+    if(add)
+      set_property(TEST ${test} PROPERTY ENVIRONMENT "${var}=${libdir}")
+    endif()
+  endforeach()
+endforeach()
