@@ -281,8 +281,24 @@ emit_struct(
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member_comparison_operator;
-  if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
+  if (_struct->members && (ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
     return ret;
+
+  if (_struct->inherit_spec)
+  {
+    char* base = NULL;
+    if (IDL_PRINTA(&base, get_cpp11_fully_scoped_name, _struct->inherit_spec->base, gen) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+    fmt = "%2$s static_cast<const %1$s&>(*this) == static_cast<const %1$s&>(_other)";
+    if (idl_fprintf(gen->header.handle, fmt, base, _struct->members ? " &&\n      " : "") < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
+  if (!_struct->members &&
+      !_struct->inherit_spec &&
+      idl_fprintf(gen->header.handle, "true") < 0)
+      return IDL_RETCODE_NO_MEMORY;
+
   fmt = ";\n"
         "  }\n\n"
         "  bool operator!=(const %s& _other) const\n"
