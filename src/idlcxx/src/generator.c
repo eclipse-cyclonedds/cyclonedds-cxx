@@ -717,16 +717,16 @@ err_print:
   return ret;
 }
 
-const char *seq_tmpl = "idl_sequence<{TYPE}, 0>";
-const char *seq_inc = "<org/eclipse/cyclonedds/topic/cdr_dummys.hpp>";
-const char *arr_tmpl = "idl_array<{TYPE}, {DIMENSION}>";
-const char *arr_inc = "<org/eclipse/cyclonedds/topic/cdr_dummys.hpp>";
-const char *bnd_seq_tmpl = "idl_sequence<{TYPE}, {BOUND}>";
-const char *bnd_seq_inc = "<org/eclipse/cyclonedds/topic/cdr_dummys.hpp>";
-const char *str_tmpl = "idl_string<0>";
-const char *str_inc = "<org/eclipse/cyclonedds/topic/cdr_dummys.hpp>";
-const char *bnd_str_tmpl = "idl_string<{BOUND}>";
-const char *bnd_str_inc = "<org/eclipse/cyclonedds/topic/cdr_dummys.hpp>";
+const char *seq_tmpl = "std::vector<{TYPE}>";
+const char *seq_inc = "<vector>";
+const char *arr_tmpl = "std::array<{TYPE}, {DIMENSION}>";
+const char *arr_inc = "<array>";
+const char *bnd_seq_tmpl = "std::vector<{TYPE}>";
+const char *bnd_seq_inc = "<vector>";
+const char *str_tmpl = "std::string";
+const char *str_inc = "<string>";
+const char *bnd_str_tmpl = "std::string";
+const char *bnd_str_inc = "<string>";
 const char *uni_tmpl = "std::variant";
 const char *uni_get_tmpl = "std::get";
 const char *uni_inc = "<variant>";
