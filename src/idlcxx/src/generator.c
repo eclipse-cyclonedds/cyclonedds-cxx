@@ -635,7 +635,7 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
         ext = ptr;
     }
     if (ext > relpath && idl_strcasecmp(ext, ".idl") == 0) {
-      const char *fmt = "#include \"%.*s.h\"\n";
+      const char *fmt = "#include \"%.*s.hpp\"\n";
       int len = (int)(ext - relpath);
       cnt = idl_fprintf(generator->header.handle, fmt, len, relpath);
     } else {
