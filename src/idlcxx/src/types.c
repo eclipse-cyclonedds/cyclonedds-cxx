@@ -43,7 +43,7 @@ emit_member(
   if (idl_is_array(node))
     type_spec = node;
   else
-    type_spec = idl_unalias(idl_type_spec(node), 0u);
+    type_spec = idl_type_spec(node);
 
   name = get_cpp11_name(node);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
@@ -89,7 +89,11 @@ emit_parameter(
   (void)revisit;
   (void)path;
 
-  type_spec = idl_type_spec(node);
+  if (idl_is_array(node))
+    type_spec = node;
+  else
+    type_spec = idl_type_spec(node);
+
   simple = idl_mask(type_spec) & (IDL_BASE_TYPE|IDL_ENUM);
   sep = is_first(node) ? "" : ",\n";
   fmt = simple ? "%s    %s %s"
@@ -144,7 +148,12 @@ emit_member_methods(
   (void)path;
 
   name = get_cpp11_name(node);
-  type_spec = idl_type_spec(node);
+
+  if (idl_is_array(node))
+    type_spec = node;
+  else
+    type_spec = idl_type_spec(node);
+
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -328,6 +337,24 @@ emit_enum(
 }
 
 static idl_retcode_t
+expand_typedef(
+  struct generator* gen,
+  const idl_declarator_t* declarator,
+  const idl_typedef_t* _typedef)
+{
+  const char* name = get_cpp11_name(declarator);
+  char* type = NULL;
+
+  if (IDL_PRINTA(&type, get_cpp11_type, idl_is_array(declarator) ? declarator : _typedef->type_spec, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (idl_fprintf(gen->header.handle, "typedef %s %s;\n\n", type, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
 emit_typedef(
   const idl_pstate_t* pstate,
   const bool revisit,
@@ -336,8 +363,6 @@ emit_typedef(
   void* user_data)
 {
   struct generator *gen = user_data;
-  char *type;
-  const char *name;
   const idl_typedef_t *_typedef = (const idl_typedef_t *)node;
   const idl_declarator_t *declarator;
 
@@ -345,16 +370,13 @@ emit_typedef(
   (void)revisit;
   (void)path;
 
-  if (IDL_PRINTA(&type, get_cpp11_type, _typedef->type_spec, gen) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
+  idl_retcode_t ret = IDL_RETCODE_OK;
   IDL_FOREACH(declarator, _typedef->declarators) {
-    name = get_cpp11_name(declarator);
-    if (idl_fprintf(gen->header.handle, "typedef %s %s;", type, name) < 0)
-      return IDL_RETCODE_NO_MEMORY;
+    if ((ret = expand_typedef(gen, declarator, _typedef)) != IDL_RETCODE_OK)
+      break;
   }
 
-  return IDL_RETCODE_OK;
+  return ret;
 }
 
 static idl_retcode_t
