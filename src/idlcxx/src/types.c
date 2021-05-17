@@ -153,7 +153,7 @@ emit_member_methods(
           "  %1$s& %2$s() { return this->%2$s_; }\n"
           "  void %2$s(%1$s _val_) { this->%2$s_ = _val_; }\n";
   else
-    fmt = "  const %1$s %2$s() const { return this->%2$s_; }\n"
+    fmt = "  const %1$s& %2$s() const { return this->%2$s_; }\n"
           "  %1$s& %2$s() { return this->%2$s_; }\n"
           "  void %2$s(const %1$s _val_) { this->%2$s_ = _val_; }\n"
           "  void %2$s(%1$s&& _val_) { this->%2$s_ = _val_; }\n";
@@ -226,36 +226,42 @@ emit_struct(
 
   /* members */
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member;
-  if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
+  if (_struct->members && (ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
     return ret;
 
   /* constructors */
   fmt = "\n"
         "public:\n"
-        "  %1$s() = default;\n\n"
-        "  explicit %1$s(\n";
+        "  %1$s() = default;\n\n";
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  /* constructor parameters */
-  visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_parameter;
-  if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
-    return ret;
+  if (_struct->members)
+  {
+    fmt = "  explicit %1$s(\n";
+    if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+      return IDL_RETCODE_NO_MEMORY;
 
-  if (fputs(") :\n", gen->header.handle) < 0)
-    return IDL_RETCODE_NO_MEMORY;
+    /* constructor parameters */
+    visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_parameter;
+    if (_struct->members && (ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
+      return ret;
 
-  /* constructor initializers */
-  visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member_initializer;
-  if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
-    return ret;
+    if (fputs(") :\n", gen->header.handle) < 0)
+      return IDL_RETCODE_NO_MEMORY;
 
-  if (fputs(" { }\n\n", gen->header.handle) < 0)
-    return IDL_RETCODE_NO_MEMORY;
+    /* constructor initializers */
+    visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member_initializer;
+    if (_struct->members && (ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
+      return ret;
+
+    if (fputs(" { }\n\n", gen->header.handle) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
 
   /* getters and setters */
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &emit_member_methods;
-  if ((ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
+  if (_struct->members && (ret = idl_visit(pstate, _struct->members, &visitor, user_data)))
     return ret;
 
   /* comparison operators */

@@ -254,8 +254,8 @@ process_inherit_spec(
   struct streams *streams = user_data;
   const idl_type_spec_t *type_spec = ((const idl_inherit_spec_t *)node)->base;
   char *type = NULL;
-  const char *fmt = "  %2$s(dynamic_cast<%s&>(instance));\n";
-  const char *constfmt = "  %2$s(dynamic_cast<const %1$s&>(instance));\n";
+  const char *fmt = "  %2$s(str,dynamic_cast<%s&>(instance));\n";
+  const char *constfmt = "  %2$s(str,dynamic_cast<const %1$s&>(instance));\n";
 
   (void)pstate;
   (void)revisit;
