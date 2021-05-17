@@ -80,6 +80,35 @@ struct streams {
   size_t keys;
 };
 
+void setup_streams(struct streams* str, struct generator* gen)
+{
+  assert(str);
+  memset(str, 0, sizeof(struct streams));
+  str->generator = gen;
+}
+
+void cleanup_streams(struct streams* str)
+{
+  if (str->write.data)
+    free(str->write.data);
+  if (str->read.data)
+    free(str->read.data);
+  if (str->move.data)
+    free(str->move.data);
+  if (str->max.data)
+    free(str->max.data);
+  if (str->key_write.data)
+    free(str->key_write.data);
+  if (str->key_read.data)
+    free(str->key_read.data);
+  if (str->key_move.data)
+    free(str->key_move.data);
+  if (str->key_max.data)
+    free(str->key_max.data);
+  if (str->key.data)
+    free(str->key.data);
+}
+
 static idl_retcode_t
 process_instance(
   const idl_pstate_t *pstate,
@@ -390,6 +419,32 @@ process_struct(
 }
 
 static idl_retcode_t
+process_module(
+  const idl_pstate_t* pstate,
+  const bool revisit,
+  const idl_path_t* path,
+  const void* node,
+  void* user_data)
+{
+  struct streams* streams = user_data;
+
+  (void)pstate;
+  (void)path;
+
+  if (revisit) {
+    if (putf(&streams->key_max,"}\n\n") < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  } else {
+    const char* name = get_cpp11_name(node);
+    if (putf(&streams->write, "namespace %1$s\n{\n", name) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+    return IDL_VISIT_REVISIT;
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
 process_switch_type_spec(
   const idl_pstate_t *pstate,
   bool revisit,
@@ -500,6 +555,60 @@ process_case_label(
   return IDL_RETCODE_OK;
 }
 
+static idl_retcode_t
+process_typedef(
+  const idl_pstate_t* pstate,
+  const bool revisit,
+  const idl_path_t* path,
+  const void* node,
+  void* user_data)
+{
+  (void)revisit;
+  (void)path;
+
+  const char* fmt =
+    "template<typename T>\n"
+    "void %2$s_%1$s(T& str, %1$s& instance)\n{\n";
+  const char* constfmt =
+    "template<typename T>\n"
+    "void %2$s_%1$s(T& str, const %1$s& instance)\n{\n";
+  const char* closefmt = "}\n\n";
+
+  struct streams* streams = user_data;
+  idl_typedef_t* td = (idl_typedef_t*)node;
+  const idl_declarator_t* declarator;
+
+  IDL_FOREACH(declarator, td->declarators) {
+    const char* name = get_cpp11_name(declarator);
+
+    if (putf(&streams->write, constfmt, name, "write")
+     || putf(&streams->read, fmt, name, "read")
+     || putf(&streams->move, constfmt, name, "move")
+     || putf(&streams->max, constfmt, name, "max")
+     || putf(&streams->key_write, constfmt, name, "key_write")
+     || putf(&streams->key_read, fmt, name, "key_read")
+     || putf(&streams->key_move, constfmt, name, "key_move")
+     || putf(&streams->key_max, constfmt, name, "key_max"))
+      return IDL_RETCODE_NO_MEMORY;
+
+    idl_retcode_t ret = process_instance(pstate, streams, declarator, td->type_spec, true);
+    if (ret != IDL_RETCODE_OK)
+      return ret;
+
+    if (putf(&streams->write, closefmt)
+     || putf(&streams->read, closefmt)
+     || putf(&streams->move, closefmt)
+     || putf(&streams->max, closefmt)
+     || putf(&streams->key_write, closefmt)
+     || putf(&streams->key_read, closefmt)
+     || putf(&streams->key_move, closefmt)
+     || putf(&streams->key_max, closefmt))
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
+  return IDL_RETCODE_OK;
+}
+
 static idl_retcode_t flush(struct generator *gen, struct streams *streams)
 {
   if (streams->write.data && fputs(streams->write.data, gen->header.handle) < 0)
@@ -543,10 +652,26 @@ generate_streamers(const idl_pstate_t* pstate, struct generator *gen)
   idl_visitor_t visitor;
   const char *sources[] = { NULL, NULL };
 
-  memset(&streams, 0, sizeof(streams));
+  setup_streams(&streams, gen);
+
   memset(&visitor, 0, sizeof(visitor));
 
-  streams.generator = gen;
+  visitor.visit = IDL_TYPEDEF | IDL_MODULE;
+  visitor.accept[IDL_ACCEPT_TYPEDEF] = &process_typedef;
+  visitor.accept[IDL_ACCEPT_MODULE] = &process_module;
+  assert(pstate->sources);
+  sources[0] = pstate->sources->path->name;
+  visitor.sources = sources;
+
+  if ((ret = idl_visit(pstate, pstate->root, &visitor, &streams)) == IDL_RETCODE_OK)
+    ret = flush(gen, &streams);
+
+  cleanup_streams(&streams);
+
+  memset(&visitor, 0, sizeof(visitor));
+
+  setup_streams(&streams, gen);
+
   visitor.visit = IDL_STRUCT | IDL_UNION | IDL_MEMBER | IDL_CASE | IDL_CASE_LABEL | IDL_SWITCH_TYPE_SPEC | IDL_INHERIT_SPEC;
   visitor.accept[IDL_ACCEPT_STRUCT] = &process_struct;
   visitor.accept[IDL_ACCEPT_UNION] = &process_union;
@@ -555,31 +680,13 @@ generate_streamers(const idl_pstate_t* pstate, struct generator *gen)
   visitor.accept[IDL_ACCEPT_CASE_LABEL] = &process_case_label;
   visitor.accept[IDL_ACCEPT_SWITCH_TYPE_SPEC] = &process_switch_type_spec;
   visitor.accept[IDL_ACCEPT_INHERIT_SPEC] = &process_inherit_spec;
-  assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
 
   if ((ret = idl_visit(pstate, pstate->root, &visitor, &streams)) == IDL_RETCODE_OK)
     ret = flush(gen, &streams);
 
-  if (streams.write.data)
-    free(streams.write.data);
-  if (streams.read.data)
-    free(streams.read.data);
-  if (streams.move.data)
-    free(streams.move.data);
-  if (streams.max.data)
-    free(streams.max.data);
-  if (streams.key_write.data)
-    free(streams.key_write.data);
-  if (streams.key_read.data)
-    free(streams.key_read.data);
-  if (streams.key_move.data)
-    free(streams.key_move.data);
-  if (streams.key_max.data)
-    free(streams.key_max.data);
-  if (streams.key.data)
-    free(streams.key.data);
+  cleanup_streams(&streams);
 
   return ret;
 }
