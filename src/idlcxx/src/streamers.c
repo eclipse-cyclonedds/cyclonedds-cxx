@@ -451,20 +451,20 @@ process_case(
                        "      read(str, obj);\n"
                        "      instance.%2$s(obj);\n"
                        "    }\n"
-                       "      break;";
+                       "      break;\n";
   else
     readfmt = simple ? "    {\n"
                        "      %1$s obj = %3$s;\n"
                        "      read(str, obj);\n"
                        "      instance.%2$s(obj, d);\n"
                        "    }\n"
-                       "      break;"
+                       "      break;\n"
                      : "    {\n"
                        "      %1$s obj;\n"
                        "      read(str, obj);\n"
                        "      instance.%2$s(obj, d);\n"
                        "    }\n"
-                       "      break;";
+                       "      break;\n";
 
   if (revisit) {
     const char *fmt = "  }\n";

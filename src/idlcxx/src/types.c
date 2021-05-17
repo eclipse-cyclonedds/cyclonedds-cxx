@@ -523,8 +523,37 @@ emit_case_label(
   assert(label->const_expr);
   if (IDL_PRINTA(&value, get_cpp11_value, label->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, "      case %s:\n", value) < 0)
+  if (idl_mask(label) == IDL_IMPLICIT_DEFAULT_CASE_LABEL || idl_mask(label) == IDL_DEFAULT_CASE_LABEL)
+  {
+    if (idl_fprintf(gen->header.handle, "      default:\n") < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  } else if (idl_fprintf(gen->header.handle, "      case %s:\n", value) < 0)
     return IDL_RETCODE_NO_MEMORY;
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+emit_case_comparison(
+  const idl_pstate_t* pstate,
+  bool revisit,
+  const idl_path_t* path,
+  const void* node,
+  void* user_data)
+{
+  struct generator* gen = user_data;
+  const idl_case_t* branch = node;
+
+  (void)pstate;
+  (void)path;
+
+  if (!revisit)
+    return IDL_VISIT_REVISIT;
+
+  const char* branch_name = get_cpp11_name(branch->declarator);
+  if (idl_fprintf(gen->header.handle, "        return %1$s() == other.%1$s();\n", branch_name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
   return IDL_RETCODE_OK;
 }
 
@@ -721,13 +750,6 @@ emit_union(
   visitor.accept[IDL_ACCEPT_CASE_LABEL] = emit_case_label;
   if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
-  /* generate default case */
-  if (idl_mask(_union->default_case) != IDL_CASE_LABEL) {
-    fmt = "      default:\n"
-          "        break;\n";
-    if (fputs(fmt, gen->header.handle) < 0)
-      return IDL_RETCODE_NO_MEMORY;
-  }
 
   fmt = "    }\n"
         "    return _default_discriminator;\n"
@@ -771,6 +793,31 @@ emit_union(
     return ret;
 
   /* comparison operators */
+
+  fmt = "  bool operator==(const %s& _other) const\n"
+        "  {\n"
+        "    if (_d() != other._d()) return false;\n"
+        "    switch (_d()) {\n";
+
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  visitor.visit = IDL_CASE | IDL_CASE_LABEL;
+  visitor.accept[IDL_ACCEPT_CASE] = emit_case_comparison;
+  visitor.accept[IDL_ACCEPT_CASE_LABEL] = emit_case_label;
+  if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
+    return ret;
+
+  fmt = "    }\n"
+        "    return false;\n"
+        "  }\n\n"
+        "  bool operator!=(const %s& _other) const\n"
+        "  {\n"
+        "    return !(*this == other);\n"
+        "  }\n\n";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
 
   /* implicit default setter */
   if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
