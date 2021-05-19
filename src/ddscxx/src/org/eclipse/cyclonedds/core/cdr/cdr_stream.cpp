@@ -13,7 +13,13 @@
 #include <algorithm>
 #include <assert.h>
 
-#include <org/eclipse/cyclonedds/topic/cdr_stream.hpp>
+#include <org/eclipse/cyclonedds/core/cdr/cdr_stream.hpp>
+
+namespace org {
+namespace eclipse {
+namespace cyclonedds {
+namespace core {
+namespace cdr {
 
 void cdr_stream::set_buffer(void* toset) {
   m_buffer = static_cast<char*>(toset);
@@ -38,3 +44,9 @@ size_t cdr_stream::align(size_t newalignment, bool add_zeroes)
 
   return tomove;
 }
+
+}
+}
+}
+}
+}  /* namespace org / eclipse / cyclonedds / core / cdr */

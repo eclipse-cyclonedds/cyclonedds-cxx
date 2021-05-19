@@ -34,6 +34,7 @@ set(sources
     src/org/eclipse/cyclonedds/core/InstanceHandleDelegate.cpp
     src/org/eclipse/cyclonedds/core/EntitySet.cpp
     src/org/eclipse/cyclonedds/core/MiscUtils.cpp
+    src/org/eclipse/cyclonedds/core/cdr/cdr_stream.cpp
     src/org/eclipse/cyclonedds/core/cond/ConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/GuardConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/StatusConditionDelegate.cpp
@@ -58,7 +59,6 @@ set(sources
     src/org/eclipse/cyclonedds/sub/qos/SubscriberQosDelegate.cpp
     src/org/eclipse/cyclonedds/topic/find.cpp
     src/org/eclipse/cyclonedds/topic/hash.cpp
-    src/org/eclipse/cyclonedds/topic/cdr_stream.cpp
     src/org/eclipse/cyclonedds/topic/AnyTopicDelegate.cpp
     src/org/eclipse/cyclonedds/topic/FilterDelegate.cpp
     src/org/eclipse/cyclonedds/topic/TopicDescriptionDelegate.cpp
