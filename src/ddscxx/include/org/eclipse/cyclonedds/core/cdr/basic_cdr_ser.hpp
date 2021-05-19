@@ -21,6 +21,12 @@
 #include <cstring>
 #include <algorithm>
 
+namespace org {
+namespace eclipse {
+namespace cyclonedds {
+namespace core {
+namespace cdr {
+
 /**
 * Implementation of the basic cdr stream.
 */
@@ -265,4 +271,9 @@ void max_string(basic_cdr_stream& str, const T& max_sz, size_t N)
   }
 }
 
+}
+}
+}
+}
+}  /* namespace org / eclipse / cyclonedds / core / cdr */
 #endif

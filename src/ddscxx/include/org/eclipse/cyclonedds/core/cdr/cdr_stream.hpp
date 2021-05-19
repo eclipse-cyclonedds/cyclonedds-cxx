@@ -12,12 +12,17 @@
 #ifndef CDR_STREAM_HPP_
 #define CDR_STREAM_HPP_
 
-#include "cdr_dummys.hpp"
 #include "dds/ddsrt/endian.h"
 #include <org/eclipse/cyclonedds/core/type_helpers.hpp>
 #include <stdint.h>
 #include <stdexcept>
 #include <dds/core/macros.hpp>
+
+namespace org {
+namespace eclipse {
+namespace cyclonedds {
+namespace core {
+namespace cdr {
 
 /**
 * Byte swapping function, is only enabled for arithmetic (base) types.
@@ -164,4 +169,9 @@ protected:
     char* m_buffer = nullptr;  //the current buffer in use
 };
 
+}
+}
+}
+}
+} /* namespace org / eclipse / cyclonedds / core / cdr */
 #endif

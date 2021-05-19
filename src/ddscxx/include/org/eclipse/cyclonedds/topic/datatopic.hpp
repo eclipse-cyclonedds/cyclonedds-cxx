@@ -22,7 +22,7 @@
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
-#include "basic_cdr_ser.hpp"
+#include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
@@ -119,7 +119,7 @@ public:
     T *t = m_t.load(std::memory_order_acquire);
     if (t == nullptr) {
       t = new T();
-      basic_cdr_stream str;
+      org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
       str.set_buffer(calc_offset(data(),4));
       switch (kind)
       {
@@ -148,7 +148,7 @@ void ddscxx_serdata<T>::populate_hash()
   if (hash_populated)
     return;
 
-  basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   key_md5_hashed() = to_key(str, *getT(), key());
   if (!key_md5_hashed())
   {
@@ -213,7 +213,7 @@ ddsi_serdata *serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
-  basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   str.set_buffer(calc_offset(d->data(), 4));
   d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
   d->populate_hash();
@@ -243,7 +243,7 @@ ddsi_serdata *serdata_from_ser_iov(
     off += n_bytes;
   }
 
-  basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   str.set_buffer(calc_offset(d->data(), 4));
   d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
   d->populate_hash();
@@ -290,7 +290,7 @@ ddsi_serdata *serdata_from_sample(
 {
   try {
     auto d = new ddscxx_serdata<T>(typecmn, kind);
-    basic_cdr_stream str;
+    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
     const auto& msg = *static_cast<const T*>(sample);
 
     if (kind == SDK_KEY)
@@ -301,7 +301,7 @@ ddsi_serdata *serdata_from_sample(
     d->resize(sz);
     auto ptr = static_cast<unsigned char*>(d->data());
     memset(ptr, 0x0, 4);
-    if (str.local_endianness() == endianness::little_endian)
+    if (str.local_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
       *(ptr + 1) = 0x1;
 
     str.set_buffer(calc_offset(d->data(), 4));
@@ -362,7 +362,7 @@ bool serdata_to_sample(
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   str.set_buffer(calc_offset(ptr->data(), 4));
   auto& msg = *static_cast<T*>(sample);
   read(str, msg);
@@ -381,14 +381,14 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   auto d1 = new ddscxx_serdata<T>(d->type, SDK_KEY);
   d1->type = nullptr;
 
-  basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   auto &t = *d->getT();
   key_move(str, t);
   d1->resize(4 + str.position());
 
   auto ptr = static_cast<unsigned char*>(d1->data());
   memset(ptr, 0x0, 4);
-  if (str.stream_endianness() == endianness::little_endian)
+  if (str.stream_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
     *(ptr + 1) = 0x1;
 
   str.set_buffer(calc_offset(d1->data(), 4));
@@ -413,7 +413,7 @@ bool serdata_untyped_to_sample(
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
   T* ptr = static_cast<T*>(sample);
-  basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   str.set_buffer(calc_offset(d->data(), 4));
   key_read(str, *ptr);
 
