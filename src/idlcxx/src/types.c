@@ -551,7 +551,7 @@ emit_case_comparison(
     return IDL_VISIT_REVISIT;
 
   const char* branch_name = get_cpp11_name(branch->declarator);
-  if (idl_fprintf(gen->header.handle, "        return %1$s() == other.%1$s();\n", branch_name) < 0)
+  if (idl_fprintf(gen->header.handle, "        return %1$s() == _other.%1$s();\n", branch_name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -758,29 +758,29 @@ emit_union(
         "  {\n"
         "    return _is_discriminator(d1) == _is_discriminator(d2);\n"
         "  }\n\n";
-  if (idl_fprintf(gen->header.handle, fmt, type, value) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, type) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* contructor */
   fmt = "public:\n"
         "  %1$s() :\n"
-        "      m__d(%2$s)";
-  if (idl_fprintf(gen->header.handle, fmt, name, value) < 0)
+        "      m__d(_default_discriminator),\n      m__u(";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_mask(_union->default_case) != IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
-    const idl_case_t *_case = idl_parent(_union->default_case);
 
-    /* set value explicitly if no default case exists */
-    if (idl_mask(_union->default_case) == IDL_DEFAULT_CASE_LABEL)
-      name = "m__u()";
-    else
-      name = get_cpp11_name(_case->declarator);
-    fmt = ",\n"
-          "      %1$s()";
-    if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+  if (idl_mask(_union->default_case) == IDL_DEFAULT_CASE_LABEL) {
+    /* default case is present */
+    const idl_case_t* _case = idl_parent(_union->default_case);
+    char *default_type = NULL;
+    if (IDL_PRINTA(&default_type, get_cpp11_type, _case->type_spec, gen) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+
+    /* add default constructor for type of default branch */
+    fmt = "%1$s()";
+    if (idl_fprintf(gen->header.handle, fmt, default_type) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
-  if (fputs(" { }\n\n", gen->header.handle) < 0)
+  if (fputs(")\n { }\n\n", gen->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* getters and setters */
@@ -796,7 +796,7 @@ emit_union(
 
   fmt = "  bool operator==(const %s& _other) const\n"
         "  {\n"
-        "    if (_d() != other._d()) return false;\n"
+        "    if (_d() != _other._d()) return false;\n"
         "    switch (_d()) {\n";
 
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
@@ -813,7 +813,7 @@ emit_union(
         "  }\n\n"
         "  bool operator!=(const %s& _other) const\n"
         "  {\n"
-        "    return !(*this == other);\n"
+        "    return !(*this == _other);\n"
         "  }\n\n";
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -821,13 +821,15 @@ emit_union(
 
   /* implicit default setter */
   if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
-    if (_union->unused_labels)
-      fmt = "  void _default(%s d = %s)\n"
-            "  {\n";
+    if (_union->unused_labels > 1)
+      fmt = "  void _default(%1$s d = %2$ss)\n"
+            "  {\n"
+            "    if (!_is_compatible_discriminator(d, %2$s))\n"
+            "      return;\n";
     else
       fmt = "  void _default()\n"
             "  {\n"
-            "    const %s d = %s;\n";
+            "    const %1$s d = %2$s;\n";
     if (idl_fprintf(gen->header.handle, fmt, type, value) < 0)
       return IDL_RETCODE_NO_MEMORY;
     fmt = "    m__d = d;\n"
@@ -835,6 +837,15 @@ emit_union(
     if (fputs(fmt, gen->header.handle) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
+
+  /* swap function */
+  fmt = "  friend void swap(%1$s& m1, %1$s &m2)\n"
+        "  {\n"
+        "    %2$s(m1.m__d, m2.m__d);\n"
+        "    %2$s(m1.m__u, m2.m__u);\n"
+        "  }\n\n";
+  if (idl_fprintf(gen->header.handle, fmt, name, gen->swap_format) < 0)
+    return IDL_RETCODE_NO_MEMORY;
 
   if (fputs("};\n\n", gen->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;

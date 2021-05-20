@@ -661,7 +661,7 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   }
 
   { int len = 0;
-    const char *incs[6];
+    const char *incs[7];
 
     if (generator->uses_array)
       incs[len++] = generator->array_include;
@@ -674,7 +674,10 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
     if (generator->uses_bounded_string)
       incs[len++] = generator->bounded_string_include;
     if (generator->uses_union)
+    {
       incs[len++] = generator->union_include;
+      incs[len++] = generator->swap_include;
+    }
 
     for (int i=0, j; i < len; i++) {
       for (j=0; j < i && strcmp(incs[i], incs[j]) != 0; j++) ;
@@ -742,6 +745,8 @@ const char *bnd_str_inc = "<string>";
 const char *uni_tmpl = "std::variant";
 const char *uni_get_tmpl = "std::get";
 const char *uni_inc = "<variant>";
+const char *swap_tmpl = "std::swap";
+const char *swap_inc = "<utility>";
 
 static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
 static const char *arr_flags[] = { "s", PRIu32, NULL };
@@ -815,6 +820,8 @@ idl_retcode_t generate(const idl_pstate_t *pstate)
     goto err_uni;
   if (makefmtp(&gen.union_getter_format, uni_get_tmpl, NULL, NULL) < 0)
     goto err_uni_get;
+  if (makefmtp(&gen.swap_format, swap_tmpl, NULL, NULL) < 0)
+    goto err_swap;
   /* copy include directives verbatim */
   gen.array_include = arr_inc;
   gen.sequence_include = seq_inc;
@@ -822,9 +829,12 @@ idl_retcode_t generate(const idl_pstate_t *pstate)
   gen.string_include = str_inc;
   gen.bounded_string_include = bnd_str_inc;
   gen.union_include = uni_inc;
+  gen.swap_include = swap_inc;
 
   ret = generate_nosetup(pstate, &gen);
 
+  free(gen.swap_format);
+err_swap:
   free(gen.union_getter_format);
 err_uni_get:
   free(gen.union_format);
@@ -926,6 +936,16 @@ static const idlc_option_t *opts[] = {
     IDLC_STRING, { .string = &uni_inc },
     'f', "union_include", "<header>",
     "Header to include if template for union-template is used."
+  },
+  &(idlc_option_t) {
+    IDLC_STRING, { .string = &swap_tmpl },
+    'f', "swap-template", "ns_name::swap",
+    "Template to use for swap function. Copied verbatim."
+  },
+  &(idlc_option_t) {
+    IDLC_STRING, { .string = &swap_inc },
+    'f', "swap-include", "<header>",
+    "Header to include if template for swap-template is used."
   },
   NULL
 };
