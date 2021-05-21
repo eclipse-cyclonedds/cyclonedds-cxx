@@ -32,7 +32,7 @@ namespace cdr {
 */
 class basic_cdr_stream : public cdr_stream {
 public:
-  basic_cdr_stream(endianness end = native_endianness()) : cdr_stream(end, 8) { ; }
+  basic_cdr_stream(endianness end = native_endianness(), uint64_t ignore_faults = 0x0) : cdr_stream(end, 8, ignore_faults) { ; }
 };
 
 /**
@@ -54,6 +54,9 @@ public:
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 void read(basic_cdr_stream &str, T& toread)
 {
+  if (str.abort_status())
+    return;
+
   char *cursor = str.get_cursor();
   str.align(sizeof(T), false);
 
@@ -73,6 +76,9 @@ void read(basic_cdr_stream &str, T& toread)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 void write(basic_cdr_stream& str, const T& towrite)
 {
+  if (str.abort_status())
+    return;
+
   char *cursor = str.get_cursor();
   str.align(sizeof(T), true);
 
@@ -91,6 +97,9 @@ void write(basic_cdr_stream& str, const T& towrite)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 void move(basic_cdr_stream& str, const T& toincr)
 {
+  if (str.abort_status())
+    return;
+
   (void)toincr;
 
   str.align(sizeof(T), false);
@@ -112,6 +121,9 @@ void move(basic_cdr_stream& str, const T& toincr)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 void max(basic_cdr_stream& str, const T& max_sz)
 {
+  if (str.abort_status())
+    return;
+
   if (str.position() == SIZE_MAX)
     return;
 
@@ -177,9 +189,17 @@ void max(basic_cdr_stream& str, const T& max_sz) {
 template<typename T>
 void read_string(basic_cdr_stream& str, T& toread, size_t N)
 {
+  if (str.abort_status())
+    return;
+
   uint32_t string_length = 0;
 
   read(str, string_length);
+
+  if (N &&
+      string_length > N &&
+      str.status(serialization_status::read_bound_exceeded))
+      return;
 
   auto cursor = str.get_cursor();
   toread.assign(cursor, cursor + std::min<size_t>(string_length - 1, N ? N : SIZE_MAX));  //remove 1 for terminating NULL
@@ -199,11 +219,16 @@ void read_string(basic_cdr_stream& str, T& toread, size_t N)
 template<typename T>
 void write_string(basic_cdr_stream& str, const T& towrite, size_t N)
 {
+  if (str.abort_status())
+    return;
+
   size_t string_length = towrite.length() + 1;  //add 1 extra for terminating NULL
 
-  //throw an exception if we attempt to write a length field in excess of the supplied bound
-  if (N && string_length > N)
-    throw dds::core::InvalidDataError("Attempt to write string with length " + std::to_string(string_length) + " exceeding maximum length of " + std::to_string(N) + ".");
+  if (N &&
+      string_length > N) {
+    if (str.status(serialization_status::write_bound_exceeded))
+      return;
+  }
 
   write(str, uint32_t(string_length));
 
@@ -224,11 +249,16 @@ void write_string(basic_cdr_stream& str, const T& towrite, size_t N)
 template<typename T>
 void move_string(basic_cdr_stream& str, const T& toincr, size_t N)
 {
+  if (str.abort_status())
+    return;
+
   size_t string_length = toincr.length() + 1;  //add 1 extra for terminating NULL
 
-  //throw an exception if we attempt to move the cursor for a length field in excess of the supplied bound
-  if (N && string_length > N)
-    throw dds::core::InvalidDataError("Attempt to move cursor for string with length " + std::to_string(string_length) + " exceeding maximum length of " + std::to_string(N) + ".");
+  if (N &&
+      string_length > N) {
+    if (str.status(serialization_status::move_bound_exceeded))
+      return;
+  }
 
   move(str, uint32_t(string_length));
 
@@ -248,6 +278,9 @@ void move_string(basic_cdr_stream& str, const T& toincr, size_t N)
 template<typename T>
 void max_string(basic_cdr_stream& str, const T& max_sz, size_t N)
 {
+  if (str.abort_status())
+    return;
+
   (void)max_sz;
 
   if (str.position() == SIZE_MAX)

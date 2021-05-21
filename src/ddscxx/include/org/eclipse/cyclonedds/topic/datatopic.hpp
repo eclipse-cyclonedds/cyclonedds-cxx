@@ -132,6 +132,12 @@ public:
       case SDK_EMPTY:
         assert(0);
       }
+
+      if (str.abort_status()) {
+        delete t;
+        t = nullptr;
+      }
+
       T* exp = nullptr;
       if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
         delete t;
@@ -213,10 +219,18 @@ ddsi_serdata *serdata_from_ser(
     fragchain = fragchain->nextfrag;
   }
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  str.set_buffer(calc_offset(d->data(), 4));
-  d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
-  d->populate_hash();
+  if (d->getT())
+  {
+    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+    str.set_buffer(calc_offset(d->data(), 4));
+    d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
+    d->populate_hash();
+  }
+  else
+  {
+    delete d;
+    d = nullptr;
+  }
 
   return d;
 }
@@ -243,10 +257,16 @@ ddsi_serdata *serdata_from_ser_iov(
     off += n_bytes;
   }
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  str.set_buffer(calc_offset(d->data(), 4));
-  d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
-  d->populate_hash();
+  T* ptr = d->getT();
+  if (ptr) {
+    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+    str.set_buffer(calc_offset(d->data(), 4));
+    d->key_md5_hashed() = to_key(str, *ptr, d->key());
+    d->populate_hash();
+  } else {
+    delete d;
+    d = nullptr;
+  }
 
   return d;
 
@@ -288,44 +308,53 @@ ddsi_serdata *serdata_from_sample(
   enum ddsi_serdata_kind kind,
   const void* sample)
 {
-  try {
-    auto d = new ddscxx_serdata<T>(typecmn, kind);
-    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    const auto& msg = *static_cast<const T*>(sample);
+  auto d = new ddscxx_serdata<T>(typecmn, kind);
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  const auto& msg = *static_cast<const T*>(sample);
+  unsigned char *ptr = nullptr;
+  size_t sz = 0;
 
-    if (kind == SDK_KEY)
-      key_move(str, msg);
-    else
-      move(str, msg);
-    size_t sz = 4 + str.position();  //4 bytes extra to also include the header
-    d->resize(sz);
-    auto ptr = static_cast<unsigned char*>(d->data());
-    memset(ptr, 0x0, 4);
-    if (str.local_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
-      *(ptr + 1) = 0x1;
+  if (kind == SDK_KEY)
+    key_move(str, msg);
+  else
+    move(str, msg);
 
-    str.set_buffer(calc_offset(d->data(), 4));
-    switch (kind)
-    {
-    case SDK_KEY:
-      key_write(str, msg);
-      break;
-    case SDK_DATA:
-      write(str, msg);
-      break;
-    case SDK_EMPTY:
-      assert(0);
-    }
-    str.reset_position();
-    d->key_md5_hashed() = to_key(str,msg,d->key());
-    d->setT(&msg);
-    d->populate_hash();
+  if (str.abort_status())
+    goto failure;
 
-    return d;
+  sz = 4 + str.position();  //4 bytes extra to also include the header
+  d->resize(sz);
+  ptr = static_cast<unsigned char*>(d->data());
+  memset(ptr, 0x0, 4);
+  if (str.local_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
+    *(ptr + 1) = 0x1;
+
+  str.set_buffer(calc_offset(d->data(), 4));
+  switch (kind)
+  {
+  case SDK_KEY:
+    key_write(str, msg);
+    break;
+  case SDK_DATA:
+    write(str, msg);
+    break;
+  case SDK_EMPTY:
+    assert(0);
   }
-  catch (std::exception&) {
-    return nullptr;
-  }
+
+  if (str.abort_status())
+    goto failure;
+
+  str.reset_position();
+  d->key_md5_hashed() = to_key(str, msg, d->key());
+  d->setT(&msg);
+  d->populate_hash();
+  return d;
+
+failure:
+  if (d)
+    delete d;
+  return nullptr;
 }
 
 template <typename T>
@@ -366,8 +395,7 @@ bool serdata_to_sample(
   str.set_buffer(calc_offset(ptr->data(), 4));
   auto& msg = *static_cast<T*>(sample);
   read(str, msg);
-
-  return false;
+  return str.abort_status(); //is true this the correct return value for failure state??
 }
 
 template <typename T>
@@ -379,25 +407,38 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
    */
   auto d = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
   auto d1 = new ddscxx_serdata<T>(d->type, SDK_KEY);
+  unsigned char *ptr = nullptr;
   d1->type = nullptr;
 
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  auto &t = *d->getT();
-  key_move(str, t);
+  auto t = d->getT();
+  if (t == nullptr)
+    goto failure;
+
+  key_move(str, *t);
+  if (str.abort_status())
+    goto failure;
   d1->resize(4 + str.position());
 
-  auto ptr = static_cast<unsigned char*>(d1->data());
+  ptr = static_cast<unsigned char*>(d1->data());
   memset(ptr, 0x0, 4);
   if (str.stream_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
     *(ptr + 1) = 0x1;
 
-  str.set_buffer(calc_offset(d1->data(), 4));
-  key_write(str, t);  //4 offset due to header field
-  d1->key_md5_hashed() = to_key(str, t, d1->key());
+  str.set_buffer(calc_offset(d1->data(), 4));  //4 offset due to header field
+  key_write(str, *t);
+  if (str.abort_status())
+    goto failure;
+
+  d1->key_md5_hashed() = to_key(str, *t, d1->key());
   d1->hash = d->hash;
   d1->hash_populated = true;
 
   return d1;
+
+failure:
+  delete d1;
+  return nullptr;
 }
 
 template <typename T>
@@ -417,7 +458,7 @@ bool serdata_untyped_to_sample(
   str.set_buffer(calc_offset(d->data(), 4));
   key_read(str, *ptr);
 
-  return true;
+  return !str.abort_status();  //is true the correct value for no errors in streaming?
 }
 
 template <typename T>

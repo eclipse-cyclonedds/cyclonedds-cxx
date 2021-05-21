@@ -80,6 +80,15 @@ enum class endianness {
 constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
 
 /**
+* Serialization status bitmasks.
+*/
+enum class serialization_status {
+  move_bound_exceeded   = 0x1 << 0,   //the serialization has encountered a field which has exceeded the bounds set for it
+  write_bound_exceeded  = 0x1 << 1,   //the serialization has encountered a field which has exceeded the bounds set for it
+  read_bound_exceeded   = 0x1 << 2   //the serialization has encountered a field which has exceeded the bounds set for it
+};
+
+/**
 * Base cdr_stream class, implements the functions which all "real" cdr stream implementations will use.
 */
 class OMG_DDS_API cdr_stream {
@@ -89,7 +98,7 @@ public:
     * Sets the stream endianness to end, and maximum alignment to max_align.
     * Local endianness is implicitly set to the local endianness value.
     */
-    cdr_stream(endianness end, size_t max_align) : m_stream_endianness(end), m_max_alignment(max_align) { ; }
+    cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults) { ; }
 
     /**
     * Returns the current stream alignment.
@@ -159,6 +168,22 @@ public:
     */
     size_t align(size_t newalignment, bool add_zeroes);
 
+    /**
+    * Returns the current status of serialization.
+    */
+    uint64_t status() const { return m_status; }
+
+    /**
+    * Adds to the current status of serialization and returns whether abort status has been reached.
+    */
+    bool status(serialization_status toadd) { m_status |= static_cast<uint64_t>(toadd); return abort_status(); }
+
+    /**
+    * Returns true when the stream has encountered an error which it is not set to ignore.
+    *
+    * All streaming functions should become NOOPs after this status is encountered.
+    */
+    bool abort_status() const { return m_status & m_fault_mask; }
 protected:
 
     endianness m_stream_endianness, //the endianness of the stream
@@ -167,6 +192,8 @@ protected:
         m_max_alignment,  //the maximum bytes that can be aligned to
         m_current_alignment = 1;  //the current alignment
     char* m_buffer = nullptr;  //the current buffer in use
+    uint64_t m_status = 0,  //the current status of streaming
+             m_fault_mask;  //the mask for statuses that will causes streaming to be aborted
 };
 
 }
