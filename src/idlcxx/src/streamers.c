@@ -76,9 +76,7 @@ int get_array_accessor(char* str, size_t size, const void* node, void* user_data
 
 struct sequence_holder {
   const char* sequence_accessor;
-  const char* sequence_read_accessor;
   size_t depth;
-  size_t maximum;
 };
 typedef struct sequence_holder sequence_holder_t;
 
@@ -87,16 +85,6 @@ int get_sequence_member_accessor(char* str, size_t size, const void* node, void*
   (void)node;
   sequence_holder_t* sh = (sequence_holder_t*)user_data;
   return idl_snprintf(str, size, "%s[i_%u]", sh->sequence_accessor, sh->depth);
-}
-
-int get_sequence_member_read_accessor(char* str, size_t size, const void* node, void* user_data)
-{
-  (void)node;
-  sequence_holder_t* sh = (sequence_holder_t*)user_data;
-  if (sh->maximum)
-    return idl_snprintf(str, size, "temp_%u", sh->depth);
-  else
-    return idl_snprintf(str, size, "%s[i_%u]", sh->sequence_read_accessor, sh->depth);
 }
 
 enum instance_location {
@@ -248,13 +236,6 @@ check_endpoint(
    || putf(&streams->max, fmt, accessor, "max", maximum, ns, name))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (idl_is_string(type_spec) && maximum == 0)
-  {
-    if (putf(&streams->max, "  streamer.position(SIZE_MAX);\n")
-     || (is_key && putf(&streams->key_max, "  streamer.position(SIZE_MAX);\n")))
-      return IDL_RETCODE_NO_MEMORY;
-  }
-
   /* short-circuit if instance is not a key */
   if (!is_key)
     return IDL_RETCODE_OK;
@@ -288,7 +269,10 @@ unroll_sequence(const idl_pstate_t* pstate,
   uint32_t maximum = seq->maximum;
 
   const char* wfmt = maximum ? "  {\n"\
-                               "  uint32_t se_%1$u = std::min<uint32_t>(uint32_t(%2$s.size()), %3$u);\n"\
+                               "  uint32_t se_%1$u = uint32_t(%2$s.size());\n"\
+                               "  if (se_%1$u > %3$u &&\n"
+                               "      streamer.status(::org::eclipse::cyclonedds::core::cdr::serialization_status::%4$s_bound_exceeded))\n"
+                               "        return;\n"\
                                "  ::org::eclipse::cyclonedds::core::cdr::%4$s(streamer, se_%1$u);\n"\
                                "  for (uint32_t i_%1$u = 0; i_%1$u < se_%1$u; i_%1$u++) {\n"
                              : "  {\n"\
@@ -298,8 +282,11 @@ unroll_sequence(const idl_pstate_t* pstate,
   const char* rfmt = maximum ? "  {\n"\
                                "  uint32_t se_%1$u;\n"\
                                "  ::org::eclipse::cyclonedds::core::cdr::read(streamer, se_%1$u);\n"\
+                               "  if (se_%1$u > %4$u &&\n"
+                               "      streamer.status(::org::eclipse::cyclonedds::core::cdr::serialization_status::read_bound_exceeded))\n"
+                               "        return;\n"\
+                               "  %3$s.resize(se_%1$u);\n"\
                                "  for (uint32_t i_%1$u = 0; i_%1$u < se_%1$u; i_%1$u++) {\n"\
-                               "  %2$s temp_%1$u;\n"
                              : "  {\n"\
                                "  uint32_t se_%1$u;\n"\
                                "  ::org::eclipse::cyclonedds::core::cdr::read(streamer, se_%1$u);\n"\
@@ -314,26 +301,27 @@ unroll_sequence(const idl_pstate_t* pstate,
   if (IDL_PRINTA(&type, get_cpp11_type, seq->type_spec, streams->generator) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (putf(&streams->read, rfmt, depth, type, accessor)
+  if (putf(&streams->read, rfmt, depth, type, read_accessor, maximum)
    || putf(&streams->write, wfmt, depth, accessor, maximum, "write")
    || putf(&streams->move, wfmt, depth, accessor, maximum, "move")
    || putf(&streams->max, mfmt, depth, maximum))
     return IDL_RETCODE_NO_MEMORY;
 
   if (is_key &&
-      (putf(&streams->key_read, rfmt, depth, type, accessor)
+      (putf(&streams->key_read, rfmt, depth, type, read_accessor, maximum)
     || putf(&streams->key_write, wfmt, depth, accessor, maximum, "write")
     || putf(&streams->key_move, wfmt, depth, accessor, maximum, "move")
     || putf(&streams->key_max, mfmt, depth, maximum)))
     return IDL_RETCODE_NO_MEMORY;
 
-  sequence_holder_t sh = (sequence_holder_t){ .sequence_accessor = accessor, .sequence_read_accessor = read_accessor, .depth = depth, .maximum = maximum};
+  sequence_holder_t sh = (sequence_holder_t){ .sequence_accessor = accessor, .depth = depth};
   char* new_accessor = NULL;
   if (IDL_PRINTA(&new_accessor, get_sequence_member_accessor, &sh, &sh) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  sh.sequence_accessor = read_accessor;
   char* new_read_accessor = NULL;
-  if (IDL_PRINTA(&new_read_accessor, get_sequence_member_read_accessor, &sh, &sh) < 0)
+  if (IDL_PRINTA(&new_read_accessor, get_sequence_member_accessor, &sh, &sh) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   idl_retcode_t ret = IDL_RETCODE_OK;
@@ -347,19 +335,17 @@ unroll_sequence(const idl_pstate_t* pstate,
 
   //close sequence
   wfmt = "  } //i_%1$u\n  }\n";
-  rfmt = maximum ? "  if (i_%1$u < %2$u) %3$s.emplace_back(temp_%1$u);\n  } //i_%1$u\n  }\n"
-                 : wfmt;
   mfmt = maximum ? wfmt
-                 : "  } //i_%1$u\n  streamer.position(SIZE_MAX);\n  }\n";
+                 : "  } //i_%1$u\n  streamer.position(SIZE_MAX);\n  return;\n  }\n";
 
-  if (putf(&streams->read, rfmt, depth, maximum, read_accessor)
+  if (putf(&streams->read, wfmt, depth)
    || putf(&streams->write, wfmt, depth)
    || putf(&streams->move, wfmt, depth)
    || putf(&streams->max, mfmt, depth))
   return IDL_RETCODE_NO_MEMORY;
 
   if (is_key &&
-      (putf(&streams->key_read, rfmt, depth, maximum, read_accessor)
+      (putf(&streams->key_read, wfmt, depth)
     || putf(&streams->key_write, wfmt, depth)
     || putf(&streams->key_move, wfmt, depth)
     || putf(&streams->key_max, mfmt, depth)))
