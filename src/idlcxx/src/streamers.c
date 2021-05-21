@@ -204,7 +204,8 @@ check_endpoint(
   const idl_type_spec_t* type_spec,
   const char* accessor,
   const char* read_accessor,
-  bool is_key)
+  bool is_key,
+  bool is_sequence)
 {
   uint32_t maximum = 0;
   if (idl_is_string(type_spec))
@@ -226,8 +227,23 @@ check_endpoint(
     fmt = "  %4$s::%2$s(streamer, %1$s);\n";
   }
 
+  /*
+  * due to the differing implementation of std::vector<bool>::operator[]
+  * there needs to be a dummy variable which is read into before assigning
+  * to the entry in the container
+  */
+  const char* read_fmt = fmt;
+  if ((idl_mask(type_spec) & IDL_BOOL) == IDL_BOOL &&
+      is_sequence) {
+    read_fmt = "  {\n"
+               "    bool b;\n"
+               "    ::org::eclipse::cyclonedds::core::cdr::read(streamer, b);\n"
+               "    %1$s = b;"
+               "  }\n";
+  }
+
   if (putf(&streams->write, fmt, accessor, "write", maximum, ns, name)
-   || putf(&streams->read, fmt, read_accessor, "read", maximum, ns, name)
+   || putf(&streams->read, read_fmt, read_accessor, "read", maximum, ns, name)
    || putf(&streams->move, fmt, accessor, "move", maximum, ns, name)
    || putf(&streams->max, fmt, accessor, "max", maximum, ns, name))
     return IDL_RETCODE_NO_MEMORY;
@@ -246,10 +262,13 @@ check_endpoint(
 
   if (idl_is_constr_type(type_spec) &&
       !idl_is_keyless(type_spec, pstate->flags & IDL_FLAG_KEYLIST))
+  {
     fmt = "  %4$s::key_%2$s(streamer, %1$s);\n";
+    read_fmt = fmt;
+  }
 
   if (putf(&streams->key_write, fmt, accessor, "write", maximum, ns, name)
-   || putf(&streams->key_read, fmt, read_accessor, "read", maximum, ns, name)
+   || putf(&streams->key_read, read_fmt, read_accessor, "read", maximum, ns, name)
    || putf(&streams->key_move, fmt, accessor, "move", maximum, ns, name)
    || putf(&streams->key_max, fmt, accessor, "max", maximum, ns, name))
     return IDL_RETCODE_NO_MEMORY;
@@ -321,7 +340,7 @@ unroll_sequence(const idl_pstate_t* pstate,
   if (idl_is_sequence(seq->type_spec))
     ret = unroll_sequence (pstate, streams, (idl_sequence_t*)seq->type_spec, depth + 1, new_accessor, new_read_accessor, is_key);
   else
-    ret = check_endpoint (pstate, streams, seq->type_spec, new_accessor, new_read_accessor, is_key);
+    ret = check_endpoint (pstate, streams, seq->type_spec, new_accessor, new_read_accessor, is_key, true);
 
   if (ret != IDL_RETCODE_OK)
     return ret;
