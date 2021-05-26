@@ -500,6 +500,33 @@ void serdata_get_keyhash(
   }
 }
 
+#ifdef DDS_HAS_SHM
+template<typename T>
+uint32_t serdata_from_iox_size(const struct ddsi_serdata* d)
+{
+  assert(sizeof(T) == d->type->iox_size);
+  return d->type->iox_size;
+}
+
+template<typename T>
+ddsi_serdata * serdata_from_iox(
+    const struct ddsi_sertype * typecmn, enum ddsi_serdata_kind kind,
+    void * sub, void * iox_buffer)
+{
+  try {
+    auto d = new ddscxx_serdata<T>(typecmn, kind);
+    d->iox_chunk = iox_buffer;
+    d->iox_subscriber = sub;
+    // TODO(Sumanth), how to handle key hash?
+
+    return d;
+  }
+  catch (std::exception&) {
+    return nullptr;
+  }
+}
+#endif
+
 template <typename T>
 const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
   &serdata_eqkey<T>,
@@ -517,6 +544,10 @@ const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
   &serdata_free<T>,
   &serdata_print<T>,
   &serdata_get_keyhash<T>,
+#ifdef DDS_HAS_SHM
+  &serdata_from_iox_size<T>,
+  &serdata_from_iox<T>,
+#endif
 };
 
 template <typename T>
