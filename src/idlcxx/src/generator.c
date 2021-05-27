@@ -903,7 +903,7 @@ static const idlc_option_t *opts[] = {
     'f', "bounded-string-template", "ns_name::string<{BOUND} ...>",
     "Template to use for strings instead of std::string<{BOUND}>. \"{BOUND}\" "
     "tags are replaced by the repective maximum value, other text is copied "
-    "verbatim. (default: std::string<"
+    "verbatim. (default: std::string)"
   },
   &(idlc_option_t) {
     IDLC_STRING, { .string = &bnd_str_inc },
@@ -920,7 +920,7 @@ static const idlc_option_t *opts[] = {
   &(idlc_option_t) {
     IDLC_STRING, { .string = &arr_inc },
     'f', "array-include", "<header>",
-    "Header to include if template for array-include is used."
+    "Header to include if template for array-template is used."
   },
   &(idlc_option_t) {
     IDLC_STRING, { .string = &uni_tmpl },
