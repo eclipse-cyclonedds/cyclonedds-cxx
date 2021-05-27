@@ -19,6 +19,7 @@ Welcome to Eclipse Cyclone DDS's documentation!
    :caption: Contents
 
    ddscxx
+   idlcxx
 
 Indices and tables
 ==================
