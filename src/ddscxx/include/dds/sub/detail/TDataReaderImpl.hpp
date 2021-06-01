@@ -1095,28 +1095,28 @@ dds::sub::detail::DataReader<T>::read(SamplesFWIterator samples,
               uint32_t max_samples, const Selector& selector)
 {
     dds::sub::detail::SamplesFWInteratorHolder<T, SamplesFWIterator> holder(samples);
-    (void)max_samples;
+    max_samples = std::min(max_samples, selector.max_samples_);
 
     switch(selector.mode) {
     case SELECT_MODE_READ:
         this->AnyDataReaderDelegate::read(static_cast<dds_entity_t>(this->ddsc_entity),
                                           selector.state_filter_,
                                           holder,
-                                          selector.max_samples_);
+                                          max_samples);
         break;
     case SELECT_MODE_READ_INSTANCE:
         this->AnyDataReaderDelegate::read_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                    selector.handle,
                                                    selector.state_filter_,
                                                    holder,
-                                                   selector.max_samples_);
+                                                   max_samples);
         break;
     case SELECT_MODE_READ_NEXT_INSTANCE:
         this->AnyDataReaderDelegate::read_next_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                         selector.handle,
                                                         selector.state_filter_,
                                                         holder,
-                                                        selector.max_samples_);
+                                                        max_samples);
         break;
     case SELECT_MODE_READ_WITH_CONDITION:
         /* When SQL queries and QueryContitions are supported, then
@@ -1145,28 +1145,28 @@ dds::sub::detail::DataReader<T>::take(SamplesFWIterator samples,
               uint32_t max_samples, const Selector& selector)
 {
     dds::sub::detail::SamplesFWInteratorHolder<T, SamplesFWIterator> holder(samples);
-    (void)max_samples;
+    max_samples = std::min(max_samples, selector.max_samples_);
 
     switch(selector.mode) {
     case SELECT_MODE_READ:
         this->AnyDataReaderDelegate::take(static_cast<dds_entity_t>(this->ddsc_entity),
                                           selector.state_filter_,
                                           holder,
-                                          selector.max_samples_);
+                                          max_samples);
         break;
     case SELECT_MODE_READ_INSTANCE:
         this->AnyDataReaderDelegate::take_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                    selector.handle,
                                                    selector.state_filter_,
                                                    holder,
-                                                   selector.max_samples_);
+                                                   max_samples);
         break;
     case SELECT_MODE_READ_NEXT_INSTANCE:
         this->AnyDataReaderDelegate::take_next_instance(static_cast<dds_entity_t>(this->ddsc_entity),
                                                         selector.handle,
                                                         selector.state_filter_,
                                                         holder,
-                                                        selector.max_samples_);
+                                                        max_samples);
         break;
     case SELECT_MODE_READ_WITH_CONDITION:
         /* When SQL queries and QueryContitions are supported, then
