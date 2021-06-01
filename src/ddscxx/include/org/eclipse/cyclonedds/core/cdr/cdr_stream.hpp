@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -25,8 +25,13 @@ namespace core {
 namespace cdr {
 
 /**
-* Byte swapping function, is only enabled for arithmetic (base) types.
-*/
+ * @brief
+ * Byte swapping function, is only enabled for arithmetic (base) types.
+ *
+ * Determines the number of bytes to swap by the size of the template parameter.
+ *
+ * @param[in, out] toswap The entity whose bytes will be swapped.
+ */
 template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
 void byte_swap(T& toswap) {
     union { T a; uint16_t u2; uint32_t u4; uint64_t u8; } u;
@@ -55,8 +60,15 @@ void byte_swap(T& toswap) {
 }
 
 /**
-* Sets value of to to from, will thereafter swap the bytes of to, is sw equals true.
-*/
+ * @brief
+ * Transfer and optional byte swapping function.
+ *
+ * Will copy a primitive type and optionally do a byte swap.
+ *
+ * @param[in] from The variable to copy from.
+ * @param[out] to The variable to copy to.
+ * @param[in] sw If true, then the bytes in to will be swapped after copying.
+ */
 template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
 void transfer_and_swap(const T& from, T& to, bool sw) {
 
@@ -67,122 +79,229 @@ void transfer_and_swap(const T& from, T& to, bool sw) {
 }
 
 /**
-* Endianness types.
-*/
+ * @brief
+ * Endianness types.
+ *
+ * @enum endianness C++ implementation of cyclonedds's DDSRT_ENDIAN endianness defines
+ *
+ * @var endianness::little_endian Little endianness.
+ * @var endianness::big_endian Big endianness.
+ */
 enum class endianness {
     little_endian = DDSRT_LITTLE_ENDIAN,
     big_endian = DDSRT_BIG_ENDIAN
 };
 
 /**
-* Returns the endianness of the local system.
-*/
+ * @brief
+ * Returns the endianness of the local system.
+ *
+ * Takes the value from the DDSRT_ENDIAN definition and converts it to the c++ enum class value.
+ *
+ * @retval little_endian If the system is little endian.
+ * @retval big_endian If the system is big endian.
+ */
 constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
 
 /**
-* Serialization status bitmasks.
-*/
+ * @brief
+ * Serialization status bitmasks.
+ *
+ * @enum serialization_status Describes the serialization status of a cdr stream.
+ *
+ * These are stored as an bitfields in an int in cdr streams, since more than one serialization fault can be encountered.
+ *
+ * @var serialization_status::move_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
+ * @var serialization_status::write_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
+ * @var serialization_status::read_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
+ */
 enum class serialization_status {
-  move_bound_exceeded   = 0x1 << 0,   //the serialization has encountered a field which has exceeded the bounds set for it
-  write_bound_exceeded  = 0x1 << 1,   //the serialization has encountered a field which has exceeded the bounds set for it
-  read_bound_exceeded   = 0x1 << 2   //the serialization has encountered a field which has exceeded the bounds set for it
+  move_bound_exceeded   = 0x1 << 0,
+  write_bound_exceeded  = 0x1 << 1,
+  read_bound_exceeded   = 0x1 << 2
 };
 
 /**
-* Base cdr_stream class, implements the functions which all "real" cdr stream implementations will use.
-*/
+ * @brief
+ * Base cdr_stream class.
+ *
+ * This class implements the base functions which all "real" cdr stream implementations will use.
+ */
 class OMG_DDS_API cdr_stream {
 public:
     /**
-    * Constructor.
-    * Sets the stream endianness to end, and maximum alignment to max_align.
-    * Local endianness is implicitly set to the local endianness value.
-    */
+     * @brief
+     * Constructor.
+     *
+     * Sets the stream endianness to end, and maximum alignment to max_align.
+     *
+     * @param[in] end The endianness to set for the data stream, default to the local system endianness.
+     * @param[in] max_align The maximum size that the stream will align CDR primitives to.
+     * @param[in] ignore_faults Bitmask for ignoring faults, can be composed of bit fields from the serialization_status enumerator.
+     */
     cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults) { ; }
 
     /**
-    * Returns the current stream alignment.
-    */
+     * @brief
+     * Returns the current stream alignment.
+     *
+     * @return The current stream alignment.
+     */
     size_t alignment() const { return m_current_alignment; }
 
     /**
-    * Sets the new stream alignment.
-    */
+     * @brief
+     * Sets the new stream alignment.
+     *
+     * Also returns the value the alignment has been set to.
+     *
+     * @param[in] newalignment The new alignment to set.
+     *
+     * @return The value the alignment has been set to.
+     */
     size_t alignment(size_t newalignment) { return m_current_alignment = newalignment; }
 
     /**
-    * Returns the current cursor offset.
-    */
+     * @brief
+     * Returns the current cursor offset.
+     *
+     * @retval SIZE_MAX In this case, a maximum size calculation was being done, and the maximum size was determined to be unbounded.
+     * @return The current cursor offset.
+     */
     size_t position() const { return m_position; }
 
     /**
-    * Returns the position value after this operation.
-    */
+     * @brief
+     * Sets the new cursor offset.
+     *
+     * Also returs the value the offset has been set to.
+     *
+     * @param[in] newposition The new offset to set.
+     *
+     * @return The value the offset has been set to.
+     */
     size_t position(size_t newposition) { return m_position = newposition; }
 
     /**
-    * Moves the current position offset by incr_by if it is not at SIZE_MAX.
-    * Returns the position value after this operation.
-    */
+     * @brief
+     * Cursor move function.
+     *
+     * Moves the current position offset by incr_by if it is not at SIZE_MAX.
+     * Returns the position value after this operation.
+     *
+     * @param[in] incr_by The amount to move the cursor position by.
+     *
+     * @return The cursor position after this operation.
+     */
     size_t incr_position(size_t incr_by) { if (m_position != SIZE_MAX) m_position += incr_by; return m_position; }
 
     /**
-    * Resets the current cursor position and alignment to 0.
-    */
+     * @brief
+     * Resets the current cursor position and alignment to 0.
+     */
     void reset_position() { m_position = 0; m_current_alignment = 0; }
 
     /**
-    * Sets the buffer pointer to toset.
-    * As a side effect, the current position and alignment are reset, since these are not associated with the new buffer.
-    */
+     * @brief
+     * Buffer set function.
+     *
+     * Sets the buffer pointer to toset.
+     * As a side effect, the current position and alignment are reset, since these are not associated with the new buffer.
+     *
+     * @param[in] toset The new pointer of the buffer to set.
+     */
     void set_buffer(void* toset);
 
     /**
-    * Gets the current cursor pointer.
-    * If the current position is SIZE_MAX or the buffer pointer is not set, it returns nullptr.
-    */
+     * @brief
+     * Gets the current cursor pointer.
+     *
+     * If the current position is SIZE_MAX or the buffer pointer is not set, it returns nullptr.
+     *
+     * @retval nullptr If the current buffer is not set, or if the cursor offset is not valid.
+     * @return The current cursor pointer.
+     */
     char* get_cursor() const { return ((m_position != SIZE_MAX && m_buffer != nullptr) ? (m_buffer + m_position) : nullptr); }
 
     /**
-    * Returns the endianness of the local system.
-    */
+     * @brief
+     * Local system endianness getter.
+     *
+     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
+     *
+     * @return The local endianness.
+     */
     endianness local_endianness() const { return m_local_endianness; }
 
     /**
-    * Returns the endianness of the stream.
-    */
+     * @brief
+     * Stream endianness getter.
+     *
+     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
+     *
+     * @return The stream endianness.
+     */
     endianness stream_endianness() const { return m_stream_endianness; }
 
     /**
-    * Returns true if the stream endianness does not match the local endianness.
-    */
+     * @brief
+     * Determines whether the local and stream endianness are the same.
+     *
+     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
+     *
+     * @retval false If the stream endianness DOES match the local endianness.
+     * @retval true If the stream endianness DOES NOT match the local endianness.
+     */
     bool swap_endianness() const { return m_stream_endianness == m_local_endianness; }
 
     /**
-    * Aligns the current stream to newalignment: moves the cursor be at newalignment;
-    * Aligns to maximum m_max_alignment (which is stream-type specific).
-    *
-    * Zeroes the bytes the cursor is moved if add_zeroes is true.
-    *
-    * Nothing happens if the stream is already aligned to newalignment.
-    */
+     * @brief
+     * Aligns the current stream to a new alignment.
+     *
+     * Aligns the current stream to newalignment, moves the cursor be at newalignment.
+     * Aligns to maximum m_max_alignment (which is stream-type specific).
+     * Zeroes the bytes the cursor is moved if add_zeroes is true.
+     * Nothing happens if the stream is already aligned to newalignment.
+     *
+     * @param[in] newalignment The new alignment to align the stream to.
+     * @param[in] add_zeroes Whether the bytes that the cursor moves need to be zeroed.
+     *
+     * @return The number of bytes that the cursor was moved.
+     */
     size_t align(size_t newalignment, bool add_zeroes);
 
     /**
-    * Returns the current status of serialization.
-    */
+     * @brief
+     * Returns the current status of serialization.
+     *
+     * Can be a composition of multiple bit fields from serialization_status.
+     *
+     * @retval The current status of serialization.
+     */
     uint64_t status() const { return m_status; }
 
     /**
-    * Adds to the current status of serialization and returns whether abort status has been reached.
-    */
+     * @brief
+     * Serialization status update function.
+     *
+     * Adds to the current status of serialization and returns whether abort status has been reached.
+     *
+     * @param[in] toadd The serialization status error to add.
+     *
+     * @retval false If the serialization status of the stream HAS NOT YET reached one of the serialization errors which it is not set to ignore.
+     * @retval true If the serialization status of the stream HAS reached one of the serialization errors which it is not set to ignore.
+     */
     bool status(serialization_status toadd) { m_status |= static_cast<uint64_t>(toadd); return abort_status(); }
 
     /**
-    * Returns true when the stream has encountered an error which it is not set to ignore.
-    *
-    * All streaming functions should become NOOPs after this status is encountered.
-    */
+     * @brief
+     * Returns true when the stream has encountered an error which it is not set to ignore.
+     *
+     * All streaming functions should become NOOPs after this status is encountered.
+     *
+     * @retval false If the serialization status of the stream HAS NOT YET reached one of the serialization errors which it is not set to ignore.
+     * @retval true If the serialization status of the stream HAS reached one of the serialization errors which it is not set to ignore.
+     */
     bool abort_status() const { return m_status & m_fault_mask; }
 protected:
 
