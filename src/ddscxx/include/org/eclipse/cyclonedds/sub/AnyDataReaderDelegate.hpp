@@ -73,8 +73,8 @@ public:
     virtual SamplesHolder& operator++(int) = 0;
     virtual void *data() = 0;
     virtual detail::SampleInfo& info() = 0;
-    virtual void **cpp_sample_pointers() = 0;
-    virtual dds_sample_info_t *cpp_info_pointers() = 0;
+    virtual void **cpp_sample_pointers(size_t length) = 0;
+    virtual dds_sample_info_t *cpp_info_pointers(size_t length) = 0;
     virtual void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info) = 0;
     virtual void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos) = 0;
 };

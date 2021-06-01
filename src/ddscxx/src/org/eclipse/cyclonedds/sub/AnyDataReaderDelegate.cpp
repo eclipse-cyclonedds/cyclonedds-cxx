@@ -174,19 +174,14 @@ bool AnyDataReaderDelegate::init_samples_buffers(
     {
         c_sample_pointers_size = static_cast<size_t>(requested_max_samples);
         samples_to_read_cnt    = requested_max_samples;
+        samples.set_length(requested_max_samples);
     }
 
     /* Prepare the buffers. */
     if (c_sample_pointers_size)
     {
-      /*
-       * Unfortunately, the kludge doesn't work properly with read/take with
-       * loan. So, prepare sample memory up-front. This will cause performance
-       * decrease due to an extra copy action. Oh, well.
-       */
-        samples.set_length(static_cast<uint32_t>(c_sample_pointers_size));
-        c_sample_pointers = samples.cpp_sample_pointers();
-        c_sample_infos = samples.cpp_info_pointers();
+        c_sample_pointers = samples.cpp_sample_pointers(c_sample_pointers_size);
+        c_sample_infos = samples.cpp_info_pointers(c_sample_pointers_size);
     }
 
     return (c_sample_pointers_size > 0);
