@@ -453,7 +453,7 @@ TEST_F(DataReader, read_SamplesBIIterator)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_read)
+TEST_F(DataReader, read_default_filter_read)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -481,7 +481,7 @@ TEST_F(DataReader, DISABLED_read_default_filter_read)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_not_read)
+TEST_F(DataReader, read_default_filter_not_read)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -506,7 +506,7 @@ TEST_F(DataReader, DISABLED_read_default_filter_not_read)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_new_view)
+TEST_F(DataReader, read_default_filter_new_view)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -531,7 +531,7 @@ TEST_F(DataReader, DISABLED_read_default_filter_new_view)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_not_new_view)
+TEST_F(DataReader, read_default_filter_not_new_view)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -559,7 +559,7 @@ TEST_F(DataReader, DISABLED_read_default_filter_not_new_view)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_alive)
+TEST_F(DataReader, read_default_filter_alive)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -577,7 +577,7 @@ TEST_F(DataReader, DISABLED_read_default_filter_alive)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_not_alive_disposed)
+TEST_F(DataReader, read_default_filter_not_alive_disposed)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -607,7 +607,7 @@ TEST_F(DataReader, DISABLED_read_default_filter_not_alive_disposed)
 }
 
 
-TEST_F(DataReader, DISABLED_read_default_filter_not_alive_no_writers)
+TEST_F(DataReader, read_default_filter_not_alive_no_writers)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -726,7 +726,7 @@ TEST_F(DataReader, DISABLED_take_default_filter_read)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_not_read)
+TEST_F(DataReader, take_default_filter_not_read)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -751,7 +751,7 @@ TEST_F(DataReader, DISABLED_take_default_filter_not_read)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_new_view)
+TEST_F(DataReader, take_default_filter_new_view)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -776,7 +776,7 @@ TEST_F(DataReader, DISABLED_take_default_filter_new_view)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_not_new_view)
+TEST_F(DataReader, take_default_filter_not_new_view)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
@@ -804,7 +804,7 @@ TEST_F(DataReader, DISABLED_take_default_filter_not_new_view)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_alive)
+TEST_F(DataReader, take_default_filter_alive)
 {
     dds::sub::LoanedSamples<Space::Type1> samples;
     std::vector<Space::Type1> test_samples;
@@ -822,7 +822,7 @@ TEST_F(DataReader, DISABLED_take_default_filter_alive)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_not_alive_disposed)
+TEST_F(DataReader, take_default_filter_not_alive_disposed)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),
@@ -852,7 +852,7 @@ TEST_F(DataReader, DISABLED_take_default_filter_not_alive_disposed)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_not_alive_no_writers)
+TEST_F(DataReader, take_default_filter_not_alive_no_writers)
 {
     dds::sub::status::DataState state(dds::sub::status::SampleState::not_read(),
                                       dds::sub::status::ViewState::new_view(),

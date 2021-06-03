@@ -59,19 +59,15 @@ public:
         return (*this->samples_.delegate())[this->index_].delegate().info();
     }
 
-    void **cpp_sample_pointers()
+    void **cpp_sample_pointers(size_t length)
     {
 
-        uint32_t cpp_sample_size = this->samples_.delegate()->length();
-        void **c_sample_pointers = new void * [cpp_sample_size];
-        return c_sample_pointers;
+        return new void * [length];
     }
 
-    dds_sample_info_t *cpp_info_pointers()
+    dds_sample_info_t *cpp_info_pointers(size_t length)
     {
-        uint32_t cpp_sample_size = this->samples_.delegate()->length();
-        dds_sample_info_t *c_info_pointers = new dds_sample_info_t[cpp_sample_size];
-        return c_info_pointers;
+        return new dds_sample_info_t[length];
     }
 
     void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info)
@@ -127,17 +123,14 @@ public:
         return (*this->samples_.delegate())[this->index_].delegate().info();
     }
 
-    void **cpp_sample_pointers()
+    void **cpp_sample_pointers(size_t length)
     {
-        uint32_t cpp_sample_size = this->samples_.delegate()->length();
-        return new void * [cpp_sample_size];
+        return new void * [length];
     }
 
-    dds_sample_info_t *cpp_info_pointers()
+    dds_sample_info_t *cpp_info_pointers(size_t length)
     {
-        uint32_t cpp_sample_size = this->samples_.delegate()->length();
-        dds_sample_info_t *c_info_pointers = new dds_sample_info_t[cpp_sample_size];
-        return c_info_pointers;
+        return new dds_sample_info_t[length];
     }
 
     void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info)
@@ -179,17 +172,17 @@ template <typename T, typename SamplesFWIterator>
 class SamplesFWInteratorHolder : public SamplesHolder
 {
 public:
-    SamplesFWInteratorHolder(SamplesFWIterator& it) : iterator(it), length(0)
+    SamplesFWInteratorHolder(SamplesFWIterator& it) : iterator(it), size(0)
     {
     }
 
     void set_length(uint32_t len) {
-        this->length = len;
+        this->size = len;
 
     }
 
     uint32_t get_length() const {
-        return this->length;
+        return this->size;
     }
 
     SamplesHolder& operator++(int)
@@ -208,7 +201,7 @@ public:
         return (*iterator).delegate().info();
     }
 
-    void **cpp_sample_pointers()
+    void **cpp_sample_pointers(size_t length)
     {
         void **c_sample_pointers = new void * [length];
         SamplesFWIterator tmp_iterator = iterator;
@@ -218,17 +211,16 @@ public:
         return c_sample_pointers;
     }
 
-    dds_sample_info_t *cpp_info_pointers()
+    dds_sample_info_t *cpp_info_pointers(size_t length)
     {
-      dds_sample_info_t *c_info_pointers = new dds_sample_info_t[length];
-      return c_info_pointers;
+      return new dds_sample_info_t[length];
     }
 
     void set_sample_contents(void**, dds_sample_info_t *info)
     {
         /* Samples have already been deserialized in their containers during the read/take call. */
         SamplesFWIterator tmp_iterator = iterator;
-        for (uint32_t i = 0; i < length; ++i, ++tmp_iterator) {
+        for (uint32_t i = 0; i < size; ++i, ++tmp_iterator) {
             org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], tmp_iterator->delegate().info());
         }
     }
@@ -241,7 +233,7 @@ public:
 
 private:
     SamplesFWIterator& iterator;
-    uint32_t length;
+    uint32_t size;
 
 };
 
@@ -249,17 +241,17 @@ template <typename T, typename SamplesBIIterator>
 class SamplesBIIteratorHolder : public SamplesHolder
 {
 public:
-    SamplesBIIteratorHolder(SamplesBIIterator& it) : iterator(it), length(0)
+    SamplesBIIteratorHolder(SamplesBIIterator& it) : iterator(it), size(0)
     {
     }
 
     void set_length(uint32_t len) {
-        this->length = len;
+        this->size = len;
         samples.resize(len);
     }
 
     uint32_t get_length() const {
-        return this->length;
+        return this->size;
     }
 
     SamplesHolder& operator++(int)
@@ -278,8 +270,9 @@ public:
         return this->samples[0].delegate().info();
     }
 
-    void **cpp_sample_pointers()
+    void **cpp_sample_pointers(size_t length)
     {
+        set_length(static_cast<uint32_t>(length));
         void **c_sample_pointers = new void*[length];
         for (uint32_t i = 0; i < length; ++i) {
           c_sample_pointers[i] = samples[i].delegate().data_ptr();
@@ -287,7 +280,7 @@ public:
         return c_sample_pointers;
     }
 
-    dds_sample_info_t *cpp_info_pointers()
+    dds_sample_info_t *cpp_info_pointers(size_t length)
     {
         dds_sample_info_t *c_info_pointers = new dds_sample_info_t[length];
         return c_info_pointers;
@@ -296,7 +289,7 @@ public:
     void set_sample_contents(void**, dds_sample_info_t *info)
     {
         /* Samples have already been deserialized in their containers during the read/take call. */
-        for (uint32_t i = 0; i < length; ++i) {
+        for (uint32_t i = 0; i < size; ++i) {
             org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], samples[i].delegate().info());
             this->iterator = std::move(samples[i]);
             this->iterator++;
@@ -312,7 +305,7 @@ public:
 private:
     SamplesBIIterator& iterator;
     std::vector< dds::sub::Sample<T, dds::sub::detail::Sample> > samples;
-    uint32_t length;
+    uint32_t size;
 
 };
 
