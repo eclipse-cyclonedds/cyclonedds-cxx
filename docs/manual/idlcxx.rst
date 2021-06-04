@@ -47,8 +47,8 @@ For each template the ordering of the tags is not important, the generator will 
 on tags, not positions, all other text is inserted into the generated code verbatim. This allows
 for custom allocators and the like to be added as well.
 
-For more information on all command line options, run idlc with the -h option, loading the idlcxx
-library:
+More information on all command line options can be retrieved by running idlc with the -h option,
+while loading the idlcxx library:
 
 .. code:: bash
 
@@ -83,7 +83,7 @@ The command line options for custom sequence containers are:
 
   - replaced tags: {TYPE}, {BOUND}
 
-- bounded_sequence_include
+- bounded-sequence-include
 
   - header to include if bounded-sequence-template is used
 
@@ -143,10 +143,14 @@ The command line options for custom string containers are:
 Arrays
 ------
 
-The default container used for IDL arrays is std::array. Any user-supplied container class
-intended to be used in place of std::array is expected to support auto range for loops,
-i.e. it has a begin() and end() function returning iterators to the begin and end of the
-array.
+The default container used for IDL arrays is std::array.
+Any user-supplied container class intended to be used in place of std::array is expected
+to adhere to the following interface, with the same effect as these functions have in
+std::array:
+
+- support auto-range for loops
+
+  - having begin() and end() functions returning iterators to the begin and end of the array
 
 The command line options for custom array containers are:
 
@@ -180,26 +184,6 @@ The command line options for custom variant containers are:
 
   - template to use for unions instead of std::variant, copied verbatim
 
-- union_include
+- union-include
 
   - header to include if template for union-template is used
-
-Swap Functions
---------------
-
-Swap functions are used by both unions and structures. The default swap function is std::swap from <utility>.
-A custom swap function can be supplied as long as it is a function of the following signature:
-
-.. code:: c++
-
-  template<typename T> void custom_namespace::custom_swap_impl(T& m1, T& m2);
-
-The command line options for custom swap functions are:
-
-- swap-template
-
-  - template for swap function calls, copied verbatim
-
-- swap-include
-
-  - header to include if template for swap-template is used
