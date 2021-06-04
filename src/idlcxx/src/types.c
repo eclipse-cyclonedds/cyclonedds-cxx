@@ -838,15 +838,6 @@ emit_union(
       return IDL_RETCODE_NO_MEMORY;
   }
 
-  /* swap function */
-  fmt = "  friend void swap(%1$s& m1, %1$s &m2)\n"
-        "  {\n"
-        "    %2$s(m1.m__d, m2.m__d);\n"
-        "    %2$s(m1.m__u, m2.m__u);\n"
-        "  }\n\n";
-  if (idl_fprintf(gen->header.handle, fmt, name, gen->swap_format) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
   if (fputs("};\n\n", gen->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 

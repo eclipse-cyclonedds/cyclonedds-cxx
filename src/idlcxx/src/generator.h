@@ -29,8 +29,6 @@ struct generator {
   char *union_format;
   char *union_getter_format;
   const char *union_include;
-  char *swap_format;
-  const char *swap_include;
   bool uses_array;
   bool uses_sequence;
   bool uses_bounded_sequence;

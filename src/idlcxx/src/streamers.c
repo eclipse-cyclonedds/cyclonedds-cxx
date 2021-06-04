@@ -151,8 +151,6 @@ static void cleanup_streams(struct streams* str)
     free(str->key_move.data);
   if (str->key_max.data)
     free(str->key_max.data);
-  if (str->key.data)
-    free(str->key.data);
 }
 
 static idl_retcode_t flush_stream(idl_buffer_t* str, FILE* f)
