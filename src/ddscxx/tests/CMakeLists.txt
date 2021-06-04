@@ -16,6 +16,14 @@ idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldDat
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
+if (DDS_HAS_SHM AND NOT WIN32)
+  find_package(iceoryx_posh QUIET)
+  find_package(iceoryx_posh_roudi_environment QUIET)
+  if(iceoryx_posh_roudi_environment_FOUND)
+    set(SHM_TESTS ${iceoryx_posh_roudi_environment_FOUND})
+  endif()
+endif()
+
 set(sources
   Bounded.cpp
   EntityStatus.cpp
@@ -40,9 +48,14 @@ set(sources
   Query.cpp
   WaitSet.cpp
   Qos.cpp
-  Condition.cpp)
+  Condition.cpp
+  Util.cpp)
 
-add_executable(ddscxx_tests ${sources} Util.cpp)
+if (SHM_TESTS)
+  list(APPEND sources SharedMemory.cpp)
+endif()
+
+add_executable(ddscxx_tests ${sources})
 
 # Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
 # on Azure Pipelines
@@ -54,6 +67,11 @@ endif()
 
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD 17)
 target_link_libraries(ddscxx_tests CycloneDDS-CXX::ddscxx ddscxx_test_types GTest::GTest GTest::Main)
+if (SHM_TESTS)
+  target_link_libraries(ddscxx_tests
+      iceoryx_posh::iceoryx_posh_roudi
+      iceoryx_posh_testing::iceoryx_posh_testing)
+endif()
 gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources} TEST_LIST tests)
 
 # Ensure shared libraries are found
