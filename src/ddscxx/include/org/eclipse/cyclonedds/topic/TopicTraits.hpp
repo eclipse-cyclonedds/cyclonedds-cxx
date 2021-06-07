@@ -18,8 +18,11 @@
 #ifndef CYCLONEDDS_TOPIC_TOPICTRAITS_HPP_
 #define CYCLONEDDS_TOPIC_TOPICTRAITS_HPP_
 
-#include <string.h>
+#include <vector>
+
 #include <org/eclipse/cyclonedds/topic/DataRepresentation.hpp>
+
+struct ddsi_sertype;
 
 namespace org
 {

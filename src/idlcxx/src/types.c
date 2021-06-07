@@ -164,7 +164,7 @@ emit_member_methods(
   else
     fmt = "  const %1$s& %2$s() const { return this->%2$s_; }\n"
           "  %1$s& %2$s() { return this->%2$s_; }\n"
-          "  void %2$s(const %1$s _val_) { this->%2$s_ = _val_; }\n"
+          "  void %2$s(const %1$s& _val_) { this->%2$s_ = _val_; }\n"
           "  void %2$s(%1$s&& _val_) { this->%2$s_ = _val_; }\n";
 
   if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
