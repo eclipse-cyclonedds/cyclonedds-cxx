@@ -110,6 +110,13 @@ public:
     explicit Reference(const Reference& ref);
 
     /**
+     * Creates a Reference from another.
+     *
+     * @param ref the other reference
+     */
+    explicit Reference(Reference&& ref);
+
+    /**
      * Creates a Reference from other Reference type safely.
      *
      * @param ref the other reference
@@ -194,6 +201,9 @@ public:
 
     /** @copydoc dds::core::Reference::operator=(const Reference<D>& that) */
     Reference& operator=(const Reference& other) = default;
+
+    /** @copydoc dds::core::Reference::operator=(const Reference<D>& that) */
+    Reference& operator=(Reference&& other) = default;
 
     /**
      * Special assignment operators that takes care of assigning

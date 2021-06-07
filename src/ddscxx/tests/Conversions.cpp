@@ -23,84 +23,6 @@
  * test for those invalid castings by disabling the related tests.
  */
 
-/* Class to test implicit conversion from DataWriter<T> to AnyDataWriter and vice versa. */
-class AnyWriterStore
-{
-public:
-    AnyWriterStore(const dds::pub::AnyDataWriter& base)
-        : any(base)
-    {
-    }
-    const dds::pub::AnyDataWriter& get() {
-        return any;
-    }
-private:
-    const dds::pub::AnyDataWriter& any;
-};
-
-/* Class to test implicit conversion from DataReader<T> to AnyDataReader and vice versa. */
-class AnyReaderStore
-{
-public:
-    AnyReaderStore(const dds::sub::AnyDataReader& base)
-        : any(base)
-    {
-    }
-    const dds::sub::AnyDataReader& get() {
-        return any;
-    }
-private:
-    const dds::sub::AnyDataReader& any;
-};
-
-/* Class to test implicit conversion from Topic<T> to AnyTopic and vice versa. */
-class AnyTopicStore
-{
-public:
-    AnyTopicStore(const dds::topic::AnyTopic& base)
-        : any(base)
-    {
-    }
-    const dds::topic::AnyTopic& get() {
-        return any;
-    }
-private:
-    const dds::topic::AnyTopic& any;
-};
-
-/* Class to test implicit conversion from Topic<T> to TopicDescription and vice versa. */
-class TopicDescriptionStore
-{
-public:
-    TopicDescriptionStore(const dds::topic::TopicDescription& base)
-        : any(base)
-    {
-    }
-    const dds::topic::TopicDescription& get() {
-        return any;
-    }
-private:
-    const dds::topic::TopicDescription& any;
-};
-
-/* Class to test implicit conversion from DataReader<T> to Entity and vice versa. */
-class EntityStore
-{
-public:
-    EntityStore(const dds::core::Entity& e)
-        : entity(e)
-    {
-    }
-    const dds::core::Entity& get() {
-        return entity;
-    }
-private:
-    const dds::core::Entity& entity;
-};
-
-
-
-
 /**
  * Fixture for the Topic tests
  */
@@ -283,13 +205,13 @@ TEST_F(Conversions, DISABLED_participant_entity_implicit)
 {
     this->CreateParticipant();
 
-    /* Test implicit conversions by using a store. */
-    EntityStore store(this->participant);
+    /* Test implicit conversions to entity and back. */
+    const dds::core::Entity& e(this->participant);
 
-    dds::domain::DomainParticipant par1(store.get());
-    dds::domain::DomainParticipant par2 = store.get();
-    dds::core::Entity ent1(store.get());
-    dds::core::Entity ent2 = store.get();
+    dds::domain::DomainParticipant par1(e);
+    dds::domain::DomainParticipant par2 = e;
+    dds::core::Entity ent1(e);
+    dds::core::Entity ent2 = e;
 
     ASSERT_EQ(this->participant, par1);
     ASSERT_EQ(this->participant, par2);
@@ -297,7 +219,7 @@ TEST_F(Conversions, DISABLED_participant_entity_implicit)
     ASSERT_EQ(this->participant, ent2);
 
     ASSERT_THROW({
-        dds::pub::Publisher par3(store.get());
+        dds::pub::Publisher par3(e);
     }, dds::core::IllegalOperationError);
 }
 
@@ -396,13 +318,13 @@ TEST_F(Conversions, DISABLED_publisher_entity_implicit)
 {
     this->CreatePublisher();
 
-    /* Test implicit conversions by using a store. */
-    EntityStore store(this->publisher);
+    /* Test implicit conversions to entity and back. */
+    const dds::core::Entity& e(this->publisher);
 
-    dds::pub::Publisher pub1(store.get());
-    dds::pub::Publisher pub2 = store.get();
-    dds::core::Entity ent1(store.get());
-    dds::core::Entity ent2 = store.get();
+    dds::pub::Publisher pub1(e);
+    dds::pub::Publisher pub2 = e;
+    dds::core::Entity ent1(e);
+    dds::core::Entity ent2 = e;
 
     ASSERT_EQ(this->publisher, pub1);
     ASSERT_EQ(this->publisher, pub2);
@@ -410,7 +332,7 @@ TEST_F(Conversions, DISABLED_publisher_entity_implicit)
     ASSERT_EQ(this->publisher, ent2);
 
     ASSERT_THROW({
-        dds::pub::Publisher pub3(store.get());
+        dds::pub::Publisher pub3(e);
     }, dds::core::IllegalOperationError);
 }
 
@@ -509,13 +431,13 @@ TEST_F(Conversions, DISABLED_subscriber_entity_implicit)
 {
     this->CreateSubscriber();
 
-    /* Test implicit conversions by using a store. */
-    EntityStore store(this->subscriber);
+    /* Test implicit conversions to entity and back. */
+    const dds::core::Entity& e(this->subscriber);
 
-    dds::sub::Subscriber sub1(store.get());
-    dds::sub::Subscriber sub2 = store.get();
-    dds::core::Entity ent1(store.get());
-    dds::core::Entity ent2 = store.get();
+    dds::sub::Subscriber sub1(e);
+    dds::sub::Subscriber sub2 = e;
+    dds::core::Entity ent1(e);
+    dds::core::Entity ent2 = e;
 
     ASSERT_EQ(this->subscriber, sub1);
     ASSERT_EQ(this->subscriber, sub2);
@@ -523,7 +445,7 @@ TEST_F(Conversions, DISABLED_subscriber_entity_implicit)
     ASSERT_EQ(this->subscriber, ent2);
 
     ASSERT_THROW({
-        dds::sub::Subscriber sub3(store.get());
+        dds::sub::Subscriber sub3(e);
     }, dds::core::IllegalOperationError);
 }
 
@@ -622,13 +544,13 @@ TEST_F(Conversions, DISABLED_topic_any_implicit)
 {
     this->CreateTopic();
 
-    /* Test implicit conversions by using a store. */
-    AnyTopicStore store(this->topic);
+    /* Test implicit conversions to anytopic and back. */
+    const dds::topic::AnyTopic& tp(this->topic);
 
-    dds::topic::Topic<Space::Type1> tpc1(store.get());
-    dds::topic::Topic<Space::Type1> tpc2 = store.get();
-    dds::topic::AnyTopic any1(store.get());
-    dds::topic::AnyTopic any2 = store.get();
+    dds::topic::Topic<Space::Type1> tpc1(tp);
+    dds::topic::Topic<Space::Type1> tpc2 = tp;
+    dds::topic::AnyTopic any1(tp);
+    dds::topic::AnyTopic any2 = tp;
 
     ASSERT_EQ(this->topic, tpc1);
     ASSERT_EQ(this->topic, tpc2);
@@ -636,7 +558,7 @@ TEST_F(Conversions, DISABLED_topic_any_implicit)
     ASSERT_EQ(this->topic, any2);
 
     ASSERT_THROW({
-        dds::topic::Topic<Space::Type2> tpc3 = store.get();
+        dds::topic::Topic<Space::Type2> tpc3 = tp;
     }, dds::core::IllegalOperationError);
 }
 
@@ -735,13 +657,13 @@ TEST_F(Conversions, DISABLED_topic_description_implicit)
 {
     this->CreateTopic();
 
-    /* Test implicit conversions by using a store. */
-    TopicDescriptionStore store(this->topic);
+    /* Test implicit conversions to topicdescription and back. */
+    const dds::topic::TopicDescription& td(this->topic);
 
-    dds::topic::Topic<Space::Type1> tpc1(store.get());
-    dds::topic::Topic<Space::Type1> tpc2 = store.get();
-    dds::topic::TopicDescription desc1(store.get());
-    dds::topic::TopicDescription desc2 = store.get();
+    dds::topic::Topic<Space::Type1> tpc1(td);
+    dds::topic::Topic<Space::Type1> tpc2 = td;
+    dds::topic::TopicDescription desc1(td);
+    dds::topic::TopicDescription desc2 = td;
 
     ASSERT_EQ(this->topic, tpc1);
     ASSERT_EQ(this->topic, tpc2);
@@ -749,7 +671,7 @@ TEST_F(Conversions, DISABLED_topic_description_implicit)
     ASSERT_EQ(this->topic, desc2);
 
     ASSERT_THROW({
-        dds::topic::Topic<Space::Type2> tpc3 = store.get();
+        dds::topic::Topic<Space::Type2> tpc3 = td;
     }, dds::core::IllegalOperationError);
 }
 
@@ -848,13 +770,13 @@ TEST_F(Conversions, DISABLED_topic_entity_implicit)
 {
     this->CreateTopic();
 
-    /* Test implicit conversions by using a store. */
-    EntityStore store(this->topic);
+    /* Test implicit conversions to entity and back. */
+    const dds::core::Entity& e(this->topic);
 
-    dds::topic::Topic<Space::Type1> tpc1(store.get());
-    dds::topic::Topic<Space::Type1> tpc2 = store.get();
-    dds::core::Entity ent1(store.get());
-    dds::core::Entity ent2 = store.get();
+    dds::topic::Topic<Space::Type1> tpc1(e);
+    dds::topic::Topic<Space::Type1> tpc2 = e;
+    dds::core::Entity ent1(e);
+    dds::core::Entity ent2 = e;
 
     ASSERT_EQ(this->topic, tpc1);
     ASSERT_EQ(this->topic, tpc2);
@@ -862,7 +784,7 @@ TEST_F(Conversions, DISABLED_topic_entity_implicit)
     ASSERT_EQ(this->topic, ent2);
 
     ASSERT_THROW({
-        dds::topic::Topic<Space::Type2> tpc3 = store.get();
+        dds::topic::Topic<Space::Type2> tpc3 = e;
     }, dds::core::IllegalOperationError);
 }
 
@@ -961,13 +883,13 @@ TEST_F(Conversions, DISABLED_writer_any_implicit)
 {
     this->CreateWriter();
 
-    /* Test implicit conversions by using a store. */
-    AnyWriterStore store(this->writer);
+    /* Test implicit conversions to anydatawriter and back. */
+    const dds::pub::AnyDataWriter& wr(this->writer);
 
-    dds::pub::DataWriter<Space::Type1> wrt1(store.get());
-    dds::pub::DataWriter<Space::Type1> wrt2 = store.get();
-    dds::pub::AnyDataWriter any1(store.get());
-    dds::pub::AnyDataWriter any2 = store.get();
+    dds::pub::DataWriter<Space::Type1> wrt1(wr);
+    dds::pub::DataWriter<Space::Type1> wrt2 = wr;
+    dds::pub::AnyDataWriter any1(wr);
+    dds::pub::AnyDataWriter any2 = wr;
 
     ASSERT_EQ(this->writer, wrt1);
     ASSERT_EQ(this->writer, wrt2);
@@ -975,7 +897,7 @@ TEST_F(Conversions, DISABLED_writer_any_implicit)
     ASSERT_EQ(this->writer, any2);
 
     ASSERT_THROW({
-        dds::pub::DataWriter<Space::Type2> tpc3 = store.get();
+        dds::pub::DataWriter<Space::Type2> tpc3 = wr;
     }, dds::core::IllegalOperationError);
 }
 
@@ -1074,13 +996,13 @@ TEST_F(Conversions, DISABLED_writer_entity_implicit)
 {
     this->CreateWriter();
 
-    /* Test implicit conversions by using a store. */
-    EntityStore store(this->writer);
+    /* Test implicit conversions to entity and back. */
+    const dds::core::Entity& e(this->writer);
 
-    dds::pub::DataWriter<Space::Type1> wrt1(store.get());
-    dds::pub::DataWriter<Space::Type1> wrt2 = store.get();
-    dds::core::Entity ent1(store.get());
-    dds::core::Entity ent2 = store.get();
+    dds::pub::DataWriter<Space::Type1> wrt1(e);
+    dds::pub::DataWriter<Space::Type1> wrt2 = e;
+    dds::core::Entity ent1(e);
+    dds::core::Entity ent2 = e;
 
     ASSERT_EQ(this->writer, wrt1);
     ASSERT_EQ(this->writer, wrt2);
@@ -1088,7 +1010,7 @@ TEST_F(Conversions, DISABLED_writer_entity_implicit)
     ASSERT_EQ(this->writer, ent2);
 
     ASSERT_THROW({
-        dds::pub::DataWriter<Space::Type2> tpc3 = store.get();
+        dds::pub::DataWriter<Space::Type2> tpc3 = e;
     }, dds::core::IllegalOperationError);
 }
 
@@ -1187,13 +1109,13 @@ TEST_F(Conversions, DISABLED_reader_any_implicit)
 {
     this->CreateReader();
 
-    /* Test implicit conversions by using a store. */
-    AnyReaderStore store(this->reader);
+    /* Test implicit conversions to anydatareader and back. */
+    const dds::sub::AnyDataReader& rd(this->reader);
 
-    dds::sub::DataReader<Space::Type1> wrt1(store.get());
-    dds::sub::DataReader<Space::Type1> wrt2 = store.get();
-    dds::sub::AnyDataReader any1(store.get());
-    dds::sub::AnyDataReader any2 = store.get();
+    dds::sub::DataReader<Space::Type1> wrt1(rd);
+    dds::sub::DataReader<Space::Type1> wrt2 = rd;
+    dds::sub::AnyDataReader any1(rd);
+    dds::sub::AnyDataReader any2 = rd;
 
     ASSERT_EQ(this->reader, wrt1);
     ASSERT_EQ(this->reader, wrt2);
@@ -1201,7 +1123,7 @@ TEST_F(Conversions, DISABLED_reader_any_implicit)
     ASSERT_EQ(this->reader, any2);
 
     ASSERT_THROW({
-        dds::sub::DataReader<Space::Type2> tpc3 = store.get();
+        dds::sub::DataReader<Space::Type2> tpc3 = rd;
     }, dds::core::IllegalOperationError);
 }
 
@@ -1300,13 +1222,13 @@ TEST_F(Conversions, DISABLED_reader_entity_implicit)
 {
     this->CreateReader();
 
-    /* Test implicit conversions by using a store. */
-    EntityStore store(this->reader);
+    /* Test implicit conversions to entity and back. */
+    const dds::core::Entity& e(this->reader);
 
-    dds::sub::DataReader<Space::Type1> wrt1(store.get());
-    dds::sub::DataReader<Space::Type1> wrt2 = store.get();
-    dds::core::Entity ent1(store.get());
-    dds::core::Entity ent2 = store.get();
+    dds::sub::DataReader<Space::Type1> wrt1(e);
+    dds::sub::DataReader<Space::Type1> wrt2 = e;
+    dds::core::Entity ent1(e);
+    dds::core::Entity ent2 = e;
 
     ASSERT_EQ(this->reader, wrt1);
     ASSERT_EQ(this->reader, wrt2);
@@ -1314,6 +1236,6 @@ TEST_F(Conversions, DISABLED_reader_entity_implicit)
     ASSERT_EQ(this->reader, ent2);
 
     ASSERT_THROW({
-        dds::sub::DataReader<Space::Type2> tpc3 = store.get();
+        dds::sub::DataReader<Space::Type2> tpc3 = e;
     }, dds::core::IllegalOperationError);
 }

@@ -48,11 +48,6 @@ TGuardCondition<DELEGATE>::TGuardCondition(FUN functor)
 }
 
 template <typename DELEGATE>
-TGuardCondition<DELEGATE>::~TGuardCondition()
-{
-}
-
-template <typename DELEGATE>
 void TGuardCondition<DELEGATE>::trigger_value(bool value)
 {
     this->delegate()->trigger_value(value);

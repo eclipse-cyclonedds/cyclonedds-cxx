@@ -49,9 +49,6 @@ TSubscriber<DELEGATE>::TSubscriber(const ::dds::domain::DomainParticipant& dp,
 }
 
 template <typename DELEGATE>
-TSubscriber<DELEGATE>::~TSubscriber() {}
-
-template <typename DELEGATE>
 void TSubscriber<DELEGATE>::notify_datareaders()
 {
     this->delegate()->notify_datareaders();

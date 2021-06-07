@@ -29,11 +29,6 @@ namespace topic
 {
 
 template <typename DELEGATE>
-TTopicDescription<DELEGATE>::~TTopicDescription()
-{
-}
-
-template <typename DELEGATE>
 const std::string& TTopicDescription<DELEGATE>::name() const
 {
     return this->delegate()->name();

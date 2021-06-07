@@ -47,11 +47,6 @@ dds::core::Duration::Duration(int64_t s, uint32_t ns)
 }
 #endif
 
-dds::core::Duration::~Duration()
-{
-    // implementation-defined
-}
-
 int64_t dds::core::Duration::sec() const
 {
     return sec_;

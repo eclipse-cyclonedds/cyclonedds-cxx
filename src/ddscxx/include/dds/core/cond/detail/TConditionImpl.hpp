@@ -32,11 +32,6 @@ namespace cond
 {
 
 template <typename DELEGATE>
-TCondition<DELEGATE>::~TCondition()
-{
-}
-
-template <typename DELEGATE>
 template <typename Functor>
 void TCondition<DELEGATE>::handler(Functor func)
 {

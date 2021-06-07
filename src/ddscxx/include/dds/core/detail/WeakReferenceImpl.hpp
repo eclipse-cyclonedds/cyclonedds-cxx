@@ -40,10 +40,6 @@ WeakReference<T>::WeakReference(const T& t)
     }
 }
 
-
-template <typename T>
-WeakReference<T>::~WeakReference() { }
-
 template <typename T>
 bool WeakReference<T>::expired()
 {

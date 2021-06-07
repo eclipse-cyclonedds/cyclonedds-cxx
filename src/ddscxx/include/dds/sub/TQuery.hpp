@@ -62,6 +62,7 @@ class dds::sub::TQuery: public virtual dds::core::Reference<DELEGATE> {
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC(TQuery, dds::core::Reference, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(TQuery)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_EXPLICIT(TQuery)
 
 public:
   /**

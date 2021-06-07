@@ -34,6 +34,11 @@ dds::core::Reference<DELEGATE>::Reference(const Reference& ref) : impl_(ref.impl
 }
 
 template <typename DELEGATE>
+dds::core::Reference<DELEGATE>::Reference(Reference&& ref) : impl_(ref.impl_)
+{
+}
+
+template <typename DELEGATE>
 template <typename D>
 dds::core::Reference<DELEGATE>::Reference(const Reference<D>& ref)
 {

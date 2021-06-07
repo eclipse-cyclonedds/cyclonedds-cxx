@@ -37,9 +37,6 @@ template <typename D>
 Value<D>::Value() { }
 
 template <typename D>
-Value<D>::Value(const Value& p) : d_(p.d_) { }
-
-template <typename D>
 template <typename ARG>
 Value<D>::Value(const ARG& arg) : d_(arg) { }
 
@@ -68,10 +65,17 @@ Value<D>::Value(const ARG1& arg1, const ARG2& arg2, const ARG3& arg3, const ARG4
     : d_(arg1, arg2, arg3, arg4, arg5, arg6) { }
 
 template <typename D>
-Value<D>::~Value() { }
+Value<D>& Value<D>::operator=(const Value& other)
+{
+    if(this != &other)
+    {
+        d_ = other.d_;
+    }
+    return *this;
+}
 
 template <typename D>
-Value<D>& Value<D>::operator=(const Value& other)
+Value<D>& Value<D>::operator=(Value&& other)
 {
     if(this != &other)
     {

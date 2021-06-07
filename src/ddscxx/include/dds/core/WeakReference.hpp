@@ -56,10 +56,6 @@ public:
      */
     WeakReference(const T& t);
 
-    /** @cond */
-    ~WeakReference();
-    /** @endcond */
-
     /**
      * Checks whether the underlying reference has been deleted.
      *

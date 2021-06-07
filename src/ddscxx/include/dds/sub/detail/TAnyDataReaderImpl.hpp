@@ -31,9 +31,6 @@ namespace sub
 {
 
 template <typename DELEGATE>
-TAnyDataReader<DELEGATE>::~TAnyDataReader() {}
-
-template <typename DELEGATE>
 const dds::sub::Subscriber&
 TAnyDataReader<DELEGATE>::subscriber() const
 {

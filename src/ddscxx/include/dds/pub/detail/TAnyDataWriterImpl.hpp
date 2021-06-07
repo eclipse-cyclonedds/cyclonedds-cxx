@@ -29,11 +29,6 @@ namespace pub
 {
 
 template <typename DELEGATE>
-TAnyDataWriter<DELEGATE>::~TAnyDataWriter()
-{
-}
-
-template <typename DELEGATE>
 const dds::pub::Publisher&
 TAnyDataWriter<DELEGATE>::publisher() const
 {

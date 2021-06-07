@@ -57,9 +57,7 @@ class dds::topic::TAnyTopic :
     OMG_DDS_REF_TYPE_PROTECTED_DC(TAnyTopic, ::dds::topic::TTopicDescription, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(TAnyTopic)
 
-    /** @cond */
-    virtual ~TAnyTopic();
-    /** @endcond */
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(TAnyTopic)
 
 public:
 
@@ -121,15 +119,6 @@ public:
 
     /** @copydoc dds::topic::TAnyTopic::qos() */
     const TAnyTopic& operator >> (dds::topic::qos::TopicQos& qos) const;
-
-    /**
-     * Copies the contents from one TAnyTopic to this
-     *
-     * @param other the TAnyTopic to copy
-     *
-     * @return reference to the TAnyTopic instance that was copied to
-     */
-    TAnyTopic& operator=(const TAnyTopic& other) = default;
 
     /**
      * This operation obtains the InconsistentTopicStatus object of the Topic.

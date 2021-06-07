@@ -67,7 +67,6 @@ template <typename T>
 class dds::topic::detail::Topic : public org::eclipse::cyclonedds::topic::AnyTopicDelegate
 {
 public:
-
     typedef typename ::dds::core::smart_ptr_traits< Topic<T> >::ref_type ref_type;
     typedef typename ::dds::core::smart_ptr_traits< Topic<T> >::weak_ref_type weak_ref_type;
 

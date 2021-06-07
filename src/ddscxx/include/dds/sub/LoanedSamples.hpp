@@ -122,12 +122,28 @@ public:
     LoanedSamples(const LoanedSamples& other);
 
     /**
+     * Move-constructs a LoanedSamples instance.
+     *
+     * No actual data samples are copied.<br>
+     * Just references and reference counts are updated.
+     */
+    LoanedSamples(LoanedSamples&& other);
+
+    /**
      * Copy-assigns a LoanedSamples instance to another.
      *
      * No actual data samples are copied.<br>
      * Just references and reference counts are updated.
      */
     LoanedSamples& operator=(const LoanedSamples& other) = default;
+
+    /**
+     * Move-assigns a LoanedSamples instance to another.
+     *
+     * No actual data samples are copied.<br>
+     * Just references and reference counts are updated.
+     */
+    LoanedSamples& operator=(LoanedSamples&& other) = default;
 
 
 public:

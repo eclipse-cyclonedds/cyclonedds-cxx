@@ -108,11 +108,6 @@ public:
                 const dds::core::status::StatusMask& mask = dds::core::status::StatusMask::none());
 
 public:
-    /** @cond */
-    virtual ~TSubscriber();
-    /** @endcond */
-
-public:
     /**
      * This operation invokes the on_data_available operation on
      * DataReaderListener objects which are attached to the contained DataReader
