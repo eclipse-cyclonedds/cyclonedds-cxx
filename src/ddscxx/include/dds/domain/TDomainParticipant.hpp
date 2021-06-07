@@ -74,6 +74,7 @@ public:
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC(TDomainParticipant, dds::core::TEntity, DELEGATE)
     OMG_DDS_EXPLICIT_REF_BASE(TDomainParticipant, dds::core::Entity)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(TDomainParticipant)
 
 public:
     /**
@@ -147,21 +148,6 @@ public:
                        dds::domain::DomainParticipantListener*         listener,
                        const dds::core::status::StatusMask&            event_mask,
                        const ddsi_config&                              config);
-    /**
-    * Copy assignment operator.
-    *
-    * Copies the contents from one DomainParticipant to another.
-    *
-    * @param other the DomainParticipant to copy from
-    *
-    * @return reference to the DomainParticipant that was copied to
-    */
-    TDomainParticipant& operator=(const TDomainParticipant& other) = default;
-
-public:
-    /** @cond */
-    virtual ~TDomainParticipant();
-    /** @endcond */
 
 public:
 

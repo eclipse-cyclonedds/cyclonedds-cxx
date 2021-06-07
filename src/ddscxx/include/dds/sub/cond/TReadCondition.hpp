@@ -115,10 +115,6 @@ public:
     template <typename FUN>
     TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status, FUN functor);
 
-    /** @cond */
-    ~TReadCondition();
-    /** @endcond */
-
 public:
     /**
      * This operation returns the set of data-states that are taken into

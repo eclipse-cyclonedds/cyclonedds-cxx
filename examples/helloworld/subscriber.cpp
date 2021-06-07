@@ -84,9 +84,11 @@ int main() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
         }
-    }
-    catch (const dds::core::Exception& e) {
-        std::cerr << "=== [Subscriber] Exception: " << e.what() << std::endl;
+    } catch (const dds::core::Exception& e) {
+        std::cerr << "=== [Subscriber] DDS exception: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    } catch (const std::exception& e) {
+        std::cerr << "=== [Subscriber] C++ exception: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 

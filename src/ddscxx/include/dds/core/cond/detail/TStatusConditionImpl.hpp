@@ -50,9 +50,6 @@ TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e, FUN fun
 }
 
 template <typename DELEGATE>
-TStatusCondition<DELEGATE>::~TStatusCondition() { }
-
-template <typename DELEGATE>
 void TStatusCondition<DELEGATE>::enabled_statuses(const dds::core::status::StatusMask& status) const
 {
     this->delegate()->enabled_statuses(status);

@@ -50,9 +50,6 @@ TPublisher<DELEGATE>::TPublisher(const dds::domain::DomainParticipant& dp,
 }
 
 template <typename DELEGATE>
-TPublisher<DELEGATE>::~TPublisher() { }
-
-template <typename DELEGATE>
 const dds::pub::qos::PublisherQos& TPublisher<DELEGATE>::qos() const
 {
     return this->delegate()->qos();

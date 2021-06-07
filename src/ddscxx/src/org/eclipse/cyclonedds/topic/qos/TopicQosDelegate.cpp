@@ -35,30 +35,6 @@ TopicQosDelegate::TopicQosDelegate()
 {
 }
 
-TopicQosDelegate::TopicQosDelegate(
-    const TopicQosDelegate& other)
-    : topic_data_(other.topic_data_),
-      durability_(other.durability_),
-#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
-      durability_service_(other.durability_service_),
-#endif  // OMG_DDS_PERSISTENCE_SUPPORT
-      deadline_(other.deadline_),
-      budget_(other.budget_),
-      liveliness_(other.liveliness_),
-      reliability_(other.reliability_),
-      order_(other.order_),
-      history_(other.history_),
-      resources_(other.resources_),
-      priority_(other.priority_),
-      lifespan_(other.lifespan_),
-      ownership_(other.ownership_)
-{
-}
-
-TopicQosDelegate::~TopicQosDelegate()
-{
-}
-
 void
 TopicQosDelegate::policy(const dds::core::policy::TopicData& topic_data)
 {
@@ -251,27 +227,6 @@ TopicQosDelegate::operator ==(const TopicQosDelegate& other) const
            other.priority_    == priority_    &&
            other.lifespan_    == lifespan_    &&
            other.ownership_   == ownership_;
-}
-
-TopicQosDelegate&
-TopicQosDelegate::operator =(const TopicQosDelegate& other)
-{
-    topic_data_  = other.topic_data_;
-    durability_  = other.durability_;
-#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
-    durability_service_ = other.durability_service_;
-#endif  // OMG_DDS_PERSISTENCE_SUPPORT
-    deadline_    = other.deadline_;
-    budget_      = other.budget_;
-    liveliness_  = other.liveliness_;
-    reliability_ = other.reliability_;
-    order_       = other.order_;
-    history_     = other.history_;
-    resources_   = other.resources_;
-    priority_    = other.priority_;
-    lifespan_    = other.lifespan_;
-    ownership_   = other.ownership_;
-    return *this;
 }
 
 }

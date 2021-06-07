@@ -58,6 +58,13 @@ public:
     TEntityQos(const TEntityQos& other);
 
     /**
+     * Create moved QoS.
+     *
+     * @param other the QoS to move.
+     */
+    TEntityQos(TEntityQos&& other);
+
+    /**
      * Copy to this QoS.
      *
      * @param other the QoS to copy.
@@ -65,6 +72,15 @@ public:
      * @return reference to the Qos which was copied to.
      */
     TEntityQos<DELEGATE>& operator=(const TEntityQos<DELEGATE>& other) = default;
+
+    /**
+     * Move to this QoS.
+     *
+     * @param other the QoS to move.
+     *
+     * @return reference to the Qos which was moved to.
+     */
+    TEntityQos<DELEGATE>& operator=(TEntityQos<DELEGATE>&& other) = default;
 
     /**
      * Create/copy QoS from different QoS type.
@@ -76,7 +92,7 @@ public:
 
 public:
     /** @cond */
-    ~TEntityQos();
+    ~TEntityQos() = default;
     /** @endcond */
 
 public:

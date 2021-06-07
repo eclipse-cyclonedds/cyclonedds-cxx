@@ -41,12 +41,8 @@ class OMG_DDS_API org::eclipse::cyclonedds::core::InstanceHandleDelegate
 public:
     InstanceHandleDelegate();
     InstanceHandleDelegate(dds_instance_handle_t h);
-    ~InstanceHandleDelegate();
 public:
     InstanceHandleDelegate(const dds::core::null_type& src);
-    InstanceHandleDelegate(const InstanceHandleDelegate& other);
-
-    InstanceHandleDelegate& operator=(const InstanceHandleDelegate& src) = default;
 
 public:
     bool operator==(const InstanceHandleDelegate& that) const;

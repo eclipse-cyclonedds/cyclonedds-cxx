@@ -27,12 +27,6 @@ namespace dds
 namespace topic
 {
 
-
-template <typename DELEGATE>
-TAnyTopic<DELEGATE>::~TAnyTopic()
-{
-}
-
 template <typename DELEGATE>
 dds::topic::qos::TopicQos
 TAnyTopic<DELEGATE>::qos() const

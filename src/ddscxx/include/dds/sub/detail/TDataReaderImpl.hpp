@@ -291,9 +291,6 @@ DataReader<T, DELEGATE>::DataReader(
 #endif /* OMG_DDS_MULTI_TOPIC_SUPPORT */
 
 template <typename T, template <typename Q> class DELEGATE>
-DataReader<T, DELEGATE>::~DataReader<T, DELEGATE>() { }
-
-template <typename T, template <typename Q> class DELEGATE>
 dds::sub::status::DataState
 DataReader<T, DELEGATE>::default_filter_state()
 {

@@ -26,11 +26,6 @@
 // Implementation
 
 template <typename DELEGATE>
-dds::core::TEntity<DELEGATE>::~TEntity<DELEGATE>()
-{
-}
-
-template <typename DELEGATE>
 void
 dds::core::TEntity<DELEGATE>::enable()
 {

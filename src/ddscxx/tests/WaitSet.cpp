@@ -88,16 +88,26 @@ struct test_semaphore {
     ddsrt_cond_t cond;
     ddsrt_mutex_t mutex;
     int value;
+    test_semaphore() : cond(), mutex(), value(0) {
+      ddsrt_cond_init(&cond);
+      ddsrt_mutex_init(&mutex);
+    }
+    ~test_semaphore() {
+      ddsrt_cond_destroy(&cond);
+      ddsrt_mutex_destroy(&mutex);
+    }
 };
 
 struct writer_thread_args {
     dds::pub::DataWriter<Space::Type1> * writer;
     dds_duration_t delay;
+    writer_thread_args(): writer(nullptr), delay(0) {}
 };
 
 struct guard_thread_args {
     dds::core::cond::GuardCondition * guard;
     dds_duration_t delay;
+    guard_thread_args(): guard(nullptr), delay(0) {}
 };
 
 struct action_thread_args {
@@ -111,21 +121,18 @@ struct action_thread_args {
     test_semaphore * semReady;
     bool result;
     std::string message;
+    action_thread_args(): action(),
+                          waitSet(nullptr),
+                          guard(nullptr),
+                          readerStatus(nullptr),
+                          reader(nullptr),
+                          writer(nullptr),
+                          semStart(nullptr),
+                          semReady(nullptr),
+                          result(false),
+                          message() {
+    }
 };
-
-void test_sem_init(test_semaphore *sem, int value)
-{
-    ddsrt_mutex_init(&sem->mutex);
-    ddsrt_cond_init(&sem->cond);
-    sem->value = value;
-}
-
-void test_sem_destroy(test_semaphore *sem)
-{
-    ddsrt_cond_destroy(&sem->cond);
-    ddsrt_mutex_destroy(&sem->mutex);
-    sem->value = 0;
-}
 
 void test_sem_lock(test_semaphore *sem)
 {
@@ -302,8 +309,15 @@ public:
         statusHandlerExecuted(false),
         guardHandlerExecuted(false),
         statusCondHandler(statusHandlerExecuted),
-        guardCondHandler(guardHandlerExecuted)
+        guardCondHandler(guardHandlerExecuted),
+        writerThreadArgs(),
+        guardThreadArgs(),
+        actionThreadArgs(),
+        threadId(),
+        start_sem(),
+        ready_sem()
     {
+        ddsrt_threadattr_init(&threadAttr);
     }
 
     void SetUp()
@@ -338,10 +352,6 @@ public:
         // Init guardcondition
         guard.handler(guardCondHandler);
 
-        // Semaphore init
-        test_sem_init(&start_sem, 0);
-        test_sem_init(&ready_sem, 0);
-
         // Thread init
         writerThreadArgs.writer = &writer;
 
@@ -355,8 +365,6 @@ public:
         actionThreadArgs.writer = &writer;
         actionThreadArgs.semStart = &start_sem;
         actionThreadArgs.semReady = &ready_sem;
-
-        ddsrt_threadattr_init(&threadAttr);
     }
 
     void TearDown()
@@ -367,9 +375,6 @@ public:
         this->subscriber = dds::core::null;
         this->publisher = dds::core::null;
         this->participant = dds::core::null;
-
-        test_sem_destroy(&start_sem);
-        test_sem_destroy(&ready_sem);
     }
 };
 

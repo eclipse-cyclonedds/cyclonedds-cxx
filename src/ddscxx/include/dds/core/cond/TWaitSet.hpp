@@ -128,10 +128,6 @@ public:
      */
     TWaitSet();
 
-    /** @cond */
-    ~TWaitSet();
-    /** @endcond */
-
 public:
     /**
      * This operation allows an application thread to wait for the occurrence

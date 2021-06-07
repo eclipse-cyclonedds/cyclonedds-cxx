@@ -43,10 +43,20 @@ template <typename DELEGATE>
 TInstanceHandle<DELEGATE>::TInstanceHandle(const TInstanceHandle& other): dds::core::Value<DELEGATE>(other.delegate()) { }
 
 template <typename DELEGATE>
-TInstanceHandle<DELEGATE>::~TInstanceHandle() { }
+TInstanceHandle<DELEGATE>::TInstanceHandle(TInstanceHandle&& other): dds::core::Value<DELEGATE>(other.delegate()) { }
 
 template <typename DELEGATE>
 TInstanceHandle<DELEGATE>& TInstanceHandle<DELEGATE>::operator=(const TInstanceHandle& that)
+{
+    if(this != &that)
+    {
+        this->delegate() = that.delegate();
+    }
+    return *this;
+}
+
+template <typename DELEGATE>
+TInstanceHandle<DELEGATE>& TInstanceHandle<DELEGATE>::operator=(TInstanceHandle&& that)
 {
     if(this != &that)
     {

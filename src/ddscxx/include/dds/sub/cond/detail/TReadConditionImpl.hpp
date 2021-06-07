@@ -53,9 +53,6 @@ TReadCondition<DELEGATE>::TReadCondition(
 }
 
 template <typename DELEGATE>
-TReadCondition<DELEGATE>::~TReadCondition() { }
-
-template <typename DELEGATE>
 const dds::sub::status::DataState TReadCondition<DELEGATE>::state_filter() const
 {
     return this->delegate()->state_filter();

@@ -38,10 +38,7 @@ class OMG_DDS_API DataWriterQosDelegate
 {
 public:
     DataWriterQosDelegate();
-    DataWriterQosDelegate(const DataWriterQosDelegate& other);
     DataWriterQosDelegate(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
-
-    ~DataWriterQosDelegate();
 
     void policy(const dds::core::policy::UserData&          user_data);
     void policy(const dds::core::policy::Durability&        durability);
@@ -72,7 +69,6 @@ public:
     void check() const;
 
     bool operator ==(const DataWriterQosDelegate& other) const;
-    DataWriterQosDelegate& operator =(const DataWriterQosDelegate& other);
     DataWriterQosDelegate& operator =(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
 
 private:

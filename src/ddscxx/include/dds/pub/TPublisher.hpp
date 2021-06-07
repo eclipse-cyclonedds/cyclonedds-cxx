@@ -63,6 +63,7 @@ public:
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC(TPublisher, dds::core::TEntity, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(TPublisher)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(TPublisher)
 
     /**
      * Create a new Publisher.
@@ -107,10 +108,6 @@ public:
                const dds::pub::qos::PublisherQos& qos,
                dds::pub::PublisherListener* listener = NULL,
                const dds::core::status::StatusMask& mask = dds::core::status::StatusMask::none());
-
-    /** @cond */
-    virtual ~TPublisher();
-    /** @endcond */
 
     //==========================================================================
 

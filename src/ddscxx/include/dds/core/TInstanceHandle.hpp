@@ -53,14 +53,21 @@ public:
     TInstanceHandle(const dds::core::null_type& nullHandle);
 
     /**
-     * Copy an existing InstancHandle
+     * Copy an existing InstanceHandle
      *
      * @param other InstanceHandle to copy
      */
     TInstanceHandle(const TInstanceHandle& other);
 
+    /**
+     * Move an existing InstanceHandle
+     *
+     * @param other InstanceHandle to move
+     */
+    TInstanceHandle(TInstanceHandle&& other);
+
     /** @cond */
-    ~TInstanceHandle();
+    ~TInstanceHandle() = default;
     /** @endcond */
 
     /**
@@ -75,11 +82,18 @@ public:
 
 public:
     /**
-     * Assign an existing InstancHandle to this InstancHandle
+     * Copy-assign an existing InstanceHandle to this InstanceHandle
      *
      * @param that The TInstanceHandle to assign to this
      */
     TInstanceHandle& operator=(const TInstanceHandle& that);
+
+    /**
+     * Move-assign an existing InstanceHandle to this InstanceHandle
+     *
+     * @param that The TInstanceHandle to assign to this
+     */
+    TInstanceHandle& operator=(TInstanceHandle&& that);
 
     /**
      * Compare this InstanceHandle to another InstanceHandle

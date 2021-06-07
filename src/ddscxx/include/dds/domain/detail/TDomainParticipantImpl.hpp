@@ -70,9 +70,6 @@ TDomainParticipant<DELEGATE>::TDomainParticipant(uint32_t id,
 }
 
 template <typename DELEGATE>
-TDomainParticipant<DELEGATE>::~TDomainParticipant() { }
-
-template <typename DELEGATE>
 void TDomainParticipant<DELEGATE>::listener(Listener* listener,
         const ::dds::core::status::StatusMask& event_mask)
 {

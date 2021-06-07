@@ -38,9 +38,6 @@ class OMG_DDS_API TopicQosDelegate
 {
 public:
     TopicQosDelegate();
-    TopicQosDelegate(const TopicQosDelegate& other);
-
-    ~TopicQosDelegate();
 
     void policy(const dds::core::policy::TopicData&          topic_data);
     void policy(const dds::core::policy::Durability&         durability);
@@ -70,7 +67,6 @@ public:
     void check() const;
 
     bool operator ==(const TopicQosDelegate& other) const;
-    TopicQosDelegate& operator =(const TopicQosDelegate& other);
 
 private:
     dds::core::policy::TopicData              topic_data_;

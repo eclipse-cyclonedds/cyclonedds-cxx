@@ -184,11 +184,6 @@ public:
                     const dds::sub::status::DataState& status,
                     FUN functor);
 
-
-    /** @cond */
-    ~TQueryCondition();
-    /** @endcond */
-
 public:
     /**
      * Set the Query expression.

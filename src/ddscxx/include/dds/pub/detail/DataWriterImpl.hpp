@@ -62,11 +62,6 @@ DataWriter<T, DELEGATE>::DataWriter(const dds::pub::Publisher& pub,
 }
 
 template <typename T, template <typename Q> class DELEGATE>
-DataWriter<T, DELEGATE>::~DataWriter<T, DELEGATE>()
-{
-}
-
-template <typename T, template <typename Q> class DELEGATE>
 void
 DataWriter<T, DELEGATE>::write(const T& sample)
 {

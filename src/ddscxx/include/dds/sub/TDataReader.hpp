@@ -780,6 +780,7 @@ public:
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC_T(DataReader, dds::sub::TAnyDataReader, T, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(DataReader)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(DataReader)
 
 public:
     /**
@@ -887,11 +888,6 @@ public:
                const dds::core::status::StatusMask& mask = ::dds::core::status::StatusMask::none());
 
     #endif /* OMG_DDS_MULTI_TOPIC_SUPPORT */
-
-public:
-    /** @cond */
-    virtual ~DataReader();
-    /** @endcond */
 
 public:
     // == ReadState Management

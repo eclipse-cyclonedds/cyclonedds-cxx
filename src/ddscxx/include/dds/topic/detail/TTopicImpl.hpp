@@ -112,9 +112,6 @@ Topic<T, DELEGATE>::Topic(const dds::domain::DomainParticipant& dp,
     /* this->delegate()->init(this->impl_); */
 }
 
-template <typename T, template <typename Q> class DELEGATE>
-Topic<T, DELEGATE>::~Topic() { }
-
 /** @internal  @todo Relates to OMG_DDS_X_TYPE_DYNAMIC_TYPE_SUPPORT OSPL-1736 no implementation */
 template <typename T, template <typename Q> class DELEGATE>
 void Topic<T, DELEGATE>::listener(Listener* listener,

@@ -50,7 +50,8 @@ class dds::core::Value
 {
 protected:
     Value();
-    Value(const Value& p);
+    Value(const Value& p) = default;  //check on this != &p?
+    Value(Value&& p) = default;  //check on this != &p?
 
 public:
     /** @cond
@@ -124,7 +125,7 @@ public:
 
 public:
     /** @cond */
-    ~Value();
+    ~Value() = default;
     /** @endcond */
 
 public:
@@ -133,6 +134,12 @@ public:
      * @param other Value
      */
     Value& operator=(const Value& other);
+
+    /**
+     * Moves delegate to this Value
+     * @param other Value
+     */
+    Value& operator=(Value&& other);
 
     /**
      * Compare this Value with another Value

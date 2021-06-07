@@ -87,12 +87,6 @@ TQueryCondition<DELEGATE>::TQueryCondition(
     this->delegate()->init(this->impl_);
 }
 
-
-template <typename DELEGATE>
-TQueryCondition<DELEGATE>::~TQueryCondition()
-{
-}
-
 template <typename DELEGATE>
 template<typename FWIterator>
 void TQueryCondition<DELEGATE>::parameters(const FWIterator& begin, const FWIterator end)

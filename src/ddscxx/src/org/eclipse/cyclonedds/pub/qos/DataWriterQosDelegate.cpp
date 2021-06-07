@@ -37,36 +37,11 @@ DataWriterQosDelegate::DataWriterQosDelegate()
 }
 
 DataWriterQosDelegate::DataWriterQosDelegate(
-    const DataWriterQosDelegate& other)
-    : user_data_(other.user_data_),
-      durability_(other.durability_),
-      deadline_(other.deadline_),
-      budget_(other.budget_),
-      liveliness_(other.liveliness_),
-      reliability_(other.reliability_),
-      order_(other.order_),
-      history_(other.history_),
-      resources_(other.resources_),
-      priority_(other.priority_),
-      lifespan_(other.lifespan_),
-      ownership_(other.ownership_),
-#ifdef  OMG_DDS_OWNERSHIP_SUPPORT
-      strength_(other.strength_),
-#endif  // OMG_DDS_PERSISTENCE_SUPPORT
-      lifecycle_(other.lifecycle_)
-{
-}
-
-DataWriterQosDelegate::DataWriterQosDelegate(
     const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos)
 {
     reliability_.kind(dds::core::policy::ReliabilityKind::RELIABLE);
 
     *this = tqos;
-}
-
-DataWriterQosDelegate::~DataWriterQosDelegate()
-{
 }
 
 void
@@ -269,28 +244,6 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
            other.strength_    == strength_    &&
 #endif
            other.lifecycle_   == lifecycle_;
-}
-
-DataWriterQosDelegate&
-DataWriterQosDelegate::operator =(const DataWriterQosDelegate& other)
-{
-    user_data_   = other.user_data_;
-    durability_  = other.durability_;
-    deadline_    = other.deadline_;
-    budget_      = other.budget_;
-    liveliness_  = other.liveliness_;
-    reliability_ = other.reliability_;
-    order_       = other.order_;
-    history_     = other.history_;
-    resources_   = other.resources_;
-    priority_    = other.priority_;
-    lifespan_    = other.lifespan_;
-    ownership_   = other.ownership_;
-#ifdef  OMG_DDS_OWNERSHIP_SUPPORT
-    strength_    = other.strength_;
-#endif  // OMG_DDS_PERSISTENCE_SUPPORT
-    lifecycle_   = other.lifecycle_;
-    return *this;
 }
 
 DataWriterQosDelegate&

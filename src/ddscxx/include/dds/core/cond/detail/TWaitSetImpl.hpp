@@ -37,9 +37,6 @@ TWaitSet<DELEGATE>::TWaitSet()
 }
 
 template <typename DELEGATE>
-TWaitSet<DELEGATE>::~TWaitSet() { }
-
-template <typename DELEGATE>
 const typename TWaitSet<DELEGATE>::ConditionSeq TWaitSet<DELEGATE>::wait(const dds::core::Duration& timeout)
 {
     ConditionSeq triggered;
