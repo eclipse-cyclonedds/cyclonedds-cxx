@@ -17,24 +17,72 @@
 #include "HelloWorldData.hpp"
 #include "Space.hpp"
 
+namespace
+{
 template<class T>
-T get_sample(int32_t cnt)
+void make_sample_(T & sample, const int32_t cnt)
 {
-  throw;
+  throw std::runtime_error("make_sample_ called on unsupported type");
 }
 
 template<>
-Space::Type1 get_sample<Space::Type1>(int32_t cnt)
+void make_sample_(Space::Type1 & sample, const int32_t cnt)
 {
-  return Space::Type1(cnt, cnt + 1, cnt + 2);
+  sample.long_1(cnt);
+  sample.long_2(cnt + 1);
+  sample.long_3(cnt + 2);
 }
 
 template<>
-HelloWorldData::Msg get_sample<HelloWorldData::Msg>(int32_t cnt)
+void make_sample_(HelloWorldData::Msg & sample, const int32_t cnt)
 {
-  return HelloWorldData::Msg(cnt, std::to_string(cnt));
+  sample.userID(cnt);
+  sample.message(std::to_string(cnt));
 }
 
+template<class T>
+std::vector<T> write_loaned_data_(dds::pub::DataWriter<T> & writer, const int32_t cnt)
+{
+  std::vector<T> samples;
+  for (int32_t i = 0; i < cnt; i++) {
+    // loan memory from the middleware
+    auto & loaned_sample = writer.delegate()->loan_sample();
+    // make sample
+    make_sample_(loaned_sample, i);
+    // store sample for comparison later
+    samples.push_back(loaned_sample);
+    // write sample (which will also release the loan to the middleware)
+    writer.write(loaned_sample);
+  }
+  return samples;
+}
+
+template<>
+std::vector<HelloWorldData::Msg> write_loaned_data_(
+  dds::pub::DataWriter<HelloWorldData::Msg> & writer, const int32_t cnt)
+{
+  // loaning on a non-fixed type throws an error
+  try {
+    auto & loaned_sample = writer.delegate()->loan_sample();
+    (void)loaned_sample;
+    EXPECT_FALSE(true);
+  } catch (const std::exception & e) {
+    EXPECT_STREQ(e.what(), "sample loan failed");
+  }
+
+  std::vector<HelloWorldData::Msg> samples;
+  for (int32_t i = 0; i < cnt; i++) {
+    HelloWorldData::Msg sample;
+    // make sample
+    make_sample_(sample, i);
+    // store sample for comparison later
+    samples.push_back(sample);
+    // write sample (which will also release the loan to the middleware)
+    writer.write(sample);
+  }
+  return samples;
+}
+}
 /**
  * Fixture for the shared memory tests with RouDi
  */
@@ -136,20 +184,27 @@ public:
 
   void WaitForData()
   {
-    waitset.wait(dds::core::Duration(10, 0));
+    EXPECT_NO_THROW(waitset.wait(dds::core::Duration(10, 0)));
   }
 
   std::vector<T> WriteData(int32_t instances_cnt)
   {
     std::vector<T> samples;
     for (int32_t i = 0; i < instances_cnt; i++) {
-      samples.push_back(get_sample<T>(i));
-    }
-    for (size_t i = 0; i < samples.size(); i++) {
-      this->writer.write(samples[i]);
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      // make sample
+      T sample;
+      make_sample_(sample, i);
+      // write sample
+      this->writer.write(sample);
+      // store sample
+      samples.push_back(sample);
     }
     return samples;
+  }
+
+  std::vector<T> WriteLoanedData(int32_t instances_cnt)
+  {
+    return write_loaned_data_<T>(this->writer, instances_cnt);
   }
 
   void
@@ -177,7 +232,9 @@ public:
 
   void run_test(
     const dds::sub::qos::DataReaderQos & r_qos,
-    const dds::pub::qos::DataWriterQos & w_qos)
+    const dds::pub::qos::DataWriterQos & w_qos,
+    const int32_t num_samples,
+    const bool use_loaning = false)
   {
     dds::sub::LoanedSamples<T> samples;
     std::vector<T> test_samples;
@@ -185,7 +242,11 @@ public:
     /* setup communication */
     this->SetupCommunication(r_qos, w_qos);
     /* write data. */
-    test_samples = this->WriteData(1);
+    if (use_loaning) {
+      test_samples = this->WriteLoanedData(num_samples);
+    } else {
+      test_samples = this->WriteData(num_samples);
+    }
     /* wait for data */
     this->WaitForData();
     /* Check result by taking. */
@@ -223,23 +284,22 @@ TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(10U);
 
-  this->run_test(r_qos, w_qos);
+  this->run_test(r_qos, w_qos, 10);
 }
 
 TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
 {
   dds::sub::qos::DataReaderQos r_qos{};
-
   dds::pub::qos::DataWriterQos w_qos{};
 
-  this->run_test(r_qos, w_qos);
+  this->run_test(r_qos, w_qos, 1);
 }
 
 TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
 {
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::BestEffort();
-  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10U);
 
   dds::pub::qos::DataWriterQos w_qos;
@@ -247,7 +307,7 @@ TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(10U);
 
-  this->run_test(r_qos, w_qos);
+  this->run_test(r_qos, w_qos, 10);
 }
 
 TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
@@ -262,5 +322,35 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   w_qos << dds::core::policy::Durability::TransientLocal();
   w_qos << dds::core::policy::History::KeepLast(10U);
 
-  this->run_test(r_qos, w_qos);
+  this->run_test(r_qos, w_qos, 10);
+}
+
+TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
+{
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::BestEffort();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+
+  dds::pub::qos::DataWriterQos w_qos;
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::History::KeepLast(10U);
+
+  this->run_test(r_qos, w_qos, 10);
+}
+
+TYPED_TEST(SharedMemoryTest, loan_sample)
+{
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::BestEffort();
+  r_qos << dds::core::policy::Durability::Volatile();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+
+  dds::pub::qos::DataWriterQos w_qos;
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::Volatile();
+  w_qos << dds::core::policy::History::KeepLast(10U);
+
+  this->run_test(r_qos, w_qos, 10, true);
 }
