@@ -21,6 +21,7 @@
 #include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsi/q_radmin.h"
+#include "dds/ddsi/q_xmsg.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
@@ -116,38 +117,42 @@ public:
 
   T* getT()
   {
-    T *t = m_t.load(std::memory_order_acquire);
-    if (t == nullptr) {
-      t = new T();
-      org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
+    // if iox chunk is available, dont deserialize the sample, return the chunk directly
+    if (iox_chunk != nullptr && data() == nullptr) {
+      return static_cast<T*>(SHIFT_PAST_ICEORYX_HEADER(this->iox_chunk));
+    } else {
+      T *t = m_t.load(std::memory_order_acquire);
+      if (t == nullptr) {
+        t = new T();
+        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
           *(static_cast<unsigned char*>(data())+1) == 0x1 ?
               org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
               org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
-      str.set_buffer(calc_offset(data(),4));
-      switch (kind)
-      {
-      case SDK_KEY:
-        key_read(str,*t);
-        break;
-      case SDK_DATA:
-        read(str,*t);
-        break;
-      case SDK_EMPTY:
-        assert(0);
-      }
+        str.set_buffer(calc_offset(data(), 4));
+        switch (kind) {
+          case SDK_KEY:
+            key_read(str, *t);
+            break;
+          case SDK_DATA:
+            read(str, *t);
+            break;
+          case SDK_EMPTY:
+            assert(0);
+        }
 
-      if (str.abort_status()) {
-        delete t;
-        t = nullptr;
-      }
+        if (str.abort_status()) {
+          delete t;
+          t = nullptr;
+        }
 
-      T* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
+        T *exp = nullptr;
+        if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+          delete t;
+          t = exp;
+        }
       }
+      return t;
     }
-    return t;
   }
 };
 
