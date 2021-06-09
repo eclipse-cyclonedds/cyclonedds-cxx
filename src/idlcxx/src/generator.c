@@ -318,18 +318,6 @@ int get_cpp11_fully_scoped_name(
   return (int)len;
 }
 
-int get_cpp11_namespace(
-  char *str, size_t size, const void *node, void *user_data)
-{
-  assert(node);
-  const idl_node_t* n = node;
-
-  assert((idl_mask(n) & (IDL_STRUCT | IDL_UNION | IDL_ENUM |
-    IDL_ENUMERATOR | IDL_DECLARATOR)));
-
-  return get_cpp11_fully_scoped_name(str, size,n->parent, user_data);
-}
-
 int get_cpp11_type(
   char *str, size_t size, const void *node, void *user_data)
 {
