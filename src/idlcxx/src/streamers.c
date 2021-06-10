@@ -241,7 +241,9 @@ write_typedef_streaming_functions(
   instance_location_t loc)
 {
   const char* fmt = "  %2$s_%3$s(streamer, %1$s);\n";
-  const char* name = get_cpp11_name(type_spec);
+  char* name = NULL;
+  if (IDL_PRINTA(&name, get_cpp11_name_typedef, type_spec, streams->generator) < 0)
+    return IDL_RETCODE_NO_MEMORY;
 
   if ((loc.type & NORMAL_INSTANCE) &&
       (putf(&streams->write, fmt, accessor, "write", name)
@@ -1038,7 +1040,9 @@ process_typedef_decl(
     "  (void)instance;\n"
     "  streamer.position(SIZE_MAX);\n"
     "}\n\n";
-  const char* name = get_cpp11_name(declarator);
+  char* name = NULL;
+  if (IDL_PRINTA(&name, get_cpp11_name_typedef, declarator, streams->generator) < 0)
+    return IDL_RETCODE_NO_MEMORY;
 
   char* fullname = NULL;
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, declarator, streams->generator) < 0)

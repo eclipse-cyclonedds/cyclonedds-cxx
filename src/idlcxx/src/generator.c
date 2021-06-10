@@ -278,16 +278,15 @@ static void copy(
   memmove(dest+off, src, cnt);
 }
 
-int get_cpp11_fully_scoped_name(
-  char *str, size_t size, const void *node, void *user_data)
+static int get_cpp11_fully_scoped_name_seps(
+  char *str, size_t size, const void *node, const char *sep)
 {
-  const char *name, *sep = "::";
+  const char *name;
   size_t cnt, off, len = 0;
   static const idl_mask_t mask =
     IDL_MODULE | IDL_STRUCT | IDL_UNION | IDL_ENUM |
     IDL_ENUMERATOR | IDL_DECLARATOR;
 
-  (void)user_data;
   assert(str && size);
 
   for (const idl_node_t *n = node; n; n = n->parent) {
@@ -316,6 +315,20 @@ int get_cpp11_fully_scoped_name(
   str[ (len < size ? len : size - 1) ] = '\0';
 
   return (int)len;
+}
+
+int get_cpp11_fully_scoped_name(
+  char *str, size_t size, const void *node, void *user_data)
+{
+  (void)user_data;
+  return get_cpp11_fully_scoped_name_seps(str, size, node, "::");
+}
+
+int get_cpp11_name_typedef(
+  char *str, size_t size, const void *node, void *user_data)
+{
+  (void)user_data;
+  return get_cpp11_fully_scoped_name_seps(str, size, node, "_");
 }
 
 int get_cpp11_type(
