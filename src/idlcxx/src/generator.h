@@ -52,7 +52,7 @@ int get_cpp11_type(
 int get_cpp11_fully_scoped_name(
   char *str, size_t size, const void *node, void *user_data);
 
-int get_cpp11_namespace(
+int get_cpp11_name_typedef(
   char *str, size_t size, const void *node, void *user_data);
 
 int get_cpp11_default_value(
