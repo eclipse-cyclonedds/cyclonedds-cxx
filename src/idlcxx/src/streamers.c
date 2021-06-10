@@ -124,6 +124,8 @@ struct streams {
   idl_buffer_t key_move;
   idl_buffer_t key_max;
   size_t keys;
+  bool key_max_sz_unlimited;
+  bool max_sz_unlimited;
 };
 
 static void setup_streams(struct streams* str, struct generator* gen)
@@ -184,6 +186,9 @@ static idl_retcode_t flush(struct generator* gen, struct streams* streams)
   if (IDL_RETCODE_OK != flush_stream(&streams->key_max, gen->header.handle))
     return IDL_RETCODE_NO_MEMORY;
 
+  streams->max_sz_unlimited = false;
+  streams->key_max_sz_unlimited = false;
+
   return IDL_RETCODE_OK;
 }
 
@@ -205,6 +210,13 @@ write_string_streaming_functions(
     || putf(&streams->move, fmt, accessor, "move", maximum)
     || putf(&streams->max, fmt, accessor, "max", maximum)))
     return IDL_RETCODE_NO_MEMORY;
+
+  if (maximum == 0) {
+    if (loc.type & NORMAL_INSTANCE)
+      streams->max_sz_unlimited = true;
+    if (loc.type & KEY_INSTANCE)
+      streams->key_max_sz_unlimited = true;
+  }
 
   if (!(loc.type & KEY_INSTANCE))
     return IDL_RETCODE_OK;
@@ -242,8 +254,6 @@ write_typedef_streaming_functions(
     return IDL_RETCODE_OK;
 
   streams->keys++;
-
-  //typedefs of structs?
 
   if (putf(&streams->key_write, fmt, accessor, "key_write", name)
    || putf(&streams->key_read, fmt, read_accessor, "key_read", name)
@@ -423,23 +433,28 @@ unroll_sequence(const idl_pstate_t* pstate,
   if (ret != IDL_RETCODE_OK)
     return ret;
 
+  if (maximum == 0) {
+    if (loc.type & NORMAL_INSTANCE)
+      streams->max_sz_unlimited = true;
+    if (loc.type & KEY_INSTANCE)
+      streams->key_max_sz_unlimited = true;
+  }
+
   //close sequence
   wfmt = "  } //i_%1$u\n  }\n";
-  mfmt = maximum ? wfmt
-                 : "  } //i_%1$u\n  streamer.position(SIZE_MAX);\n  return;\n  }\n";
 
   if ((loc.type & NORMAL_INSTANCE) &&
       (putf(&streams->read, wfmt, depth)
     || putf(&streams->write, wfmt, depth)
     || putf(&streams->move, wfmt, depth)
-    || putf(&streams->max, mfmt, depth)))
+    || putf(&streams->max, wfmt, depth)))
     return IDL_RETCODE_NO_MEMORY;
 
   if ((loc.type & KEY_INSTANCE) &&
       (putf(&streams->key_read, wfmt, depth)
     || putf(&streams->key_write, wfmt, depth)
     || putf(&streams->key_move, wfmt, depth)
-    || putf(&streams->key_max, mfmt, depth)))
+    || putf(&streams->key_max, wfmt, depth)))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -807,10 +822,10 @@ print_constructed_type_close(struct streams *streams, const idl_node_t *node)
       "  (void)instance;\n"
       "}\n\n";
 
-  if (putf(&streams->write, "}\n\n")
-   || putf(&streams->read, "}\n\n")
-   || putf(&streams->move, "}\n\n")
-   || putf(&streams->max, "}\n\n"))
+  if (putf(&streams->write, close_key)
+   || putf(&streams->read, close_key)
+   || putf(&streams->move, close_key)
+   || putf(&streams->max, close_key))
     return IDL_RETCODE_NO_MEMORY;
 
   if (putf(&streams->key_write, close_key)
@@ -832,9 +847,35 @@ process_struct(
   void* user_data)
 {
   (void)path;
+  struct streams *streams = user_data;
+  static const char *fmt =
+    "template<typename T>\n"
+    "void %1$smax(T& streamer, const %2$s& instance) {\n"
+    "  (void)instance;\n"
+    "  streamer.position(SIZE_MAX);\n"
+    "}\n\n";
+
+  char *fullname = NULL;
+  if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, node, streams->generator) < 0)
+    return IDL_RETCODE_NO_MEMORY;
 
   if (revisit) {
-    return print_constructed_type_close(user_data, node);
+    if (print_constructed_type_close(user_data, node))
+      return IDL_RETCODE_NO_MEMORY;
+
+    if (streams->max_sz_unlimited) {
+      streams->max.used = 0;
+      if (putf(&streams->max, fmt, "", fullname))
+        return IDL_RETCODE_NO_MEMORY;
+    }
+
+    if (streams->key_max_sz_unlimited) {
+      streams->key_max.used = 0;
+      if (putf(&streams->key_max, fmt, "key_", fullname))
+        return IDL_RETCODE_NO_MEMORY;
+    }
+
+    return flush(streams->generator, streams);
   } else {
     bool keylist;
     const idl_struct_t *_struct = ((const idl_struct_t *)node);
@@ -912,14 +953,32 @@ process_union(
   (void)pstate;
   (void)path;
 
+  static const char *pfmt =
+    "  streamer.position(union_max);\n"
+    "  streamer.alignment(alignment_max);\n";
+  static const char *ffmt =
+    "template<typename T>\n"
+    "void max(T& streamer, const %2$s& instance) {\n"
+    "  (void)instance;\n"
+    "  streamer.position(SIZE_MAX);\n"
+    "}\n\n";
+
+  char *fullname = NULL;
+  if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, node, streams->generator) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
   if (revisit) {
-    static const char fmt[] = "  streamer.position(union_max);\n"
-                              "  streamer.alignment(alignment_max);\n";
-    if (putf(&streams->max, fmt))
+    if (putf(&streams->max, pfmt)
+     || print_constructed_type_close(user_data, node))
       return IDL_RETCODE_NO_MEMORY;
-    if (print_constructed_type_close(user_data, node))
-      return IDL_RETCODE_NO_MEMORY;
-    return IDL_RETCODE_OK;
+
+    if (streams->max_sz_unlimited) {
+      streams->max.used = 0;
+      if (putf(&streams->max, ffmt, fullname))
+        return IDL_RETCODE_NO_MEMORY;
+    }
+
+    return flush(streams->generator, streams);
   } else {
     if (print_constructed_type_open(user_data, node))
       return IDL_RETCODE_NO_MEMORY;
@@ -969,12 +1028,16 @@ process_typedef_decl(
 {
   instance_location_t loc = { .parent = "instance", .type = TYPEDEF | NORMAL_INSTANCE | KEY_INSTANCE };
 
-  const char* fmt =
+  static const char* fmt =
     "template<typename T>\n"
     "inline void %1$s_%2$s(T& streamer, %3$s& instance)\n{\n";
-  const char* constfmt =
+  static const char* constfmt =
     "template<typename T>\n"
     "inline void %1$s_%2$s(T& streamer, const %3$s& instance)\n{\n";
+  static const char* closefmt =
+    "  (void)instance;\n"
+    "  streamer.position(SIZE_MAX);\n"
+    "}\n\n";
   const char* name = get_cpp11_name(declarator);
 
   char* fullname = NULL;
@@ -998,7 +1061,21 @@ process_typedef_decl(
   if (print_constructed_type_close(streams, type_spec))
     return IDL_RETCODE_NO_MEMORY;
 
-  return IDL_RETCODE_OK;
+  if (streams->max_sz_unlimited) {
+    streams->max.used = 0;
+    if (putf(&streams->max, constfmt, "max", name, fullname)
+     || putf(&streams->max, closefmt))
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
+  if (streams->key_max_sz_unlimited) {
+    streams->key_max.used = 0;
+    if (putf(&streams->key_max, constfmt, "key_max", name, fullname)
+     || putf(&streams->key_max, closefmt))
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
+  return flush(streams->generator, streams);
 }
 
 static idl_retcode_t
