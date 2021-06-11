@@ -63,6 +63,39 @@ static bool sc_type_spec(const idl_type_spec_t *type_spec)
 }
 
 static idl_retcode_t
+emit_topic_type_name(
+  const idl_pstate_t* pstate,
+  const bool revisit,
+  const idl_path_t* path,
+  const void* node,
+  void* user_data)
+{
+  (void)pstate;
+  (void)revisit;
+  (void)path;
+
+  struct generator *gen = user_data;
+  char *name = NULL;
+  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  static const char *fmt =
+        "template <>\n"
+        "struct topic_type_name<%1$s>\n"
+        "{\n"
+        "    static std::string value()\n"
+        "    {\n"
+        "      return org::eclipse::cyclonedds::topic::TopicTraits<%1$s>::getTypeName();\n"
+        "    }\n"
+        "};\n\n";
+
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
 emit_traits(
   const idl_pstate_t* pstate,
   const bool revisit,
@@ -79,30 +112,10 @@ emit_traits(
   (void)revisit;
   (void)path;
 
-  fmt = "namespace org {\n"
-        "namespace eclipse {\n"
-        "namespace cyclonedds {\n"
-        "namespace topic {\n"
-        "template <>\n"
+  fmt = "template <>\n"
         "class TopicTraits<%1$s>\n"
         "{\n"
         "public:\n"
-        "  static ::org::eclipse::cyclonedds::topic::DataRepresentationId_t getDataRepresentationId()\n"
-        "  {\n"
-        "    return ::org::eclipse::cyclonedds::topic::OSPL_REPRESENTATION;\n"
-        "  }\n\n"
-        "  static ::std::vector<uint8_t> getMetaData()\n"
-        "  {\n"
-        "    return ::std::vector<uint8_t>();\n"
-        "  }\n\n"
-        "  static ::std::vector<uint8_t> getTypeHash()\n"
-        "  {\n"
-        "    return ::std::vector<uint8_t>();\n"
-        "  }\n\n"
-        "  static ::std::vector<uint8_t> getExtentions()\n"
-        "  {\n"
-        "    return ::std::vector<uint8_t>();\n"
-        "  }\n\n"
         "  static bool isKeyless()\n"
         "  {\n"
         "    return %3$s;\n"
@@ -124,19 +137,7 @@ emit_traits(
         "  {\n"
         "    return %4$s;\n"
         "  }\n"
-        "};\n"
-        "}\n}\n}\n}\n\n"
-        "namespace dds {\n"
-        "namespace topic {\n"
-        "template <>\n"
-        "struct topic_type_name<%1$s>\n"
-        "{\n"
-        "    static std::string value()\n"
-        "    {\n"
-        "      return org::eclipse::cyclonedds::topic::TopicTraits<%1$s>::getTypeName();\n"
-        "    }\n"
-        "};\n"
-        "}\n}\n\n";
+        "};\n\n";
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
   if (!idl_is_keyless(node, pstate->flags & IDL_FLAG_KEYLIST))
@@ -183,7 +184,12 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   const char *sources[] = { NULL, NULL };
 
   fmt = "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
-        "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n";
+        "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n"
+        "namespace org {\n"
+        "namespace eclipse {\n"
+        "namespace cyclonedds {\n"
+        "namespace topic {\n"
+        "/* all traits not explicitly set are defaulted to the values in TopicTraits.hpp */\n\n";
   if (idl_fprintf(generator->header.handle, fmt) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -196,6 +202,19 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
+  fmt = "}\n}\n}\n}\n\n"
+        "namespace dds {\n"
+        "namespace topic {\n\n";
+  if (idl_fprintf(generator->header.handle, fmt) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  visitor.accept[IDL_ACCEPT_STRUCT] = &emit_topic_type_name;
+  if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
+    return ret;
+
+  fmt = "}\n}\n\n";
+  if (idl_fprintf(generator->header.handle, fmt) < 0)
+    return IDL_RETCODE_NO_MEMORY;
 
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_register_topic_type;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
