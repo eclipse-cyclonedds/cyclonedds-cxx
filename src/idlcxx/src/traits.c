@@ -17,6 +17,51 @@
 
 #include "generator.h"
 
+static bool sc_type_spec(const idl_type_spec_t *type_spec);
+
+static bool sc_union(const idl_union_t *_union)
+{
+  if (!sc_type_spec(_union->switch_type_spec->type_spec))
+    return false;
+
+  const idl_case_t *_case = NULL;
+  IDL_FOREACH(_case, _union->cases) {
+    if (!sc_type_spec(_case->type_spec))
+      return false;
+  }
+
+  return true;
+}
+
+static bool sc_struct(const idl_struct_t *str)
+{
+  const idl_member_t *mem = NULL;
+  IDL_FOREACH(mem, str->members) {
+    if (!sc_type_spec(mem->type_spec))
+      return false;
+  }
+
+  if (str->inherit_spec)
+    return sc_type_spec(str->inherit_spec->base);
+
+  return true;
+}
+
+static bool sc_type_spec(const idl_type_spec_t *type_spec)
+{
+  if (idl_is_sequence(type_spec)
+   || idl_is_string(type_spec)) {
+    return false;
+  } else if (idl_is_typedef(type_spec)) {
+    return sc_type_spec(((const idl_typedef_t*)type_spec)->type_spec);
+  } else if (idl_is_union(type_spec)) {
+    return sc_union(type_spec);
+  } else if (idl_is_struct(type_spec)) {
+    return sc_struct(type_spec);
+  }
+  return true;
+}
+
 static idl_retcode_t
 emit_traits(
   const idl_pstate_t* pstate,
@@ -27,7 +72,7 @@ emit_traits(
 {
   struct generator *gen = user_data;
   char *name = NULL;
-  const char *fmt, *keyless = "true";
+  const char *fmt, *keyless = "true", *selfcontained = "true";
   const idl_struct_t *_struct = node;
 
   (void)pstate;
@@ -74,6 +119,10 @@ emit_traits(
         "  static size_t getSampleSize()\n"
         "  {\n"
         "    return sizeof(%1$s);\n"
+        "  }\n\n"
+        "  static bool isSelfContained()\n"
+        "  {\n"
+        "    return %4$s;\n"
         "  }\n"
         "};\n"
         "}\n}\n}\n}\n\n"
@@ -92,7 +141,9 @@ emit_traits(
     return IDL_RETCODE_NO_MEMORY;
   if (!idl_is_keyless(node, pstate->flags & IDL_FLAG_KEYLIST))
     keyless = "false";
-  if (idl_fprintf(gen->header.handle, fmt, name, name+2, keyless) < 0)
+  if (!sc_struct(_struct))
+    selfcontained = "false";
+  if (idl_fprintf(gen->header.handle, fmt, name, name+2, keyless, selfcontained) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
