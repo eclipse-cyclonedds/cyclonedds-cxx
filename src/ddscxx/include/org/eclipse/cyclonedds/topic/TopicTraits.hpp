@@ -75,6 +75,11 @@ public:
     {
         return 0;
     }
+
+    static bool isSelfContained()
+    {
+      return true;
+    }
 };
 
 }
