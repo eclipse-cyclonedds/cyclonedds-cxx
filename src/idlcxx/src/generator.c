@@ -619,8 +619,9 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 
   /* determine which "system" headers to include */
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_DECLARATOR | IDL_UNION;
+  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION;
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &register_types;
+  visitor.accept[IDL_ACCEPT_SEQUENCE] = &register_types;
   visitor.accept[IDL_ACCEPT_UNION] = &register_union;
   assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
