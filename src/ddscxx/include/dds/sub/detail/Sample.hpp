@@ -111,12 +111,6 @@ public:
         return &this->data_;
     }
 
-    dds::sub::SampleInfo *info_ptr()
-    {
-        return &this->info_;
-    }
-
-
 private:
     T data_;
     dds::sub::SampleInfo info_;

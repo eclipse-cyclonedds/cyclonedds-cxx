@@ -35,12 +35,13 @@ TEntityQos<DELEGATE>::TEntityQos(const TEntityQos& other)
     : dds::core::Value<DELEGATE>(other.delegate()) { }
 
 template <typename DELEGATE>
+TEntityQos<DELEGATE>::TEntityQos(TEntityQos&& other)
+    : dds::core::Value<DELEGATE>(other.delegate()) { }
+
+template <typename DELEGATE>
 template <typename T>
 TEntityQos<DELEGATE>::TEntityQos(const TEntityQos<T>& qos) :
     dds::core::Value<DELEGATE>(qos.delegate()) { }
-
-template <typename DELEGATE>
-TEntityQos<DELEGATE>::~TEntityQos() { }
 
 template <typename DELEGATE>
 template <typename POLICY>
@@ -84,7 +85,7 @@ template <typename DELEGATE>
 template <typename T>
 TEntityQos<DELEGATE>& TEntityQos<DELEGATE>::operator = (const TEntityQos<T>& other)
 {
-    if(this != (TEntityQos<DELEGATE>*)&other)
+    if(this != reinterpret_cast<const TEntityQos<DELEGATE>*>(&other))
     {
         this->d_ = other.delegate();
     }

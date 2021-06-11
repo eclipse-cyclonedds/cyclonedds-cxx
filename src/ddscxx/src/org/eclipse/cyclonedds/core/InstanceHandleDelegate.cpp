@@ -43,14 +43,6 @@ InstanceHandleDelegate::InstanceHandleDelegate(const dds::core::null_type& src)
     (void)src;
 }
 
-InstanceHandleDelegate::~InstanceHandleDelegate() { }
-
-InstanceHandleDelegate::InstanceHandleDelegate(const InstanceHandleDelegate& other)
-    : handle_(other.handle_)
-{
-    this->handle_ = other.handle_;
-}
-
 dds_instance_handle_t
 InstanceHandleDelegate::handle() const
 {

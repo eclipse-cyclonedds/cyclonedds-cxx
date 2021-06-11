@@ -23,6 +23,10 @@
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 #include <dds/dds.h>
 
+#include "dds/ddsi/ddsi_sertopic.h"
+#include "dds/ddsi/q_protocol.h"
+
+
 namespace org
 {
 namespace eclipse
@@ -37,7 +41,7 @@ namespace pub
 AnyDataWriterDelegate::AnyDataWriterDelegate(
         const dds::pub::qos::DataWriterQos& qos,
         const dds::topic::TopicDescription& td)
-    : copyIn(NULL), copyOut(NULL), sampleSize(0), qos_(qos), td_(td)
+    : qos_(qos), td_(td)
 {
 }
 
@@ -82,6 +86,77 @@ AnyDataWriterDelegate::qos(const dds::pub::qos::DataWriterQos& qos)
 }
 
 void
+AnyDataWriterDelegate::write_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp,
+    uint32_t statusinfo)
+{
+    dds_return_t ret;
+    struct ddsi_serdata *ser_data;
+    ddsrt_iovec_t blob_holders[2];
+
+    /* Ignore the handle until ddsc supports writes with instance handles. */
+    (void)handle;
+
+    /* Create an array of ddsrt_iovec_t to contain both the encoding and the CDR payload. */
+    blob_holders[0].iov_len = 4;
+    blob_holders[0].iov_base = const_cast<char *>(data->encoding().data());
+    blob_holders[1].iov_len = static_cast<ddsrt_iov_len_t>(data->payload().size());
+    blob_holders[1].iov_base = const_cast<uint8_t *>(data->payload().data());
+
+    /* Now create a dedicated ser_data that contains both encoding and payload as contiguous memory. */
+    ser_data = ddsi_serdata_from_ser_iov(
+        td_->get_ser_type(),
+        static_cast<ddsi_serdata_kind>(data->kind()),
+        2,
+        blob_holders,
+        data->payload().size() + 4);
+
+    ser_data->statusinfo = statusinfo;
+    if (timestamp != dds::core::Time::invalid()) {
+        dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
+        ser_data->timestamp.v = ddsc_time;
+        ret = dds_forwardcdr(writer, ser_data);
+    } else {
+        ret = dds_writecdr(writer, ser_data);
+    }
+
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
+}
+
+void
+AnyDataWriterDelegate::write_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    this->write_cdr(writer, data, handle, timestamp, 0);
+}
+
+void
+AnyDataWriterDelegate::dispose_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_DISPOSE);
+}
+
+void
+AnyDataWriterDelegate::unregister_instance_cdr(
+    dds_entity_t writer,
+    const org::eclipse::cyclonedds::topic::CDRBlob *data,
+    const dds::core::InstanceHandle& handle,
+    const dds::core::Time& timestamp)
+{
+    this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_UNREGISTER);
+}
+
+void
 AnyDataWriterDelegate::write(
     dds_entity_t writer,
     const void *data,
@@ -89,22 +164,17 @@ AnyDataWriterDelegate::write(
     const dds::core::Time& timestamp)
 {
     dds_return_t ret;
-    void *c_sample;
 
     /* Ignore the handle until ddsc supports writes with instance handles. */
     (void)handle;
 
-    c_sample = dds_alloc(this->sampleSize);
-    (*(this->copyIn))(data, c_sample);
-
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
-        ret = dds_write_ts(writer, c_sample, ddsc_time);
+        ret = dds_write_ts(writer, data, ddsc_time);
     } else {
-        ret = dds_write(writer, c_sample);
+        ret = dds_write(writer, data);
     }
 
-    dds_free (c_sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write failed.");
 }
 
@@ -116,22 +186,17 @@ AnyDataWriterDelegate::writedispose(
     const dds::core::Time& timestamp)
 {
     dds_return_t ret;
-    void *c_sample;
 
     /* Ignore the handle until ddsc supports writes with instance handles. */
     (void)handle;
 
-    c_sample = dds_alloc(this->sampleSize);
-    (*(this->copyIn))(data, c_sample);
-
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
-        ret = dds_writedispose_ts(writer, c_sample, ddsc_time);
+        ret = dds_writedispose_ts(writer, data, ddsc_time);
     } else {
-        ret = dds_writedispose(writer, c_sample);
+        ret = dds_writedispose(writer, data);
     }
 
-    dds_free (c_sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "writedispose failed.");
 }
 
@@ -141,21 +206,14 @@ AnyDataWriterDelegate::register_instance(
     const void *data,
     const dds::core::Time& timestamp)
 {
-    dds_instance_handle_t ih;
-    dds_return_t ret;
-    void *c_sample;
-
     if (timestamp != dds::core::Time::invalid()) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR,
                                "Registering with a timestamp is not supported.");
     }
 
-    c_sample = dds_alloc(this->sampleSize);
-    (*(this->copyIn))(data, c_sample);
+    dds_instance_handle_t ih;
+    dds_return_t ret = dds_register_instance(writer, &ih, data);
 
-    ret = dds_register_instance(writer, &ih, c_sample);
-
-    dds_free (c_sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "dds_instance_register failed.");
 
     return ih;
@@ -193,24 +251,19 @@ AnyDataWriterDelegate::unregister_instance(
     const dds::core::Time& timestamp)
 {
     dds_return_t ret;
-    void *c_sample;
 
     if (data == NULL)   {
         ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR,
                                "data is null");
     }
 
-    c_sample = dds_alloc(this->sampleSize);
-    (*(this->copyIn))(data, c_sample);
-
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
-        ret = dds_unregister_instance_ts(writer, c_sample, ddsc_time);
+        ret = dds_unregister_instance_ts(writer, data, ddsc_time);
     } else {
-        ret = dds_unregister_instance(writer, c_sample);
+        ret = dds_unregister_instance(writer, data);
     }
 
-    dds_free (c_sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "unregister failed.");
 }
 
@@ -246,24 +299,19 @@ AnyDataWriterDelegate::dispose_instance(
     const dds::core::Time& timestamp)
 {
     dds_return_t ret;
-    void *c_sample;
 
     if (data == NULL)   {
         ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR,
                                "data is null");
     }
 
-    c_sample = dds_alloc(this->sampleSize);
-    (*(this->copyIn))(data, c_sample);
-
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
-        ret = dds_dispose_ts(writer, c_sample, ddsc_time);
+        ret = dds_dispose_ts(writer, data, ddsc_time);
     } else {
-        ret = dds_dispose(writer, c_sample);
+        ret = dds_dispose(writer, data);
     }
 
-    dds_free (c_sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "dispose failed.");
 }
 
@@ -273,10 +321,7 @@ AnyDataWriterDelegate::get_key_value(
     void *data,
     const dds::core::InstanceHandle& handle)
 {
-    void* cKey = dds_alloc (sampleSize);
-    dds_return_t ret = dds_instance_get_key(writer, handle.delegate().handle(), cKey);
-    copyOut(cKey, data);
-    dds_free(cKey);
+    dds_return_t ret = dds_instance_get_key(writer, handle.delegate().handle(), data);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "dds_instance_get_key failed.");
 }
 
@@ -285,13 +330,7 @@ AnyDataWriterDelegate::lookup_instance(
     dds_entity_t writer,
     const void *data)
 {
-    void *c_sample;
-    c_sample = dds_alloc (sampleSize);
-    (*copyIn)(data, c_sample);
-
-    dds_instance_handle_t handle = dds_lookup_instance (writer, c_sample);
-    dds_free (c_sample);
-    return handle;
+    return dds_lookup_instance(writer, data);
 }
 
 const ::dds::core::status::LivelinessLostStatus

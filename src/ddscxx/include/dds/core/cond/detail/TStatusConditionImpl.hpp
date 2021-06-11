@@ -50,9 +50,6 @@ TStatusCondition<DELEGATE>::TStatusCondition(const dds::core::Entity& e, FUN fun
 }
 
 template <typename DELEGATE>
-TStatusCondition<DELEGATE>::~TStatusCondition() { }
-
-template <typename DELEGATE>
 void TStatusCondition<DELEGATE>::enabled_statuses(const dds::core::status::StatusMask& status) const
 {
     this->delegate()->enabled_statuses(status);
@@ -90,7 +87,8 @@ template <typename DELEGATE>
 TCondition<DELEGATE>&
 TCondition<DELEGATE>::operator=(const dds::core::cond::TStatusCondition<org::eclipse::cyclonedds::core::cond::StatusConditionDelegate>& rhs)
 {
-    if (this != (TCondition*)&rhs) {
+    const TCondition<DELEGATE> &t = rhs;
+    if (this != &t) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */

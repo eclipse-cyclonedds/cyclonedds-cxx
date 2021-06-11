@@ -98,10 +98,6 @@ public:
     template <typename FUN>
     TGuardCondition(FUN functor);
 
-    /** @cond */
-    ~TGuardCondition();
-    /** @endcond */
-
 public:
 
     /**

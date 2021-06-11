@@ -18,7 +18,7 @@
 #include "dds/dds.hpp"
 
 /* Include data type and specific traits to be used with the C++ DDS API. */
-#include "HelloWorldData_DCPS.hpp"
+#include "HelloWorldData.hpp"
 
 using namespace org::eclipse::cyclonedds;
 
@@ -31,7 +31,7 @@ int main() {
         dds::domain::DomainParticipant participant(domain::default_id());
 
         /* To publish something, a topic is needed. */
-        dds::topic::Topic<HelloWorldData::Msg> topic(participant, "ddscxx_helloworld_example");
+        dds::topic::Topic<HelloWorldData::Msg> topic(participant, "HelloWorldData_Msg");
 
         /* A writer also needs a publisher. */
         dds::pub::Publisher publisher(participant);

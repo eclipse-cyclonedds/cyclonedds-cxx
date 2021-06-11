@@ -70,10 +70,6 @@ public:
     explicit Duration(int64_t sec, uint32_t nanosec = 0);
 #endif
 
-    /** @cond */
-    ~Duration();
-    /** @endcond */
-
 public:
     /**
      * Create a Duration from a number of microseconds

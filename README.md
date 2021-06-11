@@ -13,8 +13,11 @@ tier-1 middleware for the Robot Operating System [ROS 2][6].
 [5]: https://github.com/EclipseFdn/iot.eclipse.org/issues/new?template=adopter_request.md
 [6]: https://index.ros.org/doc/ros2/
 
-[![Build Status](https://travis-ci.com/eclipse-cyclonedds/cyclonedds-cxx.svg?branch=master)](https://travis-ci.com/eclipse-cyclonedds/cyclonedds-cxx)
+[![Build Status](https://dev.azure.com/eclipse-cyclonedds/cyclonedds-cxx/_apis/build/status/Pull%20requests?branchName=master)](https://dev.azure.com/eclipse-cyclonedds/cyclonedds-cxx/_build/latest?definitionId=4&branchName=master)
 [![Coverity Status](https://scan.coverity.com/projects/21579/badge.svg)](https://scan.coverity.com/projects/eclipse-cyclonedds-cyclonedds-cxx)
+[![Codecov](https://codecov.io/gh/eclipse-cyclonedds/cyclonedds-cxx/branch/master/graphs/badge.svg?branch=master)](https://codecov.io/github/eclipse-cyclonedds/cyclonedds-cxx?branch=master)
+[![License](https://img.shields.io/badge/License-EPL%202.0-blue)](https://choosealicense.com/licenses/epl-2.0/)
+[![License](https://img.shields.io/badge/License-EDL%201.0-blue)](https://choosealicense.com/licenses/edl-1.0/)
 
 # Getting Started
 
@@ -29,16 +32,11 @@ following installed on your host:
  * [Git](https://git-scm.com/) version control system;
  * [CMake](https://cmake.org/download/), version 3.7 or later;
  * [Eclipse Cyclone DDS](https://github.com/eclipse-cyclonedds/cyclonedds/)
- * [CXX Idl compiler](https://github.com/ADLINK-IST/idlpp-cxx/)
 
-*Eclipse Cyclone DDS* and the *CXX Idl compiler* have dependencies of their
-own, most notably Java and Apache Maven. To build and install the respective
-projects, please consult their build instructions. Ensure both projects are
-installed into locations convenient for you by specifying
+*Eclipse Cyclone DDS* has dependencies of its own, most notably Bison. To
+build and install it, please consult the build instructions. Ensure the
+project is installed into a location convenient for you by specifying
 `CMAKE_INSTALL_PREFIX`.
-
-> The *CXX Idl compiler* is a temporary dependency, a new IDL compiler for
-> both Eclipse Cyclone DDS and Eclipse Cyclone DDS CXX is in the works.
 
 To obtain the C++ binding for Cyclone DDS, do
 
@@ -58,7 +56,7 @@ hand, and Windows on the other. For Linux or macOS:
 
     $ cd build
     $ cmake -DCMAKE_INSTALL_PREFIX=<install-location> \
-            -DCMAKE_PREFIX_PATH="<idlpp-cxx-install-location>;<cyclonedds-install-location>" \
+            -DCMAKE_PREFIX_PATH="<cyclonedds-install-location>" \
             ..
     $ cmake --build .
 
@@ -67,7 +65,7 @@ and for Windows:
     $ cd build
     $ cmake -G "<generator-name>" \
             -DCMAKE_INSTALL_PREFIX=<install-location> \
-            -DCMAKE_PREFIX_PATH="<idlpp-cxx-install-location>;<cyclonedds-install-location>" \
+            -DCMAKE_PREFIX_PATH="<cyclonedds-install-location>" \
             ..
     $ cmake --build .
 
@@ -123,15 +121,6 @@ that the CI build infrastructure also uses. In that case, install Conan and do:
 
 in the build directory prior to running `cmake`. This will automatically
 download and/or build Google Test.
-
-The Google Test Conan package is hosted in the Bincrafters Bintray repository.
-In case this repository was not added to your Conan remotes list yet (and the
-above mentioned install command failed because it could not find the
-Google Test package), you can add the Bintray repository by:
-
-    $ conan remote add <REMOTE> https://api.bintray.com/conan/bincrafters/public-conan
-
-Replace `<REMOTE>` with a name that identifies the repository (e.g. `bincrafters`).
 
 For Windows, depending on the generator, you might also need to add switches
 to select the architecture and build type, e.g.,

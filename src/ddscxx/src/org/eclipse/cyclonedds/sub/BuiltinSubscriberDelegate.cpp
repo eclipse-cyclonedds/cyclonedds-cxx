@@ -144,16 +144,6 @@ org::eclipse::cyclonedds::sub::BuiltinSubscriberDelegate::get_builtin_reader(
         builtin_reader = create_builtin_reader<dds::topic::PublicationBuiltinTopicData>(subscriber, topic_name).delegate();
     } else if (topic_name == "DCPSSubscription") {
         builtin_reader = create_builtin_reader<dds::topic::SubscriptionBuiltinTopicData>(subscriber, topic_name).delegate();
-    } else if (topic_name == "CMParticipant") {
-        builtin_reader = create_builtin_reader<org::eclipse::cyclonedds::topic::CMParticipantBuiltinTopicData>(subscriber, topic_name).delegate();
-    } else if (topic_name == "CMPublisher") {
-        builtin_reader = create_builtin_reader<org::eclipse::cyclonedds::topic::CMPublisherBuiltinTopicData>(subscriber, topic_name).delegate();
-    } else if (topic_name == "CMSubscriber") {
-        builtin_reader = create_builtin_reader<org::eclipse::cyclonedds::topic::CMSubscriberBuiltinTopicData>(subscriber, topic_name).delegate();
-    } else if (topic_name == "CMDataWriter") {
-        builtin_reader = create_builtin_reader<org::eclipse::cyclonedds::topic::CMDataWriterBuiltinTopicData>(subscriber, topic_name).delegate();
-    } else if (topic_name == "CMDataReader") {
-        builtin_reader = create_builtin_reader<org::eclipse::cyclonedds::topic::CMDataReaderBuiltinTopicData>(subscriber, topic_name).delegate();
     }
 
     return builtin_reader;

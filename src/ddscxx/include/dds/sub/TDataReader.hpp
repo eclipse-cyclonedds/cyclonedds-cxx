@@ -378,7 +378,7 @@ public:
          *
          * @param  sfit     Forward-inserting container iterator
          * @param  max_samples Maximum samples to read and copy into the given container
-         * @return          The number of samples in the LoanedSamples container
+         * @return          The number of samples in the given container
          * @throws dds::core::Error
          *                  An internal error has occurred.
          * @throws dds::core::NullReferenceError
@@ -402,7 +402,7 @@ public:
          * Selector with possible filters set.
          *
          * @param  sbit     Back-inserting container iterator
-         * @return          The number of samples in the LoanedSamples container
+         * @return          The number of samples in the given container
          * @throws dds::core::Error
          *                  An internal error has occurred.
          * @throws dds::core::NullReferenceError
@@ -425,7 +425,7 @@ public:
          * Selector with possible filters set.
          *
          * @param  sbit     Back-inserting container iterator
-         * @return          The number of samples in the LoanedSamples container
+         * @return          The number of samples in the given container
          * @throws dds::core::Error
          *                  An internal error has occurred.
          * @throws dds::core::NullReferenceError
@@ -780,6 +780,7 @@ public:
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC_T(DataReader, dds::sub::TAnyDataReader, T, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(DataReader)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(DataReader)
 
 public:
     /**
@@ -887,11 +888,6 @@ public:
                const dds::core::status::StatusMask& mask = ::dds::core::status::StatusMask::none());
 
     #endif /* OMG_DDS_MULTI_TOPIC_SUPPORT */
-
-public:
-    /** @cond */
-    virtual ~DataReader();
-    /** @endcond */
 
 public:
     // == ReadState Management
@@ -1291,7 +1287,7 @@ public:
      *
      * @param  sfit     Forward-inserting container iterator
      * @param  max_samples Maximum samples to take and copy into the given container
-     * @return          The number of samples in the LoanedSamples container
+     * @return          The number of samples in the given container
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::NullReferenceError
@@ -1357,7 +1353,7 @@ public:
      * Look @ref anchor_dds_sub_datareader_invalidsamples "here" for more information.
      *
      * @param  sbit     Back-inserting container iterator
-     * @return          The number of samples in the LoanedSamples container
+     * @return          The number of samples in the given container
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::NullReferenceError
@@ -1419,7 +1415,7 @@ public:
      * Look @ref anchor_dds_sub_datareader_invalidsamples "here" for more information.
      *
      * @param  sbit     Back-inserting container iterator
-     * @return          The number of samples in the LoanedSamples container
+     * @return          The number of samples in the given container
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::NullReferenceError
@@ -1628,8 +1624,8 @@ public:
      * can be used to indicate that the created entity should not respond to any of its available
      * statuses. The DDS will therefore attempt to propagate these statuses to its factory.
      * The special constant dds::core::status::StatusMask::all() can be used to select all applicable
-     * statuses specified in the “Data Distribution Service for Real-time Systems Version
-     * 1.2” specification which are applicable to the PublisherListener.
+     * statuses specified in the "Data Distribution Service for Real-time Systems Version
+     * 1.2" specification which are applicable to the PublisherListener.
      *
      * @anchor anchor_dds_sub_datareader_commpropagation
      * <i>Status Propagation</i><br>
@@ -1645,7 +1641,7 @@ public:
      * status is not activated in its mask, the application is not notified of the change.
      *
      * The statuses DATA_ON_READERS_STATUS and DATA_AVAILABLE_STATUS are
-     * “Read Communication Statuses” and are an exception to all other plain
+     * "Read Communication Statuses" and are an exception to all other plain
      * communication statuses: they have no corresponding status structure that can be
      * obtained with a get_<status_name>_status operation and they are mutually
      * exclusive. When new information becomes available to a DataReader, the Data

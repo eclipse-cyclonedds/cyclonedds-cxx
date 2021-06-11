@@ -503,7 +503,7 @@ void GroupDataDelegate::set_iso_policy(const dds_qos_t* qos)
     size_t sz;
     if (dds_qget_groupdata(qos, &value, &sz)) {
         if (sz > 0) {
-            org::eclipse::cyclonedds::core::convertByteSeq(value, (int32_t)sz, value_);
+            org::eclipse::cyclonedds::core::convertByteSeq(value, static_cast<int32_t>(sz), value_);
         }
         dds_free(value);
     }
@@ -514,7 +514,7 @@ void GroupDataDelegate::set_c_policy(dds_qos_t* qos) const
     if(value_.size())
     {
         void* data = NULL;
-        org::eclipse::cyclonedds::core::convertByteSeq(value_, data, (int32_t)value_.size());
+        org::eclipse::cyclonedds::core::convertByteSeq(value_, data, static_cast<int32_t>(value_.size()));
         dds_qset_groupdata(qos, data, value_.size());
     }
 }
@@ -992,7 +992,7 @@ void PartitionDelegate::set_c_policy(dds_qos_t* qos) const
     {
         char** partitions = 0;
         org::eclipse::cyclonedds::core::convertStringSeq(name_, partitions);
-        dds_qset_partition(qos, (uint32_t)name_.size(), (const char**)partitions);
+        dds_qset_partition(qos, static_cast<uint32_t>(name_.size()), const_cast<const char**>(static_cast<char**>(partitions)));
         for(size_t i = 0; i < name_.size(); i++)
             delete[] partitions[i];
         delete[] partitions;
@@ -1454,7 +1454,7 @@ void TopicDataDelegate::set_iso_policy(const dds_qos_t* qos)
     size_t sz;
     if (dds_qget_topicdata(qos, &value, &sz)) {
         if (sz > 0) {
-            org::eclipse::cyclonedds::core::convertByteSeq(value, (int32_t)sz, value_);
+            org::eclipse::cyclonedds::core::convertByteSeq(value, static_cast<int32_t>(sz), value_);
         }
         dds_free(value);
     }
@@ -1465,7 +1465,7 @@ void TopicDataDelegate::set_c_policy(dds_qos_t* qos) const
     if(value_.size())
     {
         void* data = NULL;
-        org::eclipse::cyclonedds::core::convertByteSeq(value_, data, (int32_t)value_.size());
+        org::eclipse::cyclonedds::core::convertByteSeq(value_, data, static_cast<int32_t>(value_.size()));
         dds_qset_topicdata(qos, data, value_.size());
     }
 }
@@ -1563,7 +1563,7 @@ void UserDataDelegate::set_iso_policy(const dds_qos_t* qos)
     if (dds_qget_userdata(qos, &value, &sz)) {
         if(sz > 0)
         {
-            org::eclipse::cyclonedds::core::convertByteSeq(value, (int32_t)sz, value_);
+            org::eclipse::cyclonedds::core::convertByteSeq(value, static_cast<int32_t>(sz), value_);
         }
         dds_free(value);
     }
@@ -1574,7 +1574,7 @@ void UserDataDelegate::set_c_policy(dds_qos_t* qos) const
     if(value_.size())
     {
         void* data = NULL;
-        org::eclipse::cyclonedds::core::convertByteSeq(value_, data, (int32_t)value_.size());
+        org::eclipse::cyclonedds::core::convertByteSeq(value_, data, static_cast<int32_t>(value_.size()));
         dds_qset_userdata(qos, data, value_.size());
     }
 }

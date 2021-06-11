@@ -24,9 +24,9 @@ class LoanedSamples
 {
 public:
 
-    typedef std::vector< dds::sub::Sample<T, dds::sub::detail::Sample> > LoanedSamplesContainer;
-    typedef typename std::vector< dds::sub::Sample<T, dds::sub::detail::Sample> >::iterator iterator;
-    typedef typename std::vector< dds::sub::Sample<T, dds::sub::detail::Sample> >::const_iterator const_iterator;
+    typedef std::vector< dds::sub::SampleRef<T, dds::sub::detail::SampleRef> > LoanedSamplesContainer;
+    typedef typename std::vector< dds::sub::SampleRef<T, dds::sub::detail::SampleRef> >::iterator iterator;
+    typedef typename std::vector< dds::sub::SampleRef<T, dds::sub::detail::SampleRef> >::const_iterator const_iterator;
 
 public:
     LoanedSamples() { }
@@ -68,12 +68,12 @@ public:
          samples_.resize(s);
     }
 
-    dds::sub::Sample<T, dds::sub::detail::Sample>& operator[] (uint32_t i)
+    dds::sub::SampleRef<T, dds::sub::detail::SampleRef>& operator[] (uint32_t i)
     {
         return this->samples_[i];
     }
 
-    dds::sub::Sample<T, dds::sub::detail::Sample> * get_buffer() {
+    dds::sub::SampleRef<T, dds::sub::detail::SampleRef> * get_buffer() {
         return this->samples_.data();
     }
 
@@ -81,6 +81,70 @@ public:
 private:
     LoanedSamplesContainer samples_;
 };
+
+template <>
+class LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>
+{
+public:
+
+    typedef std::vector< dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> > LoanedSamplesContainer;
+    typedef typename std::vector< dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> >::iterator iterator;
+    typedef typename std::vector< dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> >::const_iterator const_iterator;
+
+public:
+    LoanedSamples() { }
+
+    ~LoanedSamples()
+    {
+
+    }
+
+public:
+
+    iterator mbegin()
+    {
+        return samples_.begin();
+    }
+
+    const_iterator begin() const
+    {
+        return samples_.begin();
+    }
+
+    const_iterator end() const
+    {
+        return samples_.end();
+    }
+
+    uint32_t length() const
+    {
+        return static_cast<uint32_t>(samples_.size());
+    }
+
+    void reserve(uint32_t s)
+    {
+        samples_.reserve(s);
+    }
+
+    void resize(uint32_t s)
+    {
+         samples_.resize(s);
+    }
+
+    dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample>& operator[] (uint32_t i)
+    {
+        return this->samples_[i];
+    }
+
+    dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> * get_buffer() {
+        return this->samples_.data();
+    }
+
+
+private:
+    LoanedSamplesContainer samples_;
+};
+
 
 }
 }

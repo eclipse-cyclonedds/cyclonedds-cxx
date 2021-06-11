@@ -31,6 +31,7 @@
 #include <org/eclipse/cyclonedds/core/ObjectSet.hpp>
 #include <org/eclipse/cyclonedds/ForwardDeclarations.hpp>
 #include <dds/topic/TopicDescription.hpp>
+#include <org/eclipse/cyclonedds/topic/CDRBlob.hpp>
 
 #include <dds/topic/BuiltinTopic.hpp>
 
@@ -71,7 +72,11 @@ public:
     virtual uint32_t get_length() const = 0;
     virtual SamplesHolder& operator++(int) = 0;
     virtual void *data() = 0;
-    virtual detail::SampleInfo* info() = 0;
+    virtual detail::SampleInfo& info() = 0;
+    virtual void **cpp_sample_pointers(size_t length) = 0;
+    virtual dds_sample_info_t *cpp_info_pointers(size_t length) = 0;
+    virtual void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info) = 0;
+    virtual void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos) = 0;
 };
 
 }
@@ -91,7 +96,6 @@ namespace sub
 
 class QueryDelegate;
 
-
 class OMG_DDS_API AnyDataReaderDelegate : public org::eclipse::cyclonedds::core::EntityDelegate
 {
 public:
@@ -101,6 +105,10 @@ public:
     AnyDataReaderDelegate(const dds::sub::qos::DataReaderQos& qos,
                           const dds::topic::TopicDescription& td);
     virtual ~AnyDataReaderDelegate();
+
+    static void copy_sample_infos(
+        const dds_sample_info_t &from,
+        dds::sub::SampleInfo &to);
 
 public:
     /* DDS API mirror. */
@@ -156,39 +164,61 @@ public:
     void add_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
     void remove_query(org::eclipse::cyclonedds::sub::QueryDelegate& query);
 
-    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction _copyIn)
-    {
-        this->copyIn = _copyIn;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyInFunction getCopyIn() const
-    {
-        return this->copyIn;
-    }
-
-    inline void setSampleSize(size_t _sampleSize)
-    {
-        this->sampleSize = _sampleSize;
-    }
-
-    inline size_t getSampleSize() const
-    {
-        return this->sampleSize;
-    }
-
-    void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
-    {
-        this->copyOut = _copyOut;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyOutFunction getCopyOut() const
-    {
-        return this->copyOut;
-    }
-
     void setSample(void* sample);
     void* getSample() const;
 
+
+    void read_cdr(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void take_cdr(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_read(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_take(
+            const dds_entity_t reader,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_read_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_take_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_read_next_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
+
+    void loaned_take_next_instance(
+            const dds_entity_t reader,
+            const dds::core::InstanceHandle& handle,
+            const dds::sub::status::DataState& mask,
+            dds::sub::detail::SamplesHolder& samples,
+            uint32_t max_samples);
 
     void read(
             const dds_entity_t reader,
@@ -242,34 +272,19 @@ public:
     void close();
 
 private:
-    virtual const dds_topic_descriptor_t* getDescriptor() = 0;
-
     bool init_samples_buffers(
-            const uint32_t      requested_max_samples,
-            uint32_t&           samples_to_read_cnt,
-            size_t&             c_sample_pointers_size,
-            void**&             c_sample_pointers,
-            dds_sample_info_t*& c_sample_infos);
-
-    void copy_samples(
-            dds::sub::detail::SamplesHolder& samples,
-            void**& c_sample_pointers,
-            dds_sample_info_t*& c_sample_infos,
-            int num_read);
+            const uint32_t                    requested_max_samples,
+            uint32_t&                         samples_to_read_cnt,
+            size_t&                           c_sample_pointers_size,
+            dds::sub::detail::SamplesHolder&  samples,
+            void**&                           c_sample_pointers,
+            dds_sample_info_t*&               c_sample_infos);
 
     void fini_samples_buffers(
             void**& c_sample_pointers,
-            dds_sample_info_t*& c_sample_infos,
-            size_t c_sample_pointers_size);
-
-    static void copy_sample_info(
-            dds_sample_info_t &from,
-            dds::sub::SampleInfo *to);
+            dds_sample_info_t*& c_sample_infos);
 
 protected:
-    org::eclipse::cyclonedds::topic::copyInFunction  copyIn;
-    org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
-    size_t sampleSize;
     org::eclipse::cyclonedds::core::ObjectSet queries;
     dds::sub::qos::DataReaderQos qos_;
     dds::topic::TopicDescription td_;

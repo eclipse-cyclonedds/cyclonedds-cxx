@@ -18,8 +18,11 @@
 #ifndef CYCLONEDDS_TOPIC_TOPICTRAITS_HPP_
 #define CYCLONEDDS_TOPIC_TOPICTRAITS_HPP_
 
-#include <string.h>
+#include <vector>
+
 #include <org/eclipse/cyclonedds/topic/DataRepresentation.hpp>
+
+struct ddsi_sertype;
 
 namespace org
 {
@@ -29,10 +32,6 @@ namespace cyclonedds
 {
 namespace topic
 {
-
-typedef void (*copyInFunction)(const void *, void *);
-typedef void (*copyOutFunction)(const void *, void *);
-
 
 template <class TOPIC> class TopicTraits
 {
@@ -57,9 +56,9 @@ public:
         return ::std::vector<uint8_t>();
     }
 
-    static const char *getKeyList()
+    static bool isKeyless()
     {
-        return "ExampleKeylist";
+        return true;
     }
 
     static const char *getTypeName()
@@ -67,17 +66,7 @@ public:
         return "ExampleName";
     }
 
-    static const dds_topic_descriptor_t *getDescriptor()
-    {
-        return  NULL;
-    }
-
-    static copyInFunction getCopyIn()
-    {
-        return NULL;
-    }
-
-    static copyOutFunction getCopyOut()
+    static ddsi_sertype *getSerType()
     {
         return NULL;
     }

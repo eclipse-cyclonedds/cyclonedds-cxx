@@ -48,11 +48,6 @@ TGuardCondition<DELEGATE>::TGuardCondition(FUN functor)
 }
 
 template <typename DELEGATE>
-TGuardCondition<DELEGATE>::~TGuardCondition()
-{
-}
-
-template <typename DELEGATE>
 void TGuardCondition<DELEGATE>::trigger_value(bool value)
 {
     this->delegate()->trigger_value(value);
@@ -83,7 +78,8 @@ template <typename DELEGATE>
 TCondition<DELEGATE>&
 TCondition<DELEGATE>::operator=(const dds::core::cond::TGuardCondition<org::eclipse::cyclonedds::core::cond::GuardConditionDelegate>& rhs)
 {
-    if (this != (TCondition*)&rhs) {
+    const TCondition<DELEGATE> &t = rhs;
+    if (this != &t) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */

@@ -57,12 +57,11 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     dds_return_t ret;
 
     if ((id != org::eclipse::cyclonedds::domain::default_id()) && (id > 230)) {
-        ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid domain_id: %d", (int)id);
+        ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid domain_id: %d", static_cast<int>(id));
     }
 
     /* Validate the qos and get the corresponding ddsc qos. */
     qos.delegate().check();
-    ddsc_qos = qos.delegate().ddsc_qos();
 
     dds_entity_t ddsc_par;
 
@@ -73,11 +72,11 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
         ISOCPP_BOOL_CHECK_AND_THROW(id != org::eclipse::cyclonedds::domain::default_id(),
                                     ISOCPP_INVALID_ARGUMENT_ERROR,
                                     "When explicitly provide a config, a specific domain id has to be provided as well.");
-        it = domain_registry_.find((dds_domainid_t)id);
+        it = domain_registry_.find(static_cast<dds_domainid_t>(id));
         if (it == domain_registry_.end()) {
             /* The explicit domain is not available yet. Create it so
              * that the (to be) created participant uses that domain. */
-            this->domain_ref_.reset(new org::eclipse::cyclonedds::domain::DomainWrap((dds_domainid_t)id, config));
+            this->domain_ref_.reset(new org::eclipse::cyclonedds::domain::DomainWrap(static_cast<dds_domainid_t>(id), config));
         } else {
             /* The domain was already created previously.
              * When creating the cyclonedds participant, it'll use
@@ -85,7 +84,8 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
         }
     }
 
-    ddsc_par = dds_create_participant((dds_domainid_t)domain_id_, ddsc_qos, NULL);
+    ddsc_qos = qos.delegate().ddsc_qos();
+    ddsc_par = dds_create_participant(static_cast<dds_domainid_t>(domain_id_), ddsc_qos, NULL);
 
     dds_delete_qos (ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_par, "Could not create DomainParticipant.");
@@ -93,7 +93,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     /* Domain id is possibly changed when using default_id() */
     ret = dds_get_domainid(ddsc_par, &did);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to create useful DomainParticipant");
-    this->domain_id_ = (uint32_t)did;
+    this->domain_id_ = static_cast<uint32_t>(did);
 
     this->set_ddsc_entity(ddsc_par);
 
@@ -114,6 +114,66 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     } else {
         /* Remember domain from registry. */
         this->domain_ref_ = domain_registry_[did];
+    }
+}
+
+org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDelegate(
+  uint32_t id,
+  const dds::domain::qos::DomainParticipantQos & qos,
+  dds::domain::DomainParticipantListener * listener,
+  const dds::core::status::StatusMask & event_mask,
+  const ddsi_config & config
+)
+  : domain_id_(id), qos_(qos)
+{
+    org::eclipse::cyclonedds::domain::DomainWrap::map_ref_iter it;
+    dds_qos_t * ddsc_qos;
+    dds_domainid_t did;
+    dds_return_t ret;
+
+    if ((id != org::eclipse::cyclonedds::domain::default_id()) && (id > 230)) {
+      ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid domain_id: %" PRIu32, id);
+    }
+
+    /* Validate the qos and get the corresponding ddsc qos. */
+    qos.delegate().check();
+    ddsc_qos = qos.delegate().ddsc_qos();
+
+    dds_entity_t ddsc_par;
+
+    org::eclipse::cyclonedds::core::ScopedMutexLock scopedLock(global_participants_lock_);
+    it = domain_registry_.find(static_cast<dds_domainid_t>(id));
+    if (it == domain_registry_.end()) {
+      /* The explicit domain is not available yet. Create it so
+       * that the (to be) created participant uses that domain. */
+      this->domain_ref_.reset(new org::eclipse::cyclonedds::domain::DomainWrap(
+        static_cast<dds_domainid_t>(id), config));
+    } else {
+      /* The domain was already created previously.
+       * When creating the cyclonedds participant, it'll use
+       * that one automatically. */
+    }
+
+    ddsc_par = dds_create_participant(static_cast<dds_domainid_t>(id), ddsc_qos, NULL);
+
+    dds_delete_qos(ddsc_qos);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_par, "Could not create DomainParticipant.");
+
+    /* Domain id is possibly changed when using default_id() */
+    ret = dds_get_domainid(ddsc_par, &did);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to create useful DomainParticipant");
+    this->domain_id_ = static_cast<uint32_t>(did);
+
+    this->set_ddsc_entity(ddsc_par);
+
+    this->listener(listener, event_mask);
+
+    if (this->domain_ref_) {
+      /* Add new domain to registry. */
+      domain_registry_[did] = this->domain_ref_;
+    } else {
+      /* Remember domain from registry. */
+      this->domain_ref_ = domain_registry_[did];
     }
 }
 
@@ -239,7 +299,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::close()
     /* Release domain. */
     this->domain_ref_.reset();
     /* Update registery when needed. */
-    it = domain_registry_.find((dds_domainid_t)this->domain_id_);
+    it = domain_registry_.find(static_cast<dds_domainid_t>(this->domain_id_));
     assert(it != domain_registry_.end());
     if (it->second.use_count() == 1) {
         /* Only available in the map, no reference
@@ -408,7 +468,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topic(
     dds_time_t starttime = dds_time();
     while (true)
     {
-        ddsc_topic = dds_find_topic(this->ddsc_entity, topic_name.c_str());
+        ddsc_topic = dds_find_topic_scoped(DDS_FIND_SCOPE_PARTICIPANT, this->ddsc_entity, topic_name.c_str(), 0);
         if (ddsc_topic <= 0 || (ddsc_timeout != DDS_INFINITY &&
             dds_time () >= starttime + ddsc_timeout)) {
             break;

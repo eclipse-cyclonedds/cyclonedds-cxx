@@ -22,6 +22,7 @@
 #include <dds/sub/Subscriber.hpp>
 #include <dds/sub/qos/DataReaderQos.hpp>
 #include <dds/topic/TopicDescription.hpp>
+#include <dds/core/macros.hpp>
 
 namespace dds
 {
@@ -73,7 +74,8 @@ TAnyDataReader(const H__& h)
 template <typename T__>
 TAnyDataReader&
 operator=(const T__& rhs) {
-    if (this != (TAnyDataReader*)&rhs) {
+    const TAnyDataReader &t = rhs;
+    if (this != &t) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */
@@ -89,9 +91,7 @@ operator=(const T__& rhs) {
     return *this;
 }
 #endif
-    /** @cond */
-    virtual ~TAnyDataReader();
-    /** @endcond */
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(TAnyDataReader)
 
     //==========================================================================
     // -- Entity Navigation API

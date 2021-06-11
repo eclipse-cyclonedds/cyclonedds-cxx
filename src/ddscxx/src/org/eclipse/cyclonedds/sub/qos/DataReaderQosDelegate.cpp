@@ -36,30 +36,9 @@ DataReaderQosDelegate::DataReaderQosDelegate()
 }
 
 DataReaderQosDelegate::DataReaderQosDelegate(
-    const DataReaderQosDelegate& other)
-    : user_data_(other.user_data_),
-      durability_(other.durability_),
-      deadline_(other.deadline_),
-      budget_(other.budget_),
-      liveliness_(other.liveliness_),
-      reliability_(other.reliability_),
-      order_(other.order_),
-      history_(other.history_),
-      resources_(other.resources_),
-      ownership_(other.ownership_),
-      tfilter_(other.tfilter_),
-      lifecycle_(other.lifecycle_)
-{
-}
-
-DataReaderQosDelegate::DataReaderQosDelegate(
     const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos)
 {
     *this = tqos;
-}
-
-DataReaderQosDelegate::~DataReaderQosDelegate()
-{
 }
 
 void
@@ -232,24 +211,6 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
            other.ownership_   == ownership_   &&
            other.tfilter_     == tfilter_     &&
            other.lifecycle_   == lifecycle_;
-}
-
-DataReaderQosDelegate&
-DataReaderQosDelegate::operator =(const DataReaderQosDelegate& other)
-{
-    user_data_   = other.user_data_;
-    durability_  = other.durability_;
-    deadline_    = other.deadline_;
-    budget_      = other.budget_;
-    liveliness_  = other.liveliness_;
-    reliability_ = other.reliability_;
-    order_       = other.order_;
-    history_     = other.history_;
-    resources_   = other.resources_;
-    ownership_   = other.ownership_;
-    tfilter_     = other.tfilter_;
-    lifecycle_   = other.lifecycle_;
-    return *this;
 }
 
 DataReaderQosDelegate&

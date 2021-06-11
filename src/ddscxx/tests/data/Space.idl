@@ -1,0 +1,22 @@
+
+module Space {
+    enum Enumeration
+    {
+        VALUE1,
+        VALUE2
+    };
+
+    struct Type1 {
+	long	long_1; //@Key
+	long	long_2;
+	long	long_3;
+    };
+#pragma keylist Type1 long_1
+    struct Type2 {
+	long	long_1; //@Key
+	long	long_2;
+	long	long_3;
+	Enumeration enum_1;
+    };
+#pragma keylist Type2 long_1
+};

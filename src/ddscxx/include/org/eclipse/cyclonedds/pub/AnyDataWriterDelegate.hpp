@@ -28,6 +28,7 @@
 #include <dds/topic/TopicDescription.hpp>
 #include <dds/topic/BuiltinTopic.hpp>
 
+#include <org/eclipse/cyclonedds/topic/CDRBlob.hpp>
 
 namespace dds { namespace pub {
 template <typename DELEGATE>
@@ -100,40 +101,35 @@ public:
     void write_flush();
     void set_batch(bool);
 
+private:
+    void
+    write_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp,
+          uint32_t statusinfo);
+
 protected:
     AnyDataWriterDelegate(const dds::pub::qos::DataWriterQos& qos,
                           const dds::topic::TopicDescription& td);
 
+    void
+    write_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp);
 
-    inline void setCopyIn(org::eclipse::cyclonedds::topic::copyInFunction _copyIn)
-    {
-        this->copyIn = _copyIn;
-    }
+    void
+    dispose_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp);
 
-    inline org::eclipse::cyclonedds::topic::copyInFunction getCopyIn()
-    {
-        return this->copyIn;
-    }
-
-    inline void setSampleSize(size_t _sampleSize)
-    {
-        this->sampleSize = _sampleSize;
-    }
-
-    inline size_t getSampleSize()
-    {
-        return this->sampleSize;
-    }
-
-    inline void setCopyOut(org::eclipse::cyclonedds::topic::copyOutFunction _copyOut)
-    {
-        this->copyOut = _copyOut;
-    }
-
-    inline org::eclipse::cyclonedds::topic::copyOutFunction getCopyOut()
-    {
-        return this->copyOut;
-    }
+    void
+    unregister_instance_cdr(dds_entity_t writer,
+          const org::eclipse::cyclonedds::topic::CDRBlob *data,
+          const dds::core::InstanceHandle& handle,
+          const dds::core::Time& timestamp);
 
     void
     write(dds_entity_t writer,
@@ -182,9 +178,6 @@ protected:
                     const void *data);
 
 private:
-    org::eclipse::cyclonedds::topic::copyInFunction  copyIn;
-    org::eclipse::cyclonedds::topic::copyOutFunction copyOut;
-    size_t sampleSize;
     dds::pub::qos::DataWriterQos qos_;
     dds::topic::TopicDescription td_;
 

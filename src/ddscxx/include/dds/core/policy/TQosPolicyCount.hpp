@@ -28,6 +28,11 @@ namespace core
 namespace policy
 {
 
+#if defined(__GNUC__) && (__GNUC__ >= 10)
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wanalyzer-null-dereference\"")
+#endif
+
 /**
  * The QosPolicyCount object shows, for a QosPolicy, the total number of
  * times that the concerned DataWriter discovered a DataReader for the
@@ -81,5 +86,9 @@ public:
 }
 }
 }
+
+#if defined(__GNUC__) && (__GNUC__ >= 10)
+_Pragma("GCC diagnostic pop")
+#endif
 
 #endif // !defined(OMG_TDDS_CORE_POLICY_QOS_POLICY_COUNT_HPP_)

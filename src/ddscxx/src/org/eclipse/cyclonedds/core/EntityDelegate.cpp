@@ -40,8 +40,8 @@ org::eclipse::cyclonedds::core::EntityDelegate::EntityDelegate() :
   this->callback_mutex = dds_alloc (sizeof (ddsrt_mutex_t));
   this->callback_cond = dds_alloc (sizeof (ddsrt_cond_t));
 
-  ddsrt_mutex_init ((ddsrt_mutex_t*) this->callback_mutex);
-  ddsrt_cond_init ((ddsrt_cond_t*) this->callback_cond);
+  ddsrt_mutex_init (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
+  ddsrt_cond_init (static_cast<ddsrt_cond_t*>(this->callback_cond));
 
   callback_count = 0;
 }
@@ -54,8 +54,8 @@ org::eclipse::cyclonedds::core::EntityDelegate::~EntityDelegate()
   }
   this->listener_callbacks = NULL;
 
-  ddsrt_cond_destroy ((ddsrt_cond_t*) this->callback_cond);
-  ddsrt_mutex_destroy ((ddsrt_mutex_t*) this->callback_mutex);
+  ddsrt_cond_destroy (static_cast<ddsrt_cond_t*>(this->callback_cond));
+  ddsrt_mutex_destroy (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
   dds_free (this->callback_cond);
   dds_free (this->callback_mutex);
 }
@@ -238,7 +238,7 @@ void * org::eclipse::cyclonedds::core::EntityDelegate::listener_get () const
 
 void org::eclipse::cyclonedds::core::EntityDelegate::prevent_callbacks ()
 {
-  ddsrt_mutex_lock ((ddsrt_mutex_t*)this->callback_mutex);
+  ddsrt_mutex_lock (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
 
   if (this->get_weak_ref().expired () && (this->callback_count == 1))
   {
@@ -257,39 +257,39 @@ void org::eclipse::cyclonedds::core::EntityDelegate::prevent_callbacks ()
 
   while (callback_count > 0)
   {
-    ddsrt_cond_wait ((ddsrt_cond_t*)this->callback_cond, (ddsrt_mutex_t*)this->callback_mutex);
+    ddsrt_cond_wait (static_cast<ddsrt_cond_t*>(this->callback_cond), static_cast<ddsrt_mutex_t*>(this->callback_mutex));
   }
   callback_count = -1;
 
-  ddsrt_mutex_unlock ((ddsrt_mutex_t*) this->callback_mutex);
+  ddsrt_mutex_unlock (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
 }
 
 bool org::eclipse::cyclonedds::core::EntityDelegate::obtain_callback_lock ()
 {
   bool result = false;
 
-  ddsrt_mutex_lock ((ddsrt_mutex_t*)this->callback_mutex);
+  ddsrt_mutex_lock (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
   if (callback_count >= 0)
   {
     result = true;
     ++callback_count;
   }
-  ddsrt_mutex_unlock ((ddsrt_mutex_t*)this->callback_mutex);
+  ddsrt_mutex_unlock (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
 
   return result;
 }
 
 void org::eclipse::cyclonedds::core::EntityDelegate::release_callback_lock ()
 {
-    ddsrt_mutex_lock ((ddsrt_mutex_t*)this->callback_mutex);
+    ddsrt_mutex_lock (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
 
   --callback_count;
   if (callback_count == 0)
   {
-    ddsrt_cond_broadcast ((ddsrt_cond_t*) this->callback_cond);
+    ddsrt_cond_broadcast (static_cast<ddsrt_cond_t*>(this->callback_cond));
   }
 
-  ddsrt_mutex_unlock ((ddsrt_mutex_t*) this->callback_mutex);
+  ddsrt_mutex_unlock (static_cast<ddsrt_mutex_t*>(this->callback_mutex));
 }
 
 const dds::core::status::StatusMask

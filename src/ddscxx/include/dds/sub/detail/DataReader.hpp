@@ -61,12 +61,19 @@ public:
 
     virtual ~DataReader();
 
-    void init(ObjectDelegate::weak_ref_type weak_ref);
+    void copy_samples(
+      dds::sub::detail::SamplesHolder& samples,
+      void**& c_sample_pointers,
+      dds_sample_info_t*& c_sample_infos,
+      int num_read);
 
-    virtual const dds_topic_descriptor_t* getDescriptor();
+    void init(ObjectDelegate::weak_ref_type weak_ref);
 
     dds::sub::status::DataState default_filter_state();
     void default_filter_state(const dds::sub::status::DataState& state);
+
+    dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> read_cdr();
+    dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> take_cdr();
 
     dds::sub::LoanedSamples<T> read();
     dds::sub::LoanedSamples<T> take();

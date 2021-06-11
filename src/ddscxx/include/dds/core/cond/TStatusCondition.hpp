@@ -114,10 +114,6 @@ public:
     template <typename FUN>
     TStatusCondition(const dds::core::Entity& e, FUN functor);
 
-    /** @cond */
-    ~TStatusCondition();
-    /** @endcond */
-
 public:
     /**
      * This operation sets the list of communication statuses that are taken into account to

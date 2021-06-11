@@ -9,7 +9,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-add_subdirectory(helloworld)
+set(CMAKE_INSTALL_EXAMPLESDIR "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/examples")
 
 install(
   FILES helloworld/publisher.cpp
@@ -17,5 +17,7 @@ install(
         helloworld/HelloWorldData.idl
         helloworld/CMakeLists.txt
         helloworld/readme.rst
-  DESTINATION "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/helloworld"
+  DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/helloworld"
   COMPONENT dev)
+
+add_subdirectory(helloworld)

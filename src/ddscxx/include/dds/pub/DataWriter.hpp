@@ -98,6 +98,7 @@ public:
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC_T(DataWriter, dds::pub::TAnyDataWriter, T, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(DataWriter)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(DataWriter)
 
 public:
 
@@ -171,11 +172,6 @@ public:
                const dds::pub::qos::DataWriterQos& qos,
                dds::pub::DataWriterListener<T>* listener = NULL,
                const dds::core::status::StatusMask& mask = ::dds::core::status::StatusMask::none());
-
-public:
-    /** @cond */
-    virtual ~DataWriter();
-    /** @endcond */
 
 
 public:

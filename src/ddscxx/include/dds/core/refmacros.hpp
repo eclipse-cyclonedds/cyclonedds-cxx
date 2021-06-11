@@ -91,8 +91,9 @@
     \
     template <typename T__> \
     TYPE& \
-    operator=(const T__& rhs) {\
-        if (this != (TYPE*)&rhs) { \
+    operator=(const T__& rhs) { \
+        const TYPE &t = rhs; \
+        if (this != &t) { \
             if (rhs.is_nil()) { \
                 /* We got a null object and are not really able to do a typecheck here. */ \
                 /* So, just set a null object. */ \
@@ -140,8 +141,9 @@
     \
     public:\
     TYPE& \
-    operator=(const FROM& rhs) {\
-        if (this != (TYPE*)&rhs) { \
+    operator=(const FROM& rhs) { \
+        const TYPE &t = rhs; \
+        if (this != &t) { \
             if (rhs.is_nil()) { \
                 /* We got a null object and are not really able to do a typecheck here. */ \
                 /* So, just set a null object. */ \

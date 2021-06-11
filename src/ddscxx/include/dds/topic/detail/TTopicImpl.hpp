@@ -112,9 +112,6 @@ Topic<T, DELEGATE>::Topic(const dds::domain::DomainParticipant& dp,
     /* this->delegate()->init(this->impl_); */
 }
 
-template <typename T, template <typename Q> class DELEGATE>
-Topic<T, DELEGATE>::~Topic() { }
-
 /** @internal  @todo Relates to OMG_DDS_X_TYPE_DYNAMIC_TYPE_SUPPORT OSPL-1736 no implementation */
 template <typename T, template <typename Q> class DELEGATE>
 void Topic<T, DELEGATE>::listener(Listener* listener,
@@ -154,6 +151,8 @@ typename Topic<T, DELEGATE>::Listener* Topic<T, DELEGATE>::listener() const
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
 #include <org/eclipse/cyclonedds/core/ListenerDispatcher.hpp>
 
+#include "dds/ddsi/ddsi_sertype.h"
+
 template <typename T>
 dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
       const std::string& name,
@@ -173,21 +172,22 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
     dds_qos_t* ddsc_qos = tQos.ddsc_qos();
     dds_entity_t ddsc_par = dp.delegate()->get_ddsc_entity();
 
-    dds_entity_t ddsc_topic = dds_create_topic(
-            ddsc_par,
-            org::eclipse::cyclonedds::topic::TopicTraits<T>::getDescriptor(),
-            name.c_str(),
-            ddsc_qos,
-            NULL);
+    ser_type_ = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType();
+
+    dds_entity_t ddsc_topic = dds_create_topic_sertype(
+      ddsc_par, name.c_str(), &ser_type_, ddsc_qos, NULL, NULL);
 
     dds_delete_qos(ddsc_qos);
 
-    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_topic, "Could not create topic.");
+    if (ddsc_topic < 0) {
+      ddsi_sertype_unref(ser_type_);
+      ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_topic, "Could not create topic.");
+    }
+
     this->set_ddsc_entity(ddsc_topic);
 
     this->listener(listener, mask);
 
-    this->AnyTopicDelegate::set_copy_out(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyOut());
     this->AnyTopicDelegate::set_sample(&this->sample_);
 }
 
@@ -203,13 +203,12 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
     this->set_ddsc_entity(ddsc_topic);
     this->listener(NULL, dds::core::status::StatusMask::none());
 
-    this->AnyTopicDelegate::set_copy_out(org::eclipse::cyclonedds::topic::TopicTraits<T>::getCopyOut());
     this->AnyTopicDelegate::set_sample(&this->sample_);
 }
 
 
 template <typename T>
-dds::topic::detail::Topic<T>::~Topic()
+dds::topic::detail::Topic<T>::~Topic<T>()
 {
     if (!closed) {
         try {

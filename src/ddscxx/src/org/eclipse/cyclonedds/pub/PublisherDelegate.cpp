@@ -47,7 +47,7 @@ PublisherDelegate::PublisherDelegate(const dds::domain::DomainParticipant& dp,
     dds_entity_t ddsc_pub;
     dds_qos_t* ddsc_qos;
 
-    ddsc_par = (dds_entity_t)this->dp_.delegate()->get_ddsc_entity();
+    ddsc_par = static_cast<dds_entity_t>(this->dp_.delegate()->get_ddsc_entity());
     if (!ddsc_par) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "Could not get publisher participant.");
     }

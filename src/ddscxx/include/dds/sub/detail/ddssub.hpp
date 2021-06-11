@@ -15,6 +15,7 @@
 #include "dds/sub/detail/TDataReaderImpl.hpp"
 #include "dds/sub/detail/TQueryImpl.hpp"
 #include "dds/sub/detail/TSampleImpl.hpp"
+#include "dds/sub/detail/TSampleRefImpl.hpp"
 #include "dds/sub/cond/detail/TQueryConditionImpl.hpp"
 
 #endif /* OMG_DDS_SUB_PACKAGE_DETAIL_INCLUDE_HPP_ */

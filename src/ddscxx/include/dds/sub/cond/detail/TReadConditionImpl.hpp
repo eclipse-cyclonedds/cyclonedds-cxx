@@ -53,9 +53,6 @@ TReadCondition<DELEGATE>::TReadCondition(
 }
 
 template <typename DELEGATE>
-TReadCondition<DELEGATE>::~TReadCondition() { }
-
-template <typename DELEGATE>
 const dds::sub::status::DataState TReadCondition<DELEGATE>::state_filter() const
 {
     return this->delegate()->state_filter();
@@ -92,7 +89,8 @@ template <typename DELEGATE>
 TCondition<DELEGATE>&
 TCondition<DELEGATE>::operator=(const dds::sub::cond::TReadCondition<org::eclipse::cyclonedds::sub::cond::ReadConditionDelegate>& rhs)
 {
-    if (this != (TCondition*)&rhs) {
+    const TCondition<DELEGATE> &t = rhs;
+    if (this != &t) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */

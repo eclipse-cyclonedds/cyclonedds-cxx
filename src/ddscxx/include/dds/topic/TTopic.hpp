@@ -88,11 +88,9 @@ public:
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC_T(Topic, ::dds::topic::TAnyTopic, T, DELEGATE)
     OMG_DDS_IMPLICIT_REF_BASE(Topic)
+    OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_DEFAULT(Topic)
 
 public:
-    /** @cond */
-    virtual ~Topic();
-    /** @endcond */
 
     /**
      * Create a new Topic.

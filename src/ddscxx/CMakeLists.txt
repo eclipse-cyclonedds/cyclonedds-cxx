@@ -11,8 +11,6 @@
 #
 include(GenerateExportHeader)
 
-find_package(CycloneDDS REQUIRED)
-
 set(sources
     src/dds/core/Duration.cpp
     src/dds/core/Exception.cpp
@@ -36,6 +34,7 @@ set(sources
     src/org/eclipse/cyclonedds/core/InstanceHandleDelegate.cpp
     src/org/eclipse/cyclonedds/core/EntitySet.cpp
     src/org/eclipse/cyclonedds/core/MiscUtils.cpp
+    src/org/eclipse/cyclonedds/core/cdr/cdr_stream.cpp
     src/org/eclipse/cyclonedds/core/cond/ConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/GuardConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/StatusConditionDelegate.cpp
@@ -59,6 +58,7 @@ set(sources
     src/org/eclipse/cyclonedds/sub/cond/QueryConditionDelegate.cpp
     src/org/eclipse/cyclonedds/sub/qos/SubscriberQosDelegate.cpp
     src/org/eclipse/cyclonedds/topic/find.cpp
+    src/org/eclipse/cyclonedds/topic/hash.cpp
     src/org/eclipse/cyclonedds/topic/AnyTopicDelegate.cpp
     src/org/eclipse/cyclonedds/topic/FilterDelegate.cpp
     src/org/eclipse/cyclonedds/topic/TopicDescriptionDelegate.cpp
@@ -78,6 +78,8 @@ set_target_properties(ddscxx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${P
 # those targets outside the regular Cyclone build-tree (i.e. the installed tree)
 add_library(${CMAKE_PROJECT_NAME}::ddscxx ALIAS ddscxx)
 
+add_coverage(ddscxx)
+
 target_include_directories(
   ddscxx
   PUBLIC
@@ -85,7 +87,7 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ddscxx>)
 
-set_property(TARGET ddscxx PROPERTY CXX_STANDARD 11)
+set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
 target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 
 generate_export_header(

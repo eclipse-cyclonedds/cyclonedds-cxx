@@ -17,6 +17,7 @@
 #include <org/eclipse/cyclonedds/core/MiscUtils.hpp>
 
 #include "dds/dds.h"
+#include "dds/ddsrt/string.h"
 
 void
 org::eclipse::cyclonedds::core::convertByteSeq(
@@ -32,15 +33,15 @@ org::eclipse::cyclonedds::core::convertByteSeq(
     }
 
     if (size > 0) {
-        byteArray = static_cast<uint8_t*>(dds_alloc((size_t)size * sizeof(uint8_t)));
+        byteArray = static_cast<uint8_t*>(dds_alloc(static_cast<size_t>(size) * sizeof(uint8_t)));
         if (!byteArray) {
             ISOCPP_THROW_EXCEPTION(ISOCPP_OUT_OF_RESOURCES_ERROR, "Could not create internal byte sequence.");
         }
         for(int32_t i = 0; i < size; i++)
         {
-            byteArray[i] = from[(dds::core::ByteSeq::size_type)i];
+            byteArray[i] = from[static_cast<dds::core::ByteSeq::size_type>(i)];
         }
-        to = (void*)byteArray;
+        to = static_cast<void*>(byteArray);
     }
 }
 
@@ -64,9 +65,13 @@ org::eclipse::cyclonedds::core::convertStringSeq(
     for(uint32_t i = 0; i < from.size(); i++)
     {
         size_t len = from[i].length();
+        DDSCXX_WARNING_MSVC_OFF(6386)
         to[i] = new char[len + 1];
+        DDSCXX_WARNING_MSVC_ON(6386)
         to[i][len] = '\0';
+        DDSCXX_WARNING_MSVC_OFF(6385)
         memcpy(to[i], from[i].c_str(), len);
+        DDSCXX_WARNING_MSVC_ON(6385)
     }
 }
 
@@ -82,7 +87,7 @@ org::eclipse::cyclonedds::core::convertStringSeq(
         to.reserve(size);
         for(uint32_t i = 0; i < size; i++)
         {
-            to.push_back((char *)from[i] ? (char *)from[i] : "");
+            to.push_back(static_cast<char *>(from[i]) ? static_cast<char *>(from[i]) : "");
         }
     }
 }
@@ -98,7 +103,7 @@ org::eclipse::cyclonedds::core::convertDuration(
     else
     {
         return dds::core::Duration(
-            (int64_t)(from / DDS_NSECS_IN_SEC), (uint32_t)(from - ((from / DDS_NSECS_IN_SEC) * DDS_NSECS_IN_SEC)));
+            static_cast<int64_t>(from / DDS_NSECS_IN_SEC), static_cast<uint32_t>(from - ((from / DDS_NSECS_IN_SEC) * DDS_NSECS_IN_SEC)));
     }
 }
 
@@ -121,7 +126,7 @@ org::eclipse::cyclonedds::core::convertTime(
         const dds_time_t &from)
 {
     return dds::core::Time(from / DDS_NSECS_IN_SEC,
-                           (uint32_t)(from - ((from / DDS_NSECS_IN_SEC) * DDS_NSECS_IN_SEC)));
+                           static_cast<uint32_t>(from - ((from / DDS_NSECS_IN_SEC) * DDS_NSECS_IN_SEC)));
 }
 
 dds_time_t

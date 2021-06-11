@@ -54,6 +54,12 @@ public:
                               const dds::core::status::StatusMask& mask,
                               const std::string& config);
 
+    DomainParticipantDelegate(uint32_t id,
+                              const dds::domain::qos::DomainParticipantQos& qos,
+                              dds::domain::DomainParticipantListener *listener,
+                              const dds::core::status::StatusMask& mask,
+                              const ddsi_config& config);
+
     virtual ~DomainParticipantDelegate();
 
 public:

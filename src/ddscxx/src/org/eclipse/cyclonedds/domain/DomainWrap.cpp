@@ -32,6 +32,12 @@ org::eclipse::cyclonedds::domain::DomainWrap::DomainWrap(dds_domainid_t id, cons
     }
 }
 
+org::eclipse::cyclonedds::domain::DomainWrap::DomainWrap(dds_domainid_t id, const struct ddsi_config& config)
+{
+    this->ddsc_domain = dds_create_domain_with_rawconfig(id, &config);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(this->ddsc_domain, "Failed to create domain explicitly.");
+}
+
 org::eclipse::cyclonedds::domain::DomainWrap::~DomainWrap()
 {
     if (this->ddsc_domain > 0) {

@@ -38,10 +38,7 @@ class OMG_DDS_API DataReaderQosDelegate
 {
 public:
     DataReaderQosDelegate();
-    DataReaderQosDelegate(const DataReaderQosDelegate& other);
     DataReaderQosDelegate(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
-
-    ~DataReaderQosDelegate();
 
     void policy(const dds::core::policy::UserData&            user_data);
     void policy(const dds::core::policy::Durability&          durability);
@@ -68,7 +65,6 @@ public:
     void check() const;
 
     bool operator==(const DataReaderQosDelegate& other) const;
-    DataReaderQosDelegate& operator =(const DataReaderQosDelegate& other);
     DataReaderQosDelegate& operator =(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
 
 private:

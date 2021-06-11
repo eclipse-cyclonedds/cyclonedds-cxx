@@ -87,12 +87,6 @@ TQueryCondition<DELEGATE>::TQueryCondition(
     this->delegate()->init(this->impl_);
 }
 
-
-template <typename DELEGATE>
-TQueryCondition<DELEGATE>::~TQueryCondition()
-{
-}
-
 template <typename DELEGATE>
 template<typename FWIterator>
 void TQueryCondition<DELEGATE>::parameters(const FWIterator& begin, const FWIterator end)
@@ -183,7 +177,7 @@ template <typename DELEGATE>
 TCondition<DELEGATE>&
 TCondition<DELEGATE>::operator=(const dds::sub::cond::TQueryCondition<org::eclipse::cyclonedds::sub::cond::QueryConditionDelegate>& rhs)
 {
-    if (this != (TCondition*)&rhs) {
+    if (this != static_cast<TCondition*>(&rhs)) {
         if (rhs.is_nil()) {
             /* We got a null object and are not really able to do a typecheck here. */
             /* So, just set a null object. */

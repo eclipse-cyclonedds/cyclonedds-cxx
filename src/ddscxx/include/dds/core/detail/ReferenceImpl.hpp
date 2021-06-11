@@ -34,6 +34,11 @@ dds::core::Reference<DELEGATE>::Reference(const Reference& ref) : impl_(ref.impl
 }
 
 template <typename DELEGATE>
+dds::core::Reference<DELEGATE>::Reference(Reference&& ref) : impl_(ref.impl_)
+{
+}
+
+template <typename DELEGATE>
 template <typename D>
 dds::core::Reference<DELEGATE>::Reference(const Reference<D>& ref)
 {
@@ -55,7 +60,7 @@ dds::core::Reference<DELEGATE>::Reference(const DELEGATE_REF_T& p) : impl_(p)
 }
 
 template <typename DELEGATE>
-dds::core::Reference<DELEGATE>::~Reference()
+dds::core::Reference<DELEGATE>::~Reference<DELEGATE>()
 {
 }
 
@@ -96,7 +101,7 @@ dds::core::Reference<DELEGATE>&
 dds::core::Reference<DELEGATE>::operator=(const Reference<D>& that)
 {
     OMG_DDS_STATIC_ASSERT((dds::core::is_base_of<DELEGATE_T, D>::value));
-    if(this != (Reference*)&that)
+    if(this != static_cast<Reference*>(&that))
     {
         *this = Reference<DELEGATE_T>(that);
     }
@@ -109,7 +114,7 @@ dds::core::Reference<DELEGATE>&
 dds::core::Reference<DELEGATE>::operator=(const R& rhs)
 {
     OMG_DDS_STATIC_ASSERT((dds::core::is_base_of< DELEGATE_T, typename R::DELEGATE_T>::value));
-    if(this != (Reference*)&rhs)
+    if(this != static_cast<Reference*>(&rhs))
     {
         *this = Reference<DELEGATE_T>(rhs);
     }

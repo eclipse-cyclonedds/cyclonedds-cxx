@@ -12,22 +12,27 @@
 project(helloworld LANGUAGES C CXX)
 cmake_minimum_required(VERSION 3.5)
 
-find_package(Idlpp-cxx REQUIRED)
-if (NOT TARGET CycloneDDS-CXX::ddscxx)
+if(NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-# Convenience function, provided by the Idlpp-cxx that generates a CMake
-# target for the given IDL file. The function calls Idlcpp-cxx to generate
-# source files and compiles them into a library.
-idl_ddscxx_generate(ddscxxHelloWorldData_lib "HelloWorldData.idl")
+idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl)
 
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
 
 # Link both executables to idl data type library and ddscxx.
-target_link_libraries(ddscxxHelloworldPublisher ddscxxHelloWorldData_lib CycloneDDS-CXX::ddscxx)
-target_link_libraries(ddscxxHelloworldSubscriber ddscxxHelloWorldData_lib CycloneDDS-CXX::ddscxx)
+target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata)
+target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata)
 
-set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD 11)
-set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD 11)
+# Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
+# on Azure Pipelines
+if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ANALYZER STREQUAL "on")
+    target_compile_options(ddscxxHelloworldPublisher PRIVATE -fno-analyzer)
+    target_compile_options(ddscxxHelloworldSubscriber PRIVATE -fno-analyzer)
+  endif()
+endif()
+
+set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD 17)

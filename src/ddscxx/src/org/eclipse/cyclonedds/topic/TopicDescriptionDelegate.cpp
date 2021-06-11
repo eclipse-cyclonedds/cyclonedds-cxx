@@ -34,7 +34,8 @@ TopicDescriptionDelegate::TopicDescriptionDelegate(
     : myParticipant(dp),
       myTopicName(name),
       myTypeName(type_name),
-      nrDependents(0)
+      nrDependents(0),
+      ser_type_(NULL)
 {
 }
 
@@ -84,9 +85,14 @@ TopicDescriptionDelegate::hasDependents() const
     return (nrDependents > 0);
 }
 
+ddsi_sertype *
+TopicDescriptionDelegate::get_ser_type() const
+{
+    return ser_type_;
+}
+
 
 }
 }
 }
 }
-
