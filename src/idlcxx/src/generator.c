@@ -613,7 +613,6 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   idl_retcode_t ret;
   idl_visitor_t visitor;
   bool inc = false;
-  char *sep = NULL, *path;
   const char *sources[] = { NULL, NULL };
   const idl_source_t *include, *source = pstate->sources;
 
@@ -629,35 +628,23 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
-  if (!(path = idl_strdup(source->path->name)))
-    goto err_path;
-  for (char *ptr = path; *ptr; ptr++)
-    if (idl_isseparator(*ptr))
-      sep = ptr;
-  if (sep)
-    *sep = '\0';
-
   for (include = source->includes; include; include = include->next) {
     int cnt;
-    char *ext, *relpath = NULL;
-    if (idl_relative_path(path, include->path->name, &relpath))
-      goto err_relpath;
-    ext = relpath;
-    for (char *ptr = ext; *ptr; ptr++) {
+    const char *ext = NULL, *file = include->file->name;
+    for (const char *ptr = file; *ptr; ptr++) {
       if (*ptr == '.')
         ext = ptr;
     }
-    if (ext > relpath && idl_strcasecmp(ext, ".idl") == 0) {
+    if (ext && idl_strcasecmp(ext, ".idl") == 0) {
       const char *fmt = "#include \"%.*s.hpp\"\n";
-      int len = (int)(ext - relpath);
-      cnt = idl_fprintf(generator->header.handle, fmt, len, relpath);
+      int len = (int)(ext - file);
+      cnt = idl_fprintf(generator->header.handle, fmt, len, file);
     } else {
       const char *fmt = "#include \"%s\"\n";
-      cnt = idl_fprintf(generator->header.handle, fmt, relpath);
+      cnt = idl_fprintf(generator->header.handle, fmt, file);
     }
-    free(relpath);
     if (cnt < 0 || fputs("\n", generator->header.handle) < 0)
-      goto err_relpath;
+      return IDL_RETCODE_NO_MEMORY;
     inc = true;
   }
 
@@ -683,20 +670,15 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
         continue;
       const char *fmt = "#include %s\n";
       if (idl_fprintf(generator->header.handle, fmt, incs[i]) < 0)
-        goto err_relpath;
+        return IDL_RETCODE_NO_MEMORY;
       inc = true;
     }
   }
 
   if (inc && fputs("\n", generator->header.handle) < 0)
-    goto err_relpath;
+    return IDL_RETCODE_NO_MEMORY;
 
-  free(path);
   return IDL_RETCODE_OK;
-err_relpath:
-  free(path);
-err_path:
-  return IDL_RETCODE_NO_MEMORY;
 }
 
 #if _WIN32
