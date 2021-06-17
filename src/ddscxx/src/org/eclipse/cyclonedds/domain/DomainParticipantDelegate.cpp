@@ -468,7 +468,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topic(
     dds_time_t starttime = dds_time();
     while (true)
     {
-        ddsc_topic = dds_find_topic_scoped(DDS_FIND_SCOPE_PARTICIPANT, this->ddsc_entity, topic_name.c_str(), 0);
+        ddsc_topic = dds_find_topic_scoped(DDS_FIND_SCOPE_LOCAL_DOMAIN, this->ddsc_entity, topic_name.c_str(), 0);
         if (ddsc_topic <= 0 || (ddsc_timeout != DDS_INFINITY &&
             dds_time () >= starttime + ddsc_timeout)) {
             break;

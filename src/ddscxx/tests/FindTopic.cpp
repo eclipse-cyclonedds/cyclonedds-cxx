@@ -279,7 +279,7 @@ TEST_F(FindTopic, discover_list)
 }
 
 /* Disabled because dds_find_topic changed behaviour. */
-TEST_F(FindTopic, DISABLED_discover_on_2nd)
+TEST_F(FindTopic, discover_on_2nd)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
     this->CreateTopics();
@@ -292,7 +292,7 @@ TEST_F(FindTopic, DISABLED_discover_on_2nd)
     ASSERT_STREQ(found.name().c_str(), this->topic3.name().c_str());
 }
 
-TEST_F(FindTopic, DISABLED_discover_any_on_2nd)
+TEST_F(FindTopic, discover_any_on_2nd)
 {
     dds::topic::AnyTopic found = dds::core::null;
     this->CreateTopics();
@@ -304,7 +304,7 @@ TEST_F(FindTopic, DISABLED_discover_any_on_2nd)
     ASSERT_STREQ(found.name().c_str(), this->topic2.name().c_str());
 }
 
-TEST_F(FindTopic, DISABLED_discover_description_on_2nd)
+TEST_F(FindTopic, discover_description_on_2nd)
 {
     dds::topic::TopicDescription found = dds::core::null;
     this->CreateTopics();
