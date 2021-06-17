@@ -211,7 +211,7 @@ TEST_F(DataReaderManipulatorSelector, implicit_take)
     this->CheckData(read_samples, std::vector<Space::Type1>());
 }
 
-TEST_F(DataReaderManipulatorSelector, DISABLED_implicit_instance)
+TEST_F(DataReaderManipulatorSelector, implicit_instance)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     std::vector<Space::Type1> expected_samples;
@@ -277,7 +277,7 @@ TEST_F(DataReaderManipulatorSelector, implicit_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderManipulatorSelector, DISABLED_implicit_state)
+TEST_F(DataReaderManipulatorSelector, implicit_state)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -360,7 +360,7 @@ TEST_F(DataReaderManipulatorSelector, implicit_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-TEST_F(DataReaderManipulatorSelector, DISABLED_implicit_multiple)
+TEST_F(DataReaderManipulatorSelector, implicit_multiple)
 {
     dds::sub::LoanedSamples<Space::Type1> read_samples;
     dds::sub::LoanedSamples<Space::Type1> tmp_samples;
@@ -441,7 +441,7 @@ TEST_F(DataReaderManipulatorSelector, explicit_take)
     this->CheckData(read_samples, std::vector<Space::Type1>());
 }
 
-TEST_F(DataReaderManipulatorSelector, DISABLED_explicit_instance)
+TEST_F(DataReaderManipulatorSelector, explicit_instance)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -512,7 +512,7 @@ TEST_F(DataReaderManipulatorSelector, explicit_next_instance)
     }, dds::core::UnsupportedError);
 }
 
-TEST_F(DataReaderManipulatorSelector, DISABLED_explicit_state)
+TEST_F(DataReaderManipulatorSelector, explicit_state)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;
@@ -602,7 +602,7 @@ TEST_F(DataReaderManipulatorSelector, explicit_max_samples)
     this->CheckData(read_samples, expected_samples);
 }
 
-TEST_F(DataReaderManipulatorSelector, DISABLED_explicit_multiple)
+TEST_F(DataReaderManipulatorSelector, explicit_multiple)
 {
     dds::sub::DataReader<Space::Type1>::ManipulatorSelector manipulator(this->reader);
     dds::sub::LoanedSamples<Space::Type1> read_samples;

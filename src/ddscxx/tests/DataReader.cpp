@@ -698,7 +698,7 @@ TEST_F(DataReader, take_SamplesBIIterator)
 }
 
 
-TEST_F(DataReader, DISABLED_take_default_filter_read)
+TEST_F(DataReader, take_default_filter_read)
 {
     dds::sub::status::DataState state =
                     dds::sub::status::DataState(dds::sub::status::SampleState::read(),
