@@ -294,16 +294,12 @@ public:
     dds::topic::Topic<HelloWorldData::Msg> topic;
     dds::pub::Publisher publisher;
     dds::sub::Subscriber subscriber;
-    dds::pub::DataWriter<HelloWorldData::Msg> writer;
-    dds::sub::DataReader<HelloWorldData::Msg> reader;
 
     Listener() :
         participant(dds::core::null),
         topic(dds::core::null),
         publisher(dds::core::null),
-        subscriber(dds::core::null),
-        writer(dds::core::null),
-        reader(dds::core::null)
+        subscriber(dds::core::null)
     {
         // Empty
     }
@@ -335,10 +331,6 @@ public:
     }
 
     void TearDown() {
-        if (reader != dds::core::null)
-            reader = dds::core::null;
-        if (writer != dds::core::null)
-            writer = dds::core::null;
         subscriber = dds::core::null;
         publisher = dds::core::null;
         topic = dds::core::null;
@@ -674,7 +666,7 @@ TEST_F(Listener, writer_without_listener)
     DataWriterListener listener;
 
     // Create data writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(publisher, topic);
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(publisher, topic);
     ASSERT_NE(writer, dds::core::null);
 
     // Listener should not be set
@@ -704,7 +696,7 @@ TEST_F(Listener, writer_with_listener)
     DataWriterListener listener;
 
     // Create data writer with listener
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, dds::pub::qos::DataWriterQos(), &listener, dds::core::status::StatusMask());
     ASSERT_NE(writer, dds::core::null);
 
@@ -727,7 +719,7 @@ TEST_F(Listener, already_closed_writer)
     DataWriterListener listener;
 
     // Create data writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(publisher, topic);
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(publisher, topic);
     ASSERT_NE(writer, dds::core::null);
 
     // Close the writer
@@ -758,7 +750,7 @@ TEST_F(Listener, reader_without_listener)
     DataReaderListener listener;
 
     // Create data reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, dds::sub::qos::DataReaderQos(), nullptr, dds::core::status::StatusMask());
     ASSERT_NE(reader, dds::core::null);
 
@@ -789,7 +781,7 @@ TEST_F(Listener, reader_with_listener)
     DataReaderListener listener;
 
     // Create data reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, dds::sub::qos::DataReaderQos(), &listener, dds::core::status::StatusMask());
     ASSERT_NE(reader, dds::core::null);
 
@@ -812,7 +804,7 @@ TEST_F(Listener, already_closed_reader)
     DataReaderListener listener;
 
     // Create data reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(subscriber, topic);
+    dds::sub::DataReader<HelloWorldData::Msg> reader(subscriber, topic);
     ASSERT_NE(reader, dds::core::null);
 
     // Close the reader
@@ -841,12 +833,12 @@ TEST_F(Listener, incorrect_listener_mask)
         dds::core::status::StatusMask::publication_matched();
 
     // Create reader with reader listener, but using mask for writer event type
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, dds::sub::qos::DataReaderQos(), &listener, mask);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-     writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+     dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, dds::pub::qos::DataWriterQos());
      ASSERT_NE(writer, dds::core::null);
 
@@ -870,12 +862,12 @@ TEST_F(Listener, sample_lost)
         dds::core::policy::DestinationOrder::SourceTimestamp();
 
     // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos, &listener, mask);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, writerQos);
     ASSERT_NE(writer, dds::core::null);
 
@@ -918,12 +910,12 @@ TEST_F(Listener, sample_rejected)
         dds::core::policy::Reliability::BestEffort(dds::core::Duration(0, DDS_MSECS(100)));
 
     // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos, &listener, mask);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, writerQos);
     ASSERT_NE(writer, dds::core::null);
 
@@ -965,12 +957,12 @@ TEST_F(Listener, liveliness_changed)
     dds_instance_handle_t instance_handle;
 
     // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, dds::sub::qos::DataReaderQos(), &listener, mask);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic);
     ASSERT_NE(writer, dds::core::null);
 
@@ -1043,12 +1035,12 @@ TEST_F(Listener, DISABLED_incompatible_qos)
         dds::core::policy::Durability::Persistent();
 
     // Create writer with listener
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, writerQos, &writerListener, writerMask);
     ASSERT_NE(writer, dds::core::null);
 
     // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos, &readerListener, readerMask);
     ASSERT_NE(reader, dds::core::null);
 
@@ -1096,12 +1088,12 @@ TEST_F(Listener, publication_matched)
     dds_instance_handle_t instance_handle;
 
     // Create writer with listener
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, writerQos, &listener, mask);
     ASSERT_NE(writer, dds::core::null);
 
     // Create reader
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos);
     ASSERT_NE(reader, dds::core::null);
 
@@ -1166,12 +1158,12 @@ TEST_F(Listener, subscription_matched)
     dds_instance_handle_t instance_handle;
 
     // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos, &listener, mask);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(publisher, topic, writerQos);
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(publisher, topic, writerQos);
     ASSERT_NE(writer, dds::core::null);
 
     retcode = dds_get_instance_handle(writer.delegate()->get_ddsc_entity(), &instance_handle);
@@ -1219,7 +1211,7 @@ TEST_F(Listener, subscription_matched)
     ASSERT_EQ(status.last_publication_handle(), instance_handle);
 }
 
-TEST_F(Listener, DISABLED_publication_subscription_matched)
+TEST_F(Listener, publication_subscription_matched)
 {
     DataReaderListener readerListener;
     DataWriterListener writerListener;
@@ -1236,14 +1228,15 @@ TEST_F(Listener, DISABLED_publication_subscription_matched)
         dds::sub::qos::DataReaderQos() <<
         dds::core::policy::History::KeepAll();
 
-    // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
+        publisher, topic, writerQos, &writerListener, writerMask);
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos, &readerListener, readerMask);
+
+    // Create reader with listener
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer with listener
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
-        publisher, topic, writerQos, &writerListener, writerMask);
     ASSERT_NE(writer, dds::core::null);
 
     // Publication and Subscription should be matched.
@@ -1266,12 +1259,12 @@ TEST_F(Listener, data_available)
     uint32_t triggered;
 
     // Create reader with listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, qos, &readerListener, mask);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic);
     ASSERT_NE(writer, dds::core::null);
 
@@ -1333,11 +1326,11 @@ TEST_F(Listener, data_available_subscriber)
     subscriber.listener(&subscriberListener, mask);
 
     // Create reader without listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(subscriber, topic, readerQos);
+    dds::sub::DataReader<HelloWorldData::Msg> reader(subscriber, topic, readerQos);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(publisher, topic, writerQos);
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(publisher, topic, writerQos);
     ASSERT_NE(writer, dds::core::null);
 
     // Write sample
@@ -1372,12 +1365,12 @@ TEST_F(Listener, data_available_participant)
     participant.listener(&participantListener, mask);
 
     // Create reader without listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic, readerQos);
     ASSERT_NE(reader, dds::core::null);
 
     // Create writer
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic, writerQos);
     ASSERT_NE(writer, dds::core::null);
 
@@ -1454,11 +1447,11 @@ TEST_F(Listener, DISABLED_propagation)
     subscriber.listener(&subscriberListener, subscriberMask);
 
     // Create reader and writer without listener
-    reader = dds::sub::DataReader<HelloWorldData::Msg>(
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
         subscriber, topic);
     ASSERT_NE(reader, dds::core::null);
 
-    writer = dds::pub::DataWriter<HelloWorldData::Msg>(
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
         publisher, topic);
     ASSERT_NE(writer, dds::core::null);
 

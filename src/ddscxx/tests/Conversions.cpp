@@ -314,7 +314,7 @@ TEST_F(Conversions, publisher_entity_invalid)
 }
 
 /* Please see comment at top of the file why this test is disabled. */
-TEST_F(Conversions, DISABLED_publisher_entity_implicit)
+TEST_F(Conversions, publisher_entity_implicit)
 {
     this->CreatePublisher();
 
@@ -332,7 +332,7 @@ TEST_F(Conversions, DISABLED_publisher_entity_implicit)
     ASSERT_EQ(this->publisher, ent2);
 
     ASSERT_THROW({
-        dds::pub::Publisher pub3(e);
+        dds::sub::Subscriber pub3(e);
     }, dds::core::IllegalOperationError);
 }
 
@@ -427,7 +427,7 @@ TEST_F(Conversions, subscriber_entity_invalid)
 }
 
 /* Please see comment at top of the file why this test is disabled. */
-TEST_F(Conversions, DISABLED_subscriber_entity_implicit)
+TEST_F(Conversions, subscriber_entity_implicit)
 {
     this->CreateSubscriber();
 
@@ -445,7 +445,7 @@ TEST_F(Conversions, DISABLED_subscriber_entity_implicit)
     ASSERT_EQ(this->subscriber, ent2);
 
     ASSERT_THROW({
-        dds::sub::Subscriber sub3(e);
+        dds::pub::Publisher sub3(e);
     }, dds::core::IllegalOperationError);
 }
 
