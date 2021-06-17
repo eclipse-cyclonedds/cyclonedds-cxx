@@ -511,7 +511,7 @@ print_header(FILE *fh, const char *in, const char *out)
 
 static idl_retcode_t print_guard_if(FILE* fh, const char *guard)
 {
-  static const char fmt[] =
+  static const char *fmt =
     "#ifndef %1$s\n"
     "#define %1$s\n\n";
   if (idl_fprintf(fh, fmt, guard) < 0)
