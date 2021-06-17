@@ -551,7 +551,8 @@ emit_case_comparison(
     return IDL_VISIT_REVISIT;
 
   const char* branch_name = get_cpp11_name(branch->declarator);
-  if (idl_fprintf(gen->header.handle, "        return %1$s() == _other.%1$s();\n", branch_name) < 0)
+  static const char* fmt = "        return %1$s() == _other.%1$s();\n";
+  if (idl_fprintf(gen->header.handle, fmt, branch_name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -733,8 +734,7 @@ emit_union(
   visitor.accept[IDL_ACCEPT_CASE] = emit_variant;
   if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
-  fmt = "> m__u;\n\n";
-  if (idl_fprintf(gen->header.handle, fmt) < 0)
+  if (idl_fprintf(gen->header.handle, "> m__u;\n\n") < 0)
     return ret;
 
   /**/

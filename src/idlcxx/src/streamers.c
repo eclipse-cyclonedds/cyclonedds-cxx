@@ -84,7 +84,8 @@ static int get_sequence_member_accessor(char* str, size_t size, const void* node
 {
   (void)node;
   sequence_holder_t* sh = (sequence_holder_t*)user_data;
-  return idl_snprintf(str, size, "%s[i_%u]", sh->sequence_accessor, sh->depth);
+  const char *fmt = "%1$s[i_%2$u]";
+  return idl_snprintf(str, size, fmt, sh->sequence_accessor, (uint32_t)sh->depth);
 }
 
 enum instance_mask {
@@ -738,13 +739,14 @@ process_key(
     //using malloc because windows causes a warning for using stack allocation (IDL_PRINTA) in a loop
     if (i < key->field_name->length - 1) {
       const char* name = get_cpp11_name(decl);
-      int res = idl_snprintf(tmp, 0, "%1$s.%2$s()", loc.parent, name);
+      const char *fmt = "%1$s.%2$s()";
+      int res = idl_snprintf(tmp, 0, fmt, loc.parent, name);
       if (res < 0) {
         ret = IDL_RETCODE_NO_MEMORY;
         goto fail;
       }
       tmp = malloc((size_t)res+1);
-      res = idl_snprintf(tmp, (size_t)res+1, "%1$s.%2$s()", loc.parent, name);
+      res = idl_snprintf(tmp, (size_t)res+1, fmt, loc.parent, name);
       if (res < 0) {
         ret = IDL_RETCODE_NO_MEMORY;
         goto fail;

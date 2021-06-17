@@ -180,17 +180,15 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
 {
   idl_retcode_t ret;
   idl_visitor_t visitor;
-  const char *fmt;
   const char *sources[] = { NULL, NULL };
 
-  fmt = "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
+  if (idl_fprintf(generator->header.handle, "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
         "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n"
         "namespace org {\n"
         "namespace eclipse {\n"
         "namespace cyclonedds {\n"
         "namespace topic {\n"
-        "/* all traits not explicitly set are defaulted to the values in TopicTraits.hpp */\n\n";
-  if (idl_fprintf(generator->header.handle, fmt) < 0)
+        "/* all traits not explicitly set are defaulted to the values in TopicTraits.hpp */\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   memset(&visitor, 0, sizeof(visitor));
@@ -202,18 +200,16 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
-  fmt = "}\n}\n}\n}\n\n"
+  if (idl_fprintf(generator->header.handle, "}\n}\n}\n}\n\n"
         "namespace dds {\n"
-        "namespace topic {\n\n";
-  if (idl_fprintf(generator->header.handle, fmt) < 0)
+        "namespace topic {\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_topic_type_name;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
-  fmt = "}\n}\n\n";
-  if (idl_fprintf(generator->header.handle, fmt) < 0)
+  if (idl_fprintf(generator->header.handle, "}\n}\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_register_topic_type;
