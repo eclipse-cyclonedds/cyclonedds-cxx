@@ -19,7 +19,7 @@ org::eclipse::cyclonedds::sub::cond::QueryConditionDelegate::QueryConditionDeleg
         QueryDelegate(dr, expression, data_state),
         ReadConditionDelegate(dr, data_state)
 {
-    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "QueryCondition currently supported");
+    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "QueryCondition not currently supported");
 }
 
 org::eclipse::cyclonedds::sub::cond::QueryConditionDelegate::QueryConditionDelegate(
@@ -30,7 +30,7 @@ org::eclipse::cyclonedds::sub::cond::QueryConditionDelegate::QueryConditionDeleg
         QueryDelegate(dr, expression, params, data_state),
         ReadConditionDelegate(dr, data_state)
 {
-    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "QueryCondition currently supported");
+    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "QueryCondition not currently supported");
 }
 
 /* The close() operation of Condition will try to remove this Condition from
