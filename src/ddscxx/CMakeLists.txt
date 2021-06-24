@@ -35,6 +35,10 @@ set(sources
     src/org/eclipse/cyclonedds/core/EntitySet.cpp
     src/org/eclipse/cyclonedds/core/MiscUtils.cpp
     src/org/eclipse/cyclonedds/core/cdr/cdr_stream.cpp
+    src/org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.cpp
+    src/org/eclipse/cyclonedds/core/cdr/entity_properties.cpp
+    src/org/eclipse/cyclonedds/core/cdr/extended_cdr_v1_ser.cpp
+    src/org/eclipse/cyclonedds/core/cdr/extended_cdr_v2_ser.cpp
     src/org/eclipse/cyclonedds/core/cond/ConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/GuardConditionDelegate.cpp
     src/org/eclipse/cyclonedds/core/cond/StatusConditionDelegate.cpp

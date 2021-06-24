@@ -1,0 +1,149 @@
+
+module CDR_testing {
+
+  //ID fields
+  struct basicstruct {
+    long l;
+    @key char c;
+    string str;
+    double d;
+  };
+
+  @appendable struct appendablestruct {
+    @id(7) long l;
+    @key @id(5) char c;
+    @id(3) string str;
+    @id(1) double d;
+  };
+
+  @mutable struct mutablestruct {
+    @id(7) long l;
+    @key @id(5) char c;
+    @id(3) string str;
+    @id(1) double d;
+  };
+
+  //nested
+  @mutable struct inner {
+    char c_inner;
+    long l_inner;
+  };
+
+  @mutable struct outer {
+    inner a;
+    inner b;
+    @key inner c;
+  };
+
+  //inheritance
+  @mutable struct base {
+    string str;
+    @key char c;
+  };
+
+  @mutable struct derived : base {
+    @id(123) string str_d;
+    @id(234) char c_d;
+  };
+
+  //sequence
+  @mutable struct sequence_struct {
+    @key sequence<char> c;
+    sequence<long> l;
+  };
+
+  //array
+  struct array_struct {
+    @key char c[5];
+    long l[5];
+  };
+
+  //typedef
+  typedef sequence<base> sequence_base;
+
+  @mutable struct typedef_struct {
+    @key sequence_base c;
+    sequence_base l;
+  };
+
+  //enums
+  @bit_bound(8)
+  enum enum_8
+  {
+    first_8,
+    second_8,
+    third_8,
+    fourth_8
+  };
+
+  @bit_bound(16)
+  enum enum_16
+  {
+    first_16,
+    second_16,
+    third_16,
+    fourth_16
+  };
+
+  enum enum_32
+  {
+    first_32,
+    second_32,
+    third_32,
+    fourth_32
+  };
+
+  struct enum_struct {
+    @key enum_8 c;
+    enum_16 b;
+    enum_32 a;
+  };
+
+  //optional
+  struct optional_final_struct {
+    @optional(true) char a;
+    @optional(false) char b;
+    @key char c;
+  };
+
+  @appendable struct optional_appendable_struct {
+    @optional(true) char a;
+    @optional(false) char b;
+    @key char c;
+  };
+
+  @mutable struct optional_mutable_struct {
+    @optional(true) char a;
+    @optional(false) char b;
+    @key char c;
+  };
+
+  //unions
+  union un switch (char) {
+    case 'a':
+    case 'b': char c;
+    case 'c':
+    case 'd': short s;
+    case 'e':
+    case 'f': long l;
+    default: string str;
+  };
+
+  union un_k switch (@key char) {
+    case 'a':
+    case 'b': char c;
+    case 'c':
+    case 'd': short s;
+    case 'e':
+    case 'f': long l;
+    default: string str;
+  };
+
+  struct union_struct {
+    @key un c;
+  };
+
+  struct union_struct_k {
+    @key un_k c;
+  };
+};

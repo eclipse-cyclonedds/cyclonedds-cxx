@@ -1,0 +1,47 @@
+module Entity_testing {
+
+  struct L1_u {
+    char a;
+    char b;
+  };
+
+  struct L1_k {
+    char a;
+    @key char b;
+  };
+
+  struct L2_u_u {
+    L1_u a;
+    L1_u b;
+  };
+
+  struct L2_k_u {
+    L1_u a;
+    @key L1_u b;
+  };
+
+  struct L2_k_k {
+    L1_k a;
+    @key L1_k b;
+  };
+
+  struct L3_u_u_u {
+    L2_u_u a;
+    L2_u_u b;
+  };
+
+  struct L3_k_u_u {
+    L2_u_u a;
+    @key L2_u_u b;
+  };
+
+  struct L3_k_k_u {
+    L2_k_u a;
+    @key L2_k_u b;
+  };
+
+  struct L3_k_k_k {
+    L2_k_k a;
+    @key L2_k_k b;
+  };
+};

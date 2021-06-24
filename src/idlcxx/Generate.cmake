@@ -39,7 +39,7 @@ function(IDLCXX_GENERATE)
     INCLUDES ${IDLCXX_INCLUDES}
     WARNINGS ${IDLCXX_WARNINGS}
     DEFAULT_EXTENSIBILITY ${IDLC_DEFAULT_EXTENSIBILITY}
-    SUFFIXES .hpp
+    SUFFIXES .hpp .cpp
     DEPENDS ${_idlcxx_depends}
   )
 endfunction()

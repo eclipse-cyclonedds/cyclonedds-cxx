@@ -26,6 +26,8 @@ struct generator {
   const char *string_include;
   char *bounded_string_format;
   const char *bounded_string_include;
+  char *optional_format;
+  const char *optional_include;
   char *union_format;
   char *union_getter_format;
   const char *union_include;
@@ -36,13 +38,15 @@ struct generator {
   bool uses_string;
   bool uses_bounded_string;
   bool uses_union;
-#if 0
   bool uses_optional;
-#endif
   struct {
     FILE *handle;
     char *path;
   } header;
+  struct {
+    FILE *handle;
+    char *path;
+  } impl;
 };
 
 const char *get_cpp11_name(const void *);
@@ -61,6 +65,9 @@ int get_cpp11_default_value(
 
 int get_cpp11_value(
   char *str, size_t size, const void *node, void *user_data);
+
+bool is_optional(
+  const void *node);
 
 idl_retcode_t
 generate_streamers(const idl_pstate_t *pstate, struct generator *generator);

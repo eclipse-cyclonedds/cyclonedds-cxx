@@ -67,31 +67,24 @@ public:
 
     template<typename T>
     void validate(const T &msg, const std::vector<uint8_t> &exp_le, const std::vector<uint8_t> &exp_be) {
-        bool le_is_swapped = (native_endianness() != endianness::little_endian);
-        validate_impl(msg, exp_le, le_is_swapped);
-        validate_impl(msg, exp_be, !le_is_swapped);
+        validate_impl(msg, exp_le, endianness::little_endian);
+        validate_impl(msg, exp_be, endianness::big_endian);
     }
 
 private:
 
     template<typename T>
-    void validate_impl(const T &msg, const std::vector<uint8_t> &exp, bool swap) {
-        basic_cdr_stream str;
+    void validate_impl(const T &msg, const std::vector<uint8_t> &exp, endianness end) {
+        basic_cdr_stream str(end);
 
-        if (swap)
-          move_swapped(str, msg);
-        else
-          move(str, msg);
+        move(str, msg, false);
 
         size_t sz = str.position();
         ASSERT_EQ(sz, exp.size());
         std::vector<uint8_t> buffer(sz, 0x0);
         str.set_buffer(buffer.data());
 
-        if (swap)
-          write_swapped(str, msg);
-        else
-          write(str, msg);
+        write(str, msg, false);
 
         ASSERT_EQ(buffer, exp);
     }
@@ -107,14 +100,11 @@ TEST_F(Serdata, alignment)
 {
     Endianness::Msg msg({16,25,36},65535);
 
-    basic_cdr_stream str;
+    basic_cdr_stream str(endianness::little_endian);
     std::vector<unsigned char> vec(8,0x0);
     str.set_buffer(vec.data());
 
-    if (native_endianness() == endianness::little_endian)
-      write(str,msg);
-    else
-      write_swapped(str,msg);
+    write(str, msg, false);
 
     ASSERT_EQ(vec, std::vector<unsigned char>({16,25,36,0,255,255,0,0}));
 }

@@ -189,8 +189,7 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
         "namespace org {\n"
         "namespace eclipse {\n"
         "namespace cyclonedds {\n"
-        "namespace topic {\n"
-        "/* all traits not explicitly set are defaulted to the values in TopicTraits.hpp */\n\n") < 0)
+        "namespace topic {\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   memset(&visitor, 0, sizeof(visitor));

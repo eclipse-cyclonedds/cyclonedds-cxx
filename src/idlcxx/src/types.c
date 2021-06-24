@@ -56,8 +56,13 @@ emit_member(
   else if (IDL_PRINTA(&value, get_cpp11_default_value, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  fmt = " %s %s_%s%s;\n";
-  if (idl_fprintf(gen->header.handle, fmt, type, name, value ? " = " : "", value ? value : "") < 0)
+  fmt = " %1$s %2$s_%3$s%4$s;\n";
+  if (is_optional(node)) {
+    fmt = " %5$s<%1$s> %2$s_%3$s%4$s;\n";
+    value = NULL;
+  }
+
+  if (idl_fprintf(gen->header.handle, fmt, type, name, value ? " = " : "", value ? value : "", gen->optional_format) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -97,12 +102,16 @@ emit_parameter(
 
   simple = idl_mask(idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD)) & (IDL_BASE_TYPE|IDL_ENUM);
   sep = is_first(node) ? "" : ",\n";
-  fmt = simple ? "%s    %s %s"
-               : "%s    const %s& %s";
+  if (is_optional(node)) {
+    fmt = "%1$s    const %4$s<%2$s>& %3$s";
+  } else {
+    fmt = simple ? "%1$s    %2$s %3$s"
+                 : "%1$s    const %2$s& %3$s";
+  }
   name = get_cpp11_name(node);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, fmt, sep, type, name) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, sep, type, name, gen->optional_format) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
@@ -159,7 +168,12 @@ emit_member_methods(
     return IDL_RETCODE_NO_MEMORY;
 
   type_spec = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
-  if (idl_mask(type_spec) & (IDL_BASE_TYPE | IDL_ENUM))
+  if (is_optional(node))
+    fmt = "  const %3$s<%1$s>& %2$s() const { return this->%2$s_; }\n"
+          "  %3$s<%1$s>& %2$s() { return this->%2$s_; }\n"
+          "  void %2$s(const %3$s<%1$s>& _val_) { this->%2$s_ = _val_; }\n"
+          "  void %2$s(%3$s<%1$s>&& _val_) { this->%2$s_ = _val_; }\n";
+  else if (idl_is_base_type(type_spec) || idl_is_enum(type_spec))
     fmt = "  %1$s %2$s() const { return this->%2$s_; }\n"
           "  %1$s& %2$s() { return this->%2$s_; }\n"
           "  void %2$s(%1$s _val_) { this->%2$s_ = _val_; }\n";
@@ -169,7 +183,7 @@ emit_member_methods(
           "  void %2$s(const %1$s& _val_) { this->%2$s_ = _val_; }\n"
           "  void %2$s(%1$s&& _val_) { this->%2$s_ = _val_; }\n";
 
-  if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, type, name, gen->optional_format) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
