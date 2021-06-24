@@ -18,6 +18,7 @@
 #include "dds/ddsrt/sync.h"
 #include "dds/ddsrt/threads.h"
 
+#include "Util.hpp"
 #include "HelloWorldData.hpp"
 
 static uint32_t cb_called = 0;
@@ -308,8 +309,7 @@ public:
     }
 
     void SetUp() {
-        char buf[32];
-        ddsrt_pid_t pid = ddsrt_getpid();
+        char name[32];
 
         ddsrt_mutex_init(&g_mutex);
         ddsrt_cond_init(&g_cond);
@@ -319,8 +319,8 @@ public:
         ASSERT_NE(participant, dds::core::null);
 
         // Create topic
-        snprintf(buf, sizeof(buf), "listener_topic_%" PRIdPID, pid);
-        topic = dds::topic::Topic<HelloWorldData::Msg>(participant, buf);
+        create_unique_topic_name("Listener", name, sizeof(name));
+        topic = dds::topic::Topic<HelloWorldData::Msg>(participant, name);
         ASSERT_NE(topic, dds::core::null);
 
         // Create publisher
