@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 
+#include "Util.hpp"
 #include "HelloWorldData.hpp"
 
 /**
@@ -27,6 +28,8 @@ public:
     }
 
     void SetUp() {
+        char name[32];
+
         this->par = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
         ASSERT_NE(this->par, dds::core::null);
 
@@ -36,7 +39,8 @@ public:
         this->sub = dds::sub::Subscriber(this->par);
         ASSERT_NE(this->sub, dds::core::null);
 
-        this->topic = dds::topic::Topic<HelloWorldData::Msg>(this->par, "EntiyStatus_test");
+        create_unique_topic_name("EntityStatus", name, sizeof(name));
+        this->topic = dds::topic::Topic<HelloWorldData::Msg>(this->par, name);
         ASSERT_NE(this->topic, dds::core::null);
     }
 

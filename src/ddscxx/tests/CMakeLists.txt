@@ -40,7 +40,7 @@ set(sources
   Qos.cpp
   Condition.cpp)
 
-add_executable(ddscxx_tests ${sources})
+add_executable(ddscxx_tests ${sources} Util.cpp)
 
 # Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
 # on Azure Pipelines

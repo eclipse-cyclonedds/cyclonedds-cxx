@@ -16,6 +16,7 @@
 #include "dds/ddsrt/threads.h"
 #include "dds/ddsrt/sync.h"
 
+#include "Util.hpp"
 #include "Space.hpp"
 
 #define TA_ATTACH_REMOVE_CONDITION "attach_remove_condition"
@@ -322,8 +323,7 @@ public:
 
     void SetUp()
     {
-        char buf[32];
-        ddsrt_pid_t pid = ddsrt_getpid();
+        char name[32];
 
         this->participant = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
         ASSERT_NE(this->participant, dds::core::null);
@@ -334,8 +334,8 @@ public:
         this->subscriber = dds::sub::Subscriber(this->participant);
         ASSERT_NE(this->subscriber, dds::core::null);
 
-        snprintf(buf, sizeof(buf), "waitset_test_topic_%" PRIdPID, pid);
-        this->topic = dds::topic::Topic<Space::Type1>(this->participant, buf);
+        create_unique_topic_name("WaitSet", name, sizeof(name));
+        this->topic = dds::topic::Topic<Space::Type1>(this->participant, name);
         ASSERT_NE(this->topic, dds::core::null);
 
         this->reader = dds::sub::DataReader<Space::Type1>(this->subscriber, this->topic);
