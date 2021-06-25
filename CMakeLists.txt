@@ -229,4 +229,4 @@ if(BUILD_DOCS)
   add_subdirectory(docs)
 endif()
 
-include(CmakeCPack.cmake)
+include(CMakeCPack.cmake)
