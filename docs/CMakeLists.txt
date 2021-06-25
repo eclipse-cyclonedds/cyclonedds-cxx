@@ -9,7 +9,7 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-find_package(Sphinx REQUIRED breathe)
+find_package(Sphinx REQUIRED breathe exhale)
 
 sphinx_add_docs(
   docs
