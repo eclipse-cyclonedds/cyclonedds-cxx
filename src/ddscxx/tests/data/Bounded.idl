@@ -3,7 +3,9 @@ module Bounded
 
   struct Msg
   {
-    string<255> b_str_;
+    string<255> bounded_string;
+    sequence<long,255> bounded_sequence;
+    sequence<boolean,255> boolean_sequence;
   };
 
 };
