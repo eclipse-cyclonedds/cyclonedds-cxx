@@ -1,0 +1,9 @@
+module Bounded
+{
+
+  struct Msg
+  {
+    string<255> b_str_;
+  };
+
+};

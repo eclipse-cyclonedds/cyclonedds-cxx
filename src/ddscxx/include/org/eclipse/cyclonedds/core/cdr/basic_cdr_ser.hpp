@@ -253,8 +253,15 @@ void read_string(basic_cdr_stream& str, T& toread, size_t N)
 
   read(str, string_length);
 
+  if (string_length == 0 &&
+      str.status(serialization_status::illegal_field_value))
+      return;
+
+  //the string length in the CDR stream includes the terminating NULL
+  //therefore the checks on the string length decrease it by 1
+
   if (N &&
-      string_length > N &&
+      string_length - 1 > N &&
       str.status(serialization_status::read_bound_exceeded))
       return;
 
@@ -285,13 +292,15 @@ void write_string(basic_cdr_stream& str, const T& towrite, size_t N)
   if (str.abort_status())
     return;
 
-  size_t string_length = towrite.length() + 1;  //add 1 extra for terminating NULL
-
+  size_t string_length = towrite.length();
   if (N &&
       string_length > N) {
     if (str.status(serialization_status::write_bound_exceeded))
       return;
   }
+
+  //add 1 extra for terminating NULL
+  string_length++;
 
   write(str, uint32_t(string_length));
 
@@ -321,7 +330,7 @@ void move_string(basic_cdr_stream& str, const T& toincr, size_t N)
   if (str.abort_status())
     return;
 
-  size_t string_length = toincr.length() + 1;  //add 1 extra for terminating NULL
+  size_t string_length = toincr.length();
 
   if (N &&
       string_length > N) {
@@ -329,6 +338,8 @@ void move_string(basic_cdr_stream& str, const T& toincr, size_t N)
       return;
   }
 
+  //add 1 extra for terminating NULL
+  string_length++;
   move(str, uint32_t(string_length));
 
   str.incr_position(string_length);
