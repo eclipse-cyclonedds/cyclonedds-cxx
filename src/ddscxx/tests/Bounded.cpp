@@ -70,7 +70,7 @@ public:
         ASSERT_NE(reader, dds::core::null);
     }
 
-    void TakeAndVerify(size_t N)
+    void TakeAndVerifyBoundedString(size_t N)
     {
         auto msgs = reader.take();
         ASSERT_EQ(msgs.length(),1);
@@ -80,7 +80,47 @@ public:
             const auto& info = sample.info();
 
             ASSERT_TRUE (info.valid());
-            ASSERT_EQ (msg.b_str_(), std::string(N,'a'));
+            std::string str;
+            for (size_t i = 0; i < N; i++)
+              str.push_back(static_cast<char>('a'+(i%26)));
+
+            ASSERT_EQ (msg.bounded_string(), str);
+        }
+    }
+
+    void TakeAndVerifyBoundedSequence(size_t N)
+    {
+        auto msgs = reader.take();
+        ASSERT_EQ(msgs.length(),1);
+
+        for (const auto &sample:msgs) {
+            const auto& msg  = sample.data();
+            const auto& info = sample.info();
+
+            ASSERT_TRUE (info.valid());
+            std::vector<int32_t> vec;
+            for (size_t i = 0; i < N; i++)
+              vec.push_back(static_cast<int32_t>(i+123456));
+
+            ASSERT_EQ (msg.bounded_sequence(), vec);
+        }
+    }
+
+    void TakeAndVerifyBooleanSequence(size_t N)
+    {
+        auto msgs = reader.take();
+        ASSERT_EQ(msgs.length(),1);
+
+        for (const auto &sample:msgs) {
+            const auto& msg  = sample.data();
+            const auto& info = sample.info();
+
+            ASSERT_TRUE (info.valid());
+            std::vector<bool> vec;
+            for (size_t i = 0; i < N; i++)
+              vec.push_back(i%2);
+
+            ASSERT_EQ (msg.boolean_sequence(), vec);
         }
     }
 
@@ -94,10 +134,29 @@ public:
         this->participant = dds::core::null;
     }
 
-    void TryWrite(size_t N)
+    void TryWriteBoundedString(size_t N)
     {
         Bounded::Msg msg;
-        msg.b_str_() = std::string(N,'a');
+        for (size_t i = 0; i < N; i++)
+          msg.bounded_string().push_back(static_cast<char>('a'+(i%26)));
+
+        writer.write(msg);
+    }
+
+    void TryWriteBoundedSequence(size_t N)
+    {
+        Bounded::Msg msg;
+        for (size_t i = 0; i < N; i++)
+          msg.bounded_sequence().push_back(static_cast<int32_t>(i+123456));
+
+        writer.write(msg);
+    }
+
+    void TryWriteBooleanSequence(size_t N)
+    {
+        Bounded::Msg msg;
+        for (size_t i = 0; i < N; i++)
+          msg.boolean_sequence().push_back(i%2);
 
         writer.write(msg);
     }
@@ -110,14 +169,14 @@ using namespace org::eclipse::cyclonedds::core::cdr;
  */
 TEST_F(Bounds, strings)
 {
-    TryWrite(254);
-    TakeAndVerify(254);
+    TryWriteBoundedString(254);
+    TakeAndVerifyBoundedString(254);
 
-    TryWrite(255);
-    TakeAndVerify(255);
+    TryWriteBoundedString(255);
+    TakeAndVerifyBoundedString(255);
 
     ASSERT_THROW({
-        TryWrite(256);
+        TryWriteBoundedString(256);
     }, dds::core::InvalidArgumentError) << "Writing a bounded string with length in excess of its bound did not throw an exception.";
 
     basic_cdr_stream str;
@@ -130,4 +189,36 @@ TEST_F(Bounds, strings)
     read(str, msg);
 
     ASSERT_EQ (static_cast<serialization_status>(str.status()), serialization_status::illegal_field_value);
+}
+
+/**
+ * Test writing below, at and beyond bound (255 chars)
+ */
+TEST_F(Bounds, sequence)
+{
+    TryWriteBoundedSequence(254);
+    TakeAndVerifyBoundedSequence(254);
+
+    TryWriteBoundedSequence(255);
+    TakeAndVerifyBoundedSequence(255);
+
+    ASSERT_THROW({
+        TryWriteBoundedSequence(256);
+    }, dds::core::InvalidArgumentError) << "Writing a bounded sequence with length in excess of its bound did not throw an exception.";
+}
+
+/**
+ * Test writing below, at and beyond bound (255 chars)
+ */
+TEST_F(Bounds, boolean)
+{
+    TryWriteBooleanSequence(254);
+    TakeAndVerifyBooleanSequence(254);
+
+    TryWriteBooleanSequence(255);
+    TakeAndVerifyBooleanSequence(255);
+
+    ASSERT_THROW({
+        TryWriteBooleanSequence(256);
+    }, dds::core::InvalidArgumentError) << "Writing a boolean sequence with length in excess of its bound did not throw an exception.";
 }
