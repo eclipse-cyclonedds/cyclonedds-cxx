@@ -40,7 +40,8 @@ set(sources
   Query.cpp
   WaitSet.cpp
   Qos.cpp
-  Condition.cpp)
+  Condition.cpp
+  BuiltinTopic.cpp)
 
 add_executable(ddscxx_tests ${sources} Util.cpp)
 

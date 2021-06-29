@@ -71,6 +71,11 @@ public:
         user_data_.delegate().set_iso_policy(policy);
     }
 
+    void qos(const dds_qos_t* policy)
+    {
+        user_data(policy);
+    }
+
     bool operator ==(const ParticipantBuiltinTopicDataDelegate& other) const
     {
         return other.key_ == key_ && other.user_data_ == user_data_;
@@ -250,6 +255,23 @@ public:
         topic_data_.delegate().set_iso_policy(policy);
     }
 
+    void qos(const dds_qos_t* policy)
+    {
+        durability(policy);
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+        durability_service(policy);
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
+        deadline(policy);
+        latency_budget(policy);
+        liveliness(policy);
+        transport_priority(policy);
+        lifespan(policy);
+        destination_order(policy);
+        history(policy);
+        resource_limits(policy);
+        topic_data(policy);
+    }
+
     bool operator ==(const TopicBuiltinTopicDataDelegate& other) const
     {
         return other.key_ == key_
@@ -359,6 +381,11 @@ public:
     const ::dds::core::policy::DurabilityService&  durability_service() const
     {
         return durability_service_;
+    }
+
+    void durability_service(const dds_qos_t* policy)
+    {
+        durability_service_.delegate().set_iso_policy(policy);
     }
 
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
@@ -499,6 +526,28 @@ public:
         group_data_.delegate().set_iso_policy(policy);
     }
 
+    void qos(const dds_qos_t* policy)
+    {
+        durability(policy);
+    #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+        durability_service(policy);
+    #endif  // OMG_DDS_PERSISTENCE_SUPPORT
+        deadline(policy);
+        latency_budget(policy);
+        liveliness(policy);
+        reliability(policy);
+        lifespan(policy);
+        user_data(policy);
+        ownership(policy);
+    #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
+        ownership_strength(policy);
+    #endif  // OMG_DDS_OWNERSHIP_SUPPORT
+        destination_order(policy);
+        presentation(policy);
+        partition(policy);
+        topic_data(policy);
+        group_data(policy);
+    }
 
     bool operator ==(const PublicationBuiltinTopicDataDelegate& other) const
     {
@@ -730,6 +779,23 @@ public:
     void group_data(const dds_qos_t* policy)
     {
         group_data_.delegate().set_iso_policy(policy);
+    }
+
+    void qos(const dds_qos_t* policy)
+    {
+        durability(policy);
+        deadline(policy);
+        latency_budget(policy);
+        liveliness(policy);
+        reliability(policy);
+        ownership(policy);
+        destination_order(policy);
+        user_data(policy);
+        time_based_filter(policy);
+        presentation(policy);
+        partition(policy);
+        topic_data(policy);
+        group_data(policy);
     }
 
     bool operator ==(const SubscriptionBuiltinTopicDataDelegate& other) const

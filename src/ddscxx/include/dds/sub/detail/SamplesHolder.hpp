@@ -18,7 +18,7 @@
 
 #include <dds/sub/LoanedSamples.hpp>
 #include "org/eclipse/cyclonedds/sub/AnyDataReaderDelegate.hpp"
-#include "org/eclipse/cyclonedds/topic/datatopic.hpp"
+#include "org/eclipse/cyclonedds/topic/BuiltinDataTopic.hpp"
 
 namespace dds
 {
@@ -79,6 +79,12 @@ public:
             tmp_iterator->delegate().data_ptr() = static_cast<ddscxx_serdata<T>*>(c_sample_pointers[i]);
             org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], tmp_iterator->delegate().info());
         }
+    }
+
+    template<typename T_ = T, IsBuiltinTopicType<T_> = true>
+    void set_builtin_sample_contents(void** cxx_sample_pointers, dds_sample_info_t *info)
+    {
+        set_sample_contents(cxx_sample_pointers, info);
     }
 
     void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
@@ -216,6 +222,20 @@ public:
       return new dds_sample_info_t[length];
     }
 
+    template<typename T_ = T, IsBuiltinTopicType<T_> = true>
+    void set_builtin_sample_contents(void** cxx_sample_pointers, dds_sample_info_t *info)
+    {
+        /* Samples have already been deserialized in their containers during the read/take call. */
+        SamplesFWIterator tmp_iterator = iterator;
+        for (uint32_t i = 0; i < size; ++i, ++tmp_iterator) {
+            auto ptr = static_cast<ddscxx_serdata<T>*>(cxx_sample_pointers[i]);
+            tmp_iterator->delegate().data() = *ptr->getT();
+            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], tmp_iterator->delegate().info());
+            delete(ptr);
+            cxx_sample_pointers[i] = nullptr;
+        }
+    }
+
     void set_sample_contents(void**, dds_sample_info_t *info)
     {
         /* Samples have already been deserialized in their containers during the read/take call. */
@@ -284,6 +304,20 @@ public:
     {
         dds_sample_info_t *c_info_pointers = new dds_sample_info_t[length];
         return c_info_pointers;
+    }
+
+    template<typename T_ = T, IsBuiltinTopicType<T_> = true>
+    void set_builtin_sample_contents(void** cxx_sample_pointers, dds_sample_info_t *info)
+    {
+        /* Samples have already been deserialized in their containers during the read/take call. */
+        for (uint32_t i = 0; i < size; ++i, ++iterator) {
+            auto ptr = static_cast<ddscxx_serdata<T>*>(cxx_sample_pointers[i]);
+            samples[i].data(*ptr->getT());
+            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], samples[i].delegate().info());
+            iterator = samples[i];
+            delete(ptr);
+            cxx_sample_pointers[i] = nullptr;
+        }
     }
 
     void set_sample_contents(void**, dds_sample_info_t *info)
