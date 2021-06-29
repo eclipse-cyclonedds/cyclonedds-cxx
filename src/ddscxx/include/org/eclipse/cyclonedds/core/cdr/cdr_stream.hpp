@@ -114,11 +114,13 @@ constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
  * @var serialization_status::move_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
  * @var serialization_status::write_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
  * @var serialization_status::read_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
+ * @var serialization_status::illegal_field_value The serialization has encountered a field with a value which should never occur in a valid CDR stream.
  */
 enum class serialization_status {
   move_bound_exceeded   = 0x1 << 0,
   write_bound_exceeded  = 0x1 << 1,
-  read_bound_exceeded   = 0x1 << 2
+  read_bound_exceeded   = 0x1 << 2,
+  illegal_field_value   = 0x1 << 3
 };
 
 /**
