@@ -749,10 +749,36 @@ bool sertype_equal(
 }
 
 template <typename T>
+bool sertype_typeid (const struct ddsi_sertype *tpcmn, unsigned char *buf)
+{
+  assert (tpcmn);
+  auto tp = static_cast<const ddscxx_sertype<T>*>(tpcmn);
+
+  uint32_t no_key = tp->typekind_no_key;
+  uint32_t req_keyhash = tp->request_keyhash;
+  uint32_t fixed_size = tp->fixed_size;
+  const void *st_ops = tp->ops, *sd_ops = tp->serdata_ops, *sd_bh = &tp->serdata_basehash, *tn = tp->type_name, *nk = &no_key, *rk = &req_keyhash, *fs = &fixed_size;
+  ddsrt_md5_state_t md5st;
+  ddsrt_md5_init (&md5st);
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(st_ops), static_cast<uint32_t>(sizeof (struct ddsi_sertype_ops)));
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(sd_ops), static_cast<uint32_t>(sizeof (struct ddsi_serdata_ops)));
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(sd_bh), static_cast<uint32_t>(sizeof (tp->serdata_basehash)));
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(nk), static_cast<uint32_t>(sizeof (no_key)));
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(rk), static_cast<uint32_t>(sizeof (req_keyhash)));
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(fs), static_cast<uint32_t>(sizeof (fixed_size)));
+  ddsrt_md5_append (&md5st, static_cast<const ddsrt_md5_byte_t *>(tn), static_cast<uint32_t>(strlen (tp->type_name)));
+  ddsrt_md5_finish (&md5st, static_cast<ddsrt_md5_byte_t *>(buf));
+
+  return true;
+}
+
+template <typename T>
 uint32_t sertype_hash(const ddsi_sertype* tpcmn)
 {
-  (void)tpcmn;
-  return 0x0;
+  unsigned char buf[16];
+  void *ptr = buf;
+  sertype_typeid<T>(tpcmn, static_cast<unsigned char*>(ptr));
+  return *static_cast<uint32_t*>(ptr);
 }
 
 template <typename T>
@@ -806,7 +832,7 @@ const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   sertype_free_samples<T>,
   sertype_equal<T>,
   sertype_hash<T>,
-  nullptr, // typeid_hash
+  sertype_typeid<T>,
   nullptr, // serialized_size
   nullptr, // serialize
   nullptr, // deserialize

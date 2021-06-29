@@ -1439,6 +1439,189 @@ void dds::sub::detail::DataReader<T>::on_sample_lost(dds_entity_t,
     l->on_sample_lost(dr, s);
 }
 
+namespace dds {
+namespace sub {
+
+const uint32_t MAX_SAMPLES = 16;
+
+template<typename T, typename H>
+void readtake(
+    H &holder,
+    dds_entity_t ddsc_entity,
+    bool take,
+    const status::DataState &st,
+    uint32_t max_samples,
+    void (*conversion_function) (T*, void*, bool))
+{
+    (void) st;
+    max_samples = std::min<uint32_t>(max_samples,MAX_SAMPLES);
+    void * c_samples[MAX_SAMPLES] = { nullptr };
+    dds_sample_info_t c_infos[MAX_SAMPLES];
+    dds_return_t ret;
+    if (take) {
+        ret = dds_take(ddsc_entity, c_samples, c_infos, max_samples, max_samples);
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Taking sample failed.");
+    } else {
+        ret = dds_read(ddsc_entity, c_samples, c_infos, max_samples, max_samples);
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Reading sample failed.");
+    }
+
+    void* cxx_samples[MAX_SAMPLES] = { nullptr };
+    auto ser_type = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType();
+    auto n = static_cast<uint32_t>(ret);
+    for (size_t i = 0; i < n; i++) {
+        auto ptr = new ddscxx_serdata<T>(ser_type,SDK_DATA);
+        cxx_samples[i] = ptr;
+        conversion_function(ptr->getT(), c_samples[i], c_infos[i].valid_data);
+    }
+    dds_return_loan(ddsc_entity, c_samples, ret);
+    ddsi_sertype_unref(ser_type);
+
+    holder.set_length(n);
+    if (n > 0)
+        holder.set_builtin_sample_contents(cxx_samples, c_infos);
+}
+
+template<typename T>
+void convert_builtin_participant(
+    T *ptr,
+    void *c_sample,
+    bool valid_data)
+{
+    (void) valid_data;
+    auto c_data = static_cast<dds_builtintopic_participant *>(c_sample);
+    ptr->delegate().key(c_data->key.v);
+    ptr->delegate().qos(c_data->qos);
+}
+
+template<typename T>
+void convert_builtin_topic(
+    T *ptr,
+    void *c_sample,
+    bool valid_data)
+{
+    auto c_data = static_cast<dds_builtintopic_topic *>(c_sample);
+    ptr->delegate().key(c_data->key.d);
+    if (valid_data) {
+        ptr->delegate().name(c_data->topic_name);
+        ptr->delegate().type_name(c_data->type_name);
+    }
+    ptr->delegate().qos(c_data->qos);
+}
+
+template<typename T>
+void convert_builtin_pubsub(
+    T *ptr,
+    void *c_sample,
+    bool valid_data)
+{
+    auto c_data = static_cast<dds_builtintopic_endpoint_t *>(c_sample);
+    ptr->delegate().key(c_data->key.v);
+    ptr->delegate().participant_key(c_data->participant_key.v);
+    if (valid_data) {
+        ptr->delegate().topic_name(c_data->topic_name);
+        ptr->delegate().type_name(c_data->type_name);
+    }
+    ptr->delegate().qos(c_data->qos);
+}
+
+#define readtakefunction(TYPE, METHOD, TF, FNCTN)\
+template <> inline LoanedSamples<TYPE> \
+detail::DataReader<TYPE>::METHOD() {\
+    dds::sub::LoanedSamples<TYPE> samples;\
+    detail::LoanedSamplesHolder<TYPE> holder(samples);\
+    status::DataState state;\
+    readtake<TYPE, detail::LoanedSamplesHolder<TYPE> >(\
+        holder, this->ddsc_entity, TF, state, MAX_SAMPLES, &FNCTN<TYPE>);\
+    return samples;\
+}\
+\
+template <> inline LoanedSamples<TYPE> \
+detail::DataReader<TYPE>::METHOD(const Selector& selector) {\
+    dds::sub::LoanedSamples<TYPE> samples;\
+    detail::LoanedSamplesHolder<TYPE> holder(samples);\
+    switch(selector.mode) {\
+    case SELECT_MODE_READ:\
+        readtake<TYPE, detail::LoanedSamplesHolder<TYPE> >(\
+            holder, this->ddsc_entity, TF, selector.state_filter_, selector.max_samples_, &FNCTN<TYPE>);\
+        break;\
+    default:\
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_UNSUPPORTED, "Using selector failed.");\
+    }\
+    return samples;\
+}
+
+#define iteratorfunction(TYPE, METHOD, TF, FNCTN)\
+template <> template <typename SamplesFWIterator> inline uint32_t \
+detail::DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples) {\
+    detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> holder(samples);\
+    status::DataState state;\
+    readtake<TYPE, detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> >(\
+        holder, this->ddsc_entity, TF, state, max_samples, &FNCTN<TYPE>);\
+    return holder.get_length();\
+}\
+template <> template <typename SamplesFWIterator> inline uint32_t \
+detail::DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples, const Selector& selector) {\
+    detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> holder(samples);\
+    switch(selector.mode) {\
+    case SELECT_MODE_READ:\
+        readtake<TYPE, detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> >(\
+            holder, this->ddsc_entity, TF, selector.state_filter_, std::min<uint32_t>(selector.max_samples_, max_samples), &FNCTN<TYPE>);\
+        break;\
+    default:\
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_UNSUPPORTED, "Using selector failed.");\
+    }\
+    return holder.get_length();\
+}\
+template <> template <typename SamplesBIIterator> inline uint32_t \
+detail::DataReader<TYPE>::METHOD(SamplesBIIterator samples) {\
+    detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> holder(samples);\
+    status::DataState state;\
+    readtake<TYPE, detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> >(\
+        holder, this->ddsc_entity, TF, state, MAX_SAMPLES, &FNCTN<TYPE>);\
+    return holder.get_length();\
+}\
+template <> template <typename SamplesBIIterator> inline uint32_t \
+detail::DataReader<TYPE>::METHOD(SamplesBIIterator samples, const Selector& selector) {\
+    detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> holder(samples);\
+    switch(selector.mode) {\
+    case SELECT_MODE_READ:\
+        readtake<TYPE, detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> >(\
+            holder, this->ddsc_entity, TF, selector.state_filter_, selector.max_samples_, &FNCTN<TYPE>);\
+        break;\
+    default:\
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_UNSUPPORTED, "Using selector failed.");\
+    }\
+    return holder.get_length();\
+}
+
+#define readtakefunctions(TYPE, FNCTN)\
+readtakefunction(TYPE, read, false, FNCTN)\
+readtakefunction(TYPE, take, true, FNCTN)
+
+#define iteratorfunctions(TYPE, FNCTN)\
+iteratorfunction(TYPE, read, false, FNCTN)\
+iteratorfunction(TYPE, take, true, FNCTN)
+
+#define typefunctions(TYPE, FNCTN)\
+readtakefunctions(TYPE, FNCTN)\
+iteratorfunctions(TYPE, FNCTN)
+
+typefunctions(dds::topic::ParticipantBuiltinTopicData, convert_builtin_participant)
+typefunctions(dds::topic::TopicBuiltinTopicData, convert_builtin_topic)
+typefunctions(dds::topic::SubscriptionBuiltinTopicData, convert_builtin_pubsub)
+typefunctions(dds::topic::PublicationBuiltinTopicData, convert_builtin_pubsub)
+
+/* cleaning up so that the defines do not contaminate other files */
+#undef readtakefunction
+#undef iteratorfunction
+#undef readtakefunctions
+#undef iteratorfunctions
+#undef typefunctions
+
+}  /* namespace sub */
+}  /* namespace dds */
+
 // End of implementation
 
 #endif /* CYCLONEDDS_DDS_SUB_TDATAREADER_IMPL_HPP_ */

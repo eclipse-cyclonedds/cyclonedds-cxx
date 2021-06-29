@@ -465,6 +465,16 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topic(
 
     this->check();
 
+    if (topic_name == "DCPSParticipant") {
+        return DDS_BUILTIN_TOPIC_DCPSPARTICIPANT;
+    } else if (topic_name == "DCPSTopic") {
+        return DDS_BUILTIN_TOPIC_DCPSTOPIC;
+    } else if (topic_name == "DCPSPublication") {
+        return DDS_BUILTIN_TOPIC_DCPSPUBLICATION;
+    } else if (topic_name == "DCPSSubscription") {
+        return DDS_BUILTIN_TOPIC_DCPSSUBSCRIPTION;
+    }
+
     dds_time_t starttime = dds_time();
     while (true)
     {

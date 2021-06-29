@@ -47,7 +47,8 @@ set(sources
   WaitSet.cpp
   Qos.cpp
   Condition.cpp
-  Util.cpp)
+  Util.cpp
+  BuiltinTopic.cpp)
 
 if(ENABLE_SHM)
   # Add shared memory tests

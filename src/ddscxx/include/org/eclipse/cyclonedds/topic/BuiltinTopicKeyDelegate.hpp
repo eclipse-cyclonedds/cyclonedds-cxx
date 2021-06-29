@@ -18,6 +18,8 @@
 #ifndef CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 #define CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 
+#include <array>
+
 namespace org
 {
 namespace eclipse
@@ -30,37 +32,29 @@ namespace topic
 class BuiltinTopicKeyDelegate
 {
 public:
-    typedef uint32_t VALUE_T;
-public:
     BuiltinTopicKeyDelegate() { }
-    BuiltinTopicKeyDelegate(int32_t v[])
+    BuiltinTopicKeyDelegate(const uint8_t *v)
     {
-        key_[0] = v[0];
-        key_[1] = v[1];
-        key_[2] = v[2];
+        memcpy(key_.data(), v, key_.size());
     }
 public:
-    const int32_t* value() const
+    const uint8_t* value() const
     {
-        return key_;
+        return key_.data();
     }
 
-    void value(int32_t v[])
+    void value(const uint8_t *v)
     {
-        key_[0] = v[0];
-        key_[1] = v[1];
-        key_[2] = v[2];
+        memcpy(key_.data(), v, key_.size());
     }
 
     bool operator ==(const BuiltinTopicKeyDelegate& other) const
     {
-        return other.key_[0] == key_[0]
-                 && other.key_[1] == key_[1]
-                 && other.key_[2] == key_[2];
+        return other.key_ == key_;
     }
 
 private:
-    int32_t key_[3];
+    std::array<uint8_t, 16> key_;
 };
 
 }
