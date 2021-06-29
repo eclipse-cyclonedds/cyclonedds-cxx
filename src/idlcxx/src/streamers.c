@@ -285,6 +285,12 @@ write_basic_type_streaming_functions(
       "    %2$s(streamer, b);\n"
       "    %1$s = b;\n"
       "  }\n";
+
+    fmt =
+        "  {\n"
+        "    const bool b = %1$s;\n"
+        "    %2$s(streamer, b);\n"
+        "  }\n";
   }
 
   if ((loc.type & NORMAL_INSTANCE) &&
