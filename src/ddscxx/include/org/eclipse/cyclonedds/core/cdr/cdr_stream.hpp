@@ -254,7 +254,7 @@ public:
      * @retval false If the stream endianness DOES match the local endianness.
      * @retval true If the stream endianness DOES NOT match the local endianness.
      */
-    bool swap_endianness() const { return m_stream_endianness == m_local_endianness; }
+    bool swap_endianness() const { return m_stream_endianness != m_local_endianness; }
 
     /**
      * @brief
