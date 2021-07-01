@@ -355,15 +355,19 @@ emit_enum(
 static idl_retcode_t
 expand_typedef(
   struct generator* gen,
-  const idl_declarator_t* declarator,
-  const idl_typedef_t* _typedef)
+  const idl_declarator_t* declarator)
 {
-  const char* name = get_cpp11_name(declarator);
-  char* type = NULL;
+  char *type = NULL;
+  const char *name = get_cpp11_name(declarator);
+  const idl_type_spec_t *type_spec;
 
-  if (IDL_PRINTA(&type, get_cpp11_type, idl_is_array(declarator) ? declarator : _typedef->type_spec, gen) < 0)
+  if (idl_is_array(declarator))
+    type_spec = declarator;
+  else
+    type_spec = idl_type_spec(declarator);
+
+  if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-
   if (idl_fprintf(gen->header.handle, "typedef %s %s;\n\n", type, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -388,7 +392,7 @@ emit_typedef(
 
   idl_retcode_t ret = IDL_RETCODE_OK;
   IDL_FOREACH(declarator, _typedef->declarators) {
-    if ((ret = expand_typedef(gen, declarator, _typedef)) != IDL_RETCODE_OK)
+    if ((ret = expand_typedef(gen, declarator)) != IDL_RETCODE_OK)
       break;
   }
 
