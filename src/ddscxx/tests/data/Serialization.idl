@@ -9,3 +9,14 @@ module Bounded
   };
 
 };
+
+module Endianness
+{
+
+  struct Msg
+  {
+    char chars[3];
+    unsigned long l;
+  };
+
+};

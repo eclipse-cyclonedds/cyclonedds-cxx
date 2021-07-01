@@ -13,7 +13,7 @@
 #include <string>
 
 #include "dds/dds.hpp"
-#include "Bounded.hpp"
+#include "Serialization.hpp"
 
 /**
  * Fixture for the tests

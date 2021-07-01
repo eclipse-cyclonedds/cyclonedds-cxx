@@ -11,7 +11,7 @@
 #
 find_package(GTest REQUIRED)
 
-idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldData.idl data/Bounded.idl)
+idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldData.idl data/Serialization.idl)
 
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
@@ -29,6 +29,7 @@ set(sources
   FindTopic.cpp
   Topic.cpp
   Publisher.cpp
+  Serdata.cpp
   Subscriber.cpp
   DataWriter.cpp
   DataReader.cpp

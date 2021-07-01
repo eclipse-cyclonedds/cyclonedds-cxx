@@ -119,7 +119,10 @@ public:
     T *t = m_t.load(std::memory_order_acquire);
     if (t == nullptr) {
       t = new T();
-      org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+      org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
+          *(static_cast<unsigned char*>(data())+1) == 0x1 ?
+              org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
+              org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
       str.set_buffer(calc_offset(data(),4));
       switch (kind)
       {
@@ -391,7 +394,10 @@ bool serdata_to_sample(
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
+          *(static_cast<unsigned char*>(ptr->data())+1) == 0x1 ?
+              org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
+              org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
   str.set_buffer(calc_offset(ptr->data(), 4));
   auto& msg = *static_cast<T*>(sample);
   read(str, msg);
@@ -454,7 +460,10 @@ bool serdata_untyped_to_sample(
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
   T* ptr = static_cast<T*>(sample);
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
+          *(static_cast<unsigned char*>(d->data())+1) == 0x1 ?
+              org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
+              org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
   str.set_buffer(calc_offset(d->data(), 4));
   key_read(str, *ptr);
 
