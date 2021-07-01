@@ -75,9 +75,9 @@ void read(basic_cdr_stream &str, T& toread)
   if (str.abort_status())
     return;
 
-  char *cursor = str.get_cursor();
   str.align(sizeof(T), false);
 
+  char *cursor = str.get_cursor();
   assert(cursor);
   transfer_and_swap(*(reinterpret_cast<const T*>(cursor)), toread, str.swap_endianness());
   str.incr_position(sizeof(T));
@@ -102,9 +102,9 @@ void write(basic_cdr_stream& str, const T& towrite)
   if (str.abort_status())
     return;
 
-  char *cursor = str.get_cursor();
   str.align(sizeof(T), true);
 
+  char *cursor = str.get_cursor();
   assert(cursor);
   transfer_and_swap(towrite, *(reinterpret_cast<T*>(cursor)), str.swap_endianness());
   str.incr_position(sizeof(T));
