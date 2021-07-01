@@ -578,7 +578,7 @@ register_types(
   if (src && strcmp(loc->first.source->path->name, src) != 0)
     return IDL_VISIT_DONT_RECURSE;
 
-  if (idl_is_array(type_spec))
+  if (idl_is_array(node) || idl_is_array(type_spec))
     gen->uses_array = true;
 
   type_spec = idl_unalias(idl_type_spec(node), IDL_UNALIAS_IGNORE_ARRAY);
@@ -601,6 +601,10 @@ register_types(
       gen->uses_string = true;
   } else if (idl_is_union(type_spec)) {
     gen->uses_union = true;
+  } else if (idl_is_integer_type(type_spec)) {
+    gen->uses_integers = true;
+  } else if (idl_type(type_spec) == IDL_OCTET) {
+    gen->uses_integers = true;
   }
 
   /* FIXME: add support for @optional */
@@ -619,9 +623,10 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 
   /* determine which "system" headers to include */
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION;
+  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_CONST;
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &register_types;
   visitor.accept[IDL_ACCEPT_SEQUENCE] = &register_types;
+  visitor.accept[IDL_ACCEPT_CONST] = &register_types;
   visitor.accept[IDL_ACCEPT_UNION] = &register_union;
   assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
@@ -631,11 +636,8 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 
   for (include = source->includes; include; include = include->next) {
     int cnt;
-    const char *ext = NULL, *file = include->file->name;
-    for (const char *ptr = file; *ptr; ptr++) {
-      if (*ptr == '.')
-        ext = ptr;
-    }
+    const char *file = include->file->name;
+    const char *ext = strrchr(file, '.');
     if (ext && idl_strcasecmp(ext, ".idl") == 0) {
       const char *fmt = "#include \"%.*s.hpp\"\n";
       int len = (int)(ext - file);
@@ -650,8 +652,10 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   }
 
   { int len = 0;
-    const char *incs[6];
+    const char *incs[7];
 
+    if (generator->uses_integers)
+      incs[len++] = "<cstdint>";
     if (generator->uses_array)
       incs[len++] = generator->array_include;
     if (generator->uses_sequence)

@@ -29,6 +29,7 @@ struct generator {
   char *union_format;
   char *union_getter_format;
   const char *union_include;
+  bool uses_integers;
   bool uses_array;
   bool uses_sequence;
   bool uses_bounded_sequence;

@@ -182,8 +182,10 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   idl_visitor_t visitor;
   const char *sources[] = { NULL, NULL };
 
-  if (idl_fprintf(generator->header.handle, "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
-        "#include \"org/eclipse/cyclonedds/topic/DataRepresentation.hpp\"\n\n"
+  if (idl_fprintf(generator->header.handle,
+        "#include \"dds/topic/TopicTraits.hpp\"\n"
+        "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
+        "#include \"org/eclipse/cyclonedds/topic/datatopic.hpp\"\n\n"
         "namespace org {\n"
         "namespace eclipse {\n"
         "namespace cyclonedds {\n"
