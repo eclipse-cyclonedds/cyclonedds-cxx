@@ -42,6 +42,12 @@ void org::eclipse::cyclonedds::core::ObjectDelegate::unlock () const
   this->mutex.unlock ();
 }
 
+bool org::eclipse::cyclonedds::core::ObjectDelegate::is_valid() const
+{
+  bool is_closed = this->closed.load(std::memory_order_acquire);
+  return !is_closed;
+}
+
 void org::eclipse::cyclonedds::core::ObjectDelegate::close ()
 {
   this->closed.store(true);

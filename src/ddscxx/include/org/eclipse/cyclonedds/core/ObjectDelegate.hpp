@@ -47,6 +47,7 @@ public:
     virtual void close ();
     void lock() const;
     void unlock() const;
+    virtual bool is_valid() const;
 
     virtual void init (ObjectDelegate::weak_ref_type weak_ref) = 0;
     ObjectDelegate::weak_ref_type get_weak_ref () const;
