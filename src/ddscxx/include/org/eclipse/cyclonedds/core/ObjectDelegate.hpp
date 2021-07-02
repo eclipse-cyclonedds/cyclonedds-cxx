@@ -18,6 +18,7 @@
 #ifndef CYCLONEDDS_CORE_OBJECT_DELEGATE_HPP_
 #define CYCLONEDDS_CORE_OBJECT_DELEGATE_HPP_
 
+#include <atomic>
 #include "dds/core/macros.hpp"
 #include "dds/core/refmacros.hpp"
 #include "org/eclipse/cyclonedds/core/Mutex.hpp"
@@ -57,7 +58,7 @@ protected:
     void set_weak_ref (ObjectDelegate::weak_ref_type weak_ref);
 
     Mutex mutex;
-    bool closed;
+    std::atomic_bool closed {false};
     ObjectDelegate::weak_ref_type myself;
 };
 

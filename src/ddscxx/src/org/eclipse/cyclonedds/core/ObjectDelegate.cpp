@@ -16,8 +16,7 @@
 #include "org/eclipse/cyclonedds/core/ObjectDelegate.hpp"
 #include <org/eclipse/cyclonedds/core/ReportUtils.hpp>
 
-org::eclipse::cyclonedds::core::ObjectDelegate::ObjectDelegate () :
-  closed (false)
+org::eclipse::cyclonedds::core::ObjectDelegate::ObjectDelegate ()
 {
 }
 
@@ -27,24 +26,15 @@ org::eclipse::cyclonedds::core::ObjectDelegate::~ObjectDelegate ()
 
 void org::eclipse::cyclonedds::core::ObjectDelegate::check () const
 {
-  /* This method is not-thread-safe, and should only be used with a lock. */
-  if (closed) {
+  if (closed.load()) {
     ISOCPP_THROW_EXCEPTION (ISOCPP_ALREADY_CLOSED_ERROR, "Trying to invoke an oparation on an object that was already closed");
   }
 }
 
 void org::eclipse::cyclonedds::core::ObjectDelegate::lock () const
 {
+  check();
   this->mutex.lock ();
-  try
-  {
-    check();
-  }
-  catch (...)
-  {
-    this->mutex.unlock ();
-    throw;
-  }
 }
 
 void org::eclipse::cyclonedds::core::ObjectDelegate::unlock () const
@@ -54,7 +44,7 @@ void org::eclipse::cyclonedds::core::ObjectDelegate::unlock () const
 
 void org::eclipse::cyclonedds::core::ObjectDelegate::close ()
 {
-  this->closed = true;
+  this->closed.store(true);
 }
 
 void org::eclipse::cyclonedds::core::ObjectDelegate::set_weak_ref (ObjectDelegate::weak_ref_type weak_ref)
