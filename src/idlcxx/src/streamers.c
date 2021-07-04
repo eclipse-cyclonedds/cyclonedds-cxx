@@ -277,8 +277,8 @@ write_basic_type_streaming_functions(
 {
   const char* fmt = "  %2$s(streamer, %1$s);\n";
   const char* read_fmt = fmt;
-  if ((idl_mask(type_spec) & IDL_BOOL) == IDL_BOOL &&
-      loc.type & SEQUENCE) {
+  if ((idl_type(type_spec) == IDL_BOOL) &&
+      (loc.type & SEQUENCE)) {
     read_fmt =
       "  {\n"
       "    bool b(false);\n"
