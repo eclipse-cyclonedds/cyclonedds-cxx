@@ -22,6 +22,8 @@ install(
 
 add_subdirectory(helloworld)
 
+# TODO(Sumanth), get this from cyclonedds project
+set(DDS_HAS_SHM 1)
 if (DDS_HAS_SHM)
 install(
     FILES helloworld_shm/publisher_shm.cpp
