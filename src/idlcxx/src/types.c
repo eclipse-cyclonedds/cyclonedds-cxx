@@ -826,7 +826,7 @@ emit_union(
   /* implicit default setter */
   if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
     if (_union->unused_labels > 1)
-      fmt = "  void _default(%1$s d = %2$ss)\n"
+      fmt = "  void _default(%1$s d = %2$s)\n"
             "  {\n"
             "    if (!_is_compatible_discriminator(d, %2$s))\n"
             "      return;\n";
