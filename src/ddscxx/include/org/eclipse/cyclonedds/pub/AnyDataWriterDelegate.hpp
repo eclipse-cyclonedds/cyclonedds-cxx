@@ -132,6 +132,14 @@ protected:
           const dds::core::Time& timestamp);
 
     void
+    loan_sample(dds_entity_t writer,
+          void **sample);
+
+    void
+    return_loan(dds_entity_t writer,
+          void *sample);
+
+    void
     write(dds_entity_t writer,
           const void *data,
           const dds::core::InstanceHandle& handle,

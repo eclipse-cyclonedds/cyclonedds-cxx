@@ -69,6 +69,10 @@ public:
 
     void init(ObjectDelegate::weak_ref_type weak_ref);
 
+    T& loan_sample();
+
+    void return_loan(T& sample);
+
     void write_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample);
 
     void write_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample, const dds::core::Time& timestamp);
