@@ -59,7 +59,16 @@ int main() {
         }
 
         /* Loan the memory for the message */
-        auto loaned_msg = writer->loan_sample();
+        HelloWorldDataShm::Msg &loaned_msg = writer->loan_sample();
+
+        /* Fill the message */
+        loaned_msg.data(4321);
+
+        /* Realize you do not intend to write this message and cancel the loan. */
+        writer->return_loan(loaned_msg);
+
+        /* Loan memory for a new message */
+        loaned_msg = writer->loan_sample();
 
         /* Fill the message */
         loaned_msg.data(1234);
