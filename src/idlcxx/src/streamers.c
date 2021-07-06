@@ -968,7 +968,7 @@ process_union(
     "  streamer.alignment(alignment_max);\n";
   static const char *ffmt =
     "template<typename T>\n"
-    "void max(T& streamer, const %2$s& instance) {\n"
+    "void max(T& streamer, const %1$s& instance) {\n"
     "  (void)instance;\n"
     "  streamer.position(SIZE_MAX);\n"
     "}\n\n";
