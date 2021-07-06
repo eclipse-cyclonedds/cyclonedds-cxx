@@ -136,6 +136,10 @@ protected:
           void **sample);
 
     void
+    return_loan(dds_entity_t writer,
+          void *sample);
+
+    void
     write(dds_entity_t writer,
           const void *data,
           const dds::core::InstanceHandle& handle,

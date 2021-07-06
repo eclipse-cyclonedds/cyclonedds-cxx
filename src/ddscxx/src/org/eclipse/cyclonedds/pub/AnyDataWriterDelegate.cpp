@@ -168,6 +168,17 @@ AnyDataWriterDelegate::loan_sample(
 }
 
 void
+AnyDataWriterDelegate::return_loan(
+    dds_entity_t writer,
+    void *sample)
+{
+    dds_return_t ret;
+
+    ret = dds_return_loan(writer, &sample, 1);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "return of sample loan failed.");
+}
+
+void
 AnyDataWriterDelegate::write(
     dds_entity_t writer,
     const void *data,
