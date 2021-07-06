@@ -20,14 +20,17 @@ install(
   DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/helloworld"
   COMPONENT dev)
 
+add_subdirectory(helloworld)
+
+if (DDS_HAS_SHM)
 install(
     FILES helloworld_shm/publisher_shm.cpp
-          helloworld_shm/subscriber_shm.cpp
-          helloworld_shm/HelloWorldDataShm.idl
-          helloworld_shm/CMakeLists.txt
-          helloworld_shm/readme.rst
+    helloworld_shm/subscriber_shm.cpp
+    helloworld_shm/HelloWorldDataShm.idl
+    helloworld_shm/CMakeLists.txt
+    helloworld_shm/readme.rst
     DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/helloworld_shm"
     COMPONENT dev)
 
-add_subdirectory(helloworld)
 add_subdirectory(helloworld_shm)
+endif()

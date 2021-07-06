@@ -117,10 +117,13 @@ public:
 
   T* getT()
   {
+#ifdef DDS_HAS_SHM
     // if iox chunk is available, dont deserialize the sample, return the chunk directly
     if (iox_chunk != nullptr && data() == nullptr) {
       return static_cast<T*>(SHIFT_PAST_ICEORYX_HEADER(this->iox_chunk));
-    } else {
+    } else
+#endif  // DDS_HAS_SHM
+    {
       T *t = m_t.load(std::memory_order_acquire);
       if (t == nullptr) {
         t = new T();
