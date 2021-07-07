@@ -582,8 +582,9 @@ ddscxx_sertype<T>::ddscxx_sertype()
 #ifdef DDS_HAS_SHM
   uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
                     DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
-  // TODO(Sumanth), fix this. Currently assuming the type is fixed always
-  flags |= DDSI_SERTYPE_FLAG_FIXED_SIZE;
+  flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
+      DDSI_SERTYPE_FLAG_FIXED_SIZE : 0);
+
   ddsi_sertype_init_flags(
       static_cast<ddsi_sertype*>(this),
       org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
