@@ -21,18 +21,3 @@ install(
   COMPONENT dev)
 
 add_subdirectory(helloworld)
-
-# TODO(Sumanth), get this from cyclonedds project
-set(DDS_HAS_SHM 1)
-if (DDS_HAS_SHM)
-install(
-    FILES helloworld_shm/publisher_shm.cpp
-    helloworld_shm/subscriber_shm.cpp
-    helloworld_shm/HelloWorldDataShm.idl
-    helloworld_shm/CMakeLists.txt
-    helloworld_shm/readme.rst
-    DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/helloworld_shm"
-    COMPONENT dev)
-
-add_subdirectory(helloworld_shm)
-endif()
