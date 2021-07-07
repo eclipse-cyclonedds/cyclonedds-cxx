@@ -26,6 +26,7 @@
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 
 #include "dds/dds.h"
+#include "dds/ddsc/dds_data_allocator.h"
 #include "dds/ddsc/dds_internal_api.h"
 
 namespace org
@@ -185,6 +186,12 @@ bool AnyDataReaderDelegate::init_samples_buffers(
     }
 
     return (c_sample_pointers_size > 0);
+}
+
+bool
+AnyDataReaderDelegate::is_loan_supported(const dds_entity_t reader) const
+{
+  return dds_is_loan_available(reader);
 }
 
 void

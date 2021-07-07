@@ -167,6 +167,7 @@ public:
     void setSample(void* sample);
     void* getSample() const;
 
+    bool is_loan_supported(const dds_entity_t reader) const;
 
     void read_cdr(
             const dds_entity_t reader,
