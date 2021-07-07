@@ -160,7 +160,7 @@ AnyDataWriterDelegate::unregister_instance_cdr(
 bool
 AnyDataWriterDelegate::is_loan_supported(const dds_entity_t writer)
 {
-  return dds_is_loan_available(writer);
+  return is_loan_available(writer);
 }
 
 void
