@@ -461,6 +461,14 @@ dds::pub::detail::DataWriter<T>::init(ObjectDelegate::weak_ref_type weak_ref)
 }
 
 template <typename T>
+bool
+dds::pub::detail::DataWriter<T>::is_loan_supported()
+{
+  this->check();
+  return AnyDataWriterDelegate::is_loan_supported(static_cast<dds_entity_t>(this->ddsc_entity));
+}
+
+template <typename T>
 T&
 dds::pub::detail::DataWriter<T>::loan_sample()
 {

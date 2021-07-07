@@ -69,6 +69,8 @@ public:
 
     void init(ObjectDelegate::weak_ref_type weak_ref);
 
+    bool is_loan_supported();
+
     T& loan_sample();
 
     void return_loan(T& sample);

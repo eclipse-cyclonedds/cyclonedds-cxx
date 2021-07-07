@@ -131,6 +131,9 @@ protected:
           const dds::core::InstanceHandle& handle,
           const dds::core::Time& timestamp);
 
+    bool
+    is_loan_supported(const dds_entity_t writer);
+
     void
     loan_sample(dds_entity_t writer,
           void **sample);

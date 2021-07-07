@@ -22,6 +22,7 @@
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 #include <dds/dds.h>
+#include <dds/ddsc/dds_data_allocator.h>
 
 #include "dds/ddsi/ddsi_sertopic.h"
 #include "dds/ddsi/q_protocol.h"
@@ -154,6 +155,12 @@ AnyDataWriterDelegate::unregister_instance_cdr(
     const dds::core::Time& timestamp)
 {
     this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_UNREGISTER);
+}
+
+bool
+AnyDataWriterDelegate::is_loan_supported(const dds_entity_t writer)
+{
+  return dds_is_loan_available(writer);
 }
 
 void
