@@ -16,7 +16,7 @@
 #include "iceoryx_posh/testing/roudi_gtest.hpp"
 #include "HelloWorldData.hpp"
 #include "Space.hpp"
-#include "Bounded.hpp"
+#include "Serialization.hpp"
 
 #define EXPECT_THROW_EXCEPTION(statement, error_msg) \
   ASSERT_THROW(statement, dds::core::Exception); \
