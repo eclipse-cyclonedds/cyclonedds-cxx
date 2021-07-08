@@ -978,6 +978,21 @@ process_union(
     return IDL_RETCODE_NO_MEMORY;
 
   if (revisit) {
+    // Force the discriminant value to be the actual one read from the CDR, not the
+    // default value associated with the setter we used.  E.g.:
+    //   union U switch (long) {
+    //     case 1: case 2: long a;
+    //     default: string b;
+    //   };
+    // setting a value with a(...) will initialize the discriminant to 1, even when
+    // the intended discrimant value is 2; the same problem exists with the default
+    // case, as well as when where there is no "default:" but the discrimant value
+    // doesn't map to any case.
+    //
+    // FIXME: for the vast majority of the unions, this doesn't come into play this
+    // simply wastes time.
+    putf(&streams->read, "  instance._d(d);\n");
+
     if (putf(&streams->max, pfmt)
      || print_constructed_type_close(user_data, node))
       return IDL_RETCODE_NO_MEMORY;
