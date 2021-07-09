@@ -16,9 +16,7 @@ idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldDat
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
-# TODO(Sumanth), get this from cyclonedds project
-set(DDS_HAS_SHM 1)
-if (DDS_HAS_SHM AND NOT WIN32)
+if (DDSCXX_HAS_SHM)
   find_package(iceoryx_posh QUIET)
   find_package(iceoryx_posh_roudi_environment QUIET)
   if(iceoryx_posh_roudi_environment_FOUND)

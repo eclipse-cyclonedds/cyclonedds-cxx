@@ -117,12 +117,12 @@ public:
 
   T* getT()
   {
-#ifdef DDS_HAS_SHM
+#ifdef DDSCXX_HAS_SHM
     // if iox chunk is available, dont deserialize the sample, return the chunk directly
     if (iox_chunk != nullptr && data() == nullptr) {
       return static_cast<T*>(SHIFT_PAST_ICEORYX_HEADER(this->iox_chunk));
     } else
-#endif  // DDS_HAS_SHM
+#endif  // DDSCXX_HAS_SHM
     {
       T *t = m_t.load(std::memory_order_acquire);
       if (t == nullptr) {
@@ -517,7 +517,7 @@ void serdata_get_keyhash(
   }
 }
 
-#ifdef DDS_HAS_SHM
+#ifdef DDSCXX_HAS_SHM
 template<typename T>
 uint32_t serdata_iox_size(const struct ddsi_serdata* d)
 {
@@ -579,7 +579,7 @@ template <typename T>
 ddscxx_sertype<T>::ddscxx_sertype()
   : ddsi_sertype{}
 {
-#ifdef DDS_HAS_SHM
+#ifdef DDSCXX_HAS_SHM
   uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
                     DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
   flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
