@@ -236,6 +236,9 @@ if(ENABLE_SHM AND NOT WIN32)
   endif()
 endif()
 
+message(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(features.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/src/ddscxx/include/dds/features.hpp")
+
 add_subdirectory(src)
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
