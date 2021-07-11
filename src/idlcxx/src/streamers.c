@@ -991,7 +991,8 @@ process_union(
     //
     // FIXME: for the vast majority of the unions, this doesn't come into play this
     // simply wastes time.
-    putf(&streams->read, "  instance._d(d);\n");
+    if (putf(&streams->read, "  instance._d(d);\n"))
+      return IDL_RETCODE_NO_MEMORY;
 
     if (putf(&streams->max, pfmt)
      || print_constructed_type_close(user_data, node))
