@@ -169,10 +169,10 @@ private:
 };
 
 template <typename T, typename SamplesFWIterator>
-class SamplesFWInteratorHolder : public SamplesHolder
+class SamplesFWIteratorHolder : public SamplesHolder
 {
 public:
-    SamplesFWInteratorHolder(SamplesFWIterator& it) : iterator(it), size(0)
+    SamplesFWIteratorHolder(SamplesFWIterator& it) : iterator(it), size(0)
     {
     }
 
