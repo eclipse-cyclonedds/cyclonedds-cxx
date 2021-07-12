@@ -670,7 +670,7 @@ template<typename SamplesFWIterator>
 uint32_t
 dds::sub::detail::DataReader<T>::read(SamplesFWIterator samples, uint32_t max_samples)
 {
-    dds::sub::detail::SamplesFWInteratorHolder<T, SamplesFWIterator> holder(samples);
+    dds::sub::detail::SamplesFWIteratorHolder<T, SamplesFWIterator> holder(samples);
 
     this->AnyDataReaderDelegate::read(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, max_samples);
 
@@ -682,7 +682,7 @@ template<typename SamplesFWIterator>
 uint32_t
 dds::sub::detail::DataReader<T>::take(SamplesFWIterator samples, uint32_t max_samples)
 {
-    dds::sub::detail::SamplesFWInteratorHolder<T, SamplesFWIterator> holder(samples);
+    dds::sub::detail::SamplesFWIteratorHolder<T, SamplesFWIterator> holder(samples);
 
     this->AnyDataReaderDelegate::take(static_cast<dds_entity_t>(this->ddsc_entity), this->status_filter_, holder, max_samples);
 
@@ -1099,7 +1099,7 @@ uint32_t
 dds::sub::detail::DataReader<T>::read(SamplesFWIterator samples,
               uint32_t max_samples, const Selector& selector)
 {
-    dds::sub::detail::SamplesFWInteratorHolder<T, SamplesFWIterator> holder(samples);
+    dds::sub::detail::SamplesFWIteratorHolder<T, SamplesFWIterator> holder(samples);
     max_samples = std::min(max_samples, selector.max_samples_);
 
     switch(selector.mode) {
@@ -1149,7 +1149,7 @@ uint32_t
 dds::sub::detail::DataReader<T>::take(SamplesFWIterator samples,
               uint32_t max_samples, const Selector& selector)
 {
-    dds::sub::detail::SamplesFWInteratorHolder<T, SamplesFWIterator> holder(samples);
+    dds::sub::detail::SamplesFWIteratorHolder<T, SamplesFWIterator> holder(samples);
     max_samples = std::min(max_samples, selector.max_samples_);
 
     switch(selector.mode) {
