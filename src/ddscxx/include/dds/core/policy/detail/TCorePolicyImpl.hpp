@@ -869,9 +869,9 @@ const dds::core::Duration TLiveliness<D>::lease_duration() const
 }
 
 template <typename D>
-TLiveliness<D> TLiveliness<D>::Automatic()
+TLiveliness<D> TLiveliness<D>::Automatic(const dds::core::Duration& lease_duration)
 {
-    return TLiveliness(dds::core::policy::LivelinessKind::AUTOMATIC, dds::core::Duration::infinite());
+    return TLiveliness(dds::core::policy::LivelinessKind::AUTOMATIC, lease_duration);
 }
 
 template <typename D>
