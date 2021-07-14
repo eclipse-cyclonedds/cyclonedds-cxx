@@ -183,7 +183,7 @@ TEST_F(Bounds, strings)
     char arr[16];
     str.set_buffer(arr);
     write(str,uint32_t(0));
-    str.position(0);
+    str.reset_position();
 
     Bounded::Msg msg;
     read(str, msg);

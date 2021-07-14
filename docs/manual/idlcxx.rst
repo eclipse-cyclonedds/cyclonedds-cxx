@@ -67,6 +67,8 @@ std::vector:
 
 - resize
 
+- data
+
 - operator==
 
 - operator[]
@@ -110,7 +112,7 @@ std::string:
 
 - assign
 
-  - the variant using two input iterators specifying the range to initialize with
+  - the variant taking an input pointer and a length
 
 - operator==
 
@@ -151,6 +153,8 @@ std::array:
 - support auto-range for loops
 
   - having begin() and end() functions returning iterators to the begin and end of the array
+
+- the function data()
 
 The command line options for custom array containers are:
 
