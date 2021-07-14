@@ -19,4 +19,45 @@ module Endianness
     unsigned long l;
   };
 
+  struct Seqs
+  {
+    sequence<boolean> b_seq;
+    sequence<char> c_seq;
+    sequence<short> s_seq;
+    sequence<long> l_seq;
+    sequence<long long> ll_seq;
+  };
+
+  enum test_enum {
+    zeroth,
+    first,
+    second,
+    third,
+    fourth,
+    fifth
+  };
+
+  struct Enums
+  {
+    test_enum e_1, e_arr[4];
+  };
+
+  struct SeqEnums
+  {
+    sequence<test_enum> e_seq;
+  };
+
+  union U switch (long) {
+    case 0:
+    case 3:
+    case 6: double d;
+    case 1:
+    case 4:
+    case 7: string str;
+    default: short s;
+  };
+
+  struct UnionStr {
+    U u;
+  };
 };

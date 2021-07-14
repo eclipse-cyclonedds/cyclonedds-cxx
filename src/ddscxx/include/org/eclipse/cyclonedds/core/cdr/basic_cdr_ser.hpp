@@ -41,10 +41,9 @@ public:
    *
    * Basically a pass through for the cdr_stream base class.
    *
-   * @param[in] end The endianness to set for the data stream, default to the local system endianness.
    * @param[in] ignore_faults Bitmask for ignoring faults, can be composed of bit fields from the serialization_status enumerator.
    */
-  basic_cdr_stream(endianness end = native_endianness(), uint64_t ignore_faults = 0x0) : cdr_stream(end, 8, ignore_faults) { ; }
+  basic_cdr_stream(uint64_t ignore_faults = 0x0) : cdr_stream(8, ignore_faults) { ; }
 };
 
 /**
@@ -62,7 +61,7 @@ public:
  *
  * Aligns the stream to the alignment of type T.
  * Reads the value from the current position of the stream str into
- * toread, will swap bytes if necessary.
+ * toread.
  * Moves the cursor of the stream by the size of T.
  * This function is only enabled for arithmetic types and enums.
  *
@@ -70,17 +69,65 @@ public:
  * @param[out] toread The variable to read into.
  */
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
-void read(basic_cdr_stream &str, T& toread)
+inline void read(basic_cdr_stream &str, T& toread)
 {
   if (str.abort_status())
     return;
 
   str.align(sizeof(T), false);
 
-  char *cursor = str.get_cursor();
-  assert(cursor);
-  transfer_and_swap(*(reinterpret_cast<const T*>(cursor)), toread, str.swap_endianness());
+  toread = *static_cast<T*>(str.get_cursor());
+
   str.incr_position(sizeof(T));
+}
+
+/**
+ * @brief
+ * Primitive type read function, byteswap version.
+ *
+ * Same as read(), with an additional byteswap at the end.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[out] toread The variable to read into.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void read_swapped(basic_cdr_stream &str, T& toread)
+{
+  read(str, toread);
+
+  byte_swap(toread);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void read_many(basic_cdr_stream &str, T *out, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  str.align(sizeof(T), false);
+
+  T *in = static_cast<T*>(str.get_cursor());
+
+  memcpy(out, in, sizeof(T)*N);
+
+  str.incr_position(sizeof(T)*N);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void read_many_swapped(basic_cdr_stream &str, T *out, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  str.align(sizeof(T), false);
+
+  T *in = static_cast<T*>(str.get_cursor());
+  for (size_t i = 0; i < N; i++, out++, in++) {
+    *out = *in;
+    byte_swap(*out);
+  }
+
+  str.incr_position(sizeof(T)*N);
 }
 
 /**
@@ -97,17 +144,74 @@ void read(basic_cdr_stream &str, T& toread)
  * @param[in] towrite The variable to write.
  */
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
-void write(basic_cdr_stream& str, const T& towrite)
+inline void write(basic_cdr_stream& str, const T& towrite)
 {
   if (str.abort_status())
     return;
 
   str.align(sizeof(T), true);
 
-  char *cursor = str.get_cursor();
-  assert(cursor);
-  transfer_and_swap(towrite, *(reinterpret_cast<T*>(cursor)), str.swap_endianness());
+  auto out = static_cast<T*>(str.get_cursor());
+
+  *out = towrite;
+
   str.incr_position(sizeof(T));
+}
+
+/**
+ * @brief
+ * Primitive type write function, byteswap version.
+ *
+ * Same as write(), with an additional byteswap at the end.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[in] towrite The variable to write.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void write_swapped(basic_cdr_stream& str, const T& towrite)
+{
+  if (str.abort_status())
+    return;
+
+  str.align(sizeof(T), true);
+
+  auto out = static_cast<T*>(str.get_cursor());
+
+  *out = towrite;
+
+  byte_swap(*out);
+
+  str.incr_position(sizeof(T));
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void write_many(basic_cdr_stream& str, const T* in, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  T *out = static_cast<T*>(str.get_cursor());
+
+  memcpy(out, in, sizeof(T)*N);
+
+  str.incr_position(sizeof(T)*N);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void write_many_swapped(basic_cdr_stream& str, const T* in, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  str.align(sizeof(T), true);
+
+  T *out = static_cast<T*>(str.get_cursor());
+  for (size_t i = 0; i < N; i++, out++, in++) {
+    *out = *in;
+    byte_swap(*out);
+  }
+
+  str.incr_position(sizeof(T)*N);
 }
 
 /**
@@ -123,7 +227,7 @@ void write(basic_cdr_stream& str, const T& towrite)
  * @param[in] toincr The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
  */
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
-void move(basic_cdr_stream& str, const T& toincr)
+inline void move(basic_cdr_stream& str, const T& toincr)
 {
   if (str.abort_status())
     return;
@@ -133,6 +237,40 @@ void move(basic_cdr_stream& str, const T& toincr)
   str.align(sizeof(T), false);
 
   str.incr_position(sizeof(T));
+}
+
+/**
+ * @brief
+ * Primitive type cursor move function, byteswap version.
+ *
+ * Same as move(), with an additional byteswap at the end.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] toincr The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void move_swapped(basic_cdr_stream& str, const T& toincr)
+{
+  move(str, toincr);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void move_many(basic_cdr_stream& str, const T* toincr, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  (void)toincr;
+
+  str.align(sizeof(T), false);
+
+  str.incr_position(sizeof(T)*N);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void move_many_swapped(basic_cdr_stream& str, const T* toincr, size_t N)
+{
+  move_many(str, toincr, N);
 }
 
 /**
@@ -152,7 +290,7 @@ void move(basic_cdr_stream& str, const T& toincr)
  * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
  */
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
-void max(basic_cdr_stream& str, const T& max_sz)
+inline void max(basic_cdr_stream& str, const T& max_sz)
 {
   if (str.abort_status())
     return;
@@ -162,6 +300,40 @@ void max(basic_cdr_stream& str, const T& max_sz)
 
   move(str, max_sz);
 }
+
+/**
+ * @brief
+ * Primitive type max stream move function.
+ *
+ * Same as max(), with an additional byteswap at the end.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void max_swapped(basic_cdr_stream& str, const T& max_sz)
+{
+  max(str, max_sz);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void max_many(basic_cdr_stream& str, const T* max_sz, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  if (str.position() == SIZE_MAX)
+    return;
+
+  move_many(str, max_sz, N);
+}
+
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
+inline void max_many_swapped(basic_cdr_stream& str, const T* max_sz, size_t N)
+{
+  max_many(str, max_sz, N);
+}
+
 
 /**
  * @brief
@@ -182,8 +354,30 @@ void max(basic_cdr_stream& str, const T& max_sz)
  * @param[out] toread The variable to read into.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void read(basic_cdr_stream& str, T& toread) {
+inline void read(basic_cdr_stream& str, T& toread) {
   read(str, *reinterpret_cast<uint32_t*>(&toread));
+}
+
+/**
+ * @brief
+ * Reads the byteswapped value of the enum from the stream.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[out] toread The variable to read into.
+ */
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void read_swapped(basic_cdr_stream& str, T& toread) {
+  read_swapped(str, *reinterpret_cast<uint32_t*>(&toread));
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void read_many(basic_cdr_stream& str, T* toread, size_t N) {
+  read_many(str, reinterpret_cast<uint32_t*>(toread), N);
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void read_many_swapped(basic_cdr_stream& str, T* toread, size_t N) {
+  read_many_swapped(str, reinterpret_cast<uint32_t*>(toread), N);
 }
 
 /**
@@ -194,8 +388,30 @@ void read(basic_cdr_stream& str, T& toread) {
  * @param [in] towrite The variable to write.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void write(basic_cdr_stream& str, const T& towrite) {
+inline void write(basic_cdr_stream& str, const T& towrite) {
   write(str, uint32_t(towrite));
+}
+
+/**
+ * @brief
+ * Writes the byteswapped value of the enum to the stream.
+ *
+ * @param [in, out] str The stream which is written to.
+ * @param [in] towrite The variable to write.
+ */
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void write_swapped(basic_cdr_stream& str, const T& towrite) {
+  write_swapped(str, uint32_t(towrite));
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void write_many(basic_cdr_stream& str, const T* towrite, size_t N) {
+  write_many(str, static_cast<uint32_t*>(towrite), N);
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void write_many_swapped(basic_cdr_stream& str, const T* towrite, size_t N) {
+  write_many_swapped(str, static_cast<uint32_t*>(towrite), N);
 }
 
 /**
@@ -206,8 +422,30 @@ void write(basic_cdr_stream& str, const T& towrite) {
  * @param[in] toincr The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void move(basic_cdr_stream& str, const T& toincr) {
+inline void move(basic_cdr_stream& str, const T& toincr) {
   move(str, uint32_t(toincr));
+}
+
+/**
+ * @brief
+ * Moves the cursor of the stream by the size the enum would take up (byteswapped version).
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] toincr The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ */
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void move_swapped(basic_cdr_stream& str, const T& toincr) {
+  move_swapped(str, uint32_t(toincr));
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void move_many(basic_cdr_stream& str, const T* toincr, size_t N) {
+  move_many(str, static_cast<uint32_t*>(toincr), N);
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void move_many_swapped(basic_cdr_stream& str, const T* toincr, size_t N) {
+  move_many_swapped(str, static_cast<uint32_t*>(toincr), N);
 }
 
 /**
@@ -218,8 +456,30 @@ void move(basic_cdr_stream& str, const T& toincr) {
  * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void max(basic_cdr_stream& str, const T& max_sz) {
+inline void max(basic_cdr_stream& str, const T& max_sz) {
   max(str, uint32_t(max_sz));
+}
+
+/**
+ * @brief
+ * Moves the cursor of the stream by the size the enum would take up (maximum size and byteswapped version).
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ */
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void max_swapped(basic_cdr_stream& str, const T& max_sz) {
+  max_swapped(str, uint32_t(max_sz));
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void max_many(basic_cdr_stream& str, const T* max_sz, size_t N) {
+  max_many(str, static_cast<uint32_t*>(max_sz), N);
+}
+
+template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+inline void max_many_swapped(basic_cdr_stream& str, const T* max_sz, size_t N) {
+  max_many_swapped(str, static_cast<uint32_t*>(max_sz), N);
 }
 
  /**
@@ -266,7 +526,48 @@ void read_string(basic_cdr_stream& str, T& toread, size_t N)
       return;
 
   auto cursor = str.get_cursor();
-  toread.assign(cursor, cursor + std::min<size_t>(string_length - 1, N ? N : SIZE_MAX));  //remove 1 for terminating NULL
+  toread.assign(static_cast<char*>(cursor), std::min<size_t>(string_length - 1, N ? N : SIZE_MAX));  //remove 1 for terminating NULL
+
+  str.incr_position(string_length);
+
+  //aligned to chars
+  str.alignment(1);
+}
+
+/**
+ * @brief
+ * Bounded string read function, byteswapped version.
+ *
+ * Same as read_string(), only that the string length is byte swapped.
+ *
+ * @param[in, out] str The stream to read from.
+ * @param[out] toread The string to read to.
+ * @param[in] N The maximum number of characters to read from the stream.
+ */
+template<typename T>
+void read_string_swapped(basic_cdr_stream& str, T& toread, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  uint32_t string_length = 0;
+
+  read_swapped(str, string_length);
+
+  if (string_length == 0 &&
+      str.status(serialization_status::illegal_field_value))
+      return;
+
+  //the string length in the CDR stream includes the terminating NULL
+  //therefore the checks on the string length decrease it by 1
+
+  if (N &&
+      string_length - 1 > N &&
+      str.status(serialization_status::read_bound_exceeded))
+      return;
+
+  auto cursor = str.get_cursor();
+  toread.assign(static_cast<char*>(cursor), std::min<size_t>(string_length - 1, N ? N : SIZE_MAX));  //remove 1 for terminating NULL
 
   str.incr_position(string_length);
 
@@ -314,6 +615,42 @@ void write_string(basic_cdr_stream& str, const T& towrite, size_t N)
 
 /**
  * @brief
+ * Bounded string write function, byteswapped version.
+ *
+ * Same as write_string(), only that the string length is byte swapped.
+ *
+ * @param[in, out] str The stream to write to.
+ * @param[in] towrite The string to write.
+ * @param[in] N The maximum number of characters to write to the stream.
+ */
+template<typename T>
+void write_string_swapped(basic_cdr_stream& str, const T& towrite, size_t N)
+{
+  if (str.abort_status())
+    return;
+
+  size_t string_length = towrite.length();
+  if (N &&
+      string_length > N) {
+    if (str.status(serialization_status::write_bound_exceeded))
+      return;
+  }
+
+  //add 1 extra for terminating NULL
+  string_length++;
+
+  write_swapped(str, uint32_t(string_length));
+
+  memcpy(str.get_cursor(), towrite.c_str(), string_length);
+
+  str.incr_position(string_length);
+
+  //aligned to chars
+  str.alignment(1);
+}
+
+/**
+ * @brief
  * Bounded string cursor move function.
  *
  * Attempts to move the cursor for the length field, where the bound is checked.
@@ -346,6 +683,22 @@ void move_string(basic_cdr_stream& str, const T& toincr, size_t N)
 
   //aligned to chars
   str.alignment(1);
+}
+
+/**
+ * @brief
+ * Bounded string cursor move function, byteswapped version.
+ *
+ * Same as move_string().
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] toincr The string used to move the cursor.
+ * @param[in] N The maximum number of characters in the string which the stream is moved by.
+ */
+template<typename T>
+inline void move_string_swapped(basic_cdr_stream& str, const T& toincr, size_t N)
+{
+  move_string(str, toincr, N);
 }
 
 /**
@@ -387,6 +740,22 @@ void max_string(basic_cdr_stream& str, const T& max_sz, size_t N)
     //aligned to chars
     str.alignment(1);
   }
+}
+
+/**
+ * @brief
+ * Bounded string cursor max move function, byteswapped version.
+ *
+ * Same as max_string().
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] max_sz The string used to move the cursor.
+ * @param[in] N The maximum number of characters in the string which the stream is moved by.
+ */
+template<typename T>
+inline void max_string_swapped(basic_cdr_stream& str, const T& max_sz, size_t N)
+{
+  max_string(str, max_sz, N);
 }
 
 }
