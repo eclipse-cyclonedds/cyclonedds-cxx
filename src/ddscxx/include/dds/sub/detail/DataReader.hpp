@@ -72,6 +72,8 @@ public:
     dds::sub::status::DataState default_filter_state();
     void default_filter_state(const dds::sub::status::DataState& state);
 
+    bool is_loan_supported();
+
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> read_cdr();
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> take_cdr();
 

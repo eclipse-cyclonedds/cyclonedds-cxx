@@ -461,6 +461,32 @@ dds::pub::detail::DataWriter<T>::init(ObjectDelegate::weak_ref_type weak_ref)
 }
 
 template <typename T>
+bool
+dds::pub::detail::DataWriter<T>::is_loan_supported()
+{
+  this->check();
+  return AnyDataWriterDelegate::is_loan_supported(static_cast<dds_entity_t>(this->ddsc_entity));
+}
+
+template <typename T>
+T&
+dds::pub::detail::DataWriter<T>::loan_sample()
+{
+    T *sample;
+    this->check();
+    AnyDataWriterDelegate::loan_sample(static_cast<dds_entity_t>(this->ddsc_entity), reinterpret_cast<void **>(&sample));
+    return *sample;
+}
+
+template <typename T>
+void
+dds::pub::detail::DataWriter<T>::return_loan(T& sample)
+{
+    this->check();
+    AnyDataWriterDelegate::return_loan(static_cast<dds_entity_t>(this->ddsc_entity), &sample);
+}
+
+template <typename T>
 void
 dds::pub::detail::DataWriter<T>::write_cdr(const org::eclipse::cyclonedds::topic::CDRBlob& sample)
 {

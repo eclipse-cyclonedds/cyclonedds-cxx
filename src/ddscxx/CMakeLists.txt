@@ -70,6 +70,7 @@ else()
   add_library(ddscxx ${sources})
 endif()
 
+
 # SOVERSION should increase on incompatible ABI change
 set_target_properties(ddscxx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 

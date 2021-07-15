@@ -610,6 +610,14 @@ dds::sub::detail::DataReader<T>::default_filter_state(const dds::sub::status::Da
 }
 
 template <typename T>
+bool
+dds::sub::detail::DataReader<T>::is_loan_supported()
+{
+  this->check();
+  return this->AnyDataReaderDelegate::is_loan_supported(static_cast<dds_entity_t>(this->ddsc_entity));
+}
+
+template <typename T>
 dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>
 dds::sub::detail::DataReader<T>::read_cdr()
 {

@@ -783,7 +783,8 @@ THistory<D> THistory<D>::KeepAll()
 template <typename D>
 THistory<D> THistory<D>::KeepLast(uint32_t depth)
 {
-    return THistory(dds::core::policy::HistoryKind::KEEP_LAST, depth);
+    return THistory(dds::core::policy::HistoryKind::KEEP_LAST,
+                    static_cast<int32_t>(depth));
 }
 
 //TResourceLimits
