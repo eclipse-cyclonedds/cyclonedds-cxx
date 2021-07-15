@@ -580,11 +580,12 @@ template <typename T>
 ddscxx_sertype<T>::ddscxx_sertype()
   : ddsi_sertype{}
 {
-#ifdef DDSCXX_HAS_SHM
   uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
                     DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
+#ifdef DDSCXX_HAS_SHM
   flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
       DDSI_SERTYPE_FLAG_FIXED_SIZE : 0);
+#endif
 
   ddsi_sertype_init_flags(
       static_cast<ddsi_sertype*>(this),
@@ -592,15 +593,12 @@ ddscxx_sertype<T>::ddscxx_sertype()
       &ddscxx_sertype<T>::ddscxx_sertype_ops,
       &ddscxx_serdata<T>::ddscxx_serdata_ops,
       flags);
+
+#ifdef DDSCXX_HAS_SHM
+  // update the size of the type, if its fixed
+  // this needs to be done after sertype init! TODO need an API in Cyclone DDS to set this
   this->iox_size =
       static_cast<uint32_t>(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
-#else
-  ddsi_sertype_init(
-    static_cast<ddsi_sertype*>(this),
-    org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
-    &ddscxx_sertype<T>::ddscxx_sertype_ops,
-    &ddscxx_serdata<T>::ddscxx_serdata_ops,
-    org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless());
 #endif
 }
 

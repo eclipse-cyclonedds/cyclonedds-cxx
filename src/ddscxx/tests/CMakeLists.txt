@@ -16,12 +16,10 @@ idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldDat
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
-if (DDSCXX_HAS_SHM)
-  find_package(iceoryx_posh QUIET)
-  find_package(iceoryx_posh_roudi_environment QUIET)
-  if(iceoryx_posh_roudi_environment_FOUND)
-    set(SHM_TESTS ${iceoryx_posh_roudi_environment_FOUND})
-  endif()
+if (ENABLE_SHM)
+  # find required packages for SHM tests
+  find_package(iceoryx_posh REQUIRED)
+  find_package(iceoryx_posh_roudi_environment REQUIRED)
 endif()
 
 set(sources
@@ -51,7 +49,8 @@ set(sources
   Condition.cpp
   Util.cpp)
 
-if (SHM_TESTS)
+if (ENABLE_SHM)
+  # Add shared memory tests
   list(APPEND sources SharedMemory.cpp)
 endif()
 
@@ -66,12 +65,21 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
 endif()
 
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD 17)
-target_link_libraries(ddscxx_tests CycloneDDS-CXX::ddscxx ddscxx_test_types GTest::GTest GTest::Main)
-if (SHM_TESTS)
-  target_link_libraries(ddscxx_tests
+set(TEST_LINK_LIBS
+    CycloneDDS-CXX::ddscxx
+    ddscxx_test_types
+    GTest::GTest
+    GTest::Main
+)
+if (ENABLE_SHM)
+  # add libraries required for SHM tests
+  list(APPEND TEST_LINK_LIBS
       iceoryx_posh::iceoryx_posh_roudi
       iceoryx_posh_testing::iceoryx_posh_testing)
 endif()
+
+target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS})
+
 gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources} TEST_LIST tests)
 
 # Ensure shared libraries are found

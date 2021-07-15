@@ -186,8 +186,8 @@ option(BUILD_TESTING "Build the testing tree." OFF)
 # Disable building the examples by default until the Idlpp-cxx has been
 # deprecated.
 option(BUILD_EXAMPLES "Build examples." OFF)
-# Enable SHM by default
-option(ENABLE_SHM "Enable shared memory support" ON)
+# Disable SHM by default, this will set based on the SHM support in Cyclone DDS
+option(ENABLE_SHM "Enable shared memory support" OFF)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -223,17 +223,19 @@ install(
 
 find_package(CycloneDDS REQUIRED)
 
-if(ENABLE_SHM AND NOT WIN32)
-  get_target_property(cyclone_support_shm
-      CycloneDDS::ddsc CYCLONE_DDS_SHM_SUPPORT_IS_AVAILABLE)
-  if(cyclone_support_shm)
-    set(DDSCXX_HAS_SHM "1")
-    message(STATUS "CycloneDDSCXX is build with shared memory support!")
-  else()
-    message(WARNING
-        "CycloneDDS is not build with shared memory support!\n"
-        "CycloneDDSCXX will be compiled with out shared memory support!")
-  endif()
+get_target_property(cyclone_support_shm
+    CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
+if(cyclone_support_shm)
+  set(ENABLE_SHM ON)
+  set(DDSCXX_HAS_SHM "1")
+  message(STATUS "CycloneDDSCXX is build with shared memory support!")
+elseif(ENABLE_SHM AND NOT cyclone_support_shm)
+  message(FATAL_ERROR
+      "SHM support in CycloneDDSCXX is requested, but CycloneDDS is not build with shared memory support!")
+endif()
+
+if (ENABLE_SHM)
+  find_package(iceoryx_binding_c REQUIRED)
 endif()
 
 message(${CMAKE_CURRENT_BINARY_DIR})

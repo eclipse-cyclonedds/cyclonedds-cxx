@@ -97,12 +97,16 @@ public:
   void CreateParticipant()
   {
     if (this->participant == dds::core::null) {
-      // configure cyclone to enable shared memory communication
-      ddsrt_setenv(
-        "CYCLONEDDS_URI",
-        "<CycloneDDS><Domain><SharedMemory><Enable>true</Enable><SubQueueCapacity>256</SubQueueCapacity><SubHistoryRequest>16</SubHistoryRequest><PubHistoryCapacity>16</PubHistoryCapacity><LogLevel>verbose</LogLevel></SharedMemory></Domain></CycloneDDS>");
+      // configuration to enable shared memory communication
+      static const std::string shm_config {
+        "<CycloneDDS><Domain><SharedMemory><Enable>true</Enable><SubQueueCapacity>256</SubQueueCapacity><SubHistoryRequest>16</SubHistoryRequest><PubHistoryCapacity>16</PubHistoryCapacity><LogLevel>verbose</LogLevel></SharedMemory></Domain></CycloneDDS>"};
+
       this->participant = dds::domain::DomainParticipant(
-        org::eclipse::cyclonedds::domain::default_id());
+        0,
+        dds::domain::DomainParticipant::default_participant_qos(),
+        nullptr,
+        dds::core::status::StatusMask::none(),
+        shm_config);
       ASSERT_NE(this->participant, dds::core::null);
     }
   }
@@ -179,6 +183,7 @@ public:
         samples.push_back(loaned_sample);
         // write sample (which will also release the loan to the middleware)
         writer.write(loaned_sample);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
       return samples;
     } else {
