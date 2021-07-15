@@ -225,7 +225,7 @@ find_package(CycloneDDS REQUIRED)
 
 if(ENABLE_SHM AND NOT WIN32)
   get_target_property(cyclone_support_shm
-      CycloneDDS::ddsc CYCLONE_DDS_SHM_SUPPORT_IS_AVAILABLE)
+      CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
   if(cyclone_support_shm)
     set(DDSCXX_HAS_SHM "1")
     message(STATUS "CycloneDDSCXX is build with shared memory support!")
