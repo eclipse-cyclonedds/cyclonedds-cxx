@@ -20,6 +20,7 @@ set(sources
     src/dds/core/status/State.cpp
     src/dds/domain/discovery.cpp
     src/dds/domain/find.cpp
+    src/dds/topic/BuiltinTopic.cpp
     src/dds/pub/pubdiscovery.cpp
     src/dds/sub/subdiscovery.cpp
     src/dds/sub/subfind.cpp
@@ -59,6 +60,7 @@ set(sources
     src/org/eclipse/cyclonedds/sub/qos/SubscriberQosDelegate.cpp
     src/org/eclipse/cyclonedds/topic/find.cpp
     src/org/eclipse/cyclonedds/topic/hash.cpp
+    src/org/eclipse/cyclonedds/topic/BuiltinDataTopic.cpp
     src/org/eclipse/cyclonedds/topic/AnyTopicDelegate.cpp
     src/org/eclipse/cyclonedds/topic/FilterDelegate.cpp
     src/org/eclipse/cyclonedds/topic/TopicDescriptionDelegate.cpp

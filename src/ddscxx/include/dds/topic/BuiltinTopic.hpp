@@ -20,6 +20,7 @@
  */
 
 #include <dds/topic/detail/BuiltinTopic.hpp>
+#include <dds/topic/TopicTraits.hpp>
 
 namespace dds
 {
@@ -34,8 +35,39 @@ typedef dds::topic::detail::PublicationBuiltinTopicData PublicationBuiltinTopicD
 
 typedef dds::topic::detail::SubscriptionBuiltinTopicData SubscriptionBuiltinTopicData;
 
-}
-}
+template <>
+Topic<ParticipantBuiltinTopicData, detail::Topic>::Topic(
+    const dds::domain::DomainParticipant& dp,
+    const std::string& topic_name);
 
+template <>
+Topic<TopicBuiltinTopicData, detail::Topic>::Topic(
+    const dds::domain::DomainParticipant& dp,
+    const std::string& topic_name);
+
+template <>
+Topic<PublicationBuiltinTopicData, detail::Topic>::Topic(
+    const dds::domain::DomainParticipant& dp,
+    const std::string& topic_name);
+
+template <>
+Topic<SubscriptionBuiltinTopicData, detail::Topic>::Topic(
+    const dds::domain::DomainParticipant& dp,
+    const std::string& topic_name);
+
+} /* topic */
+} /* dds */
+
+REGISTER_TOPIC_TYPE(ParticipantBuiltinTopicData)
+REGISTER_TOPIC_TYPE(TopicBuiltinTopicData)
+REGISTER_TOPIC_TYPE(PublicationBuiltinTopicData)
+REGISTER_TOPIC_TYPE(SubscriptionBuiltinTopicData)
+
+template<typename T>
+using IsBuiltinTopicType = std::enable_if_t<
+        std::is_same<T,dds::topic::ParticipantBuiltinTopicData>::value
+     || std::is_same<T,dds::topic::TopicBuiltinTopicData>::value
+     || std::is_same<T,dds::topic::SubscriptionBuiltinTopicData>::value
+     || std::is_same<T,dds::topic::PublicationBuiltinTopicData>::value, bool >;
 
 #endif /* OMG_DDS_TOPIC_BUILTIN_TOPIC_HPP_ */

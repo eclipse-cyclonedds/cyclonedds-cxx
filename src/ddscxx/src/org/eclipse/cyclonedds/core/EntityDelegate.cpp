@@ -62,6 +62,12 @@ org::eclipse::cyclonedds::core::EntityDelegate::~EntityDelegate()
 
 void org::eclipse::cyclonedds::core::EntityDelegate::enable()
 {
+  if (DDS_BUILTIN_TOPIC_DCPSPARTICIPANT == this->ddsc_entity
+   || DDS_BUILTIN_TOPIC_DCPSTOPIC == this->ddsc_entity
+   || DDS_BUILTIN_TOPIC_DCPSSUBSCRIPTION == this->ddsc_entity
+   || DDS_BUILTIN_TOPIC_DCPSPUBLICATION == this->ddsc_entity)
+    return;
+
   dds_return_t ret;
   enabled_ = true;
   ret = dds_set_listener (this->ddsc_entity, this->listener_callbacks);

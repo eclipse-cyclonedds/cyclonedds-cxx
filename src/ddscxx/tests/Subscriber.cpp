@@ -230,7 +230,5 @@ TEST_F(Subscriber, use_after_deletion)
 TEST_F(Subscriber, builtin)
 {
     this->CreateSubscriber();
-    ASSERT_THROW({
-        dds::sub::builtin_subscriber(this->participant);
-    }, dds::core::UnsupportedError);
+    ASSERT_NE(dds::sub::builtin_subscriber(this->participant), dds::core::null);
 }

@@ -112,14 +112,7 @@ org::eclipse::cyclonedds::sub::create_builtin_reader(
 {
     dds::sub::qos::DataReaderQos rQos;
 
-    dds::topic::Topic<T> topic =
-            dds::topic::find< dds::topic::Topic<T> >(subscriber.participant(), topic_name);
-    if (topic.is_nil()) {
-        topic = dds::topic::discover< dds::topic::Topic<T> >(subscriber.participant(), topic_name, dds::core::Duration::zero());
-        if (topic.is_nil()) {
-            ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "Could not find builtin topic \"%s\"", topic_name.c_str());
-        }
-    }
+    dds::topic::Topic<T> topic(subscriber.participant(), topic_name);
     subscriber.default_datareader_qos(rQos);
     rQos = topic.qos();
     dds::sub::DataReader<T> reader(subscriber.wrapper(), topic, rQos);
@@ -137,13 +130,13 @@ org::eclipse::cyclonedds::sub::BuiltinSubscriberDelegate::get_builtin_reader(
     org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type builtin_reader;
 
     if (topic_name == "DCPSParticipant") {
-        builtin_reader = create_builtin_reader<dds::topic::ParticipantBuiltinTopicData>(subscriber, topic_name).delegate();
+        builtin_reader = org::eclipse::cyclonedds::sub::create_builtin_reader<dds::topic::ParticipantBuiltinTopicData>(subscriber, topic_name).delegate();
     } else if (topic_name == "DCPSTopic") {
-        builtin_reader = create_builtin_reader<dds::topic::TopicBuiltinTopicData>(subscriber, topic_name).delegate();
+        builtin_reader = org::eclipse::cyclonedds::sub::create_builtin_reader<dds::topic::TopicBuiltinTopicData>(subscriber, topic_name).delegate();
     } else if (topic_name == "DCPSPublication") {
-        builtin_reader = create_builtin_reader<dds::topic::PublicationBuiltinTopicData>(subscriber, topic_name).delegate();
+        builtin_reader = org::eclipse::cyclonedds::sub::create_builtin_reader<dds::topic::PublicationBuiltinTopicData>(subscriber, topic_name).delegate();
     } else if (topic_name == "DCPSSubscription") {
-        builtin_reader = create_builtin_reader<dds::topic::SubscriptionBuiltinTopicData>(subscriber, topic_name).delegate();
+        builtin_reader = org::eclipse::cyclonedds::sub::create_builtin_reader<dds::topic::SubscriptionBuiltinTopicData>(subscriber, topic_name).delegate();
     }
 
     return builtin_reader;
