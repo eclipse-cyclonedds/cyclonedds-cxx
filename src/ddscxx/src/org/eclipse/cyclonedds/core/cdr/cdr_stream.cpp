@@ -35,7 +35,7 @@ size_t cdr_stream::align(size_t newalignment, bool add_zeroes)
 
   size_t tomove = (m_current_alignment - m_position % m_current_alignment) % m_current_alignment;
   if (tomove && add_zeroes && m_buffer) {
-    char *cursor = get_cursor();
+    auto cursor = get_cursor();
     assert(cursor);
     memset(cursor, 0, tomove);
   }

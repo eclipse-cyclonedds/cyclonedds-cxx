@@ -61,25 +61,6 @@ void byte_swap(T& toswap) {
 
 /**
  * @brief
- * Transfer and optional byte swapping function.
- *
- * Will copy a primitive type and optionally do a byte swap.
- *
- * @param[in] from The variable to copy from.
- * @param[out] to The variable to copy to.
- * @param[in] sw If true, then the bytes in to will be swapped after copying.
- */
-template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
-void transfer_and_swap(const T& from, T& to, bool sw) {
-
-  to = from;
-
-  if (sw && sizeof(T) > 1)
-    byte_swap(to);
-}
-
-/**
- * @brief
  * Endianness types.
  *
  * @enum endianness C++ implementation of cyclonedds's DDSRT_ENDIAN endianness defines
@@ -102,6 +83,17 @@ enum class endianness {
  * @retval big_endian If the system is big endian.
  */
 constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
+
+
+/**
+ * @brief
+ * Returns whether a byte swap is necessary for an incoming data set.
+ *
+ * @param[in] remote The remote (incoming) data endianness.
+ *
+ * @return Whether the local and remote datasets have the same endianness.
+ */
+inline bool swap_necessary(endianness remote) {return native_endianness() != remote;}
 
 /**
  * @brief
@@ -137,11 +129,10 @@ public:
      *
      * Sets the stream endianness to end, and maximum alignment to max_align.
      *
-     * @param[in] end The endianness to set for the data stream, default to the local system endianness.
      * @param[in] max_align The maximum size that the stream will align CDR primitives to.
      * @param[in] ignore_faults Bitmask for ignoring faults, can be composed of bit fields from the serialization_status enumerator.
      */
-    cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults) { ; }
+    cdr_stream(size_t max_align, uint64_t ignore_faults = 0x0) : m_max_alignment(max_align), m_fault_mask(~ignore_faults) { ; }
 
     /**
      * @brief
@@ -223,38 +214,7 @@ public:
      * @retval nullptr If the current buffer is not set, or if the cursor offset is not valid.
      * @return The current cursor pointer.
      */
-    char* get_cursor() const { return ((m_position != SIZE_MAX && m_buffer != nullptr) ? (m_buffer + m_position) : nullptr); }
-
-    /**
-     * @brief
-     * Local system endianness getter.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @return The local endianness.
-     */
-    endianness local_endianness() const { return m_local_endianness; }
-
-    /**
-     * @brief
-     * Stream endianness getter.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @return The stream endianness.
-     */
-    endianness stream_endianness() const { return m_stream_endianness; }
-
-    /**
-     * @brief
-     * Determines whether the local and stream endianness are the same.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @retval false If the stream endianness DOES match the local endianness.
-     * @retval true If the stream endianness DOES NOT match the local endianness.
-     */
-    bool swap_endianness() const { return m_stream_endianness != m_local_endianness; }
+    void* get_cursor() const { return ((m_position != SIZE_MAX && m_buffer != nullptr) ? (m_buffer + m_position) : nullptr); }
 
     /**
      * @brief
@@ -307,8 +267,6 @@ public:
     bool abort_status() const { return m_status & m_fault_mask; }
 protected:
 
-    endianness m_stream_endianness, //the endianness of the stream
-        m_local_endianness = native_endianness();  //the local endianness
     size_t m_position = 0,  //the current offset position in the stream
         m_max_alignment,  //the maximum bytes that can be aligned to
         m_current_alignment = 1;  //the current alignment

@@ -12,6 +12,7 @@
 #include <gtest/gtest.h>
 
 #include "dds/dds.hpp"
+#include "Util.hpp"
 #include "Space.hpp"
 
 /**
@@ -56,8 +57,11 @@ public:
         dds::topic::qos::TopicQos topic_qos = this->participant.default_topic_qos();
         topic_qos << dds::core::policy::Reliability::Reliable() <<
                      dds::core::policy::History::KeepAll();
+
+        char topicname[128];
+        create_unique_topic_name("selector_test_topic",topicname,sizeof(topicname));
         this->topic = dds::topic::Topic<Space::Type1>(this->participant,
-                                                      "selector_test_topic",
+                                                      topicname,
                                                       topic_qos);
         ASSERT_NE(this->topic, dds::core::null);
 
