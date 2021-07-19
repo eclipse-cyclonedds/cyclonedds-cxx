@@ -535,7 +535,12 @@ ddsi_serdata * serdata_from_iox_buffer(
     auto d = new ddscxx_serdata<T>(typecmn, kind);
     d->iox_chunk = iox_buffer;
     d->iox_subscriber = sub;
-    // TODO(Sumanth), how to handle key hash?
+
+    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+    const auto& msg = *static_cast<const T*>(d->iox_chunk);
+    d->key_md5_hashed() = to_key(str, msg, d->key());
+    d->setT(&msg);
+    d->populate_hash();
 
     return d;
   }
