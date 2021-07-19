@@ -28,6 +28,15 @@
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 #include "dds/features.hpp"
 
+// We need this to return the loan back to iceoryx
+// TODO(Sumanth) fix this, there should be an API in Cyclone DDS which can return the loan back
+//  to iceoryx, so we don't need to depend on iceoryx directly in the C++ language binding
+#ifdef DDSCXX_HAS_SHM
+extern "C" {
+#include "dds/ddsi/shm_sync.h"
+}
+#endif
+
 template<class streamer, typename T>
 bool to_key(streamer& str, const T& tokey, ddsi_keyhash_t& hash)
 {
@@ -482,7 +491,20 @@ bool serdata_untyped_to_sample(
 template <typename T>
 void serdata_free(ddsi_serdata* dcmn)
 {
-  auto* d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  auto* d = static_cast<ddscxx_serdata<T>*>(dcmn);
+
+#ifdef DDSCXX_HAS_SHM
+  if (d->iox_chunk && d->iox_subscriber)
+  {
+    auto iox_sub = *static_cast<iox_sub_t *>(d->iox_subscriber);
+    shm_lock_iox_sub(iox_sub);
+    // return the ownership of the memory chunk to iceoryx
+    iox_sub_release_chunk(iox_sub, d->iox_chunk);
+    shm_unlock_iox_sub(iox_sub);
+    // make this pointer to chunk explicitly null
+    d->iox_chunk = nullptr;
+  }
+#endif
   delete d;
 }
 

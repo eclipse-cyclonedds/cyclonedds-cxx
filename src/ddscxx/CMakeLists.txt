@@ -70,7 +70,6 @@ else()
   add_library(ddscxx ${sources})
 endif()
 
-
 # SOVERSION should increase on incompatible ABI change
 set_target_properties(ddscxx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
@@ -89,7 +88,19 @@ target_include_directories(
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ddscxx>)
 
 set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
-target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
+
+set(LINK_LIBS
+    CycloneDDS::ddsc)
+
+if (ENABLE_SHM)
+  # add iceoryx library
+  # TODO(Sumanth), this needs to be cleaned-up. Ideally the C++ language binding shouldn't
+  # depend directly on iceoryx, but should get it from Cyclone DDS
+  list(APPEND LINK_LIBS
+      iceoryx_binding_c::iceoryx_binding_c)
+endif()
+
+target_link_libraries(ddscxx PUBLIC ${LINK_LIBS})
 
 generate_export_header(
   ddscxx
