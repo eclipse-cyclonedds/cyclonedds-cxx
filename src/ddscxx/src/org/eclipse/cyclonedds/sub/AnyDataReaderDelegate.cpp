@@ -191,7 +191,7 @@ bool AnyDataReaderDelegate::init_samples_buffers(
 bool
 AnyDataReaderDelegate::is_loan_supported(const dds_entity_t reader) const
 {
-  return is_loan_available(reader);
+  return dds_is_loan_available(reader);
 }
 
 void
