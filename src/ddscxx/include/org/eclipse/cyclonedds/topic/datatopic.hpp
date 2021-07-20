@@ -130,7 +130,18 @@ public:
 #ifdef DDSCXX_HAS_SHM
     // if iox chunk is available, dont deserialize the sample, return the chunk directly
     if (iox_chunk != nullptr && data() == nullptr) {
+#ifndef _WIN32
+#ifndef __clang__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+#endif
       return static_cast<T*>(SHIFT_PAST_ICEORYX_HEADER(this->iox_chunk));
+#ifndef _WIN32
+#ifndef __clang__
+# pragma GCC diagnostic pop
+#endif
+#endif
     } else
 #endif  // DDSCXX_HAS_SHM
     {
