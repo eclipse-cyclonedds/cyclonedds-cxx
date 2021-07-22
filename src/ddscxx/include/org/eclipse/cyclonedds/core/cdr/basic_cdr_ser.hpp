@@ -190,6 +190,8 @@ inline void write_many(basic_cdr_stream& str, const T* in, size_t N)
   if (str.abort_status())
     return;
 
+  str.align(sizeof(T), true);
+
   T *out = static_cast<T*>(str.get_cursor());
 
   memcpy(out, in, sizeof(T)*N);
