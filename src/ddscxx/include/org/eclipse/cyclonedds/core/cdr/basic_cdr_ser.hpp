@@ -101,7 +101,7 @@ inline void read_swapped(basic_cdr_stream &str, T& toread)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 inline void read_many(basic_cdr_stream &str, T *out, size_t N)
 {
-  if (str.abort_status())
+  if (str.abort_status() || N == 0)
     return;
 
   str.align(sizeof(T), false);
@@ -116,7 +116,7 @@ inline void read_many(basic_cdr_stream &str, T *out, size_t N)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 inline void read_many_swapped(basic_cdr_stream &str, T *out, size_t N)
 {
-  if (str.abort_status())
+  if (str.abort_status() || N == 0)
     return;
 
   str.align(sizeof(T), false);
@@ -187,7 +187,7 @@ inline void write_swapped(basic_cdr_stream& str, const T& towrite)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 inline void write_many(basic_cdr_stream& str, const T* in, size_t N)
 {
-  if (str.abort_status())
+  if (str.abort_status() || N == 0)
     return;
 
   str.align(sizeof(T), true);
@@ -202,7 +202,7 @@ inline void write_many(basic_cdr_stream& str, const T* in, size_t N)
 template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && !std::is_enum<T>::value, bool> = true >
 inline void write_many_swapped(basic_cdr_stream& str, const T* in, size_t N)
 {
-  if (str.abort_status())
+  if (str.abort_status() || N == 0)
     return;
 
   str.align(sizeof(T), true);
