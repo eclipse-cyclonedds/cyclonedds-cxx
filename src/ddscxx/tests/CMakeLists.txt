@@ -16,7 +16,7 @@ idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldDat
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
-if (ENABLE_SHM)
+if(ENABLE_SHM)
   # find required packages for SHM tests
   find_package(iceoryx_posh REQUIRED)
   find_package(iceoryx_posh_roudi_environment REQUIRED)
