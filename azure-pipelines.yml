@@ -35,6 +35,7 @@ strategy:
       image: ubuntu-20.04
       analyzer: on
       sanitizer: address
+      iceoryx: on
       cc: clang-10
       cxx: clang++-10
     'Ubuntu 20.04 LTS with Clang 10 (Release, x86_64)':
