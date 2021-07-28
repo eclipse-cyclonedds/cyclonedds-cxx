@@ -220,25 +220,25 @@ install(
   COMPONENT dev)
 
 find_package(CycloneDDS REQUIRED)
+# Support for shared memory in Cyclone DDS C++ depends on support for shared
+# memory being compiled into Cyclone DDS and iceoryx_binding_c being available
+# If Cyclone DDS is compiled with support for shared memory, Cyclone DDS C++
+# must be compiled with shared memory too and vice versa.
+get_target_property(cyclonedds_has_shm CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
+mark_as_advanced(cyclonedds_has_shm)
 
-set(ENABLE_SHM "auto" CACHE STRING "Enable shared memory support")
+option(ENABLE_SHM "Enable shared memory support" ${cyclonedds_has_shm})
 if(ENABLE_SHM)
-  get_target_property(cyclone_support_shm
-      CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
-  mark_as_advanced(find_iceoryx_flags)
-  if(ENABLE_SHM MATCHES "[aA][uU][tT][oO]")
-    set(find_iceoryx_flags QUIET)
+  if(NOT cyclonedds_has_shm)
+    message(FATAL_ERROR "Cyclone DDS is not compiled with support for shared memory")
   else()
-    set(find_iceoryx_flags REQUIRED)
+    find_package(iceoryx_binding_c REQUIRED)
   endif()
-  find_package(iceoryx_binding_c ${find_iceoryx_flags})
-  if(iceoryx_binding_c_FOUND AND cyclone_support_shm)
-    set(ENABLE_SHM ON)
-    set(DDSCXX_HAS_SHM "1")
-    message(STATUS "CycloneDDSCXX is build with shared memory support!")
-  else()
-    set(ENABLE_SHM OFF)
-  endif()
+  message(STATUS "Found iceoryx_binding_c: (found version \"${iceoryx_binding_c_VERSION}\")")
+  set(ENABLE_SHM ON)
+  set(DDSCXX_HAS_SHM "1")
+else(cyclonedds_has_shm)
+  message(FATAL_ERROR "Cyclone DDS is compiled with support for shared memory")
 endif()
 
 configure_file(features.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/src/ddscxx/include/dds/features.hpp")
