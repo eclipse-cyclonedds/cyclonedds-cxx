@@ -17,7 +17,7 @@ configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
 if(ENABLE_SHM)
-  # find required packages for SHM tests
+  # Packages required packages for SHM tests
   find_package(iceoryx_posh REQUIRED)
   find_package(iceoryx_posh_roudi_environment REQUIRED)
 endif()
@@ -49,7 +49,7 @@ set(sources
   Condition.cpp
   Util.cpp)
 
-if (ENABLE_SHM)
+if(ENABLE_SHM)
   # Add shared memory tests
   list(APPEND sources SharedMemory.cpp)
 endif()
@@ -65,17 +65,22 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
 endif()
 
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD 17)
-set(TEST_LINK_LIBS
+target_link_libraries(
+  ddscxx_tests PRIVATE
     CycloneDDS-CXX::ddscxx
-    ddscxx_test_types
     GTest::GTest
     GTest::Main
-)
-if (ENABLE_SHM)
-  # add libraries required for SHM tests
-  list(APPEND TEST_LINK_LIBS
+    ddscxx_test_types)
+
+if(ENABLE_SHM)
+  target_link_libraries(
+    ddscxx_tests PRIVATE
       iceoryx_posh::iceoryx_posh_roudi
-      iceoryx_posh_testing::iceoryx_posh_testing)
+      iceoryx_posh_testing::iceoryx_posh_testing
+      # iceoryx_posh_testing depends on GoogleMock but does not propagate the
+      # the dependency. Workaround it by requiring the package here.
+      GTest::GMock
+      GTest::GMockMain)
 endif()
 
 target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS})
@@ -94,9 +99,13 @@ else()
   set(var "LD_LIBRARY_PATH")
 endif()
 
-get_target_property(cyclone_lib CycloneDDS::ddsc LOCATION)
+get_target_property(cyclonedds_lib CycloneDDS::ddsc LOCATION)
 get_target_property(gtest_lib GTest::GTest IMPORTED_LOCATION)
 get_target_property(gtest_main_lib GTest::Main IMPORTED_LOCATION)
+if(ENABLE_SHM)
+  get_target_property(gmock_lib GTest::GMock IMPORTED_LOCATION)
+  get_target_property(gmock_main_lib GTest::GMockMain IMPORTED_LOCATION)
+endif()
 
 # Ignore false positives due to gtest not being compiled with asan
 if(SANITIZER MATCHES "address")
@@ -105,7 +114,7 @@ if(SANITIZER MATCHES "address")
   endforeach()
 endif()
 
-foreach(lib ${cyclone_lib} ${gtest_lib} ${gtest_main_lib})
+foreach(lib ${cyclonedds_lib} ${gtest_lib} ${gtest_main_lib} ${gmock_lib} ${gmock_main_lib})
   get_filename_component(libdir "${lib}" PATH)
   file(TO_NATIVE_PATH "${libdir}" libdir)
 
