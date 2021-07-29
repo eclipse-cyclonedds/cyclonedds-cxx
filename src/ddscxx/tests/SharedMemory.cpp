@@ -265,8 +265,8 @@ public:
  * Tests
  */
 
-using TestTypes = testing::Types<Space::Type1, HelloWorldData::Msg, Bounded::Msg>;
-TYPED_TEST_CASE(SharedMemoryTest, TestTypes);
+using TestTypes = ::testing::Types<Space::Type1, HelloWorldData::Msg, Bounded::Msg>;
+TYPED_TEST_SUITE(SharedMemoryTest, TestTypes, );
 
 TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
 {
