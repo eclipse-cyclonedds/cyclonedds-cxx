@@ -1474,8 +1474,9 @@ public:
 public:
     /**
      * @return a Liveliness QoS instance with the kind set to AUTOMATIC
+     * and the lease_duration set to the supplied value
      */
-    static TLiveliness Automatic();
+    static TLiveliness Automatic(const dds::core::Duration& lease_duration = dds::core::Duration::infinite());
 
     /**
      * @return a Liveliness QoS instance with the kind set to MANUAL_BY_PARTICIPANT

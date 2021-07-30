@@ -37,6 +37,11 @@ extern "C" {
 }
 #endif
 
+using org::eclipse::cyclonedds::core::cdr::endianness;
+using org::eclipse::cyclonedds::core::cdr::native_endianness;
+using org::eclipse::cyclonedds::core::cdr::swap_necessary;
+using org::eclipse::cyclonedds::core::cdr::basic_cdr_stream;
+
 template<class streamer, typename T>
 bool to_key(streamer& str, const T& tokey, ddsi_keyhash_t& hash)
 {
@@ -48,6 +53,10 @@ bool to_key(streamer& str, const T& tokey, ddsi_keyhash_t& hash)
   std::vector<unsigned char> buffer(sz + padding);
   memset(buffer.data() + sz, 0x0, padding);
   str.set_buffer(buffer.data());
+  /* TODO: what is key endianness to be used here?
+   * since, this may be different between nodes, and if this value is used
+   * for global lookups or the like, this
+   * may cause discrepancies. */
   key_write(str, tokey);
   static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
   if (fptr == NULL)
@@ -148,17 +157,25 @@ public:
       T *t = m_t.load(std::memory_order_acquire);
       if (t == nullptr) {
         t = new T();
-        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
-          *(static_cast<unsigned char*>(data())+1) == 0x1 ?
-              org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
-              org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
-        str.set_buffer(calc_offset(data(), 4));
-        switch (kind) {
+        endianness stream_endianness  = endianness::big_endian;
+        if (*(static_cast<unsigned char*>(data())+1) == 0x1)
+          stream_endianness = endianness::little_endian;
+
+        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+        str.set_buffer(calc_offset(data(),4));
+        switch (kind)
+        {
           case SDK_KEY:
-            key_read(str, *t);
+            if (swap_necessary(stream_endianness))
+              key_read_swapped(str,*t);
+            else
+              key_read(str,*t);
             break;
           case SDK_DATA:
-            read(str, *t);
+            if (swap_necessary(stream_endianness))
+              read_swapped(str,*t);
+            else
+              read(str,*t);
             break;
           case SDK_EMPTY:
             assert(0);
@@ -169,7 +186,7 @@ public:
           t = nullptr;
         }
 
-        T *exp = nullptr;
+        T* exp = nullptr;
         if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
           delete t;
           t = exp;
@@ -358,7 +375,7 @@ ddsi_serdata *serdata_from_sample(
   d->resize(sz);
   ptr = static_cast<unsigned char*>(d->data());
   memset(ptr, 0x0, 4);
-  if (str.local_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
+  if (native_endianness() == endianness::little_endian)
     *(ptr + 1) = 0x1;
 
   str.set_buffer(calc_offset(d->data(), 4));
@@ -423,13 +440,17 @@ bool serdata_to_sample(
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
-          *(static_cast<unsigned char*>(ptr->data())+1) == 0x1 ?
-              org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
-              org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
+  endianness stream_endianness = endianness::big_endian;
+  if (*(static_cast<unsigned char*>(ptr->data())+1) == 0x1)
+    stream_endianness = endianness::little_endian;
+
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   str.set_buffer(calc_offset(ptr->data(), 4));
   auto& msg = *static_cast<T*>(sample);
-  read(str, msg);
+  if (swap_necessary(stream_endianness))
+    read_swapped(str, msg);
+  else
+    read(str, msg);
   return str.abort_status(); //is true this the correct return value for failure state??
 }
 
@@ -445,7 +466,7 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   unsigned char *ptr = nullptr;
   d1->type = nullptr;
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  basic_cdr_stream str;
   auto t = d->getT();
   if (t == nullptr)
     goto failure;
@@ -457,7 +478,7 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
 
   ptr = static_cast<unsigned char*>(d1->data());
   memset(ptr, 0x0, 4);
-  if (str.stream_endianness() == org::eclipse::cyclonedds::core::cdr::endianness::little_endian)
+  if (native_endianness() == endianness::little_endian)
     *(ptr + 1) = 0x1;
 
   str.set_buffer(calc_offset(d1->data(), 4));  //4 offset due to header field
@@ -489,12 +510,17 @@ bool serdata_untyped_to_sample(
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
   T* ptr = static_cast<T*>(sample);
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(
-          *(static_cast<unsigned char*>(d->data())+1) == 0x1 ?
-              org::eclipse::cyclonedds::core::cdr::endianness::little_endian :
-              org::eclipse::cyclonedds::core::cdr::endianness::big_endian);
+
+  basic_cdr_stream str;
+  endianness stream_endianness = endianness::big_endian;
+  if (*(static_cast<unsigned char*>(d->data())+1) == 0x1)
+    stream_endianness = endianness::little_endian;
+
   str.set_buffer(calc_offset(d->data(), 4));
-  key_read(str, *ptr);
+  if (swap_necessary(stream_endianness))
+    key_read_swapped(str, *ptr);
+  else
+    key_read(str, *ptr);
 
   return !str.abort_status();  //is true the correct value for no errors in streaming?
 }

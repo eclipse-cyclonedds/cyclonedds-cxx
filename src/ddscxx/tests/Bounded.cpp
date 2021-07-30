@@ -12,6 +12,7 @@
 #include <gtest/gtest.h>
 #include <string>
 
+#include "Util.hpp"
 #include "dds/dds.hpp"
 #include "Serialization.hpp"
 
@@ -57,7 +58,9 @@ public:
         subscriber = dds::sub::Subscriber(participant, subQos);
         ASSERT_NE(subscriber, dds::core::null);
 
-        topic = dds::topic::Topic<Bounded::Msg>(participant, "bounds_test_topic");
+        char topicname[64];
+        create_unique_topic_name("bounds_test_topic",topicname,sizeof(topicname));
+        topic = dds::topic::Topic<Bounded::Msg>(participant, topicname);
         ASSERT_NE(topic, dds::core::null);
 
         dds::pub::qos::DataWriterQos writerQos =
@@ -183,7 +186,7 @@ TEST_F(Bounds, strings)
     char arr[16];
     str.set_buffer(arr);
     write(str,uint32_t(0));
-    str.position(0);
+    str.reset_position();
 
     Bounded::Msg msg;
     read(str, msg);

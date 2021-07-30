@@ -48,6 +48,7 @@ emit_member(
   name = get_cpp11_name(node);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
+  type_spec = idl_unalias(type_spec, 0);
   if (idl_is_array(type_spec))
     value = "{ }";
   else if (!idl_is_enum(type_spec) && !idl_is_base_type(type_spec))
@@ -94,7 +95,7 @@ emit_parameter(
   else
     type_spec = idl_type_spec(node);
 
-  simple = idl_mask(type_spec) & (IDL_BASE_TYPE|IDL_ENUM);
+  simple = idl_mask(idl_unalias(type_spec, 0)) & (IDL_BASE_TYPE|IDL_ENUM);
   sep = is_first(node) ? "" : ",\n";
   fmt = simple ? "%s    %s %s"
                : "%s    const %s& %s";
@@ -157,6 +158,7 @@ emit_member_methods(
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  type_spec = idl_unalias(type_spec, 0);
   if (idl_mask(type_spec) & (IDL_BASE_TYPE | IDL_ENUM))
     fmt = "  %1$s %2$s() const { return this->%2$s_; }\n"
           "  %1$s& %2$s() { return this->%2$s_; }\n"
@@ -609,7 +611,7 @@ emit_case_methods(
   void *user_data)
 {
   struct generator *gen = user_data;
-  bool simple, single;
+  bool simple;
   char *type, *value, *discr_type;
   const idl_case_t *branch = node;
   const char *name, *fmt;
@@ -644,8 +646,7 @@ emit_case_methods(
   if (IDL_PRINTA(&value, get_cpp11_value, branch->labels->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  simple = (idl_mask(branch->type_spec) & IDL_BASE_TYPE) != 0;
-  single = (idl_degree(branch->labels) == 1);
+  simple = (idl_mask(idl_unalias(branch->type_spec, 0)) & (IDL_BASE_TYPE|IDL_ENUM)) != 0;
 
   /* const-getter */
   fmt = simple ? "  %1$s %2$s() const\n  {\n"
@@ -663,18 +664,10 @@ emit_case_methods(
     return IDL_RETCODE_NO_MEMORY;
 
   /* setter */
-  if (single)
-    fmt = simple ? "  void %1$s(%2$s u)\n"
-                   "  {\n"
-                   "    const %3$s d = %4$s;\n"
-                 : "  void %1$s(const %2$s& u)\n"
-                   "  {\n"
-                   "    const %3$s d = %4$s;\n";
-  else
-    fmt = simple ? "  void %1$s(%2$s u, %3$s d = %4$s)\n"
-                   "  {\n"
-                 : "  void %1$s(const %2$s& u, %3$s d = %4$s)\n"
-                   "  {\n";
+  fmt = simple ? "  void %1$s(%2$s u, %3$s d = %4$s)\n"
+                 "  {\n"
+               : "  void %1$s(const %2$s& u, %3$s d = %4$s)\n"
+                 "  {\n";
   if (idl_fprintf(gen->header.handle, fmt, name, type, discr_type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
   if (idl_fprintf(gen->header.handle, setter, value) < 0)
@@ -684,11 +677,8 @@ emit_case_methods(
     return IDL_RETCODE_OK;
 
   /* setter with move semantics */
-  fmt = single ? "  void %1$s(%2$s&& u)\n"
-                 "  {\n"
-                 "    const %3$s d = %4$s;\n"
-               : "  void %1$s(%2$s&& u, %3$s d = %4$s)\n"
-                 "  {\n";
+  fmt = "  void %1$s(%2$s&& u, %3$s d = %4$s)\n"
+        "  {\n";
   if (idl_fprintf(gen->header.handle, fmt, name, type, discr_type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
   if (idl_fprintf(gen->header.handle, setter, value) < 0)
@@ -825,20 +815,14 @@ emit_union(
 
   /* implicit default setter */
   if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
-    if (_union->unused_labels > 1)
-      fmt = "  void _default(%1$s d = %2$s)\n"
-            "  {\n"
-            "    if (!_is_compatible_discriminator(d, %2$s))\n"
-            "      return;\n";
-    else
-      fmt = "  void _default()\n"
-            "  {\n"
-            "    const %1$s d = %2$s;\n";
-    if (idl_fprintf(gen->header.handle, fmt, type, value) < 0)
-      return IDL_RETCODE_NO_MEMORY;
-    fmt = "    m__d = d;\n"
+    fmt = "  void _default(%1$s d = %2$s)\n"
+          "  {\n"
+          "    if (!_is_compatible_discriminator(d, %2$s))\n"
+          "      throw dds::core::InvalidArgumentError(\n"
+          "        \"Discriminator does not match default branch\");\n"
+          "    m__d = d;\n"
           "  }\n\n";
-    if (fputs(fmt, gen->header.handle) < 0)
+    if (idl_fprintf(gen->header.handle, fmt, type, value) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
 
