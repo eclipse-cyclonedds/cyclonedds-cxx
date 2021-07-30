@@ -80,6 +80,8 @@ add_library(${CMAKE_PROJECT_NAME}::ddscxx ALIAS ddscxx)
 
 add_coverage(ddscxx)
 
+set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
+target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 target_include_directories(
   ddscxx
   PUBLIC
@@ -87,8 +89,11 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ddscxx>)
 
-set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
-target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
+if(ENABLE_SHM)
+  # TODO: Ideally the C++ language binding shouldn't depend directly on
+  #       Iceoryx, but should get it from Cyclone DDS
+  target_link_libraries(ddscxx PUBLIC iceoryx_binding_c::iceoryx_binding_c)
+endif()
 
 generate_export_header(
   ddscxx

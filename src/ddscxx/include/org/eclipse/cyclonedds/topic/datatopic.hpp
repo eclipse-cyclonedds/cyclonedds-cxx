@@ -21,10 +21,21 @@
 #include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsi/q_radmin.h"
+#include "dds/ddsi/q_xmsg.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
+#include "dds/features.hpp"
+
+// We need this to return the loan back to iceoryx
+// TODO(Sumanth) fix this, there should be an API in Cyclone DDS which can return the loan back
+//  to iceoryx, so we don't need to depend on iceoryx directly in the C++ language binding
+#ifdef DDSCXX_HAS_SHM
+extern "C" {
+#include "dds/ddsi/shm_sync.h"
+}
+#endif
 
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
@@ -125,45 +136,64 @@ public:
 
   T* getT()
   {
-    T *t = m_t.load(std::memory_order_acquire);
-    if (t == nullptr) {
-      t = new T();
-      endianness stream_endianness  = endianness::big_endian;
-      if (*(static_cast<unsigned char*>(data())+1) == 0x1)
-        stream_endianness = endianness::little_endian;
+#ifdef DDSCXX_HAS_SHM
+    // if iox chunk is available, dont deserialize the sample, return the chunk directly
+    if (iox_chunk != nullptr && data() == nullptr) {
+#ifndef _WIN32
+#ifndef __clang__
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+#endif
+      return static_cast<T*>(SHIFT_PAST_ICEORYX_HEADER(this->iox_chunk));
+#ifndef _WIN32
+#ifndef __clang__
+# pragma GCC diagnostic pop
+#endif
+#endif
+    } else
+#endif  // DDSCXX_HAS_SHM
+    {
+      T *t = m_t.load(std::memory_order_acquire);
+      if (t == nullptr) {
+        t = new T();
+        endianness stream_endianness  = endianness::big_endian;
+        if (*(static_cast<unsigned char*>(data())+1) == 0x1)
+          stream_endianness = endianness::little_endian;
 
-      org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-      str.set_buffer(calc_offset(data(),4));
-      switch (kind)
-      {
-      case SDK_KEY:
-        if (swap_necessary(stream_endianness))
-          key_read_swapped(str,*t);
-        else
-          key_read(str,*t);
-        break;
-      case SDK_DATA:
-        if (swap_necessary(stream_endianness))
-          read_swapped(str,*t);
-        else
-          read(str,*t);
-        break;
-      case SDK_EMPTY:
-        assert(0);
-      }
+        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+        str.set_buffer(calc_offset(data(),4));
+        switch (kind)
+        {
+          case SDK_KEY:
+            if (swap_necessary(stream_endianness))
+              key_read_swapped(str,*t);
+            else
+              key_read(str,*t);
+            break;
+          case SDK_DATA:
+            if (swap_necessary(stream_endianness))
+              read_swapped(str,*t);
+            else
+              read(str,*t);
+            break;
+          case SDK_EMPTY:
+            assert(0);
+        }
 
-      if (str.abort_status()) {
-        delete t;
-        t = nullptr;
-      }
+        if (str.abort_status()) {
+          delete t;
+          t = nullptr;
+        }
 
-      T* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
+        T* exp = nullptr;
+        if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+          delete t;
+          t = exp;
+        }
       }
+      return t;
     }
-    return t;
   }
 };
 
@@ -498,7 +528,20 @@ bool serdata_untyped_to_sample(
 template <typename T>
 void serdata_free(ddsi_serdata* dcmn)
 {
-  auto* d = static_cast<const ddscxx_serdata<T>*>(dcmn);
+  auto* d = static_cast<ddscxx_serdata<T>*>(dcmn);
+
+#ifdef DDSCXX_HAS_SHM
+  if (d->iox_chunk && d->iox_subscriber)
+  {
+    auto iox_sub = *static_cast<iox_sub_t *>(d->iox_subscriber);
+    shm_lock_iox_sub(iox_sub);
+    // return the ownership of the memory chunk to iceoryx
+    iox_sub_release_chunk(iox_sub, d->iox_chunk);
+    shm_unlock_iox_sub(iox_sub);
+    // make this pointer to chunk explicitly null
+    d->iox_chunk = nullptr;
+  }
+#endif
   delete d;
 }
 
@@ -534,6 +577,38 @@ void serdata_get_keyhash(
   }
 }
 
+#ifdef DDSCXX_HAS_SHM
+template<typename T>
+uint32_t serdata_iox_size(const struct ddsi_serdata* d)
+{
+  assert(sizeof(T) == d->type->iox_size);
+  return d->type->iox_size;
+}
+
+template<typename T>
+ddsi_serdata * serdata_from_iox_buffer(
+    const struct ddsi_sertype * typecmn, enum ddsi_serdata_kind kind,
+    void * sub, void * iox_buffer)
+{
+  try {
+    auto d = new ddscxx_serdata<T>(typecmn, kind);
+    d->iox_chunk = iox_buffer;
+    d->iox_subscriber = sub;
+
+    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+    const auto& msg = *static_cast<const T*>(d->iox_chunk);
+    d->key_md5_hashed() = to_key(str, msg, d->key());
+    d->setT(&msg);
+    d->populate_hash();
+
+    return d;
+  }
+  catch (std::exception&) {
+    return nullptr;
+  }
+}
+#endif
+
 template <typename T>
 const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
   &serdata_eqkey<T>,
@@ -551,6 +626,10 @@ const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
   &serdata_free<T>,
   &serdata_print<T>,
   &serdata_get_keyhash<T>,
+#ifdef DDSCXX_HAS_SHM
+  &serdata_iox_size<T>,
+  &serdata_from_iox_buffer<T>
+#endif
 };
 
 template <typename T>
@@ -565,12 +644,26 @@ template <typename T>
 ddscxx_sertype<T>::ddscxx_sertype()
   : ddsi_sertype{}
 {
-  ddsi_sertype_init(
-    static_cast<ddsi_sertype*>(this),
-    org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
-    &ddscxx_sertype<T>::ddscxx_sertype_ops,
-    &ddscxx_serdata<T>::ddscxx_serdata_ops,
-    org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless());
+  uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
+                    DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
+#ifdef DDSCXX_HAS_SHM
+  flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
+      DDSI_SERTYPE_FLAG_FIXED_SIZE : 0);
+#endif
+
+  ddsi_sertype_init_flags(
+      static_cast<ddsi_sertype*>(this),
+      org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
+      &ddscxx_sertype<T>::ddscxx_sertype_ops,
+      &ddscxx_serdata<T>::ddscxx_serdata_ops,
+      flags);
+
+#ifdef DDSCXX_HAS_SHM
+  // update the size of the type, if its fixed
+  // this needs to be done after sertype init! TODO need an API in Cyclone DDS to set this
+  this->iox_size =
+      static_cast<uint32_t>(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
+#endif
 }
 
 template <typename T>
