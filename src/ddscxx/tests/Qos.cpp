@@ -65,6 +65,7 @@ WriterDataLifecycle    nonDefaultWdLifecycle(true);
 TimeBasedFilter        nonDefaultTbFilter(dds::core::Duration(14, 14));
 ReaderDataLifecycle    nonDefaultRdLifecycle(dds::core::Duration(1, 1),
                                              dds::core::Duration(2, 2));
+IgnoreLocal            nonDefaultIgnoreLocal(org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::PROCESS);
 
 
 
@@ -97,6 +98,7 @@ OwnershipStrength   tmpStrength;
 WriterDataLifecycle tmpWdLifecycle;
 TimeBasedFilter     tmpTbFilter;
 ReaderDataLifecycle tmpRdLifecycle;
+IgnoreLocal         tmpIgnoreLocal;
 
 TEST(Qos, DomainParticipant)
 {
@@ -317,7 +319,8 @@ TEST(Qos, DataWriter)
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
                  << nonDefaultStrength
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
-                 << nonDefaultWdLifecycle;
+                 << nonDefaultWdLifecycle
+                 << nonDefaultIgnoreLocal;
     DataWriterQos dwQosWConstructed(dwQosShifted);
     DataWriterQos dwQosWAssigned1 = dwQosShifted; /* Actually calls copy constructor. */
     DataWriterQos dwQosWAssigned2;
@@ -354,6 +357,7 @@ TEST(Qos, DataWriter)
     dwQosShifted >> tmpLifespan;
     dwQosShifted >> tmpOwnership;
     dwQosShifted >> tmpWdLifecycle;
+    dwQosShifted >> tmpIgnoreLocal;
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
     ASSERT_EQ(nonDefaultDeadline,    tmpDeadline);
@@ -367,6 +371,7 @@ TEST(Qos, DataWriter)
     ASSERT_EQ(nonDefaultLifespan,    tmpLifespan);
     ASSERT_EQ(nonDefaultOwnership,   tmpOwnership);
     ASSERT_EQ(nonDefaultWdLifecycle, tmpWdLifecycle);
+    ASSERT_EQ(nonDefaultIgnoreLocal, tmpIgnoreLocal);
 
     ASSERT_EQ(nonDefaultUserData,    dwQosWConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  dwQosWConstructed.policy<Durability>());
@@ -381,6 +386,7 @@ TEST(Qos, DataWriter)
     ASSERT_EQ(nonDefaultLifespan,    dwQosWConstructed.policy<Lifespan>());
     ASSERT_EQ(nonDefaultOwnership,   dwQosWConstructed.policy<Ownership>());
     ASSERT_EQ(nonDefaultWdLifecycle, dwQosWConstructed.policy<WriterDataLifecycle>());
+    ASSERT_EQ(nonDefaultIgnoreLocal, dwQosWConstructed->policy<IgnoreLocal>());
 
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
     dwQosShifted >> tmpStrength;
@@ -423,7 +429,8 @@ TEST(Qos, DataReader)
                  << nonDefaultResources
                  << nonDefaultOwnership
                  << nonDefaultTbFilter
-                 << nonDefaultRdLifecycle;
+                 << nonDefaultRdLifecycle
+                 << nonDefaultIgnoreLocal;
     DataReaderQos drQosRConstructed(drQosShifted);
     DataReaderQos drQosRAssigned1 = drQosShifted; /* Actually calls copy constructor. */
     DataReaderQos drQosRAssigned2;
@@ -459,6 +466,7 @@ TEST(Qos, DataReader)
     drQosShifted >> tmpOwnership;
     drQosShifted >> tmpTbFilter;
     drQosShifted >> tmpRdLifecycle;
+    drQosShifted >> tmpIgnoreLocal;
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
     ASSERT_EQ(nonDefaultDeadline,    tmpDeadline);
@@ -471,6 +479,7 @@ TEST(Qos, DataReader)
     ASSERT_EQ(nonDefaultOwnership,   tmpOwnership);
     ASSERT_EQ(nonDefaultTbFilter,    tmpTbFilter);
     ASSERT_EQ(nonDefaultRdLifecycle, tmpRdLifecycle);
+    ASSERT_EQ(nonDefaultIgnoreLocal, tmpIgnoreLocal);
 
     ASSERT_EQ(nonDefaultUserData,    drQosRConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  drQosRConstructed.policy<Durability>());
@@ -484,6 +493,7 @@ TEST(Qos, DataReader)
     ASSERT_EQ(nonDefaultOwnership,   drQosRConstructed.policy<Ownership>());
     ASSERT_EQ(nonDefaultTbFilter,    drQosRConstructed.policy<TimeBasedFilter>());
     ASSERT_EQ(nonDefaultRdLifecycle, drQosRConstructed.policy<ReaderDataLifecycle>());
+    ASSERT_EQ(nonDefaultIgnoreLocal, drQosRConstructed.policy<IgnoreLocal>());
 }
 
 TEST(Qos, invalid_values)

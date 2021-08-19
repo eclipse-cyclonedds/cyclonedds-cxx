@@ -898,7 +898,31 @@ private:
     bool autodispose_;
 };
 
+//==============================================================================
 
+class OMG_DDS_API IgnoreLocalDelegate
+{
+public:
+    IgnoreLocalDelegate(const IgnoreLocalDelegate& other);
+    explicit IgnoreLocalDelegate(org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind);
+
+    IgnoreLocalDelegate& operator=(const IgnoreLocalDelegate& other) = default;
+
+    void kind(org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind);
+    org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind() const;
+
+    bool operator ==(const IgnoreLocalDelegate& other) const;
+
+    void check() const;
+
+    void set_iso_policy(const dds_qos_t* qos);
+    void set_c_policy(dds_qos_t* qos) const;
+
+public:
+    org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind_;
+};
+
+//==============================================================================
 
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 

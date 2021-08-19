@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -22,6 +22,11 @@
 #include <org/eclipse/cyclonedds/core/MiscUtils.hpp>
 #include "dds/dds.h"
 #include "dds/ddsc/dds_public_qos.h"
+
+/*
+ * Proprietary policies traits.
+ */
+OMG_DDS_DEFINE_POLICY_TRAITS(org::eclipse::cyclonedds::core::policy::IgnoreLocal, "IgnoreLocal")
 
 namespace org
 {
@@ -1623,6 +1628,80 @@ void WriterDataLifecycleDelegate::set_c_policy(dds_qos_t* qos) const
     dds_qset_writer_data_lifecycle(qos, autodispose_);
 }
 
+//==============================================================================
+
+IgnoreLocalDelegate::IgnoreLocalDelegate(const IgnoreLocalDelegate& other)
+    : kind_(other.kind_)
+{
+}
+
+IgnoreLocalDelegate::IgnoreLocalDelegate(org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind)
+    : kind_(kind)
+{
+    this->check();
+}
+
+void IgnoreLocalDelegate::kind(org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind)
+{
+    kind_ = kind;
+}
+
+org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type IgnoreLocalDelegate::kind() const
+{
+    return kind_;
+}
+
+bool IgnoreLocalDelegate::operator ==(const IgnoreLocalDelegate& other) const
+{
+    return other.kind() == kind_;
+}
+
+void IgnoreLocalDelegate::check() const
+{
+    /* The kind correctness is enforced by the compiler: nothing to check. */
+}
+
+void IgnoreLocalDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    dds_ignorelocal_kind_t kind;
+    if (dds_qget_ignorelocal(qos, &kind)) {
+        switch (kind) {
+            case DDS_IGNORELOCAL_NONE:
+                kind_ = org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::NONE;
+                break;
+            case DDS_IGNORELOCAL_PARTICIPANT:
+                kind_ = org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::PARTICIPANT;
+                break;
+            case DDS_IGNORELOCAL_PROCESS:
+                kind_ = org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::PROCESS;
+                break;
+            default:
+                assert(0);
+                break;
+        }
+    }
+}
+
+void IgnoreLocalDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    switch(kind_)
+    {
+    case org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::NONE:
+        dds_qset_ignorelocal(qos, DDS_IGNORELOCAL_NONE);
+        break;
+    case org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::PARTICIPANT:
+        dds_qset_ignorelocal(qos, DDS_IGNORELOCAL_PARTICIPANT);
+        break;
+    case org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::PROCESS:
+        dds_qset_ignorelocal(qos, DDS_IGNORELOCAL_PROCESS);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+//==============================================================================
 
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 

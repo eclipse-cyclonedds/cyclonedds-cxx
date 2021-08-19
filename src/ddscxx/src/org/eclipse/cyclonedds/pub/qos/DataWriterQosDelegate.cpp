@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -144,6 +144,13 @@ DataWriterQosDelegate::policy(const dds::core::policy::WriterDataLifecycle& life
     lifecycle_ = lifecycle;
 }
 
+void
+DataWriterQosDelegate::policy(const org::eclipse::cyclonedds::core::policy::IgnoreLocal& ignorelocal)
+{
+    ignorelocal.delegate().check();
+    ignorelocal_ = ignorelocal;
+}
+
 dds_qos_t*
 DataWriterQosDelegate::ddsc_qos() const
 {
@@ -163,7 +170,8 @@ DataWriterQosDelegate::ddsc_qos() const
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
     strength_    .delegate().set_c_policy(qos);
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
-    lifecycle_.delegate().set_c_policy(qos);
+    lifecycle_   .delegate().set_c_policy(qos);
+    ignorelocal_ .delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -187,6 +195,7 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos)
     strength_    .delegate().set_iso_policy(qos);
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
     lifecycle_   .delegate().set_iso_policy(qos);
+    ignorelocal_ .delegate().set_iso_policy(qos);
 }
 
 void
@@ -214,6 +223,7 @@ DataWriterQosDelegate::named_qos(const struct _DDS_NamedDataWriterQos &qos)
     strength_    .delegate().v_policy((v_strengthPolicy&)       (q->ownership_strength)   );
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
     lifecycle_   .delegate().v_policy((v_writerLifecyclePolicy&)(q->writer_data_lifecycle));
+    ignorelocal_ .delegate().v_policy((v_ignorelocalPolicy&)    (q->ignorelocal)          );
 #endif
 }
 
@@ -243,7 +253,8 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
            other.strength_    == strength_    &&
 #endif
-           other.lifecycle_   == lifecycle_;
+           other.lifecycle_   == lifecycle_   &&
+           other.ignorelocal_ == ignorelocal_;
 }
 
 DataWriterQosDelegate&

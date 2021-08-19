@@ -67,6 +67,17 @@ struct SchedulingPriorityKind_def
 };
 typedef dds::core::safe_enum<SchedulingPriorityKind_def> SchedulingPriorityKind;
 
+struct IgnoreLocalKind_def
+{
+    enum Type
+    {
+        NONE,
+        PARTICIPANT,
+        PROCESS
+    };
+};
+typedef dds::core::safe_enum<IgnoreLocalKind_def> IgnoreLocalKind;
+
 }
 }
 }

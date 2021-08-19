@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -455,6 +455,63 @@ public:
                                  int32_t scheduling_priority)
         : org::eclipse::cyclonedds::core::policy::TScheduling<D>(scheduling_kind, scheduling_priority_kind, scheduling_priority)
     {
+    }
+};
+
+
+template <typename D>
+class TIgnoreLocal : public dds::core::Value<D>
+{
+public:
+    /**
+     * Creates a IgnoreLocal QoS instance
+     */
+    TIgnoreLocal()
+        : dds::core::Value<D>(org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::NONE)
+    {
+    }
+
+    /**
+     * Creates a IgnoreLocal QoS instance
+     *
+     * @param ignorelocal what to ignore
+     */
+    TIgnoreLocal(const org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type& ignorelocal)
+        : dds::core::Value<D>(ignorelocal)
+    {
+    }
+#if 0
+    /**
+     * Copies a IgnoreLocal QoS instance
+     *
+     * @param other the TIgnoreLocal QoS instance to copy
+     */
+    TIgnoreLocal(const TIgnoreLocal& other)
+        : dds::core::Value<D>(other.delegate())
+    {
+    }
+#endif
+
+public:
+    /**
+     * Sets what entities to ignore
+     *
+     * @param ignorelocal the entities to ignore
+     */
+    TIgnoreLocal& kind(const org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type& ignorelocal)
+    {
+        this->delegate().ignorelocal(ignorelocal);
+        return *this;
+    }
+
+    /**
+     * Gets the ignorelocal setting
+     *
+     * @return the ignorelocal setting
+     */
+    org::eclipse::cyclonedds::core::policy::IgnoreLocalKind::Type kind() const
+    {
+        return this->delegate().ignorelocal();
     }
 };
 

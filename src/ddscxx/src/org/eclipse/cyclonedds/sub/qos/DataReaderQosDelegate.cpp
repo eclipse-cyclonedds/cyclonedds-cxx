@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -125,6 +125,13 @@ DataReaderQosDelegate::policy(const dds::core::policy::ReaderDataLifecycle& life
     lifecycle_ = lifecycle;
 }
 
+void
+DataReaderQosDelegate::policy(const org::eclipse::cyclonedds::core::policy::IgnoreLocal& ignorelocal)
+{
+    ignorelocal.delegate().check();
+    ignorelocal_ = ignorelocal;
+}
+
 dds_qos_t*
 DataReaderQosDelegate::ddsc_qos() const
 {
@@ -141,6 +148,7 @@ DataReaderQosDelegate::ddsc_qos() const
     reliability_ .delegate().set_c_policy(qos);
     resources_   .delegate().set_c_policy(qos);
     user_data_   .delegate().set_c_policy(qos);
+    ignorelocal_ .delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -160,6 +168,7 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos)
     reliability_ .delegate().set_iso_policy(qos);
     resources_   .delegate().set_iso_policy(qos);
     user_data_   .delegate().set_iso_policy(qos);
+    ignorelocal_ .delegate().set_iso_policy(qos);
 }
 
 void
@@ -184,6 +193,7 @@ DataReaderQosDelegate::named_qos(const struct _DDS_NamedDataReaderQos &qos)
     reliability_ .delegate().v_policy((v_reliabilityPolicy&)    (q->reliability)          );
     resources_   .delegate().v_policy((v_resourcePolicy&)       (q->resource_limits)      );
     user_data_   .delegate().v_policy((v_builtinUserDataPolicy&)(q->user_data)            );
+    ignorelocal_ .delegate().v_policy((v_ignorelocalPolicy&)    (q->ignorelocal)          );
 #endif
 }
 
@@ -210,7 +220,8 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
            other.resources_   == resources_   &&
            other.ownership_   == ownership_   &&
            other.tfilter_     == tfilter_     &&
-           other.lifecycle_   == lifecycle_;
+           other.lifecycle_   == lifecycle_   &&
+           other.ignorelocal_ == ignorelocal_;
 }
 
 DataReaderQosDelegate&
