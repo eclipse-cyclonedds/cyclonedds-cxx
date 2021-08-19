@@ -74,6 +74,7 @@ TypeConsistencyEnforcement nonDefaultTypeConsistencyEnforcement(dds::core::polic
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 WriterBatching         nonDefaultWriterBatching(true);
 PSMXInstances          nonDefaultPSMXInstances({"some_psmx_name"});
+IgnoreLocal            nonDefaultIgnoreLocal(dds::core::policy::IgnoreLocalKind::PROCESS);
 
 
 
@@ -112,6 +113,7 @@ TypeConsistencyEnforcement  tmpEnforcement;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 WriterBatching      tmpWriterBatching;
 PSMXInstances       tmpPSMXInstances;
+IgnoreLocal         tmpIgnoreLocal;
 
 TEST(Qos, DomainParticipant)
 {
@@ -362,9 +364,10 @@ TEST(Qos, DataWriter)
                  << nonDefaultRepresentation
                  << nonDefaultTypeConsistencyEnforcement
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-                << nonDefaultWriterBatching
-                << nonDefaultPSMXInstances
-                  ;
+                 << nonDefaultWriterBatching
+                 << nonDefaultPSMXInstances
+                 << nonDefaultIgnoreLocal
+                 ;
     DataWriterQos dwQosWConstructed(dwQosShifted);
     DataWriterQos dwQosWAssigned1 = dwQosShifted; /* Actually calls copy constructor. */
     DataWriterQos dwQosWAssigned2;
@@ -413,6 +416,7 @@ TEST(Qos, DataWriter)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     dwQosShifted >> tmpWriterBatching;
     dwQosShifted >> tmpPSMXInstances;
+    dwQosShifted >> tmpIgnoreLocal;
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
@@ -435,6 +439,7 @@ TEST(Qos, DataWriter)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultWriterBatching, tmpWriterBatching);
     ASSERT_EQ(nonDefaultPSMXInstances, tmpPSMXInstances);
+    ASSERT_EQ(nonDefaultIgnoreLocal, tmpIgnoreLocal);
 
     ASSERT_EQ(nonDefaultUserData,    dwQosWConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  dwQosWConstructed.policy<Durability>());
@@ -458,6 +463,7 @@ TEST(Qos, DataWriter)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultWriterBatching, dwQosWConstructed.policy<WriterBatching>());
     ASSERT_EQ(nonDefaultPSMXInstances, dwQosWConstructed.policy<PSMXInstances>());
+    ASSERT_EQ(nonDefaultIgnoreLocal, dwQosWConstructed->policy<IgnoreLocal>());
 
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
     dwQosShifted >> tmpStrength;
@@ -510,8 +516,9 @@ TEST(Qos, DataReader)
                  << nonDefaultRepresentation
                  << nonDefaultTypeConsistencyEnforcement
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-                << nonDefaultPSMXInstances
-                  ;
+                 << nonDefaultPSMXInstances
+                 << nonDefaultIgnoreLocal
+                 ;
     DataReaderQos drQosRConstructed(drQosShifted);
     DataReaderQos drQosRAssigned1 = drQosShifted; /* Actually calls copy constructor. */
     DataReaderQos drQosRAssigned2;
@@ -552,6 +559,7 @@ TEST(Qos, DataReader)
     drQosShifted >> tmpEnforcement;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     drQosShifted >> tmpPSMXInstances;
+    drQosShifted >> tmpIgnoreLocal;
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
     ASSERT_EQ(nonDefaultDeadline,    tmpDeadline);
@@ -569,6 +577,7 @@ TEST(Qos, DataReader)
     ASSERT_EQ(nonDefaultTypeConsistencyEnforcement, tmpEnforcement);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultPSMXInstances, tmpPSMXInstances);
+    ASSERT_EQ(nonDefaultIgnoreLocal, tmpIgnoreLocal);
 
     ASSERT_EQ(nonDefaultUserData,    drQosRConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  drQosRConstructed.policy<Durability>());
@@ -587,6 +596,7 @@ TEST(Qos, DataReader)
     ASSERT_EQ(nonDefaultTypeConsistencyEnforcement, drQosRConstructed.policy<TypeConsistencyEnforcement>());
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultPSMXInstances, drQosRConstructed.policy<PSMXInstances>());
+    ASSERT_EQ(nonDefaultIgnoreLocal, drQosRConstructed.policy<IgnoreLocal>());
 }
 
 TEST(Qos, invalid_values)
@@ -689,4 +699,5 @@ TEST(Qos, policy_name)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(dds::core::policy::policy_name<WriterBatching>::name(),      "WriterBatching");
     ASSERT_EQ(dds::core::policy::policy_name<PSMXInstances>::name(),       "PSMXInstances");
+    ASSERT_EQ(dds::core::policy::policy_name<IgnoreLocal>::name(),         "IgnoreLocal");
 }

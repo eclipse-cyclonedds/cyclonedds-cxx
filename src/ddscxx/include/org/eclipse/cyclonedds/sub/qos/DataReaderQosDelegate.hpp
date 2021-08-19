@@ -54,6 +54,7 @@ public:
     void policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     void policy(const dds::core::policy::PSMXInstances&       psmxinstances);
+    void policy(const dds::core::policy::IgnoreLocal&         ignorelocal);
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -90,6 +91,7 @@ private:
     dds::core::policy::TypeConsistencyEnforcement typeconsistencyenforcement_;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     dds::core::policy::PSMXInstances           psmxinstances_;
+    dds::core::policy::IgnoreLocal             ignorelocal_;
 };
 
 
@@ -250,6 +252,19 @@ DataReaderQosDelegate::policy<dds::core::policy::PSMXInstances>() const
 {
     return psmxinstances_;
 }
+
+
+template<>
+inline const dds::core::policy::IgnoreLocal&
+DataReaderQosDelegate::policy<dds::core::policy::IgnoreLocal>() const
+{
+    return ignorelocal_;
+}
+
+template<>
+OMG_DDS_API dds::core::policy::IgnoreLocal&
+DataReaderQosDelegate::policy<dds::core::policy::IgnoreLocal>();
+
 
 }
 }

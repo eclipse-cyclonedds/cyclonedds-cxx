@@ -109,6 +109,9 @@ namespace dds { namespace core { namespace policy { namespace detail {
 
     typedef dds::core::policy::TWriterBatching<org::eclipse::cyclonedds::core::policy::WriterBatchingDelegate>
     WriterBatching;
+
+    typedef dds::core::policy::TIgnoreLocal<org::eclipse::cyclonedds::core::policy::IgnoreLocalDelegate>
+    IgnoreLocal;
 } } } } // namespace dds::core::policy::detail
 
 
