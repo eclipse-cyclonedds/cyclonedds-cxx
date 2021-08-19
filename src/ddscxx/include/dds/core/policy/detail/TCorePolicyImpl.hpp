@@ -1174,6 +1174,45 @@ const dds::core::StringSeq TPSMXInstances<D>::instances() const
     return this->delegate().instances();
 }
 
+//TIgnoreLocal
+
+template <typename D>
+TIgnoreLocal<D>::TIgnoreLocal(dds::core::policy::IgnoreLocalKind::Type kind) : dds::core::Value<D>(kind) { }
+
+template <typename D>
+TIgnoreLocal<D>::TIgnoreLocal(const TIgnoreLocal& other) : dds::core::Value<D>(other.delegate()) { }
+
+template <typename D>
+TIgnoreLocal<D>& TIgnoreLocal<D>::kind(dds::core::policy::IgnoreLocalKind::Type kind)
+{
+    this->delegate().kind(kind);
+    return *this;
+}
+
+template <typename D>
+dds::core::policy::IgnoreLocalKind::Type TIgnoreLocal<D>::kind() const
+{
+    return this->delegate().kind();
+}
+
+template <typename D>
+TIgnoreLocal<D> TIgnoreLocal<D>::None()
+{
+    return TIgnoreLocal(dds::core::policy::IgnoreLocalKind::NONE);
+}
+
+template <typename D>
+TIgnoreLocal<D> TIgnoreLocal<D>::Participant()
+{
+    return TIgnoreLocal(dds::core::policy::IgnoreLocalKind::PARTICIPANT);
+}
+
+template <typename D>
+TIgnoreLocal<D> TIgnoreLocal<D>::Process()
+{
+    return TIgnoreLocal(dds::core::policy::IgnoreLocalKind::PROCESS);
+}
+
 }
 }
 }

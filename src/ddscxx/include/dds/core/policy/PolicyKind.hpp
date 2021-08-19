@@ -253,6 +253,17 @@ struct TypeConsistencyKind_def
 
 typedef dds::core::safe_enum<TypeConsistencyKind_def> TypeConsistencyKind;
 
+struct IgnoreLocalKind_def
+{
+    enum Type
+    {
+        NONE,
+        PARTICIPANT,
+        PROCESS
+    };
+};
+typedef dds::core::safe_enum<IgnoreLocalKind_def> IgnoreLocalKind;
+
 }
 }
 }
