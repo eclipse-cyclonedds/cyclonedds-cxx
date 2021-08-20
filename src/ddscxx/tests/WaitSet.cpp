@@ -872,3 +872,60 @@ TEST_F(WaitSet, DISABLED_attach_detach_multiple_during_wait)
 
     ddsrt_thread_join(threadId, NULL);
 }
+
+/**
+ * Check that the status conditions are triggered correctly
+ *
+ * The test checks for trigger of status condition in the following sequence
+ *     1. Status Condition is create and initialized with StatusMask::none()
+ *     2. Specific status mask is enabled on status condition (requested_incompatible_qos())
+ *     3. Status condition is attached to the waitset
+ *     4. The test checks for the trigger for an event which happend before enabling the status mask
+ */
+TEST_F(WaitSet, status_condition_trigger)
+{
+  using SampleType = Space::Type2;
+  auto topic = dds::topic::Topic<SampleType>(this->participant, "space_type2");
+  ASSERT_NE(topic, dds::core::null);
+
+  // Create datawriter
+  dds::pub::qos::DataWriterQos dw_qos{};
+  dw_qos.policy<dds::core::policy::Durability>().kind(
+    dds::core::policy::DurabilityKind::VOLATILE);
+  dds::pub::DataWriter<SampleType> dw(this->publisher, topic, dw_qos);
+
+  // Create datareader
+  dds::sub::qos::DataReaderQos dr_qos{};
+  dr_qos.policy<dds::core::policy::Durability>().kind(
+    dds::core::policy::DurabilityKind::TRANSIENT_LOCAL);
+  dds::sub::DataReader<SampleType> dr(this->subscriber, topic, dr_qos);
+
+  // status condition on writer for offered incompatible QoS
+  dds::core::cond::StatusCondition sc_w(dw);
+  sc_w.enabled_statuses(dds::core::status::StatusMask::offered_incompatible_qos());
+
+  // status condition on reader
+  dds::core::cond::StatusCondition sc_r(dr);
+  // reset the status mask for the status condition
+  sc_r.enabled_statuses(dds::core::status::StatusMask::none());
+  // enable the status mask for requested incompatible QoS
+  sc_r.enabled_statuses(dds::core::status::StatusMask::requested_incompatible_qos());
+
+
+  // create a waitset and attach the conditions
+  dds::core::cond::WaitSet ws{};
+  ws.attach_condition(sc_w);  // write status condition
+  ws.attach_condition(sc_r);  // read status condition
+
+  auto attached_conditions = ws.conditions();
+  // wait for the events
+  auto triggered_conditions = ws.wait(dds::core::Duration{3, 0});
+
+  // both conditions (requested/offered incompatible QoS) should be triggered
+  EXPECT_EQ(triggered_conditions.size(), 2);
+  EXPECT_EQ(triggered_conditions[0]->get_ddsc_entity(), sc_w->get_ddsc_entity());
+  EXPECT_EQ(triggered_conditions[1]->get_ddsc_entity(), sc_r->get_ddsc_entity());
+
+  EXPECT_EQ(dr.requested_incompatible_qos_status().total_count(), 1);
+  EXPECT_EQ(dw.offered_incompatible_qos_status().total_count(), 1);
+}
