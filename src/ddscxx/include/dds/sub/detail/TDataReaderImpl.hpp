@@ -530,7 +530,7 @@ dds::sub::detail::DataReader<T>::init(ObjectDelegate::weak_ref_type weak_ref)
     this->set_weak_ref(weak_ref);
     /* Add weak_ref to the map of entities */
     this->add_to_entity_map(weak_ref);
-    /* Register writer at publisher. */
+    /* Add the datareader to the datareader set of the subscriber */
     this->sub_.delegate()->add_datareader(*this);
 
     // Because listeners are added after reader is created (which is in enabled state, because
