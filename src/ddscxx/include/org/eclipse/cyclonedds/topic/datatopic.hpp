@@ -592,9 +592,17 @@ ddsi_serdata * serdata_from_iox_buffer(
 {
   try {
     auto d = new ddscxx_serdata<T>(typecmn, kind);
-    d->iox_chunk = iox_buffer;
-    d->iox_subscriber = sub;
 
+    // serdata from the loaned sample (when using iceoryx)
+    d->iox_chunk = iox_buffer;
+
+    // Update the iox subscriber, when constructing the serdata in the case of sample received
+    // from iceoryx
+    if (sub != nullptr) {
+      d->iox_subscriber = sub;
+    }
+
+    // key handling
     org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
     const auto& msg = *static_cast<const T*>(d->iox_chunk);
     d->key_md5_hashed() = to_key(str, msg, d->key());
