@@ -340,7 +340,7 @@ emit_enum(
 
   IDL_FOREACH(enumerator, _enum->enumerators) {
     name = get_cpp11_name(enumerator);
-    value = enumerator->value;
+    value = enumerator->value.value;
     fmt = (value == skip) ? "%s%s" : "%s%s = %" PRIu32 "\n";
     if (idl_fprintf(gen->header.handle, fmt, sep, name, value) < 0)
       return IDL_RETCODE_NO_MEMORY;

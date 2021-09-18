@@ -719,7 +719,7 @@ process_member(
   type_spec = ((const idl_member_t *)node)->type_spec;
   /* only use the @key annotations when you do not use the keylist */
   if (!(pstate->flags & IDL_FLAG_KEYLIST) &&
-      ((const idl_member_t *)node)->key == IDL_TRUE)
+      ((const idl_member_t *)node)->key.value)
     loc.type |= KEY_INSTANCE;
 
   IDL_FOREACH(declarator, ((const idl_member_t *)node)->declarators) {
@@ -1129,7 +1129,7 @@ process_switch_type_spec(
     return IDL_RETCODE_NO_MEMORY;
 
   /* short-circuit if switch type specifier is not a key */
-  if (switch_type_spec->key != IDL_TRUE)
+  if (!switch_type_spec->key.value)
     return IDL_RETCODE_OK;
 
   if (putf(&streams->key_write, writefmt)
