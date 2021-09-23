@@ -74,6 +74,7 @@ pool:
   vmImage: $(image)
 
 variables:
+  cyclonedds_branch: 'releases/0.8.x'
   cyclonedds_uri: '<CycloneDDS><Domain><Internal><EnableExpensiveChecks>rhc,whc</EnableExpensiveChecks><LivelinessMonitoring>true</LivelinessMonitoring></Internal><Tracing><Verbosity>config</Verbosity><OutputFile>stderr</OutputFile></Tracing></Domain></CycloneDDS>'
 
 steps:
