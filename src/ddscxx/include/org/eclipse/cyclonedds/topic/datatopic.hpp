@@ -145,7 +145,7 @@ public:
 # pragma GCC diagnostic ignored "-Wold-style-cast"
 #endif
 #endif
-      return static_cast<T*>(SHIFT_PAST_ICEORYX_HEADER(this->iox_chunk));
+      return static_cast<T*>(this->iox_chunk);
 #ifndef _WIN32
 #ifndef __clang__
 # pragma GCC diagnostic pop
