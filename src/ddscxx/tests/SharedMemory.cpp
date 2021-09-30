@@ -17,6 +17,8 @@
 #include "HelloWorldData.hpp"
 #include "Space.hpp"
 #include "Serialization.hpp"
+#include "iceoryx_posh/popo/subscriber.hpp"
+#include "iceoryx_utils/cxx/optional.hpp"
 
 #define EXPECT_THROW_EXCEPTION(statement, error_msg) \
   ASSERT_THROW(statement, dds::core::Exception); \
@@ -29,15 +31,18 @@
 namespace
 {
 template<class T>
-void make_sample_(T & sample, const int32_t cnt)
-{
-  (void) sample;
-  (void) cnt;
-  throw std::runtime_error("make_sample_ called on unsupported type");
-}
+void make_sample_(T & sample, const int32_t cnt);
 
 template<>
 void make_sample_(Space::Type1 & sample, const int32_t cnt)
+{
+  sample.long_1(cnt);
+  sample.long_2(cnt + 1);
+  sample.long_3(cnt + 2);
+}
+
+template<>
+void make_sample_(Space::Type2 & sample, const int32_t cnt)
 {
   sample.long_1(cnt);
   sample.long_2(cnt + 1);
@@ -60,7 +65,42 @@ void make_sample_(Bounded::Msg & sample, const int32_t cnt)
   sample.bounded_sequence().reserve(255);
   std::fill(sample.bounded_sequence().begin(), sample.bounded_sequence().begin() + 255, cnt);
 }
+
+template<typename T>
+struct MessageProperty;
+
+template<>
+struct MessageProperty<Space::Type1> 
+{
+  static constexpr char INSTANCE_NAME[] = "Space::Type1";
+  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = true;
+};
+
+template<>
+struct MessageProperty<Space::Type2> 
+{
+  static constexpr char INSTANCE_NAME[] = "Space::Type2";
+  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = true;
+};
+
+template<>
+struct MessageProperty<HelloWorldData::Msg> 
+{
+  static constexpr char INSTANCE_NAME[] = "HelloWorldData::Msg";
+  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = false;
+};
+
+template<>
+struct MessageProperty<Bounded::Msg> 
+{
+  static constexpr char INSTANCE_NAME[] = "Bounded::Msg";
+  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = false;
+};
+
+constexpr bool MUST_USE_ICEORYX = true;
+constexpr bool DO_NOT_USE_ICEORYX = false;
 }
+
 /**
  * Fixture for the shared memory tests with RouDi
  */
@@ -78,6 +118,8 @@ public:
   dds::pub::DataWriter<T> writer;
   dds::sub::cond::ReadCondition rc;
   dds::core::cond::WaitSet waitset;
+  iox::cxx::optional<iox::popo::Subscriber<T>> iceoryx_subscriber;
+  static constexpr char TOPIC_NAME[] = "datareader_test_topic";
 
   SharedMemoryTest()
   : participant(dds::core::null),
@@ -115,7 +157,7 @@ public:
   {
     if (this->topic == dds::core::null) {
       this->CreateParticipant();
-      this->topic = dds::topic::Topic<T>(this->participant, "datareader_test_topic");
+      this->topic = dds::topic::Topic<T>(this->participant, TOPIC_NAME);
       ASSERT_NE(this->topic, dds::core::null);
     }
   }
@@ -135,6 +177,9 @@ public:
     if (this->reader == dds::core::null) {
       this->reader = dds::sub::DataReader<T>(this->subscriber, this->topic, r_qos);
       ASSERT_NE(this->reader, dds::core::null);
+
+      this->iceoryx_subscriber.emplace(
+          iox::capro::ServiceDescription{"DDS_CYCLONE", MessageProperty<TopicType>::INSTANCE_NAME, TOPIC_NAME});
     }
   }
 
@@ -202,6 +247,7 @@ public:
 
   void
   CheckData(
+    const bool must_use_iceoryx,
     const dds::sub::LoanedSamples<T> & samples,
     const std::vector<T> & test_data,
     const dds::sub::status::DataState & test_state =
@@ -220,10 +266,22 @@ public:
       ASSERT_EQ(state.view_state(), test_state.view_state());
       ASSERT_EQ(state.sample_state(), test_state.sample_state());
       ASSERT_EQ(state.instance_state(), test_state.instance_state());
+
+      if ( must_use_iceoryx ) {
+        ASSERT_TRUE(iceoryx_subscriber->hasData());
+        auto sample = iceoryx_subscriber->take();
+        ASSERT_FALSE(sample.has_error());
+        ASSERT_EQ(data, **sample);
+      }
+    }
+
+    if ( !must_use_iceoryx ) {
+      ASSERT_FALSE(iceoryx_subscriber->hasData());
     }
   }
 
   void run_communication_test(
+    const bool must_use_iceoryx,
     const dds::sub::qos::DataReaderQos & r_qos,
     const dds::pub::qos::DataWriterQos & w_qos,
     const int32_t num_samples)
@@ -239,7 +297,7 @@ public:
     this->WaitForData();
     /* Check result by taking. */
     samples = this->reader.take();
-    this->CheckData(samples, test_samples);
+    this->CheckData(must_use_iceoryx, samples, test_samples);
   }
 
   void run_loan_support_api_test(const bool valid_r_shm_qos, const bool valid_w_shm_qos)
@@ -265,7 +323,7 @@ public:
  * Tests
  */
 
-using TestTypes = ::testing::Types<Space::Type1, HelloWorldData::Msg, Bounded::Msg>;
+using TestTypes = ::testing::Types<Space::Type1, Space::Type2, HelloWorldData::Msg, Bounded::Msg>;
 TYPED_TEST_SUITE(SharedMemoryTest, TestTypes, );
 
 TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
@@ -284,8 +342,11 @@ TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
+  constexpr bool IS_SHARED_MEMORY_COMPATIBLE = 
+    MessageProperty<typename TestFixture::TopicType>::IS_SHARED_MEMORY_COMPATIBLE;
+
   // tests
-  this->run_communication_test(r_qos, w_qos, 10);
+  this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 10);
   this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
 }
 
@@ -296,8 +357,11 @@ TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
   dds::pub::qos::DataWriterQos w_qos{};
   constexpr bool valid_shm_qos = true;
 
+  constexpr bool IS_SHARED_MEMORY_COMPATIBLE = 
+    MessageProperty<typename TestFixture::TopicType>::IS_SHARED_MEMORY_COMPATIBLE;
+
   // test communication
-  this->run_communication_test(r_qos, w_qos, 1);
+  this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 1);
   this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos);
 }
 
@@ -319,8 +383,11 @@ TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
+  constexpr bool IS_SHARED_MEMORY_COMPATIBLE = 
+    MessageProperty<typename TestFixture::TopicType>::IS_SHARED_MEMORY_COMPATIBLE;
+
   // tests
-  this->run_communication_test(r_qos, w_qos, 10);
+  this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 10);
   this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
 }
 
@@ -341,7 +408,7 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   constexpr bool valid_w_shm_qos = false;
 
   // tests
-  this->run_communication_test(r_qos, w_qos, 10);
+  this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10);
   this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
 }
 
@@ -361,7 +428,7 @@ TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = false;
 
-  this->run_communication_test(r_qos, w_qos, 10);
+  this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10);
   this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
 }
 
