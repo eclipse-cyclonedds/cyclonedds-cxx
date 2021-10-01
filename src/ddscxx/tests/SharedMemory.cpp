@@ -65,38 +65,6 @@ void make_sample_(Bounded::Msg & sample, const int32_t cnt)
   sample.bounded_sequence().reserve(255);
   std::fill(sample.bounded_sequence().begin(), sample.bounded_sequence().begin() + 255, cnt);
 }
-
-template<typename T>
-struct MessageProperty;
-
-template<>
-struct MessageProperty<Space::Type1> 
-{
-  static constexpr char INSTANCE_NAME[] = "Space::Type1";
-  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = true;
-};
-
-template<>
-struct MessageProperty<Space::Type2> 
-{
-  static constexpr char INSTANCE_NAME[] = "Space::Type2";
-  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = true;
-};
-
-template<>
-struct MessageProperty<HelloWorldData::Msg> 
-{
-  static constexpr char INSTANCE_NAME[] = "HelloWorldData::Msg";
-  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = false;
-};
-
-template<>
-struct MessageProperty<Bounded::Msg> 
-{
-  static constexpr char INSTANCE_NAME[] = "Bounded::Msg";
-  static constexpr bool IS_SHARED_MEMORY_COMPATIBLE = false;
-};
-
 constexpr bool MUST_USE_ICEORYX = true;
 constexpr bool DO_NOT_USE_ICEORYX = false;
 }
@@ -179,7 +147,9 @@ public:
       ASSERT_NE(this->reader, dds::core::null);
 
       this->iceoryx_subscriber.emplace(
-          iox::capro::ServiceDescription{"DDS_CYCLONE", MessageProperty<TopicType>::INSTANCE_NAME, TOPIC_NAME});
+          iox::capro::ServiceDescription{"DDS_CYCLONE", 
+               iox::capro::IdString_t(iox::cxx::TruncateToCapacity, org::eclipse::cyclonedds::topic::TopicTraits<TopicType>::getTypeName()), 
+               TOPIC_NAME});
     }
   }
 
@@ -342,8 +312,8 @@ TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  constexpr bool IS_SHARED_MEMORY_COMPATIBLE = 
-    MessageProperty<typename TestFixture::TopicType>::IS_SHARED_MEMORY_COMPATIBLE;
+  const bool IS_SHARED_MEMORY_COMPATIBLE = 
+    org::eclipse::cyclonedds::topic::TopicTraits<typename TestFixture::TopicType>::isSelfContained();
 
   // tests
   this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 10);
@@ -357,8 +327,8 @@ TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
   dds::pub::qos::DataWriterQos w_qos{};
   constexpr bool valid_shm_qos = true;
 
-  constexpr bool IS_SHARED_MEMORY_COMPATIBLE = 
-    MessageProperty<typename TestFixture::TopicType>::IS_SHARED_MEMORY_COMPATIBLE;
+  const bool IS_SHARED_MEMORY_COMPATIBLE = 
+    org::eclipse::cyclonedds::topic::TopicTraits<typename TestFixture::TopicType>::isSelfContained();
 
   // test communication
   this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 1);
@@ -383,8 +353,8 @@ TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  constexpr bool IS_SHARED_MEMORY_COMPATIBLE = 
-    MessageProperty<typename TestFixture::TopicType>::IS_SHARED_MEMORY_COMPATIBLE;
+  const bool IS_SHARED_MEMORY_COMPATIBLE = 
+    org::eclipse::cyclonedds::topic::TopicTraits<typename TestFixture::TopicType>::isSelfContained();
 
   // tests
   this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 10);
