@@ -750,28 +750,10 @@ uint32_t sertype_hash(const ddsi_sertype* tpcmn)
   return 0x0;
 }
 
-template <typename T>
-uint32_t sertype_get_serialized_size(const ddsi_sertype* tpcmn, void * sample)
-{
-  // cast to the type
-  const auto& msg = *static_cast<const T*>(sample);
-
-  // get the serialized size of the sample (with out serializing)
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  move(str, msg);
-
-  // TODO(Sumanth), do we need to handle the key hash?
-
-  if (str.abort_status())
-    // handle error
-
-  // TODO(Sumanth), 4 bytes for header should also be considered?
-  return str.position() + 4;  //4 bytes extra to also include the header
-}
-
 // TODO(Sumanth), cleanup the below functions based on the updated C sertype interface and add
 //  the error handling
-uint32_t sertype_serialize(const ddsi_sertype* tpcmn, void * sample)
+template <typename T>
+size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
 {
   const auto& msg = *static_cast<const T*>(sample);
 
@@ -781,14 +763,19 @@ uint32_t sertype_serialize(const ddsi_sertype* tpcmn, void * sample)
 
   // TODO(Sumanth), do we need to handle the key hash?
 
-  if (str.abort_status())
+  if (str.abort_status()) {
     // TODO(Sumanth) handle this error
+  }
 
   // TODO(Sumanth), 4 bytes for header should also be considered?
   return str.position() + 4;  //4 bytes extra to also include the header
 }
 
-bool sertype_serialize(const ddsi_sertype* tpcmn, void * sample, void * dst_buffer)
+template <typename T>
+void sertype_serialize_into(const ddsi_sertype*,
+                            const void * sample,
+                            void * dst_buffer,
+                            size_t)
 {
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
@@ -797,17 +784,19 @@ bool sertype_serialize(const ddsi_sertype* tpcmn, void * sample, void * dst_buff
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   // TODO(Sumanth), considering the header offset
   str.set_buffer(calc_offset(dst_buffer, 4));
-  read(str, msg);
+  write(str, msg);
   // TODO(Sumanth), we should also handle endianness, based on the endiannes we need to call
   //  read_swapped, but this should be done as part of another issue as there is some cleanup to
   //  be done with respect to this issue
 
   // TODO(Sumanth), do we need to handle the key hash?
 
-  return !str.abort_status()
+  // TODO(Sumanth) update function signature to return bool
+  !str.abort_status();
 }
 
-bool sertype_deserialize(const ddsi_sertype* tpcmn, const void * src_buffer, void * sample)
+template <typename T>
+bool sertype_deserialize(const ddsi_sertype* tpcmn, void * src_buffer, void * sample)
 {
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
@@ -815,12 +804,12 @@ bool sertype_deserialize(const ddsi_sertype* tpcmn, const void * src_buffer, voi
   // deserialize the buffer into the sample
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   // TODO(Sumanth), considering the header offset
-  str.set_buffer(calc_offset(dst_buffer, 4));
-  write(str, sample);
+  str.set_buffer(calc_offset(src_buffer, 4));
+  read(str, msg);
 
   // TODO(Sumanth), do we need to handle the key hash?
 
-  return !str.abort_status()
+  return !str.abort_status();
 }
 
 template <typename T>
@@ -838,7 +827,9 @@ const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   nullptr, // serialize
   nullptr, // deserialize
   nullptr, // assignable_from
-  nullptr  //derive_sertype sertype_default_derive_sertype?
+  nullptr, //derive_sertype sertype_default_derive_sertype?
+  sertype_get_serialized_size<T>,
+  sertype_serialize_into<T>
 };
 
 #endif  // DDSCXXDATATOPIC_HPP_
