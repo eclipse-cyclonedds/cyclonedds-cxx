@@ -134,11 +134,55 @@ public:
     return t;
   }
 
-  T* getT()
-  {
+  T* getT() {
+    //TODO(Sumanth), clean this mess-up and make some functions
 #ifdef DDSCXX_HAS_SHM
     // if iox chunk is available, dont deserialize the sample, return the chunk directly
     if (iox_chunk != nullptr && data() == nullptr) {
+      auto iox_header = iceoryx_header_from_chunk(iox_chunk);
+
+      if (iox_header->data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+        T *t = m_t.load(std::memory_order_acquire);
+        if (t == nullptr) {
+          t = new T();
+          endianness stream_endianness = endianness::big_endian;
+          if (*(static_cast<unsigned char *>(iox_chunk) + 1) == 0x1)
+            stream_endianness = endianness::little_endian;
+
+          org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+          str.set_buffer(calc_offset(iox_chunk, 4));
+          switch (kind) {
+            case SDK_KEY:
+              if (swap_necessary(stream_endianness))
+                key_read_swapped(str, *t);
+              else
+                key_read(str, *t);
+              break;
+            case SDK_DATA:
+              if (swap_necessary(stream_endianness))
+                read_swapped(str, *t);
+              else
+                read(str, *t);
+              break;
+            case SDK_EMPTY:
+              assert(0);
+          }
+
+          //TODO(Sumanth), release the iox chunk here
+
+          if (str.abort_status()) {
+            delete t;
+            t = nullptr;
+          }
+
+          T *exp = nullptr;
+          if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+            delete t;
+            t = exp;
+          }
+        }
+        return t;
+      } else {
 #ifndef _WIN32
 #ifndef __clang__
 # pragma GCC diagnostic push
@@ -151,6 +195,7 @@ public:
 # pragma GCC diagnostic pop
 #endif
 #endif
+      }
     } else
 #endif  // DDSCXX_HAS_SHM
     {
@@ -602,12 +647,13 @@ ddsi_serdata * serdata_from_iox_buffer(
       d->iox_subscriber = sub;
     }
 
+    //TODO(Sumanth) fix the key hash handling, no point of calling setT()
     // key handling
-    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    const auto& msg = *static_cast<const T*>(d->iox_chunk);
-    d->key_md5_hashed() = to_key(str, msg, d->key());
-    d->setT(&msg);
-    d->populate_hash();
+    //org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+    //const auto& msg = *static_cast<const T*>(d->iox_chunk);
+    //d->key_md5_hashed() = to_key(str, msg, d->key());
+    //d->setT(&msg);
+    //d->populate_hash();
 
     return d;
   }
