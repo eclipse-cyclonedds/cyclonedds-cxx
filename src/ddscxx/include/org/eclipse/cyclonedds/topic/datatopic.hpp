@@ -780,14 +780,17 @@ void sertype_serialize_into(const ddsi_sertype*,
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
 
+  // set the endianess
+  auto ptr = static_cast<unsigned char*>(dst_buffer);
+  memset(ptr, 0x0, 4);
+  if (native_endianness() == endianness::little_endian)
+    *(ptr + 1) = 0x1;
+
   // serialize the sample into the destination buffer
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   // TODO(Sumanth), considering the header offset
   str.set_buffer(calc_offset(dst_buffer, 4));
   write(str, msg);
-  // TODO(Sumanth), we should also handle endianness, based on the endiannes we need to call
-  //  read_swapped, but this should be done as part of another issue as there is some cleanup to
-  //  be done with respect to this issue
 
   // TODO(Sumanth), do we need to handle the key hash?
 
