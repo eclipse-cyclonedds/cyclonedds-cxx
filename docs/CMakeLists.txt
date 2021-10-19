@@ -1,5 +1,6 @@
 #
 # Copyright(c) 2020 ADLINK Technology Limited and others
+# Copyright(c) 2021 Apex.AI Inc. All rights reserved.
 #
 # This program and the accompanying materials are made available under the
 # terms of the Eclipse Public License v. 2.0 which is available at
@@ -9,15 +10,23 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-find_package(Sphinx REQUIRED breathe exhale)
-
-sphinx_add_docs(
-  docs
-  BREATHE_PROJECTS ddscxx_api_docs
-  BUILDER html
-  SOURCE_DIRECTORY manual)
 
 install(
-  DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs"
-  DESTINATION "${CMAKE_INSTALL_DOCDIR}/manual"
-  COMPONENT dev)
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../README.md
+  DESTINATION share/doc/cyclonedds-cxx)
+
+if(BUILD_DOCS)
+  find_package(Sphinx REQUIRED breathe exhale)
+
+  sphinx_add_docs(
+    docs
+    BREATHE_PROJECTS ddscxx_api_docs
+    BUILDER html
+    SOURCE_DIRECTORY manual)
+
+  install(
+    DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs"
+    DESTINATION "${CMAKE_INSTALL_DOCDIR}/manual"
+    COMPONENT dev)
+endif()
