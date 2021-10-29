@@ -764,7 +764,8 @@ const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   nullptr, // serialized_size
   nullptr, // serialize
   nullptr, // deserialize
-  nullptr  // assignable_from
+  nullptr, // assignable_from
+  nullptr  //derive_sertype sertype_default_derive_sertype?
 };
 
 #endif  // DDSCXXDATATOPIC_HPP_
