@@ -23,6 +23,7 @@
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/q_xmsg.h"
 #include "dds/ddsi/ddsi_serdata.h"
+#include "dds/ddsi/shm_types.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
@@ -141,7 +142,7 @@ public:
     if (iox_chunk != nullptr && data() == nullptr) {
       auto iox_header = iceoryx_header_from_chunk(iox_chunk);
 
-      if (iox_header->data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+      if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
         T *t = m_t.load(std::memory_order_acquire);
         if (t == nullptr) {
           t = new T();
