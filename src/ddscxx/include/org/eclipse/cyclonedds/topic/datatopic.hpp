@@ -23,20 +23,12 @@
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/q_xmsg.h"
 #include "dds/ddsi/ddsi_serdata.h"
-#include "dds/ddsi/shm_types.h"
+#include "dds/ddsi/shm_transport.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 #include "dds/features.hpp"
 
-// We need this to return the loan back to iceoryx
-// TODO(Sumanth) fix this, there should be an API in Cyclone DDS which can return the loan back
-//  to iceoryx, so we don't need to depend on iceoryx directly in the C++ language binding
-#ifdef DDSCXX_HAS_SHM
-extern "C" {
-#include "dds/ddsi/shm_sync.h"
-}
-#endif
 
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
@@ -579,13 +571,10 @@ void serdata_free(ddsi_serdata* dcmn)
 #ifdef DDSCXX_HAS_SHM
   if (d->iox_chunk && d->iox_subscriber)
   {
-    auto iox_sub = *static_cast<iox_sub_t *>(d->iox_subscriber);
-    shm_lock_iox_sub(iox_sub);
-    // return the ownership of the memory chunk to iceoryx
-    iox_sub_release_chunk(iox_sub, d->iox_chunk);
-    shm_unlock_iox_sub(iox_sub);
-    // make this pointer to chunk explicitly null
-    d->iox_chunk = nullptr;
+    // Explicit cast to iox_subscriber is required here, since the C++ binding has no notion of
+    // iox subscriber, but the underlying C API expects this to be a types iox_subscriber.
+    // TODO (Sumanth), Fix this when we cleanup the interfaces
+    free_iox_chunk(static_cast<iox_sub_t *>(d->iox_subscriber), &d->iox_chunk);
   }
 #endif
   delete d;
@@ -807,8 +796,6 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
   // get the serialized size of the sample (with out serializing)
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   move(str, msg);
-
-  // TODO(Sumanth), do we need to handle the key hash?
 
   if (str.abort_status()) {
     // TODO(Sumanth) handle this error
