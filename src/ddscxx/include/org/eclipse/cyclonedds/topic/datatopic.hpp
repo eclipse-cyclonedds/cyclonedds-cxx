@@ -819,7 +819,7 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
 }
 
 template <typename T>
-void sertype_serialize_into(const ddsi_sertype*,
+bool sertype_serialize_into(const ddsi_sertype*,
                             const void * sample,
                             void * dst_buffer,
                             size_t)
@@ -841,8 +841,7 @@ void sertype_serialize_into(const ddsi_sertype*,
 
   // TODO(Sumanth), do we need to handle the key hash?
 
-  // TODO(Sumanth) update function signature to return bool
-  !str.abort_status();
+  return !str.abort_status();
 }
 
 template <typename T>
