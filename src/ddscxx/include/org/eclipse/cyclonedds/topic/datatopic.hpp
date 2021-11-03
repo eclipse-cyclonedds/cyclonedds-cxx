@@ -23,11 +23,14 @@
 #include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/q_xmsg.h"
 #include "dds/ddsi/ddsi_serdata.h"
-#include "dds/ddsi/shm_transport.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 #include "dds/features.hpp"
+
+#ifdef DDSCXX_HAS_SHM
+#include "dds/ddsi/shm_transport.h"
+#endif
 
 constexpr size_t CDR_HEADER_SIZE = 4U;
 
