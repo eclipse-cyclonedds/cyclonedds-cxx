@@ -13,12 +13,15 @@
 
 #include "dds/dds.hpp"
 #include "dds/ddsrt/environ.h"
+#include "dds/ddsi/shm_transport.h"
 #include "iceoryx_posh/testing/roudi_gtest.hpp"
 #include "HelloWorldData.hpp"
 #include "Space.hpp"
 #include "Serialization.hpp"
 #include "iceoryx_posh/popo/subscriber.hpp"
+#include "iceoryx_posh/popo/sample.hpp"
 #include "iceoryx_utils/cxx/optional.hpp"
+#include "dds/ddsi/shm_transport.h"
 
 #define EXPECT_THROW_EXCEPTION(statement, error_msg) \
   ASSERT_THROW(statement, dds::core::Exception); \
@@ -30,6 +33,9 @@
 
 namespace
 {
+
+using IceoryxHeader = iceoryx_header;
+
 template<class T>
 void make_sample_(T & sample, const int32_t cnt);
 
@@ -86,7 +92,8 @@ public:
   dds::pub::DataWriter<T> writer;
   dds::sub::cond::ReadCondition rc;
   dds::core::cond::WaitSet waitset;
-  iox::cxx::optional<iox::popo::Subscriber<T>> iceoryx_subscriber;
+  iox::cxx::optional<iox::popo::Subscriber<T, iceoryx_header_t>> iceoryx_subscriber;
+
   static constexpr char TOPIC_NAME[] = "datareader_test_topic";
 
   SharedMemoryTest()
@@ -237,22 +244,47 @@ public:
       ASSERT_EQ(state.sample_state(), test_state.sample_state());
       ASSERT_EQ(state.instance_state(), test_state.instance_state());
 
-      if ( must_use_iceoryx ) {
+      if (must_use_iceoryx) {
         ASSERT_TRUE(iceoryx_subscriber->hasData());
-        auto sample = iceoryx_subscriber->take();
-        ASSERT_FALSE(sample.has_error());
-        // TODO(Sumanth), handle the case when the data in iceoryx chunk is serialized
-//        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-//        org::eclipse::cyclonedds::core::cdr::move(str, data);
-//        std::vector<char> buf(str.position()+4);
-//        str.reset_position();
-//        str.set_buffer(calc_offset(buf.data(), 4));
-//        org::eclipse::cyclonedds::core::cdr::write(str, data);
-//        ASSERT_EQ(buf, **sample);
+        auto result = iceoryx_subscriber->take();
+        ASSERT_FALSE(result.has_error());
+        // get the sample with the user header
+        auto & sample = result.value();
+        // get the user header
+        auto header = sample.getUserHeader();
+        // get the actual data
+        auto iceoryx_data = sample.get();
+
+        // if the data in the chunk is of the serialized type
+        if (header.shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+          // Since the data in iceoryx chunk is in the serialized form, take the
+          // sample and deserialize the data and then compare with the sent data
+          auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
+          endianness stream_endianness = endianness::big_endian;
+          if (*(buf_ptr + 1) == 0x1) {
+            stream_endianness = endianness::little_endian;
+          }
+
+          org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+          str.set_buffer(calc_offset(buf_ptr, 4));
+          T msg;
+          if (swap_necessary(stream_endianness)) {
+            read_swapped(str, msg);
+          } else {
+            read(str, msg);
+          }
+          ASSERT_EQ(msg, test_data[count]);
+        } else if (header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+          // the chunk already has deserialized data and can be compared directly
+          ASSERT_EQ(*iceoryx_data, test_data[count]);
+        } else {
+          throw std::runtime_error(
+                  "the data state is not expected " + std::to_string(header.shm_data_state));
+        }
       }
     }
 
-    if ( !must_use_iceoryx ) {
+    if (!must_use_iceoryx) {
       ASSERT_FALSE(iceoryx_subscriber->hasData());
     }
   }
@@ -415,7 +447,7 @@ TYPED_TEST(SharedMemoryTest, loan_sample)
 
   this->SetupCommunication(r_qos, w_qos);
   using DDSType = typename TestFixture::TopicType;
-  // request loan, only if the type is fixed
+  // request loan (supported only for fixed-size self-contained types)
   if (org::eclipse::cyclonedds::topic::TopicTraits<DDSType>::isSelfContained()) {
     try {
       auto & loaned_sample = this->writer.delegate()->loan_sample();
