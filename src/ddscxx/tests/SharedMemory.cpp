@@ -298,19 +298,8 @@ public:
           // Since the data in iceoryx chunk is in the serialized form, take the
           // sample and deserialize the data and then compare with the sent data
           auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
-          endianness stream_endianness = endianness::big_endian;
-          if (*(buf_ptr + 1) == 0x1) {
-            stream_endianness = endianness::little_endian;
-          }
-
-          org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-          str.set_buffer(calc_offset(buf_ptr, 4));
           T msg;
-          if (swap_necessary(stream_endianness)) {
-            read_swapped(str, msg);
-          } else {
-            read(str, msg);
-          }
+          deserialize_sample_from_buffer(buf_ptr, msg);
           ASSERT_EQ(msg, test_data[count]);
         } else if (header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
           // the chunk already has deserialized data and can be compared directly

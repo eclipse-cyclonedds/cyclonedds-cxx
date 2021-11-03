@@ -29,6 +29,7 @@
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 #include "dds/features.hpp"
 
+constexpr size_t CDR_HEADER_SIZE = 4U;
 
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
@@ -80,6 +81,45 @@ static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
   return static_cast<const void*>(static_cast<const unsigned char*>(ptr) + n);
 }
 
+/// \brief De-serialize the buffer into the sample
+/// \param[in] buffer The buffer to be de-serialized
+/// \param[out] sample Type to which the buffer will be de-serialized
+/// \param[in] data_kind The data kind (data, or key)
+/// \tparam T The sample type
+/// \return True if the deserialization is successful
+///         False if the deserialization failed
+template <typename T>
+bool deserialize_sample_from_buffer(unsigned char * buffer,
+                                    T & sample,
+                                    const ddsi_serdata_kind data_kind=SDK_DATA)
+{
+  endianness stream_endianness = endianness::big_endian;
+  if (*(buffer + 1) == 0x1) {
+    stream_endianness = endianness::little_endian;
+  }
+
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE));
+  switch (data_kind) {
+    case SDK_KEY:
+      if (swap_necessary(stream_endianness))
+        key_read_swapped(str, sample);
+      else
+        key_read(str, sample);
+      break;
+    case SDK_DATA:
+      if (swap_necessary(stream_endianness))
+        read_swapped(str, sample);
+      else
+        read(str, sample);
+      break;
+    case SDK_EMPTY:
+      assert(0);
+  }
+
+  return !str.abort_status();
+}
+
 template <typename T>
 class ddscxx_sertype : public ddsi_sertype {
 public:
@@ -128,42 +168,17 @@ public:
   }
 
   T* getT() {
-    //TODO(Sumanth), clean this mess-up and make some functions
 #ifdef DDSCXX_HAS_SHM
-    // if iox chunk is available, dont deserialize the sample, return the chunk directly
     if (iox_chunk != nullptr && data() == nullptr) {
       auto iox_header = iceoryx_header_from_chunk(iox_chunk);
 
+      // if the iox chunk has the data in serialized form
       if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
         T *t = m_t.load(std::memory_order_acquire);
         if (t == nullptr) {
           t = new T();
-          endianness stream_endianness = endianness::big_endian;
-          if (*(static_cast<unsigned char *>(iox_chunk) + 1) == 0x1)
-            stream_endianness = endianness::little_endian;
-
-          org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-          str.set_buffer(calc_offset(iox_chunk, 4));
-          switch (kind) {
-            case SDK_KEY:
-              if (swap_necessary(stream_endianness))
-                key_read_swapped(str, *t);
-              else
-                key_read(str, *t);
-              break;
-            case SDK_DATA:
-              if (swap_necessary(stream_endianness))
-                read_swapped(str, *t);
-              else
-                read(str, *t);
-              break;
-            case SDK_EMPTY:
-              assert(0);
-          }
-
-          //TODO(Sumanth), release the iox chunk here
-
-          if (str.abort_status()) {
+          // if deserialization failed
+          if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(iox_chunk), *t, kind)) {
             delete t;
             t = nullptr;
           }
@@ -185,31 +200,8 @@ public:
       T *t = m_t.load(std::memory_order_acquire);
       if (t == nullptr) {
         t = new T();
-        endianness stream_endianness  = endianness::big_endian;
-        if (*(static_cast<unsigned char*>(data())+1) == 0x1)
-          stream_endianness = endianness::little_endian;
-
-        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-        str.set_buffer(calc_offset(data(),4));
-        switch (kind)
-        {
-          case SDK_KEY:
-            if (swap_necessary(stream_endianness))
-              key_read_swapped(str,*t);
-            else
-              key_read(str,*t);
-            break;
-          case SDK_DATA:
-            if (swap_necessary(stream_endianness))
-              read_swapped(str,*t);
-            else
-              read(str,*t);
-            break;
-          case SDK_EMPTY:
-            assert(0);
-        }
-
-        if (str.abort_status()) {
+        // if deserialization failed
+        if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(data()), *t, kind)) {
           delete t;
           t = nullptr;
         }
@@ -468,18 +460,8 @@ bool serdata_to_sample(
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  endianness stream_endianness = endianness::big_endian;
-  if (*(static_cast<unsigned char*>(ptr->data())+1) == 0x1)
-    stream_endianness = endianness::little_endian;
-
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  str.set_buffer(calc_offset(ptr->data(), 4));
   auto& msg = *static_cast<T*>(sample);
-  if (swap_necessary(stream_endianness))
-    read_swapped(str, msg);
-  else
-    read(str, msg);
-  return str.abort_status(); //is true this the correct return value for failure state??
+  return deserialize_sample_from_buffer(static_cast<unsigned char*>(ptr->data()), msg);
 }
 
 template <typename T>
@@ -536,21 +518,9 @@ bool serdata_untyped_to_sample(
   (void)buflim;
 
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-
   T* ptr = static_cast<T*>(sample);
 
-  basic_cdr_stream str;
-  endianness stream_endianness = endianness::big_endian;
-  if (*(static_cast<unsigned char*>(d->data())+1) == 0x1)
-    stream_endianness = endianness::little_endian;
-
-  str.set_buffer(calc_offset(d->data(), 4));
-  if (swap_necessary(stream_endianness))
-    key_read_swapped(str, *ptr);
-  else
-    key_read(str, *ptr);
-
-  return !str.abort_status();  //is true the correct value for no errors in streaming?
+  return deserialize_sample_from_buffer(static_cast<unsigned char*>(d->data()), *ptr, SDK_KEY);
 }
 
 template <typename T>
@@ -788,8 +758,7 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
     // TODO(Sumanth) handle this error
   }
 
-  // TODO(Sumanth), 4 bytes for header should also be considered?
-  return str.position() + 4;  //4 bytes extra to also include the header
+  return str.position() + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
 }
 
 template <typename T>
