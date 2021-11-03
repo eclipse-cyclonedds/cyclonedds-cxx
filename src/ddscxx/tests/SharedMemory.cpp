@@ -23,6 +23,8 @@
 #include "iceoryx_utils/cxx/optional.hpp"
 #include "dds/ddsi/shm_transport.h"
 
+#include <random>
+
 #define EXPECT_THROW_EXCEPTION(statement, error_msg) \
   ASSERT_THROW(statement, dds::core::Exception); \
   try { \
@@ -62,15 +64,51 @@ void make_sample_(HelloWorldData::Msg & sample, const int32_t cnt)
   sample.message(std::to_string(cnt));
 }
 
+char get_random_char()
+{
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dist('a', 'z');
+  return static_cast<char>(dist(gen));
+}
+
 template<>
 void make_sample_(Bounded::Msg & sample, const int32_t cnt)
 {
-  sample.bounded_string(std::to_string(cnt));
-  sample.boolean_sequence().reserve(255);
-  std::fill(sample.boolean_sequence().begin(), sample.boolean_sequence().begin() + 255, true);
-  sample.bounded_sequence().reserve(255);
-  std::fill(sample.bounded_sequence().begin(), sample.bounded_sequence().begin() + 255, cnt);
+  // the sequence types are bounded to 255, so limit the capacity to 255
+  int32_t capacity = cnt * 10;
+  capacity = (capacity > 255) ? 255 : capacity;
+
+  sample.bounded_string().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.bounded_string().begin(),
+    sample.bounded_string().begin() + capacity, get_random_char());
+
+  sample.boolean_sequence().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.boolean_sequence().begin(), sample.boolean_sequence().begin() + capacity, true);
+
+  sample.bounded_sequence().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.bounded_sequence().begin(), sample.bounded_sequence().begin() + capacity, cnt);
 }
+
+template<>
+void make_sample_(UnBounded::Msg & sample, const int32_t cnt)
+{
+  // the sequence types are unbounded, reserve the capacity to 100x of the count
+  int32_t capacity = cnt * 100;
+
+  sample.unbounded_string().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.unbounded_string().begin(),
+    sample.unbounded_string().begin() + capacity, get_random_char());
+
+  sample.unbounded_sequence_bool().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.unbounded_sequence_bool().begin(),
+    sample.unbounded_sequence_bool().begin() + capacity, true);
+
+  sample.unbounded_sequence_long().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.unbounded_sequence_long().begin(),
+    sample.unbounded_sequence_long().begin() + capacity, cnt);
+}
+
 constexpr bool MUST_USE_ICEORYX = true;
 constexpr bool DO_NOT_USE_ICEORYX = false;
 }
