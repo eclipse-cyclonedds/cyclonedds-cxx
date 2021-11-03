@@ -758,7 +758,8 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
   move(str, msg);
 
   if (str.abort_status()) {
-    // TODO(Sumanth) handle this error
+    // the max value is treated as an error in the Cyclone core
+    return std::numeric_limits<size_t>::max();
   }
 
   return str.position() + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
