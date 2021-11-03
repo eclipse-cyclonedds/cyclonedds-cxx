@@ -66,9 +66,8 @@ void make_sample_(HelloWorldData::Msg & sample, const int32_t cnt)
 
 char get_random_char()
 {
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dist('a', 'z');
+  static std::mt19937 gen(std::random_device{}());
+  static std::uniform_int_distribution<> dist('a', 'z');
   return static_cast<char>(dist(gen));
 }
 
@@ -263,55 +262,48 @@ public:
   void
   CheckData(
     const bool must_use_iceoryx,
-    const dds::sub::LoanedSamples<T> & samples,
-    const std::vector<T> & test_data,
-    const dds::sub::status::DataState & test_state =
-    dds::sub::status::DataState(dds::sub::status::SampleState::not_read(),
-    dds::sub::status::ViewState::new_view(),
-    dds::sub::status::InstanceState::alive()))
+    const dds::sub::LoanedSamples<T> & sample,
+    const T & test_data)
   {
-    unsigned long count = 0UL;
-    ASSERT_EQ(samples.length(), test_data.size());
-    typename dds::sub::LoanedSamples<T>::const_iterator it;
-    for (it = samples.begin(); it != samples.end(); ++it, ++count) {
-      const T & data = it->data();
-      const dds::sub::SampleInfo & info = it->info();
-      const dds::sub::status::DataState & state = info.state();
-      ASSERT_EQ(data, test_data[count]);
-      ASSERT_EQ(state.view_state(), test_state.view_state());
-      ASSERT_EQ(state.sample_state(), test_state.sample_state());
-      ASSERT_EQ(state.instance_state(), test_state.instance_state());
+    // we only have one sample
+    ASSERT_EQ(sample.length(), 1);
+    const T & data = sample.begin()->data();
+    const dds::sub::SampleInfo & info = sample.begin()->info();
+    const dds::sub::status::DataState & state = info.state();
+    ASSERT_EQ(data, test_data);
+    // the sample view state can either be new or not new (which has not been taken)
+    ASSERT_TRUE((state.view_state() == dds::sub::status::ViewState::new_view()) ||
+      (state.view_state() == dds::sub::status::ViewState::not_new_view()));
+    ASSERT_EQ(state.sample_state(), dds::sub::status::SampleState::not_read());
+    ASSERT_EQ(state.instance_state(), dds::sub::status::InstanceState::alive());
 
-      if (must_use_iceoryx) {
-        ASSERT_TRUE(iceoryx_subscriber->hasData());
-        auto result = iceoryx_subscriber->take();
-        ASSERT_FALSE(result.has_error());
-        // get the sample with the user header
-        auto & sample = result.value();
-        // get the user header
-        auto header = sample.getUserHeader();
-        // get the actual data
-        auto iceoryx_data = sample.get();
+    if (must_use_iceoryx) {
+      ASSERT_TRUE(iceoryx_subscriber->hasData());
+      auto result = iceoryx_subscriber->take();
+      ASSERT_FALSE(result.has_error());
+      // get the sample with the user header
+      auto & iox_sample = result.value();
+      // get the user header
+      auto user_header = iox_sample.getUserHeader();
+      // get the actual data
+      auto iceoryx_data = iox_sample.get();
 
-        // if the data in the chunk is of the serialized type
-        if (header.shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-          // Since the data in iceoryx chunk is in the serialized form, take the
-          // sample and deserialize the data and then compare with the sent data
-          auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
-          T msg;
-          deserialize_sample_from_buffer(buf_ptr, msg);
-          ASSERT_EQ(msg, test_data[count]);
-        } else if (header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
-          // the chunk already has deserialized data and can be compared directly
-          ASSERT_EQ(*iceoryx_data, test_data[count]);
-        } else {
-          throw std::runtime_error(
-                  "the data state is not expected " + std::to_string(header.shm_data_state));
-        }
+      // if the data in the chunk is of the serialized type
+      if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+        // Since the data in iceoryx chunk is in the serialized form, take the
+        // sample and deserialize the data and then compare with the sent data
+        auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
+        T msg;
+        deserialize_sample_from_buffer(buf_ptr, msg);
+        ASSERT_EQ(msg, test_data);
+      } else if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+        // the chunk already has deserialized data and can be compared directly
+        ASSERT_EQ(*iceoryx_data, test_data);
+      } else {
+        throw std::runtime_error(
+                "the data state is not expected " + std::to_string(user_header.shm_data_state));
       }
-    }
-
-    if (!must_use_iceoryx) {
+    } else {
       ASSERT_FALSE(iceoryx_subscriber->hasData());
     }
   }
@@ -322,18 +314,20 @@ public:
     const dds::pub::qos::DataWriterQos & w_qos,
     const int32_t num_samples)
   {
-    dds::sub::LoanedSamples<T> samples;
-    std::vector<T> test_samples;
-
-    /* setup communication */
+    // setup communication
     this->SetupCommunication(r_qos, w_qos);
-    /* write data. */
-    test_samples = this->WriteData(num_samples);
-    /* wait for data */
-    this->WaitForData();
-    /* Check result by taking. */
-    samples = this->reader.take();
-    this->CheckData(must_use_iceoryx, samples, test_samples);
+    // write data
+    std::vector<T> test_samples = this->WriteData(num_samples);
+
+    // take the data and verify
+    for (int32_t i = 0; i < num_samples; i++) {
+      // wait for data
+      this->WaitForData();
+      // Take one sample at a time (to not introduce undesired flakiness in the test)
+      auto sample = this->reader.select().max_samples(1).take();
+      // verify the received data
+      this->CheckData(must_use_iceoryx, sample, test_samples[static_cast<size_t>(i)]);
+    }
   }
 
   void run_loan_support_api_test(const bool valid_r_shm_qos, const bool valid_w_shm_qos)
@@ -380,8 +374,8 @@ TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
   constexpr bool valid_w_shm_qos = true;
 
   // tests
-  this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
@@ -392,8 +386,8 @@ TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
   constexpr bool valid_shm_qos = true;
 
   // test communication
-  this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 1);
-  this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 1));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
@@ -415,8 +409,8 @@ TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
   constexpr bool valid_w_shm_qos = true;
 
   // tests
-  this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
@@ -436,8 +430,8 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   constexpr bool valid_w_shm_qos = false;
 
   // tests
-  this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
@@ -456,8 +450,8 @@ TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = false;
 
-  this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, loan_sample)
