@@ -628,13 +628,11 @@ ddsi_serdata * serdata_from_iox_buffer(
       d->iox_subscriber = sub;
     }
 
-    //TODO(Sumanth) fix the key hash handling, no point of calling setT()
     // key handling
-    //org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    //const auto& msg = *static_cast<const T*>(d->iox_chunk);
-    //d->key_md5_hashed() = to_key(str, msg, d->key());
-    //d->setT(&msg);
-    //d->populate_hash();
+    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+    const auto& msg = *static_cast<const T*>(d->iox_chunk);
+    d->key_md5_hashed() = to_key(str, msg, d->key());
+    d->populate_hash();
 
     return d;
   }
