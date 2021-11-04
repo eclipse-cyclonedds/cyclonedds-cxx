@@ -176,18 +176,8 @@ public:
         }
         return t;
       } else {
-#ifndef _WIN32
-#ifndef __clang__
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wold-style-cast"
-#endif
-#endif
-      return static_cast<T*>(this->iox_chunk);
-#ifndef _WIN32
-#ifndef __clang__
-# pragma GCC diagnostic pop
-#endif
-#endif
+        // return the chunk directly
+        return static_cast<T*>(this->iox_chunk);
       }
     } else
 #endif  // DDSCXX_HAS_SHM
@@ -572,8 +562,9 @@ void serdata_free(ddsi_serdata* dcmn)
   if (d->iox_chunk && d->iox_subscriber)
   {
     // Explicit cast to iox_subscriber is required here, since the C++ binding has no notion of
-    // iox subscriber, but the underlying C API expects this to be a types iox_subscriber.
-    // TODO (Sumanth), Fix this when we cleanup the interfaces
+    // iox subscriber, but the underlying C API expects this to be a typed iox_subscriber.
+    // TODO (Sumanth), Fix this when we cleanup the interfaces to not use iceoryx directly in
+    //  the C++ plugin
     free_iox_chunk(static_cast<iox_sub_t *>(d->iox_subscriber), &d->iox_chunk);
   }
 #endif
@@ -786,8 +777,6 @@ uint32_t sertype_hash(const ddsi_sertype* tpcmn)
   return 0x0;
 }
 
-// TODO(Sumanth), cleanup the below functions based on the updated C sertype interface and add
-//  the error handling
 template <typename T>
 size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
 {
@@ -825,25 +814,6 @@ bool sertype_serialize_into(const ddsi_sertype*,
   // TODO(Sumanth), considering the header offset
   str.set_buffer(calc_offset(dst_buffer, 4));
   write(str, msg);
-
-  // TODO(Sumanth), do we need to handle the key hash?
-
-  return !str.abort_status();
-}
-
-template <typename T>
-bool sertype_deserialize(const ddsi_sertype* tpcmn, void * src_buffer, void * sample)
-{
-  // cast to the type
-  const auto& msg = *static_cast<const T*>(sample);
-
-  // deserialize the buffer into the sample
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  // TODO(Sumanth), considering the header offset
-  str.set_buffer(calc_offset(src_buffer, 4));
-  read(str, msg);
-
-  // TODO(Sumanth), do we need to handle the key hash?
 
   return !str.abort_status();
 }
