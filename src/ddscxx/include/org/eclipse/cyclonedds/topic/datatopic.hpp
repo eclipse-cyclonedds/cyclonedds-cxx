@@ -28,14 +28,11 @@
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 #include "dds/features.hpp"
 
-// We need this to return the loan back to iceoryx
-// TODO(Sumanth) fix this, there should be an API in Cyclone DDS which can return the loan back
-//  to iceoryx, so we don't need to depend on iceoryx directly in the C++ language binding
 #ifdef DDSCXX_HAS_SHM
-extern "C" {
-#include "dds/ddsi/shm_sync.h"
-}
+#include "dds/ddsi/shm_transport.h"
 #endif
+
+constexpr size_t CDR_HEADER_SIZE = 4U;
 
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
@@ -87,6 +84,45 @@ static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
   return static_cast<const void*>(static_cast<const unsigned char*>(ptr) + n);
 }
 
+/// \brief De-serialize the buffer into the sample
+/// \param[in] buffer The buffer to be de-serialized
+/// \param[out] sample Type to which the buffer will be de-serialized
+/// \param[in] data_kind The data kind (data, or key)
+/// \tparam T The sample type
+/// \return True if the deserialization is successful
+///         False if the deserialization failed
+template <typename T>
+bool deserialize_sample_from_buffer(unsigned char * buffer,
+                                    T & sample,
+                                    const ddsi_serdata_kind data_kind=SDK_DATA)
+{
+  endianness stream_endianness = endianness::big_endian;
+  if (*(buffer + 1) == 0x1) {
+    stream_endianness = endianness::little_endian;
+  }
+
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE));
+  switch (data_kind) {
+    case SDK_KEY:
+      if (swap_necessary(stream_endianness))
+        key_read_swapped(str, sample);
+      else
+        key_read(str, sample);
+      break;
+    case SDK_DATA:
+      if (swap_necessary(stream_endianness))
+        read_swapped(str, sample);
+      else
+        read(str, sample);
+      break;
+    case SDK_EMPTY:
+      assert(0);
+  }
+
+  return !str.abort_status();
+}
+
 template <typename T>
 class ddscxx_sertype : public ddsi_sertype {
 public:
@@ -134,54 +170,41 @@ public:
     return t;
   }
 
-  T* getT()
-  {
+  T* getT() {
 #ifdef DDSCXX_HAS_SHM
-    // if iox chunk is available, dont deserialize the sample, return the chunk directly
     if (iox_chunk != nullptr && data() == nullptr) {
-#ifndef _WIN32
-#ifndef __clang__
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wold-style-cast"
-#endif
-#endif
-      return static_cast<T*>(this->iox_chunk);
-#ifndef _WIN32
-#ifndef __clang__
-# pragma GCC diagnostic pop
-#endif
-#endif
+      auto iox_header = iceoryx_header_from_chunk(iox_chunk);
+
+      // if the iox chunk has the data in serialized form
+      if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+        T *t = m_t.load(std::memory_order_acquire);
+        if (t == nullptr) {
+          t = new T();
+          // if deserialization failed
+          if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(iox_chunk), *t, kind)) {
+            delete t;
+            t = nullptr;
+          }
+
+          T *exp = nullptr;
+          if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+            delete t;
+            t = exp;
+          }
+        }
+        return t;
+      } else {
+        // return the chunk directly
+        return static_cast<T*>(this->iox_chunk);
+      }
     } else
 #endif  // DDSCXX_HAS_SHM
     {
       T *t = m_t.load(std::memory_order_acquire);
       if (t == nullptr) {
         t = new T();
-        endianness stream_endianness  = endianness::big_endian;
-        if (*(static_cast<unsigned char*>(data())+1) == 0x1)
-          stream_endianness = endianness::little_endian;
-
-        org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-        str.set_buffer(calc_offset(data(),4));
-        switch (kind)
-        {
-          case SDK_KEY:
-            if (swap_necessary(stream_endianness))
-              key_read_swapped(str,*t);
-            else
-              key_read(str,*t);
-            break;
-          case SDK_DATA:
-            if (swap_necessary(stream_endianness))
-              read_swapped(str,*t);
-            else
-              read(str,*t);
-            break;
-          case SDK_EMPTY:
-            assert(0);
-        }
-
-        if (str.abort_status()) {
+        // if deserialization failed
+        if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(data()), *t, kind)) {
           delete t;
           t = nullptr;
         }
@@ -440,18 +463,8 @@ bool serdata_to_sample(
   (void)buflim;
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  endianness stream_endianness = endianness::big_endian;
-  if (*(static_cast<unsigned char*>(ptr->data())+1) == 0x1)
-    stream_endianness = endianness::little_endian;
-
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  str.set_buffer(calc_offset(ptr->data(), 4));
   auto& msg = *static_cast<T*>(sample);
-  if (swap_necessary(stream_endianness))
-    read_swapped(str, msg);
-  else
-    read(str, msg);
-  return str.abort_status(); //is true this the correct return value for failure state??
+  return deserialize_sample_from_buffer(static_cast<unsigned char*>(ptr->data()), msg);
 }
 
 template <typename T>
@@ -508,21 +521,9 @@ bool serdata_untyped_to_sample(
   (void)buflim;
 
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
-
   T* ptr = static_cast<T*>(sample);
 
-  basic_cdr_stream str;
-  endianness stream_endianness = endianness::big_endian;
-  if (*(static_cast<unsigned char*>(d->data())+1) == 0x1)
-    stream_endianness = endianness::little_endian;
-
-  str.set_buffer(calc_offset(d->data(), 4));
-  if (swap_necessary(stream_endianness))
-    key_read_swapped(str, *ptr);
-  else
-    key_read(str, *ptr);
-
-  return !str.abort_status();  //is true the correct value for no errors in streaming?
+  return deserialize_sample_from_buffer(static_cast<unsigned char*>(d->data()), *ptr, SDK_KEY);
 }
 
 template <typename T>
@@ -533,13 +534,11 @@ void serdata_free(ddsi_serdata* dcmn)
 #ifdef DDSCXX_HAS_SHM
   if (d->iox_chunk && d->iox_subscriber)
   {
-    auto iox_sub = *static_cast<iox_sub_t *>(d->iox_subscriber);
-    shm_lock_iox_sub(iox_sub);
-    // return the ownership of the memory chunk to iceoryx
-    iox_sub_release_chunk(iox_sub, d->iox_chunk);
-    shm_unlock_iox_sub(iox_sub);
-    // make this pointer to chunk explicitly null
-    d->iox_chunk = nullptr;
+    // Explicit cast to iox_subscriber is required here, since the C++ binding has no notion of
+    // iox subscriber, but the underlying C API expects this to be a typed iox_subscriber.
+    // TODO (Sumanth), Fix this when we cleanup the interfaces to not use iceoryx directly in
+    //  the C++ plugin
+    free_iox_chunk(static_cast<iox_sub_t *>(d->iox_subscriber), &d->iox_chunk);
   }
 #endif
   delete d;
@@ -606,7 +605,6 @@ ddsi_serdata * serdata_from_iox_buffer(
     org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
     const auto& msg = *static_cast<const T*>(d->iox_chunk);
     d->key_md5_hashed() = to_key(str, msg, d->key());
-    d->setT(&msg);
     d->populate_hash();
 
     return d;
@@ -751,6 +749,47 @@ uint32_t sertype_hash(const ddsi_sertype* tpcmn)
 }
 
 template <typename T>
+size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
+{
+  const auto& msg = *static_cast<const T*>(sample);
+
+  // get the serialized size of the sample (with out serializing)
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  move(str, msg);
+
+  if (str.abort_status()) {
+    // the max value is treated as an error in the Cyclone core
+    return std::numeric_limits<size_t>::max();
+  }
+
+  return str.position() + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
+}
+
+template <typename T>
+bool sertype_serialize_into(const ddsi_sertype*,
+                            const void * sample,
+                            void * dst_buffer,
+                            size_t)
+{
+  // cast to the type
+  const auto& msg = *static_cast<const T*>(sample);
+
+  // set the endianess
+  auto ptr = static_cast<unsigned char*>(dst_buffer);
+  memset(ptr, 0x0, 4);
+  if (native_endianness() == endianness::little_endian)
+    *(ptr + 1) = 0x1;
+
+  // serialize the sample into the destination buffer
+  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
+  // TODO(Sumanth), considering the header offset
+  str.set_buffer(calc_offset(dst_buffer, 4));
+  write(str, msg);
+
+  return !str.abort_status();
+}
+
+template <typename T>
 const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   ddsi_sertype_v0,
   nullptr,
@@ -765,7 +804,9 @@ const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   nullptr, // serialize
   nullptr, // deserialize
   nullptr, // assignable_from
-  nullptr  //derive_sertype sertype_default_derive_sertype?
+  nullptr, //derive_sertype sertype_default_derive_sertype?
+  sertype_get_serialized_size<T>,
+  sertype_serialize_into<T>
 };
 
 #endif  // DDSCXXDATATOPIC_HPP_

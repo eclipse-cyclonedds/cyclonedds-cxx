@@ -13,12 +13,17 @@
 
 #include "dds/dds.hpp"
 #include "dds/ddsrt/environ.h"
+#include "dds/ddsi/shm_transport.h"
 #include "iceoryx_posh/testing/roudi_gtest.hpp"
 #include "HelloWorldData.hpp"
 #include "Space.hpp"
 #include "Serialization.hpp"
 #include "iceoryx_posh/popo/subscriber.hpp"
+#include "iceoryx_posh/popo/sample.hpp"
 #include "iceoryx_utils/cxx/optional.hpp"
+#include "dds/ddsi/shm_transport.h"
+
+#include <random>
 
 #define EXPECT_THROW_EXCEPTION(statement, error_msg) \
   ASSERT_THROW(statement, dds::core::Exception); \
@@ -30,6 +35,9 @@
 
 namespace
 {
+
+using IceoryxHeader = iceoryx_header;
+
 template<class T>
 void make_sample_(T & sample, const int32_t cnt);
 
@@ -56,15 +64,50 @@ void make_sample_(HelloWorldData::Msg & sample, const int32_t cnt)
   sample.message(std::to_string(cnt));
 }
 
+char get_random_char()
+{
+  static std::mt19937 gen(std::random_device{}());
+  static std::uniform_int_distribution<> dist('a', 'z');
+  return static_cast<char>(dist(gen));
+}
+
 template<>
 void make_sample_(Bounded::Msg & sample, const int32_t cnt)
 {
-  sample.bounded_string(std::to_string(cnt));
-  sample.boolean_sequence().reserve(255);
-  std::fill(sample.boolean_sequence().begin(), sample.boolean_sequence().begin() + 255, true);
-  sample.bounded_sequence().reserve(255);
-  std::fill(sample.bounded_sequence().begin(), sample.bounded_sequence().begin() + 255, cnt);
+  // the sequence types are bounded to 255, so limit the capacity to 255
+  int32_t capacity = cnt * 10;
+  capacity = (capacity > 255) ? 255 : capacity;
+
+  sample.bounded_string().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.bounded_string().begin(),
+    sample.bounded_string().begin() + capacity, get_random_char());
+
+  sample.boolean_sequence().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.boolean_sequence().begin(), sample.boolean_sequence().begin() + capacity, true);
+
+  sample.bounded_sequence().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.bounded_sequence().begin(), sample.bounded_sequence().begin() + capacity, cnt);
 }
+
+template<>
+void make_sample_(UnBounded::Msg & sample, const int32_t cnt)
+{
+  // the sequence types are unbounded, reserve the capacity to 100x of the count
+  int32_t capacity = cnt * 100;
+
+  sample.unbounded_string().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.unbounded_string().begin(),
+    sample.unbounded_string().begin() + capacity, get_random_char());
+
+  sample.unbounded_sequence_bool().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.unbounded_sequence_bool().begin(),
+    sample.unbounded_sequence_bool().begin() + capacity, true);
+
+  sample.unbounded_sequence_long().resize(static_cast<uint32_t>(capacity));
+  std::fill(sample.unbounded_sequence_long().begin(),
+    sample.unbounded_sequence_long().begin() + capacity, cnt);
+}
+
 constexpr bool MUST_USE_ICEORYX = true;
 constexpr bool DO_NOT_USE_ICEORYX = false;
 }
@@ -86,7 +129,8 @@ public:
   dds::pub::DataWriter<T> writer;
   dds::sub::cond::ReadCondition rc;
   dds::core::cond::WaitSet waitset;
-  iox::cxx::optional<iox::popo::Subscriber<T>> iceoryx_subscriber;
+  iox::cxx::optional<iox::popo::Subscriber<T, iceoryx_header_t>> iceoryx_subscriber;
+
   static constexpr char TOPIC_NAME[] = "datareader_test_topic";
 
   SharedMemoryTest()
@@ -218,34 +262,48 @@ public:
   void
   CheckData(
     const bool must_use_iceoryx,
-    const dds::sub::LoanedSamples<T> & samples,
-    const std::vector<T> & test_data,
-    const dds::sub::status::DataState & test_state =
-    dds::sub::status::DataState(dds::sub::status::SampleState::not_read(),
-    dds::sub::status::ViewState::new_view(),
-    dds::sub::status::InstanceState::alive()))
+    const dds::sub::LoanedSamples<T> & sample,
+    const T & test_data)
   {
-    unsigned long count = 0UL;
-    ASSERT_EQ(samples.length(), test_data.size());
-    typename dds::sub::LoanedSamples<T>::const_iterator it;
-    for (it = samples.begin(); it != samples.end(); ++it, ++count) {
-      const T & data = it->data();
-      const dds::sub::SampleInfo & info = it->info();
-      const dds::sub::status::DataState & state = info.state();
-      ASSERT_EQ(data, test_data[count]);
-      ASSERT_EQ(state.view_state(), test_state.view_state());
-      ASSERT_EQ(state.sample_state(), test_state.sample_state());
-      ASSERT_EQ(state.instance_state(), test_state.instance_state());
+    // we only have one sample
+    ASSERT_EQ(sample.length(), 1);
+    const T & data = sample.begin()->data();
+    const dds::sub::SampleInfo & info = sample.begin()->info();
+    const dds::sub::status::DataState & state = info.state();
+    ASSERT_EQ(data, test_data);
+    // the sample view state can either be new or not new (which has not been taken)
+    ASSERT_TRUE((state.view_state() == dds::sub::status::ViewState::new_view()) ||
+      (state.view_state() == dds::sub::status::ViewState::not_new_view()));
+    ASSERT_EQ(state.sample_state(), dds::sub::status::SampleState::not_read());
+    ASSERT_EQ(state.instance_state(), dds::sub::status::InstanceState::alive());
 
-      if ( must_use_iceoryx ) {
-        ASSERT_TRUE(iceoryx_subscriber->hasData());
-        auto sample = iceoryx_subscriber->take();
-        ASSERT_FALSE(sample.has_error());
-        ASSERT_EQ(data, **sample);
+    if (must_use_iceoryx) {
+      ASSERT_TRUE(iceoryx_subscriber->hasData());
+      auto result = iceoryx_subscriber->take();
+      ASSERT_FALSE(result.has_error());
+      // get the sample with the user header
+      auto & iox_sample = result.value();
+      // get the user header
+      auto user_header = iox_sample.getUserHeader();
+      // get the actual data
+      auto iceoryx_data = iox_sample.get();
+
+      // if the data in the chunk is of the serialized type
+      if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+        // Since the data in iceoryx chunk is in the serialized form, take the
+        // sample and deserialize the data and then compare with the sent data
+        auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
+        T msg;
+        deserialize_sample_from_buffer(buf_ptr, msg);
+        ASSERT_EQ(msg, test_data);
+      } else if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+        // the chunk already has deserialized data and can be compared directly
+        ASSERT_EQ(*iceoryx_data, test_data);
+      } else {
+        throw std::runtime_error(
+                "the data state is not expected " + std::to_string(user_header.shm_data_state));
       }
-    }
-
-    if ( !must_use_iceoryx ) {
+    } else {
       ASSERT_FALSE(iceoryx_subscriber->hasData());
     }
   }
@@ -256,18 +314,20 @@ public:
     const dds::pub::qos::DataWriterQos & w_qos,
     const int32_t num_samples)
   {
-    dds::sub::LoanedSamples<T> samples;
-    std::vector<T> test_samples;
-
-    /* setup communication */
+    // setup communication
     this->SetupCommunication(r_qos, w_qos);
-    /* write data. */
-    test_samples = this->WriteData(num_samples);
-    /* wait for data */
-    this->WaitForData();
-    /* Check result by taking. */
-    samples = this->reader.take();
-    this->CheckData(must_use_iceoryx, samples, test_samples);
+    // write data
+    std::vector<T> test_samples = this->WriteData(num_samples);
+
+    // take the data and verify
+    for (int32_t i = 0; i < num_samples; i++) {
+      // wait for data
+      this->WaitForData();
+      // Take one sample at a time (to not introduce undesired flakiness in the test)
+      auto sample = this->reader.select().max_samples(1).take();
+      // verify the received data
+      this->CheckData(must_use_iceoryx, sample, test_samples[static_cast<size_t>(i)]);
+    }
   }
 
   void run_loan_support_api_test(const bool valid_r_shm_qos, const bool valid_w_shm_qos)
@@ -293,7 +353,8 @@ public:
  * Tests
  */
 
-using TestTypes = ::testing::Types<Space::Type1, Space::Type2, HelloWorldData::Msg, Bounded::Msg>;
+using TestTypes = ::testing::Types<Space::Type1, Space::Type2, HelloWorldData::Msg,
+    Bounded::Msg, UnBounded::Msg>;
 TYPED_TEST_SUITE(SharedMemoryTest, TestTypes, );
 
 TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
@@ -312,12 +373,9 @@ TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  const bool IS_SHARED_MEMORY_COMPATIBLE = 
-    org::eclipse::cyclonedds::topic::TopicTraits<typename TestFixture::TopicType>::isSelfContained();
-
   // tests
-  this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
@@ -327,12 +385,9 @@ TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
   dds::pub::qos::DataWriterQos w_qos{};
   constexpr bool valid_shm_qos = true;
 
-  const bool IS_SHARED_MEMORY_COMPATIBLE = 
-    org::eclipse::cyclonedds::topic::TopicTraits<typename TestFixture::TopicType>::isSelfContained();
-
   // test communication
-  this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 1);
-  this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 1));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
@@ -353,12 +408,9 @@ TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  const bool IS_SHARED_MEMORY_COMPATIBLE = 
-    org::eclipse::cyclonedds::topic::TopicTraits<typename TestFixture::TopicType>::isSelfContained();
-
   // tests
-  this->run_communication_test(MUST_USE_ICEORYX && IS_SHARED_MEMORY_COMPATIBLE, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
@@ -378,8 +430,8 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   constexpr bool valid_w_shm_qos = false;
 
   // tests
-  this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
@@ -398,8 +450,8 @@ TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = false;
 
-  this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10);
-  this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos);
+  EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
 TYPED_TEST(SharedMemoryTest, loan_sample)
@@ -416,7 +468,7 @@ TYPED_TEST(SharedMemoryTest, loan_sample)
 
   this->SetupCommunication(r_qos, w_qos);
   using DDSType = typename TestFixture::TopicType;
-  // request loan
+  // request loan (supported only for fixed-size self-contained types)
   if (org::eclipse::cyclonedds::topic::TopicTraits<DDSType>::isSelfContained()) {
     try {
       auto & loaned_sample = this->writer.delegate()->loan_sample();

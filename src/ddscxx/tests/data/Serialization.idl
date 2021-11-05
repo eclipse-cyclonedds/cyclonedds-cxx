@@ -10,6 +10,18 @@ module Bounded
 
 };
 
+module UnBounded
+{
+
+  struct Msg
+  {
+    string unbounded_string;
+    sequence<long> unbounded_sequence_long;
+    sequence<boolean> unbounded_sequence_bool;
+  };
+
+};
+
 module Endianness
 {
 
