@@ -5,272 +5,177 @@
 #include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 #include "org/eclipse/cyclonedds/topic/BuiltinDataTopic.hpp"
 
-bool builtin_serdata_eqkey(const ddsi_serdata* a, const ddsi_serdata* b)
+#define unsupported_method_throw ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.")
+
+bool builtin_serdata_eqkey(
+  const ddsi_serdata*,
+  const ddsi_serdata*)
 {
-  (void)a;
-  (void)b;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return false;
 }
 
-uint32_t builtin_serdata_size(const ddsi_serdata* dcmn)
+uint32_t builtin_serdata_size(
+  const ddsi_serdata*)
 {
-  (void)dcmn;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return 0;
 }
 
 ddsi_serdata *builtin_serdata_from_ser(
-  const ddsi_sertype* type,
-  enum ddsi_serdata_kind kind,
-  const struct nn_rdata* fragchain,
-  size_t size)
+  const ddsi_sertype*,
+  enum ddsi_serdata_kind,
+  const struct nn_rdata*,
+  size_t)
 {
-  (void)type;
-  (void)kind;
-  (void)fragchain;
-  (void)size;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return nullptr;
 }
 
 ddsi_serdata *builtin_serdata_from_ser_iov(
-  const ddsi_sertype* type,
-  enum ddsi_serdata_kind kind,
-  ddsrt_msg_iovlen_t niov,
-  const ddsrt_iovec_t* iov,
-  size_t size)
+  const ddsi_sertype*,
+  enum ddsi_serdata_kind,
+  ddsrt_msg_iovlen_t,
+  const ddsrt_iovec_t*,
+  size_t)
 {
-  (void)type;
-  (void)kind;
-  (void)niov;
-  (void)iov;
-  (void)size;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return nullptr;
 
 }
 
 ddsi_serdata *builtin_serdata_from_keyhash(
-  const ddsi_sertype* type,
-  const struct ddsi_keyhash* keyhash)
+  const ddsi_sertype*,
+  const struct ddsi_keyhash*)
 {
-  (void)keyhash;
-  (void)type;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return nullptr;
 }
 
 ddsi_serdata *builtin_serdata_from_sample(
-  const ddsi_sertype* typecmn,
-  enum ddsi_serdata_kind kind,
-  const void* sample)
+  const ddsi_sertype*,
+  enum ddsi_serdata_kind,
+  const void*)
 {
-  (void)typecmn;
-  (void)kind;
-  (void)sample;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return nullptr;
 }
 
-void builtin_serdata_to_ser(const ddsi_serdata* dcmn, size_t off, size_t sz, void* buf)
+void builtin_serdata_to_ser(
+  const ddsi_serdata*,
+  size_t,
+  size_t,
+  void*)
 {
-  (void)dcmn;
-  (void)off;
-  (void)sz;
-  (void)buf;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
+  unsupported_method_throw;
 }
 
 ddsi_serdata *builtin_serdata_to_ser_ref(
-  const ddsi_serdata* dcmn, size_t off,
-  size_t sz, ddsrt_iovec_t* ref)
+  const ddsi_serdata*,
+  size_t,
+  size_t,
+  ddsrt_iovec_t*)
 {
-  (void)dcmn;
-  (void)off;
-  (void)sz;
-  (void)ref;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return nullptr;
 }
 
-void builtin_serdata_to_ser_unref(ddsi_serdata* dcmn, const ddsrt_iovec_t* ref)
+void builtin_serdata_to_ser_unref(
+  ddsi_serdata*,
+  const ddsrt_iovec_t*)
 {
-  (void)dcmn;
-  (void)ref;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
+  unsupported_method_throw;
 }
 
 bool builtin_serdata_to_sample(
-  const ddsi_serdata* dcmn, void* sample, void** bufptr,
-  void* buflim)
+  const ddsi_serdata*,
+  void*,
+  void**,
+  void*)
 {
-  (void)bufptr;
-  (void)buflim;
-  (void)dcmn;
-  (void)sample;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return false;
 }
 
-ddsi_serdata *builtin_serdata_to_untyped(const ddsi_serdata* dcmn)
+ddsi_serdata *builtin_serdata_to_untyped(
+  const ddsi_serdata*)
 {
-  (void)dcmn;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return nullptr;
 }
 
 bool builtin_serdata_untyped_to_sample(
-  const ddsi_sertype* type,
-  const ddsi_serdata* dcmn, void* sample,
-  void** bufptr, void* buflim)
+  const ddsi_sertype*,
+  const ddsi_serdata*,
+  void*,
+  void**,
+  void*)
 {
-  (void)type;
-  (void)dcmn;
-  (void)sample;
-  (void)bufptr;
-  (void)buflim;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
-
+  unsupported_method_throw;
   return false;
 }
 
 void builtin_serdata_get_keyhash(
-  const ddsi_serdata* d, struct ddsi_keyhash* buf,
-  bool force_md5)
+  const ddsi_serdata*,
+  struct ddsi_keyhash*,
+  bool)
 {
-  (void)d;
-  (void)buf;
-  (void)force_md5;
-
-  ISOCPP_DDSC_RESULT_CHECK_AND_THROW(DDS_RETCODE_NOT_ENABLED, "Unsupported method for builtin topics.");
+  unsupported_method_throw;
 }
 
-template <>
-dds::topic::ParticipantBuiltinTopicData* ddscxx_serdata<dds::topic::ParticipantBuiltinTopicData>::getT()
+#ifdef DDSCXX_HAS_SHM
+uint32_t builtin_serdata_iox_size(
+  const struct ddsi_serdata*)
 {
-  dds::topic::ParticipantBuiltinTopicData *t
-    = m_t.load(std::memory_order_acquire);
-  if (t == nullptr) {
-    t = new dds::topic::ParticipantBuiltinTopicData();
-      dds::topic::ParticipantBuiltinTopicData* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
-      }
-  }
-  return t;
+  unsupported_method_throw;
+  return 0;
 }
 
-template <>
-dds::topic::TopicBuiltinTopicData* ddscxx_serdata<dds::topic::TopicBuiltinTopicData>::getT()
+ddsi_serdata * builtin_serdata_from_iox_buffer(
+  const struct ddsi_sertype *,
+  enum ddsi_serdata_kind,
+  void *,
+  void *)
 {
-  dds::topic::TopicBuiltinTopicData *t
-    = m_t.load(std::memory_order_acquire);
-  if (t == nullptr) {
-    t = new dds::topic::TopicBuiltinTopicData();
-      dds::topic::TopicBuiltinTopicData* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
-      }
-  }
-  return t;
+  unsupported_method_throw;
+  return nullptr;
 }
+#endif
 
-template <>
-dds::topic::PublicationBuiltinTopicData* ddscxx_serdata<dds::topic::PublicationBuiltinTopicData>::getT()
-{
-  dds::topic::PublicationBuiltinTopicData *t
-    = m_t.load(std::memory_order_acquire);
-  if (t == nullptr) {
-    t = new dds::topic::PublicationBuiltinTopicData();
-      dds::topic::PublicationBuiltinTopicData* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
-      }
-  }
-  return t;
-}
+#ifdef _WIN32
+#define builtin_topic_ops_impl(builtin_topic_type)
+#else
+#define builtin_topic_ops_impl(builtin_topic_type)\
+builtin_topic_ops(builtin_topic_type)
+#endif
 
-template <>
-dds::topic::SubscriptionBuiltinTopicData* ddscxx_serdata<dds::topic::SubscriptionBuiltinTopicData>::getT()
-{
-  dds::topic::SubscriptionBuiltinTopicData *t
-    = m_t.load(std::memory_order_acquire);
-  if (t == nullptr) {
-    t = new dds::topic::SubscriptionBuiltinTopicData();
-      dds::topic::SubscriptionBuiltinTopicData* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
-      }
-  }
-  return t;
-}
+#define builtin_topic_impl(builtin_topic_type)\
+template <> \
+dds::topic::builtin_topic_type* ddscxx_serdata<dds::topic::builtin_topic_type>::getT() {\
+  dds::topic::builtin_topic_type *t = m_t.load(std::memory_order_acquire);\
+  if (t == nullptr) {\
+    t = new dds::topic::builtin_topic_type();\
+    dds::topic::builtin_topic_type* exp = nullptr;\
+    if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {\
+      delete t;\
+      t = exp;\
+    }\
+  }\
+  return t;\
+}\
+template <> \
+bool sertype_serialize_into<dds::topic::builtin_topic_type>(const ddsi_sertype*, const void*, void*, size_t) {\
+  unsupported_method_throw;\
+  return false;\
+}\
+template <> \
+size_t sertype_get_serialized_size<dds::topic::builtin_topic_type>(const ddsi_sertype*, const void*) {\
+  unsupported_method_throw;\
+  return 0;\
+}\
+builtin_topic_ops_impl(builtin_topic_type)
 
-#ifndef _WIN32
-
-template<typename T>
-struct builtin_serdata_ops: public ddsi_serdata_ops {
-  builtin_serdata_ops(): ddsi_serdata_ops({
-  &builtin_serdata_eqkey,
-  &builtin_serdata_size,
-  &builtin_serdata_from_ser,
-  &builtin_serdata_from_ser_iov,
-  &builtin_serdata_from_keyhash,
-  &builtin_serdata_from_sample,
-  &builtin_serdata_to_ser,
-  &builtin_serdata_to_ser_ref,
-  &builtin_serdata_to_ser_unref,
-  &builtin_serdata_to_sample,
-  &builtin_serdata_to_untyped,
-  &builtin_serdata_untyped_to_sample,
-  &serdata_free<T>,
-  &serdata_print<T>,
-  &builtin_serdata_get_keyhash,
-  #ifdef DDS_HAS_SHM
-  NULL, //get_sample_size
-  NULL  //from_iox_buffer
-  #endif
-}) {;}
-};
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::ParticipantBuiltinTopicData>::ddscxx_serdata_ops =
-  builtin_serdata_ops<dds::topic::ParticipantBuiltinTopicData>();
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::TopicBuiltinTopicData>::ddscxx_serdata_ops =
-  builtin_serdata_ops<dds::topic::TopicBuiltinTopicData>();
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::SubscriptionBuiltinTopicData>::ddscxx_serdata_ops =
-  builtin_serdata_ops<dds::topic::SubscriptionBuiltinTopicData>();
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::PublicationBuiltinTopicData>::ddscxx_serdata_ops =
-  builtin_serdata_ops<dds::topic::PublicationBuiltinTopicData>();
-#endif /* !_WIN32 */
+builtin_topic_impl(ParticipantBuiltinTopicData)
+builtin_topic_impl(TopicBuiltinTopicData)
+builtin_topic_impl(PublicationBuiltinTopicData)
+builtin_topic_impl(SubscriptionBuiltinTopicData)

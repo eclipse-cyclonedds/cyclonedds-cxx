@@ -15,8 +15,8 @@
  * @file
  */
 
-#ifndef CYCLONEDDS_TOP_BUILTINDATATOPIC_HPP_
-#define CYCLONEDDS_TOP_BUILTINDATATOPIC_HPP_
+#ifndef CYCLONEDDS_TOPIC_BUILTINDATATOPIC_HPP_
+#define CYCLONEDDS_TOPIC_BUILTINDATATOPIC_HPP_
 
 #include <org/eclipse/cyclonedds/topic/datatopic.hpp>
 #include <dds/topic/BuiltinTopic.hpp>
@@ -28,182 +28,166 @@
  */
 
 OMG_DDS_API_DETAIL
-bool builtin_serdata_eqkey(const ddsi_serdata* a, const ddsi_serdata* b);
+bool builtin_serdata_eqkey(
+  const ddsi_serdata*,
+  const ddsi_serdata*);
 
 OMG_DDS_API_DETAIL
-uint32_t builtin_serdata_size(const ddsi_serdata* dcmn);
+uint32_t builtin_serdata_size(
+  const ddsi_serdata*);
 
 OMG_DDS_API_DETAIL
 ddsi_serdata *builtin_serdata_from_ser(
-  const ddsi_sertype* type,
-  enum ddsi_serdata_kind kind,
-  const struct nn_rdata* fragchain,
+  const ddsi_sertype*,
+  enum ddsi_serdata_kind,
+  const struct nn_rdata*,
   size_t size);
 
 OMG_DDS_API_DETAIL
 ddsi_serdata *builtin_serdata_from_ser_iov(
-  const ddsi_sertype* type,
-  enum ddsi_serdata_kind kind,
-  ddsrt_msg_iovlen_t niov,
-  const ddsrt_iovec_t* iov,
-  size_t size);
+  const ddsi_sertype*,
+  enum ddsi_serdata_kind,
+  ddsrt_msg_iovlen_t,
+  const ddsrt_iovec_t*,
+  size_t);
 
 OMG_DDS_API_DETAIL
 ddsi_serdata *builtin_serdata_from_keyhash(
-  const ddsi_sertype* type,
-  const struct ddsi_keyhash* keyhash);
+  const ddsi_sertype*,
+  const struct ddsi_keyhash*);
 
 OMG_DDS_API_DETAIL
 ddsi_serdata *builtin_serdata_from_sample(
-  const ddsi_sertype* typecmn,
-  enum ddsi_serdata_kind kind,
-  const void* sample);
+  const ddsi_sertype*,
+  enum ddsi_serdata_kind,
+  const void*);
 
 OMG_DDS_API_DETAIL
-void builtin_serdata_to_ser(const ddsi_serdata* dcmn, size_t off, size_t sz, void* buf);
+void builtin_serdata_to_ser(
+  const ddsi_serdata*,
+  size_t,
+  size_t,
+  void*);
 
 OMG_DDS_API_DETAIL ddsi_serdata *builtin_serdata_to_ser_ref(
-  const ddsi_serdata* dcmn, size_t off,
-  size_t sz, ddsrt_iovec_t* ref);
+  const ddsi_serdata*,
+  size_t,
+  size_t,
+  ddsrt_iovec_t*);
 
 OMG_DDS_API_DETAIL
-void builtin_serdata_to_ser_unref(ddsi_serdata* dcmn, const ddsrt_iovec_t* ref);
+void builtin_serdata_to_ser_unref(
+  ddsi_serdata*,
+  const ddsrt_iovec_t*);
 
 OMG_DDS_API_DETAIL
 bool builtin_serdata_to_sample(
-  const ddsi_serdata* dcmn, void* sample, void** bufptr,
-  void* buflim);
+  const ddsi_serdata*,
+  void*,
+  void**,
+  void*);
 
 OMG_DDS_API_DETAIL
-ddsi_serdata *builtin_serdata_to_untyped(const ddsi_serdata* dcmn);
+ddsi_serdata *builtin_serdata_to_untyped(
+  const ddsi_serdata*);
 
 OMG_DDS_API_DETAIL
 bool builtin_serdata_untyped_to_sample(
-  const ddsi_sertype* type,
-  const ddsi_serdata* dcmn, void* sample,
-  void** bufptr, void* buflim);
+  const ddsi_sertype*,
+  const ddsi_serdata*,
+  void*,
+  void**,
+  void*);
 
 OMG_DDS_API_DETAIL
 void builtin_serdata_get_keyhash(
-  const ddsi_serdata* d, struct ddsi_keyhash* buf,
-  bool force_md5);
+  const ddsi_serdata*,
+  struct ddsi_keyhash*,
+  bool);
+
+#ifdef DDSCXX_HAS_SHM
+OMG_DDS_API_DETAIL
+uint32_t builtin_serdata_iox_size(
+  const struct ddsi_serdata*);
+
+OMG_DDS_API_DETAIL
+ddsi_serdata * builtin_serdata_from_iox_buffer(
+  const struct ddsi_sertype *,
+  enum ddsi_serdata_kind,
+  void *,
+  void *);
+#endif
 
 /**
  * Builtin topic serdata function template specialization declarations.
  */
 
-template <>
-OMG_DDS_API_DETAIL
-dds::topic::ParticipantBuiltinTopicData* ddscxx_serdata<dds::topic::ParticipantBuiltinTopicData>::getT();
-
-template <>
-OMG_DDS_API_DETAIL
-dds::topic::TopicBuiltinTopicData* ddscxx_serdata<dds::topic::TopicBuiltinTopicData>::getT();
-
-template <>
-OMG_DDS_API_DETAIL
-dds::topic::PublicationBuiltinTopicData* ddscxx_serdata<dds::topic::PublicationBuiltinTopicData>::getT();
-
-template <>
-OMG_DDS_API_DETAIL
-dds::topic::SubscriptionBuiltinTopicData* ddscxx_serdata<dds::topic::SubscriptionBuiltinTopicData>::getT();
+#ifdef DDSCXX_HAS_SHM
+#define builtin_topic_ops(builtin_topic_type)\
+template <> const ddsi_serdata_ops ddscxx_serdata<dds::topic::builtin_topic_type>::ddscxx_serdata_ops = {\
+  &builtin_serdata_eqkey,\
+  &builtin_serdata_size,\
+  &builtin_serdata_from_ser,\
+  &builtin_serdata_from_ser_iov,\
+  &builtin_serdata_from_keyhash,\
+  &builtin_serdata_from_sample,\
+  &builtin_serdata_to_ser,\
+  &builtin_serdata_to_ser_ref,\
+  &builtin_serdata_to_ser_unref,\
+  &builtin_serdata_to_sample,\
+  &builtin_serdata_to_untyped,\
+  &builtin_serdata_untyped_to_sample,\
+  &serdata_free<dds::topic::builtin_topic_type>,\
+  &serdata_print<dds::topic::builtin_topic_type>,\
+  &builtin_serdata_get_keyhash,\
+  &builtin_serdata_iox_size,\
+  &builtin_serdata_from_iox_buffer\
+};
+#else
+#define builtin_topic_ops(builtin_topic_type)\
+template <> const ddsi_serdata_ops ddscxx_serdata<dds::topic::builtin_topic_type>::ddscxx_serdata_ops = {\
+  &builtin_serdata_eqkey,\
+  &builtin_serdata_size,\
+  &builtin_serdata_from_ser,\
+  &builtin_serdata_from_ser_iov,\
+  &builtin_serdata_from_keyhash,\
+  &builtin_serdata_from_sample,\
+  &builtin_serdata_to_ser,\
+  &builtin_serdata_to_ser_ref,\
+  &builtin_serdata_to_ser_unref,\
+  &builtin_serdata_to_sample,\
+  &builtin_serdata_to_untyped,\
+  &builtin_serdata_untyped_to_sample,\
+  &serdata_free<dds::topic::builtin_topic_type>,\
+  &serdata_print<dds::topic::builtin_topic_type>,\
+  &builtin_serdata_get_keyhash\
+};
+#endif
 
 /**
  * Due to a bug in MSVC template class static const member need to be initialized in-place.
  */
 
 #ifdef _WIN32
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::ParticipantBuiltinTopicData>::ddscxx_serdata_ops = {
-  &builtin_serdata_eqkey,
-  &builtin_serdata_size,
-  &builtin_serdata_from_ser,
-  &builtin_serdata_from_ser_iov,
-  &builtin_serdata_from_keyhash,
-  &builtin_serdata_from_sample,
-  &builtin_serdata_to_ser,
-  &builtin_serdata_to_ser_ref,
-  &builtin_serdata_to_ser_unref,
-  &builtin_serdata_to_sample,
-  &builtin_serdata_to_untyped,
-  &builtin_serdata_untyped_to_sample,
-  &serdata_free<dds::topic::ParticipantBuiltinTopicData>,
-  &serdata_print<dds::topic::ParticipantBuiltinTopicData>,
-  &builtin_serdata_get_keyhash
-};
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::TopicBuiltinTopicData>::ddscxx_serdata_ops = {
-  &builtin_serdata_eqkey,
-  &builtin_serdata_size,
-  &builtin_serdata_from_ser,
-  &builtin_serdata_from_ser_iov,
-  &builtin_serdata_from_keyhash,
-  &builtin_serdata_from_sample,
-  &builtin_serdata_to_ser,
-  &builtin_serdata_to_ser_ref,
-  &builtin_serdata_to_ser_unref,
-  &builtin_serdata_to_sample,
-  &builtin_serdata_to_untyped,
-  &builtin_serdata_untyped_to_sample,
-  &serdata_free<dds::topic::TopicBuiltinTopicData>,
-  &serdata_print<dds::topic::TopicBuiltinTopicData>,
-  &builtin_serdata_get_keyhash
-};
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::SubscriptionBuiltinTopicData>::ddscxx_serdata_ops = {
-  &builtin_serdata_eqkey,
-  &builtin_serdata_size,
-  &builtin_serdata_from_ser,
-  &builtin_serdata_from_ser_iov,
-  &builtin_serdata_from_keyhash,
-  &builtin_serdata_from_sample,
-  &builtin_serdata_to_ser,
-  &builtin_serdata_to_ser_ref,
-  &builtin_serdata_to_ser_unref,
-  &builtin_serdata_to_sample,
-  &builtin_serdata_to_untyped,
-  &builtin_serdata_untyped_to_sample,
-  &serdata_free<dds::topic::SubscriptionBuiltinTopicData>,
-  &serdata_print<dds::topic::SubscriptionBuiltinTopicData>,
-  &builtin_serdata_get_keyhash
-};
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::PublicationBuiltinTopicData>::ddscxx_serdata_ops = {
-  &builtin_serdata_eqkey,
-  &builtin_serdata_size,
-  &builtin_serdata_from_ser,
-  &builtin_serdata_from_ser_iov,
-  &builtin_serdata_from_keyhash,
-  &builtin_serdata_from_sample,
-  &builtin_serdata_to_ser,
-  &builtin_serdata_to_ser_ref,
-  &builtin_serdata_to_ser_unref,
-  &builtin_serdata_to_sample,
-  &builtin_serdata_to_untyped,
-  &builtin_serdata_untyped_to_sample,
-  &serdata_free<dds::topic::PublicationBuiltinTopicData>,
-  &serdata_print<dds::topic::PublicationBuiltinTopicData>,
-  &builtin_serdata_get_keyhash
-};
-
+#define builtin_topic_ops_decl(builtin_topic_type)\
+builtin_topic_ops(builtin_topic_type)
 #else
+#define builtin_topic_ops_decl(builtin_topic_type)\
+template <> const ddsi_serdata_ops ddscxx_serdata<dds::topic::builtin_topic_type>::ddscxx_serdata_ops;
+#endif
 
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::ParticipantBuiltinTopicData>::ddscxx_serdata_ops;
+#define builtin_topic_decl(builtin_topic_type)\
+template <> OMG_DDS_API_DETAIL \
+dds::topic::builtin_topic_type* ddscxx_serdata<dds::topic::builtin_topic_type>::getT();\
+template <> OMG_DDS_API_DETAIL \
+bool sertype_serialize_into<dds::topic::builtin_topic_type>(const ddsi_sertype*, const void*, void*, size_t);\
+template <> OMG_DDS_API_DETAIL \
+size_t sertype_get_serialized_size<dds::topic::builtin_topic_type>(const ddsi_sertype*, const void*);\
+builtin_topic_ops_decl(builtin_topic_type)
 
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::TopicBuiltinTopicData>::ddscxx_serdata_ops;
+builtin_topic_decl(ParticipantBuiltinTopicData)
+builtin_topic_decl(TopicBuiltinTopicData)
+builtin_topic_decl(PublicationBuiltinTopicData)
+builtin_topic_decl(SubscriptionBuiltinTopicData)
 
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::SubscriptionBuiltinTopicData>::ddscxx_serdata_ops;
-
-template <>
-const ddsi_serdata_ops ddscxx_serdata<dds::topic::PublicationBuiltinTopicData>::ddscxx_serdata_ops;
-
-#endif  /* _WIN32 */
-
-#endif  /* CYCLONEDDS_TOP_BUILTINDATATOPIC_HPP_ */
+#endif  /* CYCLONEDDS_TOPIC_BUILTINDATATOPIC_HPP_ */
