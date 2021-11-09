@@ -125,8 +125,10 @@ AnyDataWriterDelegate::write_cdr(
 #ifdef DDSCXX_HAS_SHM
     // TODO(Sumanth), update this if we have a better API, if not clean this
     dds_data_allocator_t data_alloc;
-    dds_data_allocator_init(writer, &data_alloc);
+    ret = dds_data_allocator_init(writer, &data_alloc);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator init failed");
     void * iox_chunk = dds_data_allocator_alloc(&data_alloc, data->payload().size() + 4);
+    ISOCPP_BOOL_CHECK_AND_THROW(iox_chunk, ISOCPP_NULL_REFERENCE_ERROR, "write_cdr - Loaning of chunk failed");
     // copy the header
     memcpy(iox_chunk, data->encoding().data(), data->encoding().size());
     // copy the actual data
@@ -146,7 +148,16 @@ AnyDataWriterDelegate::write_cdr(
         ret = dds_writecdr(writer, ser_data);
     }
 
-    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
+#ifdef DDSCXX_HAS_SHM
+    // TODO(Sumanth), update this if we have a better API, if not clean this
+    if (ret != DDS_RETCODE_OK) {
+        // write cdr failed, so free the chunk
+        ret = dds_data_allocator_free(&data_alloc, iox_chunk);
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator free failed");
+    }
+    ret = dds_data_allocator_fini(&data_alloc);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator free failed");
+#endif
 }
 
 void
