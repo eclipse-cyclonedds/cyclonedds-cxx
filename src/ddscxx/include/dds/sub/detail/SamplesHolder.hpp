@@ -139,8 +139,38 @@ public:
       uint32_t cpp_sample_size = this->samples_.delegate()->length();
       for (uint32_t i = 0; i < cpp_sample_size; ++i)
       {
+        struct ddsi_serdata * current_blob = cdr_blobs[i];
+#ifdef DDS_HAS_SHM
+        // if the data is over iox_chunk
+        if (current_blob->iox_chunk && current_blob->iox_subscriber) {
+          // get the data
+          org::eclipse::cyclonedds::topic::CDRBlob & sample_data =
+            (*this->samples_.delegate())[i].delegate().data();
+          // update the header
+          memcpy(sample_data.encoding().data(), current_blob->iox_chunk, 4);
+          // update the data kind
+          sample_data.kind(
+            static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
+          if (sample_data.kind() != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
+            // get the size
+            auto iox_header = iceoryx_header_from_chunk(current_blob->iox_chunk);
+            // if the iox chunk has the data in serialized form
+            if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+              // get the actual data
+              sample_data.payload().assign(
+                reinterpret_cast<uint8_t *>(current_blob->iox_chunk) + 4,
+                reinterpret_cast<uint8_t *>(current_blob->iox_chunk) + iox_header->data_size);
+            } else {
+              // this shouldn't never happen
+              ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR,
+                "The received sample over SHM is not in serialized form");
+            }
+            // release the chunk
+          }
+        } else
+#endif
+        {
           ddsrt_iovec_t blob_content;
-          struct ddsi_serdata *current_blob = cdr_blobs[i];
           ddsi_serdata_to_ser_ref(current_blob, 0, ddsi_serdata_size(current_blob), &blob_content);
           org::eclipse::cyclonedds::topic::CDRBlob &sample_data = (*this->samples_.delegate())[i].delegate().data();
           memcpy(sample_data.encoding().data(), blob_content.iov_base, 4);
@@ -153,7 +183,8 @@ public:
           }
           ddsi_serdata_to_ser_unref(current_blob, &blob_content);
           ddsi_serdata_unref(current_blob);
-          org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], (*samples_.delegate())[i].delegate().info());
+        }
+        org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], (*samples_.delegate())[i].delegate().info());
       }
     }
 
