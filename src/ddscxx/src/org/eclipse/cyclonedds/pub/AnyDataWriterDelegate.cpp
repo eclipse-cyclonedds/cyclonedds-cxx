@@ -26,6 +26,11 @@
 
 #include "dds/ddsi/ddsi_sertopic.h"
 #include "dds/ddsi/q_protocol.h"
+#include "dds/features.hpp"
+
+#ifdef DDSCXX_HAS_SHM
+#include <dds/ddsi/shm_transport.h>
+#endif
 
 
 namespace org
@@ -116,6 +121,20 @@ AnyDataWriterDelegate::write_cdr(
         data->payload().size() + 4);
 
     ser_data->statusinfo = statusinfo;
+
+#ifdef DDSCXX_HAS_SHM
+    // TODO(Sumanth), update this if we have a better API, if not clean this
+    dds_data_allocator_t data_alloc;
+    dds_data_allocator_init(writer, &data_alloc);
+    void * iox_chunk = dds_data_allocator_alloc(&data_alloc, data->payload().size() + 4);
+    // copy the header
+    memcpy(iox_chunk, data->encoding().data(), data->encoding().size());
+    // copy the actual data
+    memcpy(static_cast<unsigned char *>(iox_chunk) + data->encoding().size(), data->payload().data(), data->payload().size());
+    // update the loaned iox chunk in serdata
+    ser_data->iox_chunk = iox_chunk;
+#endif
+
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
         ser_data->timestamp.v = ddsc_time;
