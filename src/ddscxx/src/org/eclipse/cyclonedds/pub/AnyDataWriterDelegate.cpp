@@ -131,6 +131,9 @@ AnyDataWriterDelegate::write_cdr(
     memcpy(iox_chunk, data->encoding().data(), data->encoding().size());
     // copy the actual data
     memcpy(static_cast<unsigned char *>(iox_chunk) + data->encoding().size(), data->payload().data(), data->payload().size());
+    // update SHM data state to serialized, since this API is used to publish the serialized data
+    auto iox_header = iceoryx_header_from_chunk(iox_chunk);
+    iox_header->shm_data_state = IOX_CHUNK_CONTAINS_SERIALIZED_DATA;
     // update the loaned iox chunk in serdata
     ser_data->iox_chunk = iox_chunk;
 #endif
