@@ -166,6 +166,7 @@ public:
                 "The received sample over SHM is not in serialized form");
             }
             // release the chunk
+            free_iox_chunk(static_cast<iox_sub_t *>(current_blob->iox_subscriber), &current_blob->iox_chunk);
           }
         } else
 #endif
