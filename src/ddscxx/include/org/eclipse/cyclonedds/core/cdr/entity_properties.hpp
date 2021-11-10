@@ -101,14 +101,16 @@ struct OMG_DDS_API entity_properties
   size_t e_off = 0; /**< The current offset in the stream at which the member field starts, does not include header. */
   size_t d_off = 0; /**< The current offset in the stream at which the struct starts, does not include header.*/
   uint32_t e_sz = 0; /**< The size of the current entity as member field (only used in reading from streams).*/
-  uint32_t d_sz = 0; /**< The size of the current entity as struct (only used in reading from streams).*/
   uint32_t m_id = 0; /**< The member id of the entity, it is the global field by which the entity is identified. */
-  bool must_understand = false; /**< If the reading end cannot parse a field with this header, it must discard the entire object. */
+  bool must_understand_local = false; /**< If the reading end cannot parse a field with this header, it must discard the entire object. */
+  bool must_understand_remote = false; /**< If the reading end cannot parse a field with this header, it must discard the entire object. */
+  bool xtypes_necessary = false; /**< Is set if any of the members of this entity require xtypes support.*/
   bool implementation_extension = false;
   bool is_last = false; /**< Indicates terminating entry for reading/writing entities, will cause the current subroutine to end and decrement the stack.*/
   bool ignore = false; /**< Indicates that this field must be ignored.*/
   bool is_optional = false; /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
   bool is_key = false; /**< Indicates that this field is a key field.*/
+  bool is_present = false; /**< Indicates that this entity is present in the read stream.*/
   bit_bound e_bb = bb_unset; /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
   DDSCXX_WARNING_MSVC_OFF(4251)
@@ -154,6 +156,14 @@ struct OMG_DDS_API entity_properties
 
   /**
    * @brief
+   * Resets all flags that are set through streaming.
+   *
+   * Goes recursively through all its children.
+   */
+  void reset_flags();
+
+  /**
+   * @brief
    * Finishing function.
    *
    * Generates the m_members_by_id and m_keys from m_members_by_seq and the supplied indices.
@@ -188,6 +198,14 @@ struct OMG_DDS_API entity_properties
    * @param[in] prefix Which prefix preceeds the printed entity information.
    */
   void print(bool recurse = true, size_t depth = 0, const char *prefix = "") const;
+
+  /**
+   * @brief
+   * Xtypes requirement function.
+   *
+   * @return Whether this contains features that cannot be sent through basic cdr serialization.
+   */
+  bool requires_xtypes() const;
 private:
 
   /**

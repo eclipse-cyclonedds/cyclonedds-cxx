@@ -24,30 +24,35 @@ module CDR_testing {
   };
 
   //nested
-  @mutable struct inner {
+  struct inner {
     char c_inner;
     long l_inner;
   };
 
-  @mutable struct outer {
+  struct outer {
     inner a;
     inner b;
     @key inner c;
   };
 
   //inheritance
-  @mutable struct base {
+  struct base {
     string str;
     @key char c;
   };
 
-  @mutable struct derived : base {
-    @id(123) string str_d;
-    @id(234) char c_d;
+  struct derived : base {
+   string str_d;
+    char c_d;
   };
 
   //sequence
-  @mutable struct sequence_struct {
+  struct sequence_struct {
+    @key sequence<char> c;
+    sequence<long> l;
+  };
+
+  @mutable struct sequence_struct_mutable {
     @key sequence<char> c;
     sequence<long> l;
   };
@@ -61,7 +66,7 @@ module CDR_testing {
   //typedef
   typedef sequence<base> sequence_base;
 
-  @mutable struct typedef_struct {
+  struct typedef_struct {
     @key sequence_base c;
     sequence_base l;
   };

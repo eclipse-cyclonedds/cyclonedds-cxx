@@ -20,10 +20,21 @@ namespace cdr {
 
 entity_properties_t& basic_cdr_stream::next_entity(entity_properties_t &props, bool &firstcall)
 {
+  if (abort_status())
+    return m_final;
+
   auto &prop = next_prop(props, m_key ? member_list_type::key : member_list_type::member_by_seq, firstcall);
-  if (prop.is_optional)
-    status(unsupported_property);
   return prop;
+}
+
+bool basic_cdr_stream::start_struct(entity_properties_t &props)
+{
+  if (props.requires_xtypes() && status(unsupported_xtypes))
+    return false;
+
+  record_struct_start(props);
+
+  return true;
 }
 
 }

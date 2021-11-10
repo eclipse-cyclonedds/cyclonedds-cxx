@@ -184,7 +184,7 @@ TEST_F(Bounds, strings)
 
     basic_cdr_stream str;
     char arr[16] = {0};
-    str.set_buffer(arr);
+    str.set_buffer(arr, 16);
 
     Bounded::Msg msg;
     read(str, msg, false);

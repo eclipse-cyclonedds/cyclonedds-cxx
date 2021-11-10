@@ -17,7 +17,6 @@
 #include <cstring>
 #include <vector>
 #include <atomic>
-#include <limits>
 
 #include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
@@ -44,22 +43,23 @@ using org::eclipse::cyclonedds::core::cdr::basic_cdr_stream;
 template<class streamer, typename T>
 bool to_key(streamer& str, const T& tokey, ddsi_keyhash_t& hash)
 {
-  move(str, tokey, true);
+  if (!move(str, tokey, true))
+    return false;
   size_t sz = str.position();
   size_t padding = 16 - sz % 16;
   if (sz != 0 && padding == 16) padding = 0;
   std::vector<unsigned char> buffer(sz + padding);
   memset(buffer.data() + sz, 0x0, padding);
-  str.set_buffer(buffer.data());
+  str.set_buffer(buffer.data(), buffer.size());
   /* TODO: what is key endianness to be used here?
    * since, this may be different between nodes, and if this value is used
    * for global lookups or the like, this
    * may cause discrepancies. */
-  write(str, tokey, true);
+  if (!write(str, tokey, true))
+    return false;
   static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
   if (fptr == NULL)
   {
-    str.set_buffer(nullptr);
     max(str, tokey, true);
     if (str.position() <= 16)
     {
@@ -101,9 +101,7 @@ bool deserialize_sample_from_buffer(unsigned char * buffer,
 
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str(*(buffer + 1) == 0x1 ? endianness::little_endian : endianness::big_endian);
   str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE));
-  read(str, sample, data_kind == SDK_KEY);
-
-  return !str.abort_status();
+  return read(str, sample, data_kind == SDK_KEY);
 }
 
 template <typename T>
@@ -284,7 +282,7 @@ ddsi_serdata *serdata_from_ser(
   if (d->getT())
   {
     org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    str.set_buffer(calc_offset(d->data(), 4));
+    str.set_buffer(calc_offset(d->data(), 4), size-4);
     d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
     d->populate_hash();
   }
@@ -322,7 +320,7 @@ ddsi_serdata *serdata_from_ser_iov(
   T* ptr = d->getT();
   if (ptr) {
     org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    str.set_buffer(calc_offset(d->data(), 4));
+    str.set_buffer(calc_offset(d->data(), 4), size-4);
     d->key_md5_hashed() = to_key(str, *ptr, d->key());
     d->populate_hash();
   } else {
@@ -377,9 +375,7 @@ ddsi_serdata *serdata_from_sample(
   unsigned char *ptr = nullptr;
   size_t sz = 0;
 
-  move(str, msg, kind == SDK_KEY);
-
-  if (str.abort_status())
+  if (!move(str, msg, kind == SDK_KEY))
     goto failure;
 
   sz = 4 + str.position();  //4 bytes extra to also include the header
@@ -389,11 +385,9 @@ ddsi_serdata *serdata_from_sample(
   if (native_endianness() == endianness::little_endian)
     *(ptr + 1) = 0x1;
 
-  str.set_buffer(calc_offset(d->data(), 4));
+  str.set_buffer(calc_offset(d->data(), 4), sz-4);
 
-  write(str, msg, kind == SDK_KEY);
-
-  if (str.abort_status())
+  if (!write(str, msg, kind == SDK_KEY))
     goto failure;
 
   d->key_md5_hashed() = to_key(str, msg, d->key());
@@ -462,8 +456,7 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   if (t == nullptr)
     goto failure;
 
-  move(str, *t, true);
-  if (str.abort_status())
+  if (!move(str, *t, true))
     goto failure;
   d1->resize(4 + str.position());
 
@@ -472,9 +465,8 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   if (native_endianness() == endianness::little_endian)
     *(ptr + 1) = 0x1;
 
-  str.set_buffer(calc_offset(d1->data(), 4));  //4 offset due to header field
-  write(str, *t, true);
-  if (str.abort_status())
+  str.set_buffer(calc_offset(d1->data(), 4), d1->size()-4);  //4 offset due to header field
+  if (!write(str, *t, true))
     goto failure;
 
   d1->key_md5_hashed() = to_key(str, *t, d1->key());
@@ -733,11 +725,9 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
 
   // get the serialized size of the sample (with out serializing)
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  move(str, msg, false);
-
-  if (str.abort_status()) {
+  if (!move(str, msg, false)) {
     // the max value is treated as an error in the Cyclone core
-    return std::numeric_limits<size_t>::max();
+    return SIZE_MAX;
   }
 
   return str.position() + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
@@ -761,10 +751,8 @@ bool sertype_serialize_into(const ddsi_sertype*,
   // serialize the sample into the destination buffer
   org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   // TODO(Sumanth), considering the header offset
-  str.set_buffer(calc_offset(dst_buffer, 4));
-  write(str, msg, false);
-
-  return !str.abort_status();
+  str.set_buffer(calc_offset(dst_buffer, 4));  //buffer size?
+  return write(str, msg, false);
 }
 
 template <typename T>

@@ -41,43 +41,25 @@ public:
 
   /**
    * @brief
-   * Starts a member.
-   *
-   * As the basic cdr stream does not have anything that requires delimiting between entities, this function does nothing.
-   */
-  void start_member(entity_properties_t &, bool) {;}
-
-  /**
-   * @brief
-   * Finishes a member.
-   *
-   * As the basic cdr stream does not have anything that requires delimiting between entities, this function does nothing.
-   */
-  void finish_member(entity_properties_t &, bool) {;}
-
-  /**
-   * @brief
-   * Starts a new struct.
-   *
-   * As the basic cdr stream does not have anything that requires delimiting between entities, this function does nothing.
-   */
-  void start_struct(entity_properties_t &) {;}
-
-  /**
-   * @brief
-   * Finishes the current struct.
-   *
-   * As the basic cdr stream does not have anything that requires delimiting between entities, this function does nothing.
-   */
-  void finish_struct(entity_properties_t &) {;}
-
-  /**
-   * @brief
    * Skips an entity, bypassing the stack.
    *
-   * As the basic cdr stream does not have anything that requires delimiting between entities, this function does nothing.
+   * As the basic cdr stream does not have anything that requires delimiting between entities,
+   * this function is not supported.
    */
-  void skip_entity(const entity_properties_t &) {;}
+  void skip_entity(const entity_properties_t &) { status(serialization_status::unsupported_xtypes); }
+
+    /**
+     * @brief
+     * Function declaration for starting a parameter list.
+     *
+     * This function is called by the generated functions for the entity, and will trigger the necessary actions on starting a new struct.
+     * I.E. starting a new parameter list, writing headers.
+     *
+     * @param[in,out] props The entity whose members might be represented by a parameter list.
+     *
+     * @return Whether the operation was completed succesfully.
+     */
+    bool start_struct(entity_properties_t &props);
 
   /**
    * @brief
@@ -114,8 +96,8 @@ public:
  * @param[in] N The number of entities to read.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void read(basic_cdr_stream& str, T& toread, size_t N = 1) {
-  read_enum_impl<basic_cdr_stream,T,uint32_t>(str, toread, N);
+bool read(basic_cdr_stream& str, T& toread, const entity_properties_t &, size_t N = 1) {
+  return read_enum_impl<basic_cdr_stream,T,uint32_t>(str, toread, N);
 }
 
 /**
@@ -127,8 +109,8 @@ void read(basic_cdr_stream& str, T& toread, size_t N = 1) {
  * @param[in] N The number of entities to write.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void write(basic_cdr_stream& str, const T& towrite, size_t N = 1) {
-  write_enum_impl<basic_cdr_stream,T,uint32_t>(str, towrite, N);
+bool write(basic_cdr_stream& str, const T& towrite, const entity_properties_t &, size_t N = 1) {
+  return write_enum_impl<basic_cdr_stream,T,uint32_t>(str, towrite, N);
 }
 
 /**
@@ -139,8 +121,8 @@ void write(basic_cdr_stream& str, const T& towrite, size_t N = 1) {
  * @param[in] N The number of entities to move.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void move(basic_cdr_stream& str, const T&, size_t N = 1) {
-  move(str, uint32_t(0), N);
+bool move(basic_cdr_stream& str, const T&, const entity_properties_t &, size_t N = 1) {
+  return move(str, uint32_t(0), N);
 }
 
 /**
@@ -151,8 +133,8 @@ void move(basic_cdr_stream& str, const T&, size_t N = 1) {
  * @param[in] N The number of entities at most to move.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void max(basic_cdr_stream& str, const T&, size_t N = 1) {
-  max(str, uint32_t(0), N);
+bool max(basic_cdr_stream& str, const T&, const entity_properties_t &, size_t N = 1) {
+  return max(str, uint32_t(0), N);
 }
 
 }

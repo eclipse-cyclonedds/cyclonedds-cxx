@@ -46,9 +46,11 @@ public:
    * Determines whether a header is necessary for this entity through header_necessary, and if it is, handles the header.
    *
    * @param[in] prop Properties of the member to start.
-   * @param[in] present Whether the entity represented by prop is present, if it is an optional entity.
+   * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
+   *
+   * @return Whether the operation was completed succesfully.
    */
-  void start_member(entity_properties_t &prop, bool present);
+  bool start_member(entity_properties_t &prop, bool is_set = true);
 
   /**
    * @brief
@@ -57,19 +59,11 @@ public:
    * Determines whether a header is necessary for this entity through header_necessary, and if it is, completes the previous header.
    *
    * @param[in] prop Properties of the member to finish.
-   * @param[in] present Whether the entity represented by prop is present, if it is an optional entity.
-   */
-  void finish_member(entity_properties_t &prop, bool present);
-
-  /**
-   * @brief
-   * Skips an entity, bypassing the stack.
+   * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
-   * Used in skipping fields which are not recognized by a class being deserialized.
-   *
-   * @param[in] props The entity to skip.
+   * @return Whether the operation was completed succesfully.
    */
-  void skip_entity(const entity_properties_t &props);
+  bool finish_member(entity_properties_t &prop, bool is_set = true);
 
   /**
    * @brief
@@ -87,21 +81,15 @@ public:
 
   /**
    * @brief
-   * Starts a new struct.
-   *
-   * As the extended cdr v1 stream does not have anything that requires delimiting between entities, this function does nothing.
-   */
-  void start_struct(entity_properties_t &) {;}
-
-  /**
-   * @brief
    * Finishes the current struct.
    *
    * Adds the final parameter list entry if necessary when writing to the stream.
    *
    * @param[in, out] props The property tree to get the next entity from.
+   *
+   * @return Whether the struct is complete and correct.
    */
-  void finish_struct(entity_properties_t &props);
+  bool finish_struct(entity_properties_t &props);
 
 private:
 
@@ -133,6 +121,8 @@ private:
    * Determines whether a parameter list is necessary.
    *
    * @param[in] props The entity whose members might be represented by a parameter list.
+   *
+   * @return Whether a parameter list is necessary for the entity.
    */
   bool list_necessary(const entity_properties_t &props);
 
@@ -143,9 +133,11 @@ private:
    * If header_necessary returns true for a field, then this function needs to be called first to read the
    * header from stream and to allow the streamer to determine what to do with the field.
    *
-   * @param[out] props The header to read into.
+   * @param[out] out The header to read into.
+   *
+   * @return Whether the header was read succesfully.
    */
-  void read_header(entity_properties_t &props);
+  bool read_header(entity_properties_t &out);
 
   /**
    * @brief
@@ -155,8 +147,10 @@ private:
    * header to the stream before the contents of the field are written.
    *
    * @param[in, out] props The properties of the entity.
+   *
+   * @return Whether the header was read succesfully.
    */
-  void write_header(entity_properties_t &props);
+  bool write_header(entity_properties_t &props);
 
   /**
    * @brief
@@ -165,20 +159,26 @@ private:
    * Goes back to the offset of the length field that was unfinished in 
    *
    * @param[in, out] props The properties of the entity.
+   *
+   * @return Whether the header was read succesfully.
    */
-  void finish_write_header(entity_properties_t &props);
+  bool finish_write_header(entity_properties_t &props);
 
   /**
    * @brief
    * Writes the terminating entry in a parameter list.
+   *
+   * @return Whether the header was read succesfully.
    */
-  void write_final_list_entry();
+  bool write_final_list_entry();
 
   /**
    * @brief
    * Moves the cursor as if writing the terminating entry in a parameter list.
+   *
+   * @return Whether the header was read succesfully.
    */
-  void move_final_list_entry();
+  bool move_final_list_entry();
 
   /**
    * @brief
@@ -188,8 +188,10 @@ private:
    * have taken up, if it would have been written.
    *
    * @param[in] props The entity to move the cursor by.
+   *
+   * @return Whether the header was read succesfully.
    */
-  void move_header(const entity_properties_t &props);
+  bool move_header(const entity_properties_t &props);
 
   /**
    * @brief
@@ -222,24 +224,29 @@ private:
  *
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read into.
+ * @param[in] props The properties of the variable.
  * @param[in] N The number of entities to read.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void read(xcdr_v1_stream& str, T& toread, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : str.top_of_stack().e_bb)
+bool read(xcdr_v1_stream& str, T& toread, const entity_properties_t &props, size_t N = 1)
+{
+  switch (str.is_key() ? bb_32_bits : props.e_bb)
   {
     case bb_8_bits:
-      read_enum_impl<xcdr_v1_stream,T,uint8_t>(str, toread, N);
+      return read_enum_impl<xcdr_v1_stream,T,uint8_t>(str, toread, N);
       break;
     case bb_16_bits:
-      read_enum_impl<xcdr_v1_stream,T,uint16_t>(str, toread, N);
+      return read_enum_impl<xcdr_v1_stream,T,uint16_t>(str, toread, N);
       break;
     case bb_32_bits:
-      read_enum_impl<xcdr_v1_stream,T,uint32_t>(str, toread, N);
+      return read_enum_impl<xcdr_v1_stream,T,uint32_t>(str, toread, N);
       break;
     default:
       assert(false);
   }
+  return true;
 }
 
 /**
@@ -248,24 +255,29 @@ void read(xcdr_v1_stream& str, T& toread, size_t N = 1) {
  *
  * @param[in, out] str The stream which is written to.
  * @param[in] towrite The variable to write.
+ * @param[in] props The properties of the variable.
  * @param[in] N The number of entities to write.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void write(xcdr_v1_stream& str, const T& towrite, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : str.top_of_stack().e_bb)
+bool write(xcdr_v1_stream& str, const T& towrite, const entity_properties_t &props, size_t N = 1)
+{
+  switch (str.is_key() ? bb_32_bits : props.e_bb)
   {
     case bb_8_bits:
-      write_enum_impl<xcdr_v1_stream,T,uint8_t>(str, towrite, N);
+      return write_enum_impl<xcdr_v1_stream,T,uint8_t>(str, towrite, N);
       break;
     case bb_16_bits:
-      write_enum_impl<xcdr_v1_stream,T,uint16_t>(str, towrite, N);
+      return write_enum_impl<xcdr_v1_stream,T,uint16_t>(str, towrite, N);
       break;
     case bb_32_bits:
-      write_enum_impl<xcdr_v1_stream,T,uint32_t>(str, towrite, N);
+      return write_enum_impl<xcdr_v1_stream,T,uint32_t>(str, towrite, N);
       break;
     default:
       assert(false);
   }
+  return true;
 }
 
 /**
@@ -273,24 +285,29 @@ void write(xcdr_v1_stream& str, const T& towrite, size_t N = 1) {
  * Moves the cursor of the stream by the size the enum would take up.
  *
  * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] props The properties of the variable.
  * @param[in] N The number of entities to move.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void move(xcdr_v1_stream& str, const T&, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : str.top_of_stack().e_bb)
+bool move(xcdr_v1_stream& str, const T&, const entity_properties_t &props, size_t N = 1)
+{
+  switch (str.is_key() ? bb_32_bits : props.e_bb)
   {
     case bb_8_bits:
-      move(str, int8_t(0), N);
+      return move(str, int8_t(0), N);
       break;
     case bb_16_bits:
-      move(str, int16_t(0), N);
+      return move(str, int16_t(0), N);
       break;
     case bb_32_bits:
-      move(str, int32_t(0), N);
+      return move(str, int32_t(0), N);
       break;
     default:
       assert(false);
   }
+  return true;
 }
 
 /**
@@ -299,11 +316,15 @@ void move(xcdr_v1_stream& str, const T&, size_t N = 1) {
  *
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ * @param[in] props The properties of the variable.
  * @param[in] N The number of entities at most to move.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-void max(xcdr_v1_stream& str, const T& max_sz, size_t N = 1) {
-  move(str, max_sz, N);
+bool max(xcdr_v1_stream& str, const T& max_sz, const entity_properties_t &props, size_t N = 1)
+{
+  return move(str, max_sz, props, N);
 }
 
 }

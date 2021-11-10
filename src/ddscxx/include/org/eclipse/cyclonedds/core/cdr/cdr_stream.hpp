@@ -121,17 +121,18 @@ constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
  * @var serialization_status::write_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
  * @var serialization_status::read_bound_exceeded The serialization has encountered a field which has exceeded the bounds set for it.
  * @var serialization_status::illegal_field_value The serialization has encountered a field with a value which should never occur in a valid CDR stream.
- * @var serialization_status::invalid_pl_entry The serialization has encountered a field which it cannot parse.
+ * @var serialization_status::invalid_pl_entry The serialization has encountered a parameter list id which is illegal (not extended id in reserved for OMG space).
+ * @var serialization_status::unsupported_xtypes A streamer has attempted to stream a struct requiring xtypes but not supporting it itself.
+ * @var serialization_status::must_understand_fail A struct being read contains a field that must be understood but does not recognize or have.
  */
 enum serialization_status {
   move_bound_exceeded   = 0x1 << 0,
   write_bound_exceeded  = 0x1 << 1,
   read_bound_exceeded   = 0x1 << 2,
   invalid_pl_entry      = 0x1 << 3,
-  invalid_dl_entry      = 0x1 << 4,
-  illegal_field_value   = 0x1 << 5,
-  unsupported_property  = 0x1 << 6,
-  must_understand_fail  = 0x1 << 7
+  illegal_field_value   = 0x1 << 4,
+  unsupported_xtypes    = 0x1 << 5,
+  must_understand_fail  = 0x1 << 6
 };
 
 /**
@@ -176,6 +177,19 @@ public:
 
     /**
      * @brief
+     * Checks whether a delimited cdr stream is not being read out of bounds.
+     *
+     * This function will return true if N bytes can be read from the stream.
+     *
+     * @param[in] N The number of bytes requested.
+     * @param[in] peek Whether this is true access, or just a "peek".
+     *
+     * @return Whether enough bytes are available for another header.
+     */
+    bool bytes_available(size_t N = 1, bool peek = false);
+
+    /**
+     * @brief
      * Returns the current cursor offset.
      *
      * @retval SIZE_MAX In this case, a maximum size calculation was being done, and the maximum size was determined to be unbounded.
@@ -210,9 +224,12 @@ public:
 
     /**
      * @brief
-     * Resets the current cursor position and alignment to 0.
+     * Resets the state of the stream as before streaming began.
+     *
+     * Will set the current offset, alignment to 0, clear the stack and fault status.
+     * Will retain the buffer pointer and size.
      */
-    void reset_position() { m_position = 0; m_current_alignment = 0; }
+    void reset();
 
     /**
      * @brief
@@ -222,8 +239,9 @@ public:
      * As a side effect, the current position and alignment are reset, since these are not associated with the new buffer.
      *
      * @param[in] toset The new pointer of the buffer to set.
+     * @param[in] buffer_size The size of the buffer being set.
      */
-    void set_buffer(void* toset);
+    void set_buffer(void* toset, size_t buffer_size = SIZE_MAX);
 
     /**
      * @brief
@@ -279,9 +297,9 @@ public:
      * @param[in] newalignment The new alignment to align the stream to.
      * @param[in] add_zeroes Whether the bytes that the cursor moves need to be zeroed.
      *
-     * @return The number of bytes that the cursor was moved.
+     * @return Whether the cursor could be moved by the required amount.
      */
-    size_t align(size_t newalignment, bool add_zeroes);
+    bool align(size_t newalignment, bool add_zeroes);
 
     /**
      * @brief
@@ -319,14 +337,6 @@ public:
 
     /**
      * @brief
-     * Returns the entity currently on top of the stack.
-     *
-     * @return The entity currently on top of the stack.
-     */
-    entity_properties_t& top_of_stack();
-
-    /**
-     * @brief
      * Type of streaming operation to be done.
      *
      * @var stream_mode::unset The stream mode is not set.
@@ -361,7 +371,7 @@ public:
      * @param[in] mode The streaming mode to set for the stream.
      * @param[in] key The key mode to set for the stream.
      */
-    void set_mode(stream_mode mode, bool key) {m_mode = mode; m_key = key; reset_position();}
+    void set_mode(stream_mode mode, bool key) {m_mode = mode; m_key = key; reset();}
 
     /**
      * @brief
@@ -369,12 +379,14 @@ public:
      *
      * This function is called by next_entity for each entity which is iterated over.
      * Depending on the implementation and mode headers may be read from/written to the stream.
-     * This function is to be implemented in cdr streaming implementations.
+     * This function can be overridden in cdr streaming implementations.
      *
      * @param[in] prop Properties of the entity to start.
-     * @param[in] present Whether the entity represented by prop is present, if it is an optional entity.
+     * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
+     *
+     * @return Whether the operation was completed succesfully.
      */
-    virtual void start_member(entity_properties_t &prop, bool present) = 0;
+    virtual bool start_member(entity_properties_t &prop, bool is_set = true);
 
     /**
      * @brief
@@ -382,12 +394,14 @@ public:
      *
      * This function is called by next_entity for each entity which is iterated over.
      * Depending on the implementation and mode header length fields may be completed.
-     * This function is to be implemented in cdr streaming implementations.
+     * This function can be overridden in cdr streaming implementations.
      *
      * @param[in] prop Properties of the entity to finish.
-     * @param[in] present Whether the entity represented by prop is present, if it is an optional entity.
+     * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
+     *
+     * @return Whether the operation was completed succesfully.
      */
-    virtual void finish_member(entity_properties_t &prop, bool present) = 0;
+    virtual bool finish_member(entity_properties_t &prop, bool is_set = true);
 
     /**
      * @brief
@@ -396,11 +410,10 @@ public:
      * This function is called by the instance implementation switchbox, when it encounters an id which
      * does not resolve to an id pointing to a member it knows. It will move to the next entity in the
      * stream.
-     * This function is to be implemented in cdr streaming implementations.
      *
-     * @param[in] props The entity to skip/ignore.
+     * @param[in] prop The entity to skip/ignore.
      */
-    virtual void skip_entity(const entity_properties_t &props) = 0;
+    virtual void skip_entity(const entity_properties_t &prop);
 
     /**
      * @brief
@@ -424,8 +437,10 @@ public:
      * I.E. starting a new parameter list, writing headers.
      *
      * @param[in,out] props The entity whose members might be represented by a parameter list.
+     *
+     * @return Whether the operation was completed succesfully.
      */
-    virtual void start_struct(entity_properties_t &props) = 0;
+    virtual bool start_struct(entity_properties_t &props);
 
     /**
      * @brief
@@ -435,14 +450,16 @@ public:
      * I.E. finishing headers, writing length fields.
      *
      * @param[in,out] props The entity whose members might be represented by a parameter list.
+     *
+     * @return Whether the struct is complete and correct.
      */
-    virtual void finish_struct(entity_properties_t &props) = 0;
+    virtual bool finish_struct(entity_properties_t &props);
 
 protected:
 
     /**
      * @brief
-     * Member list types/
+     * Member list types
      *
      * @enum member_list_type Which type of list of entries is to be iterated over,
      * used in calls to cdr_stream::next_prop.
@@ -456,6 +473,47 @@ protected:
       member_by_id,
       key
     };
+
+    /**
+     * @brief
+     * Records the start of a member entry.
+     *
+     * Will record the member start and set the member present flag to true.
+     *
+     * @param[in,out] prop The member whose start is recorded.
+     */
+    void record_member_start(entity_properties_t &prop);
+
+    /**
+     * @brief
+     * Skips a member entry.
+     *
+     * In the case a read has failed, this will go to the next member.
+     *
+     * @param[in,out] prop The member who will be skipped.
+     */
+    void go_to_next_member(entity_properties_t &prop);
+
+    /**
+     * @brief
+     * Records the start of a struct.
+     *
+     * Will record the struct start and set the struct present flag to true.
+     *
+     * @param[in,out] props The struct whose start is recorded.
+     */
+    void record_struct_start(entity_properties_t &props);
+
+    /**
+     * @brief
+     * Checks the struct for completeness.
+     *
+     * Checks whether all fields which must be understood are present.
+     *
+     * @param[in,out] props The struct whose start is recorded.
+     * @param[in] list_type Which list must be checked for entries.
+     */
+    void check_struct_completeness(entity_properties_t &props, member_list_type list_type);
 
     /**
      * @brief
@@ -477,7 +535,8 @@ protected:
         m_local_endianness = native_endianness(); /**< the local endianness*/
     size_t m_position = 0,                        /**< the current offset position in the stream*/
         m_max_alignment,                          /**< the maximum bytes that can be aligned to*/
-        m_current_alignment = 1;                  /**< the current alignment*/
+        m_current_alignment = 1,                  /**< the current alignment*/
+        m_buffer_size = 0;                        /**< the size of the current buffer*/
     char* m_buffer = nullptr;                     /**< the current buffer in use*/
     uint64_t m_status = 0,                        /**< the current status of streaming*/
              m_fault_mask;                        /**< the mask for statuses that will cause streaming
@@ -487,9 +546,10 @@ protected:
 
     static entity_properties_t m_final;           /**< A placeholder for the final entry to be returned
                                                        from next_prop if we are reading from a stream*/
-    entity_properties_t m_current_header;         /**< Container for headers being read from a stream*/
+    entity_properties_t m_current_header;         /**< Container for header information being read from a stream*/
 
     DDSCXX_WARNING_MSVC_OFF(4251)
+    std::stack<size_t> m_buffer_end;              /**< the end of reading at the current level*/
     std::stack<proplist::iterator> m_stack;       /**< Stack of iterators currently being handled*/
     DDSCXX_WARNING_MSVC_ON(4251)
 };
@@ -516,16 +576,18 @@ protected:
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read into.
  * @param[in] N The number of entities to read.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
                                                && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-void read(S &str, T& toread, size_t N = 1)
+bool read(S &str, T& toread, size_t N = 1)
 {
-  if (str.abort_status() || str.position() == SIZE_MAX)
-    return;
-
-  str.align(sizeof(T), false);
+  if (str.position() == SIZE_MAX
+   || !str.align(sizeof(T), false)
+   || !str.bytes_available(sizeof(T)*N))
+    return false;
 
   auto from = str.get_cursor();
   T *to = &toread;
@@ -540,6 +602,8 @@ void read(S &str, T& toread, size_t N = 1)
   }
 
   str.incr_position(sizeof(T)*N);
+
+  return true;
 }
 
 /**
@@ -555,18 +619,23 @@ void read(S &str, T& toread, size_t N = 1)
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read.
  * @param[in] N The number of entities to read.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, typename I, std::enable_if_t<std::is_integral<I>::value
                                                && std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true>
-void read_enum_impl(S& str, T& toread, size_t N) {
+bool read_enum_impl(S& str, T& toread, size_t N)
+{
   T *ptr = &toread;
   I holder = 0;
   for (size_t i = 0; i < N; i++, ptr++)
   {
-    read(str, holder);
+    if (!read(str, holder))
+      return false;
     *ptr = enum_conversion<T>(holder);
   }
+  return true;
 }
 
 /**
@@ -582,16 +651,18 @@ void read_enum_impl(S& str, T& toread, size_t N) {
  * @param[in, out] str The stream which is written to.
  * @param[in] towrite The variable to write.
  * @param[in] N The number of entities to write.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
                                                && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-void write(S& str, const T& towrite, size_t N = 1)
+bool write(S& str, const T& towrite, size_t N = 1)
 {
-  if (str.abort_status() || str.position() == SIZE_MAX)
-    return;
-
-  str.align(sizeof(T), true);
+  if (str.position() == SIZE_MAX
+   || !str.align(sizeof(T), true)
+   || !str.bytes_available(sizeof(T)*N))
+    return false;
 
   auto to = reinterpret_cast<T*>(str.get_cursor());
   const T *from = &towrite;
@@ -606,6 +677,8 @@ void write(S& str, const T& towrite, size_t N = 1)
   }
 
   str.incr_position(sizeof(T)*N);
+
+  return true;
 }
 
 /**
@@ -622,18 +695,24 @@ void write(S& str, const T& towrite, size_t N = 1)
  * @param[in, out] str The stream which is written to.
  * @param[in] towrite The variable to write.
  * @param[in] N The number of entities to write.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, typename I, std::enable_if_t<std::is_integral<I>::value
                                                && std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true>
-void write_enum_impl(S& str, const T& towrite, size_t N) {
+bool write_enum_impl(S& str, const T& towrite, size_t N)
+{
   const T *ptr = &towrite;
   if (sizeof(T) == sizeof(I)) {
-      write(str, *reinterpret_cast<const I*>(ptr), N);
+      if (!write(str, *reinterpret_cast<const I*>(ptr), N))
+        return false;
   } else {
     for (size_t i = 0; i < N; i++, ptr++)
-      write(str, *reinterpret_cast<const I*>(ptr));
+      if (!write(str, *reinterpret_cast<const I*>(ptr)))
+        return false;
   }
+  return true;
 }
 
 /**
@@ -647,18 +726,23 @@ void write_enum_impl(S& str, const T& towrite, size_t N) {
  *
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] N The number of entities to move.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
                                                && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-void move(S& str, const T&, size_t N = 1)
+bool move(S& str, const T&, size_t N = 1)
 {
-  if (str.abort_status() || str.position() == SIZE_MAX)
-    return;
+  if (str.position() == SIZE_MAX)
+    return true;
 
-  str.align(sizeof(T), false);
+  if (!str.align(sizeof(T), false))
+    return false;
 
   str.incr_position(sizeof(T)*N);
+
+  return true;
 }
 
 /**
@@ -677,13 +761,15 @@ void move(S& str, const T&, size_t N = 1)
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
  * @param[in] N The number of entities at most to move.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
                                                && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-void max(S& str, const T& max_sz, size_t N = 1)
+bool max(S& str, const T& max_sz, size_t N = 1)
 {
-  move(str, max_sz, N);
+  return move(str, max_sz, N);
 }
 
  /**
@@ -706,25 +792,27 @@ void max(S& str, const T& max_sz, size_t N = 1)
  * @param[in, out] str The stream to read from.
  * @param[out] toread The string to read to.
  * @param[in] N The maximum number of characters to read from the stream.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-void read_string(S& str, T& toread, size_t N)
+bool read_string(S& str, T& toread, size_t N)
 {
-  if (str.abort_status() || str.position() == SIZE_MAX)
-    return;
+  if (str.position() == SIZE_MAX)
+    return false;
 
   uint32_t string_length = 0;
 
-  read(str, string_length);
+  if (!read(str, string_length)
+   || !str.bytes_available(string_length))
+    return false;
 
   if (string_length == 0
    && str.status(serialization_status::illegal_field_value))
-    return;
+    return false;
 
-  if (N
-   && string_length > N + 1
-   && str.status(serialization_status::read_bound_exceeded))
-      return;
+  if (N && string_length > N + 1)
+    return false;
 
   auto cursor = str.get_cursor();
   toread.assign(cursor, cursor + std::min<size_t>(string_length - 1, N ? N : SIZE_MAX));  //remove 1 for terminating NULL
@@ -733,6 +821,8 @@ void read_string(S& str, T& toread, size_t N)
 
   //aligned to chars
   str.alignment(1);
+
+  return true;
 }
 
 /**
@@ -746,21 +836,25 @@ void read_string(S& str, T& toread, size_t N)
  * @param[in, out] str The stream to write to.
  * @param[in] towrite The string to write.
  * @param[in] N The maximum number of characters to write to the stream.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-void write_string(S& str, const T& towrite, size_t N)
+bool write_string(S& str, const T& towrite, size_t N)
 {
-  if (str.abort_status() || str.position() == SIZE_MAX)
-    return;
+  if (str.position() == SIZE_MAX)
+    return false;
 
   size_t string_length = towrite.length() + 1;  //add 1 extra for terminating NULL
 
   if (N
    && string_length > N + 1
    && str.status(serialization_status::write_bound_exceeded))
-      return;
+      return false;
 
-  write(str, uint32_t(string_length));
+  if (!write(str, uint32_t(string_length))
+   || !str.bytes_available(string_length))
+    return false;
 
   memcpy(str.get_cursor(), towrite.c_str(), string_length);
 
@@ -769,6 +863,7 @@ void write_string(S& str, const T& towrite, size_t N)
   //aligned to chars
   str.alignment(1);
 
+  return true;
 }
 
 /**
@@ -782,26 +877,31 @@ void write_string(S& str, const T& towrite, size_t N)
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] toincr The string used to move the cursor.
  * @param[in] N The maximum number of characters in the string which the stream is moved by.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-void move_string(S& str, const T& toincr, size_t N)
+bool move_string(S& str, const T& toincr, size_t N)
 {
-  if (str.abort_status() || str.position() == SIZE_MAX)
-    return;
+  if (str.position() == SIZE_MAX)
+    return true;
 
   size_t string_length = toincr.length() + 1;  //add 1 extra for terminating NULL
 
   if (N
    && string_length > N + 1
    && str.status(serialization_status::move_bound_exceeded))
-      return;
+      return false;
 
-  move(str, uint32_t());
+  if (!move(str, uint32_t()))
+    return false;
 
   str.incr_position(string_length);
 
   //aligned to chars
   str.alignment(1);
+
+  return true;
 }
 
 /**
@@ -815,14 +915,18 @@ void move_string(S& str, const T& toincr, size_t N)
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] max_sz The string used to move the cursor.
  * @param[in] N The maximum number of characters in the string which the stream is at most moved by.
+ *
+ * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-void max_string(S& str, const T& max_sz, size_t N)
+bool max_string(S& str, const T& max_sz, size_t N)
 {
   if (N == 0)
     str.position(SIZE_MAX); //unbounded string, theoretical length unlimited
   else
-    move_string(str, max_sz, N);
+    return move_string(str, max_sz, N);
+
+  return true;
 }
 
 }

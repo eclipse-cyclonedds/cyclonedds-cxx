@@ -82,7 +82,7 @@ private:
         size_t sz = str.position();
         ASSERT_EQ(sz, exp.size());
         std::vector<uint8_t> buffer(sz, 0x0);
-        str.set_buffer(buffer.data());
+        str.set_buffer(buffer.data(), buffer.size());
 
         write(str, msg, false);
 
@@ -102,7 +102,7 @@ TEST_F(Serdata, alignment)
 
     basic_cdr_stream str(endianness::little_endian);
     std::vector<unsigned char> vec(8,0x0);
-    str.set_buffer(vec.data());
+    str.set_buffer(vec.data(), vec.size());
 
     write(str, msg, false);
 

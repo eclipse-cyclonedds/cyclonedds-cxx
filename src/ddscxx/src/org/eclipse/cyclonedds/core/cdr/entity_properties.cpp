@@ -35,7 +35,7 @@ void entity_properties::print(bool recurse, size_t depth, const char *prefix) co
 {
   std::cout << "d: " << depth;
   for (size_t i = 0; i < depth; i++) std::cout << "  ";
-  std::cout << prefix << ": m_id: " << m_id << " final: " << (is_last ? "yes" : "no") << " m_u: " << (must_understand ? "yes" : "no") << " key: " << (is_key ? "yes" : "no");
+  std::cout << prefix << ": m_id: " << m_id << " final: " << (is_last ? "yes" : "no") << " m_u: " << (must_understand_local ? "yes" : "no") << " key: " << (is_key ? "yes" : "no");
 
   std::cout << " p_ext: ";
   switch(p_ext) {
@@ -99,7 +99,7 @@ void entity_properties::set_key_values(const key_endpoint &endpoints)
   for (auto &member:m_members_by_seq) {
     if (member.is_key) {
       member.is_key = false;
-      member.must_understand = false;
+      member.must_understand_local = false;
     }
   }
 
@@ -109,17 +109,31 @@ void entity_properties::set_key_values(const key_endpoint &endpoints)
     assert(it != m_members_by_seq.end());
 
     it->is_key = true;
-    it->must_understand = true;
+    it->must_understand_local = true;
     it->set_key_values(p.second);
   }
+}
+
+bool entity_properties::requires_xtypes() const
+{
+  if (xtypes_necessary || is_optional || e_ext != ext_final)
+    return true;
+
+  for (const auto &member:m_members_by_seq)
+    if (member.requires_xtypes())
+      return true;
+
+  return false;
 }
 
 void entity_properties::finish(const key_endpoint &keys)
 {
   set_key_values(keys);
 
-  for (auto &member:m_members_by_seq)
+  xtypes_necessary = requires_xtypes();
+  for (auto &member:m_members_by_seq) {
     member.propagate_flags();
+  }
 
   populate_from_seq();
 
@@ -156,7 +170,7 @@ void entity_properties::propagate_flags()
   for (auto &member:m_members_by_seq) {
     if (!any_member_is_key) {
       member.is_key = true;
-      member.must_understand = true;
+      member.must_understand_local = true;
     }
 
     member.propagate_flags();
@@ -190,6 +204,23 @@ void entity_properties::populate_from_seq(keep_in_propagate to_keep)
     m_keys.clear();
   }
 
+}
+
+void entity_properties::reset_flags()
+{
+  must_understand_remote = must_understand_local;
+  is_present = false;
+  ignore = false;
+  d_off = 0;
+  e_off = 0;
+  e_sz = 0;
+
+  for (auto & e:m_members_by_seq)
+    e.reset_flags();
+  for (auto & e:m_members_by_id)
+    e.reset_flags();
+  for (auto & e:m_keys)
+    e.reset_flags();
 }
 
 }
