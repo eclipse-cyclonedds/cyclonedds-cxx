@@ -125,12 +125,13 @@ AnyDataWriterDelegate::write_cdr(
 #ifdef DDSCXX_HAS_SHM
     // TODO(Sumanth) we need an API to check if iceoryx is enabled for the writer
     // (meaning if QOS constraints are met, and iox_pub is set)
+    dds_data_allocator_t data_alloc;
+    void *iox_chunk ;
     if(true) {
         // TODO(Sumanth), update this if we have a better API, if not clean this
-        dds_data_allocator_t data_alloc;
         ret = dds_data_allocator_init(writer, &data_alloc);
         ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator init failed");
-        void *iox_chunk = dds_data_allocator_alloc(&data_alloc, data->payload().size() + 4);
+        iox_chunk = dds_data_allocator_alloc(&data_alloc, data->payload().size() + 4);
         ISOCPP_BOOL_CHECK_AND_THROW(iox_chunk, ISOCPP_NULL_REFERENCE_ERROR, "write_cdr - Loaning of chunk failed");
         // copy the header
         memcpy(iox_chunk, data->encoding().data(), data->encoding().size());
@@ -162,6 +163,8 @@ AnyDataWriterDelegate::write_cdr(
     }
     ret = dds_data_allocator_fini(&data_alloc);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator free failed");
+#else
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
 #endif
 }
 
