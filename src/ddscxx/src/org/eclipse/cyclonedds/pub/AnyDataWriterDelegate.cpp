@@ -123,24 +123,22 @@ AnyDataWriterDelegate::write_cdr(
     ser_data->statusinfo = statusinfo;
 
 #ifdef DDSCXX_HAS_SHM
-    // TODO(Sumanth) we need an API to check if iceoryx is enabled for the writer
-    // (meaning if QOS constraints are met, and iox_pub is set)
-    dds_data_allocator_t data_alloc;
-    void *iox_chunk ;
-    if(true) {
-        // TODO(Sumanth), update this if we have a better API, if not clean this
-        ret = dds_data_allocator_init(writer, &data_alloc);
-        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator init failed");
-        iox_chunk = dds_data_allocator_alloc(&data_alloc, data->payload().size() + 4);
+    // if shared memory is supported by the writer
+    if(dds_is_shared_memory_available(writer)) {
+        void *iox_chunk ;
+        // request a loan from the shared memory buffer
+        ret = dds_loan_shared_memory_buffer(writer,
+                                            data->payload().size() + data->encoding().size(),  // include the size for the encoding (CDR header)
+                                            &iox_chunk);
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr - Loaning of chunk failed");
         ISOCPP_BOOL_CHECK_AND_THROW(iox_chunk, ISOCPP_NULL_REFERENCE_ERROR, "write_cdr - Loaning of chunk failed");
         // copy the header
         memcpy(iox_chunk, data->encoding().data(), data->encoding().size());
         // copy the actual data
         memcpy(static_cast<unsigned char *>(iox_chunk) + data->encoding().size(),
                data->payload().data(), data->payload().size());
-        // update SHM data state to serialized, since this API is used to publish the serialized data
-        auto iox_header = iceoryx_header_from_chunk(iox_chunk);
-        iox_header->shm_data_state = IOX_CHUNK_CONTAINS_SERIALIZED_DATA;
+        // update SHM data state to serialized, since this API is used only to publish the serialized data
+        shm_set_data_state(iox_chunk, IOX_CHUNK_CONTAINS_SERIALIZED_DATA);
         // update the loaned iox chunk in serdata
         ser_data->iox_chunk = iox_chunk;
     }
@@ -155,14 +153,14 @@ AnyDataWriterDelegate::write_cdr(
     }
 
 #ifdef DDSCXX_HAS_SHM
-    // TODO(Sumanth), update this if we have a better API, if not clean this
     if (ret != DDS_RETCODE_OK) {
-        // write cdr failed, so free the chunk
-        ret = dds_data_allocator_free(&data_alloc, iox_chunk);
-        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator free failed");
+        if (ser_data->iox_chunk != nullptr) {
+            // write cdr failed, so free the chunk
+            ret = dds_return_loan(writer, &ser_data->iox_chunk, 1);
+            ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr, freeing loan failed");
+        }
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
     }
-    ret = dds_data_allocator_fini(&data_alloc);
-    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr dds_data_allocator free failed");
 #else
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
 #endif
