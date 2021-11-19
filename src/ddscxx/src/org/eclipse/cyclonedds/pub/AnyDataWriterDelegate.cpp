@@ -22,7 +22,7 @@
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 #include <dds/dds.h>
-#include <dds/ddsc/dds_data_allocator.h>
+#include <dds/ddsc/dds_loan_api.h>
 
 #include "dds/ddsi/ddsi_sertopic.h"
 #include "dds/ddsi/q_protocol.h"
