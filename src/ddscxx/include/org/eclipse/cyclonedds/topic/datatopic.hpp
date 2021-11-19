@@ -173,10 +173,8 @@ public:
   T* getT() {
 #ifdef DDSCXX_HAS_SHM
     if (iox_chunk != nullptr && data() == nullptr) {
-      auto iox_header = iceoryx_header_from_chunk(iox_chunk);
-
       // if the iox chunk has the data in serialized form
-      if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+      if (shm_get_data_state(iox_chunk) == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
         T *t = m_t.load(std::memory_order_acquire);
         if (t == nullptr) {
           t = new T();
