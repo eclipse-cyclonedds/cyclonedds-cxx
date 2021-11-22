@@ -146,8 +146,6 @@ public:
           // get the data
           org::eclipse::cyclonedds::topic::CDRBlob & sample_data =
             (*this->samples_.delegate())[i].delegate().data();
-          // update the header
-          memcpy(sample_data.encoding().data(), current_blob->iox_chunk, 4);
           // update the data kind
           sample_data.kind(
             static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
@@ -156,14 +154,29 @@ public:
             auto iox_header = iceoryx_header_from_chunk(current_blob->iox_chunk);
             // if the iox chunk has the data in serialized form
             if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+              // update the header
+              memcpy(sample_data.encoding().data(), current_blob->iox_chunk, 4);
               // get the actual data
               sample_data.payload().assign(
                 reinterpret_cast<uint8_t *>(current_blob->iox_chunk) + 4,
                 reinterpret_cast<uint8_t *>(current_blob->iox_chunk) + iox_header->data_size);
+            } else if(iox_header->shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+              // serialize the data
+              auto serialized_size = ddsi_sertype_get_serialized_size(current_blob->type,
+                                                                    current_blob->iox_chunk);
+              // create a buffer to serialize
+              std::vector<unsigned char> buffer(serialized_size);
+              // serialize into the buffer
+              ddsi_sertype_serialize_into(current_blob->type, current_blob->iox_chunk, buffer.data(),
+                                        serialized_size);
+              // update the header
+              memcpy(cdr_blob.encoding().data(), buffer.data(), 4);
+              // get the actual data
+              cdr_blob.payload().assign(buffer.data() + 4, buffer.data() + size);
             } else {
               // this shouldn't never happen
               ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR,
-                "The received sample over SHM is not in serialized form");
+                                     "The received sample over SHM is not in serialized form");
             }
             // release the chunk
             free_iox_chunk(static_cast<iox_sub_t *>(current_blob->iox_subscriber), &current_blob->iox_chunk);
