@@ -266,13 +266,23 @@ public:
 
     /**
      * @brief
+     * Const stream endianness getter (const).
+     *
+     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
+     *
+     * @return The stream endianness.
+     */
+    const endianness& stream_endianness() const { return m_stream_endianness; }
+
+    /**
+     * @brief
      * Stream endianness getter.
      *
      * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
      *
      * @return The stream endianness.
      */
-    endianness stream_endianness() const { return m_stream_endianness; }
+    endianness& stream_endianness() { return m_stream_endianness; }
 
     /**
      * @brief

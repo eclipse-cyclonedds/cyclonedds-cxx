@@ -39,25 +39,25 @@ void entity_properties::print(bool recurse, size_t depth, const char *prefix) co
 
   std::cout << " p_ext: ";
   switch(p_ext) {
-    case ext_final:
+    case extensibility::ext_final:
     std::cout << "FINAL";
     break;
-    case ext_appendable:
+    case extensibility::ext_appendable:
     std::cout << "APPENDABLE";
     break;
-    case ext_mutable:
+    case extensibility::ext_mutable:
     std::cout << "MUTABLE";
     break;
   }
   std::cout << " e_ext: ";
   switch(e_ext) {
-    case ext_final:
+    case extensibility::ext_final:
     std::cout << "FINAL";
     break;
-    case ext_appendable:
+    case extensibility::ext_appendable:
     std::cout << "APPENDABLE";
     break;
-    case ext_mutable:
+    case extensibility::ext_mutable:
     std::cout << "MUTABLE";
     break;
   }
@@ -116,7 +116,7 @@ void entity_properties::set_key_values(const key_endpoint &endpoints)
 
 bool entity_properties::requires_xtypes() const
 {
-  if (xtypes_necessary || is_optional || e_ext != ext_final)
+  if (xtypes_necessary || is_optional || e_ext != extensibility::ext_final)
     return true;
 
   for (const auto &member:m_members_by_seq)
@@ -124,6 +124,13 @@ bool entity_properties::requires_xtypes() const
       return true;
 
   return false;
+}
+
+void entity_properties::clear()
+{
+  m_members_by_seq.clear();
+  m_members_by_id.clear();
+  m_keys.clear();
 }
 
 void entity_properties::finish(const key_endpoint &keys)
@@ -204,23 +211,6 @@ void entity_properties::populate_from_seq(keep_in_propagate to_keep)
     m_keys.clear();
   }
 
-}
-
-void entity_properties::reset_flags()
-{
-  must_understand_remote = must_understand_local;
-  is_present = false;
-  ignore = false;
-  d_off = 0;
-  e_off = 0;
-  e_sz = 0;
-
-  for (auto & e:m_members_by_seq)
-    e.reset_flags();
-  for (auto & e:m_members_by_id)
-    e.reset_flags();
-  for (auto & e:m_keys)
-    e.reset_flags();
 }
 
 }

@@ -32,7 +32,7 @@ const uint32_t xcdr_v1_stream::pl_extended_flag_must_understand = 0x40000000;
 
 bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
 {
-  if (header_necessary(prop) && (prop.p_ext != ext_mutable || is_set)) {
+  if (header_necessary(prop) && (prop.p_ext != extensibility::ext_mutable || is_set)) {
     switch (m_mode) {
       case stream_mode::write:
         if (!write_header(prop))
@@ -63,7 +63,7 @@ bool xcdr_v1_stream::finish_member(entity_properties_t &prop, bool is_set)
   if (header_necessary(prop)) {
     switch (m_mode) {
       case stream_mode::write:
-        if (prop.p_ext != ext_mutable || is_set)
+        if (prop.p_ext != extensibility::ext_mutable || is_set)
           return finish_write_header(prop);
         break;
       case stream_mode::read:
@@ -135,7 +135,7 @@ entity_properties_t& xcdr_v1_stream::next_entity(entity_properties_t &props, boo
 
 bool xcdr_v1_stream::header_necessary(const entity_properties_t &props)
 {
-  return (props.p_ext == ext_mutable || props.is_optional) && !m_key;
+  return (props.p_ext == extensibility::ext_mutable || props.is_optional) && !m_key;
 }
 
 bool xcdr_v1_stream::read_header(entity_properties_t &out)
@@ -246,7 +246,7 @@ bool xcdr_v1_stream::finish_struct(entity_properties_t &props)
 
 bool xcdr_v1_stream::list_necessary(const entity_properties_t &props)
 {
-  return props.e_ext == ext_mutable && !m_key;
+  return props.e_ext == extensibility::ext_mutable && !m_key;
 }
 
 bool xcdr_v1_stream::write_final_list_entry()

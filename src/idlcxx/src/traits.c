@@ -33,6 +33,48 @@ static bool sc_union(const idl_union_t *_union)
   return true;
 }
 
+static bool req_xtypes(const void *node)
+{
+  if (idl_is_struct(node)) {
+    const idl_struct_t* str = (const idl_struct_t*)node;
+    if (str->inherit_spec && req_xtypes(str->inherit_spec->base))
+      return true;
+
+    if (str->extensibility.value != IDL_FINAL)
+      return true;
+
+    idl_member_t *mem = NULL;
+    IDL_FOREACH(mem, str->members) {
+      if (req_xtypes(mem))
+        return true;
+    }
+  } else if (idl_is_union(node)) {
+    const idl_union_t *un = (const idl_union_t*)node;
+
+    if (un->extensibility.value != IDL_FINAL
+     || req_xtypes(un->switch_type_spec->type_spec))
+      return true;
+
+    const idl_case_t *cs = NULL;
+    IDL_FOREACH(cs, un->cases) {
+      if (req_xtypes(cs->type_spec) || cs->external.value)
+        return true;
+    }
+  } else if (idl_is_enum(node)) {
+    const idl_enum_t *en = (const idl_enum_t*)node;
+
+    return en->extensibility.value != IDL_FINAL;
+  } else if (idl_is_member(node)) {
+    const idl_member_t *mem = (const idl_member_t*)node;
+    return  mem->optional.value ||
+            mem->external.value ||
+            mem->must_understand.value ||
+            req_xtypes(mem->type_spec);
+  }
+
+  return false;
+}
+
 static bool sc_struct(const idl_struct_t *str)
 {
   const idl_member_t *mem = NULL;
@@ -105,46 +147,66 @@ emit_traits(
 {
   struct generator *gen = user_data;
   char *name = NULL;
-  const char *fmt, *keyless = "true", *selfcontained = "true";
+  const char *ext = NULL;
+  static const char *fmt =
+    "template <>\n"
+    "class TopicTraits<%1$s>\n"
+    "{\n"
+    "public:\n"
+    "  static constexpr bool isKeyless()\n"
+    "  {\n"
+    "    return %3$s;\n"
+    "  }\n\n"
+    "  static constexpr const char *getTypeName()\n"
+    "  {\n"
+    "    return \"%2$s\";\n" /* skip preceeding "::" according to convention */
+    "  }\n\n"
+    "  static ddsi_sertype *getSerType()\n"
+    "  {\n"
+    "    return static_cast<ddsi_sertype*>(new ddscxx_sertype<%1$s>());\n"
+    "  }\n\n"
+    "  static constexpr size_t getSampleSize()\n"
+    "  {\n"
+    "    return sizeof(%1$s);\n"
+    "  }\n\n"
+    "  static constexpr bool isSelfContained()\n"
+    "  {\n"
+    "    return %4$s;\n"
+    "  }\n\n"
+    "  static constexpr bool requiresXTypes()\n"
+    "  {\n"
+    "    return %5$s;\n"
+    "  }\n\n"
+    "  static constexpr extensibility getExtensibility()\n"
+    "  {\n"
+    "    return extensibility::ext_%6$s;\n"
+    "  }\n\n"
+    "};\n\n";
   const idl_struct_t *_struct = node;
+
+  switch (_struct->extensibility.value) {
+    case IDL_FINAL:
+      ext = "final";
+      break;
+    case IDL_APPENDABLE:
+      ext = "appendable";
+      break;
+    case IDL_MUTABLE:
+      ext = "mutable";
+      break;
+  }
 
   (void)pstate;
   (void)revisit;
   (void)path;
 
-  fmt = "template <>\n"
-        "class TopicTraits<%1$s>\n"
-        "{\n"
-        "public:\n"
-        "  static bool isKeyless()\n"
-        "  {\n"
-        "    return %3$s;\n"
-        "  }\n\n"
-        "  static const char *getTypeName()\n"
-        "  {\n"
-        "    return \"%2$s\";\n" /* skip preceeding "::" according to convention */
-        "  }\n\n"
-        "  static ddsi_sertype *getSerType()\n"
-        "  {\n"
-        "    auto *st = new ddscxx_sertype<%1$s>();\n"
-        "    return static_cast<ddsi_sertype*>(st);\n"
-        "  }\n\n"
-        "  static size_t getSampleSize()\n"
-        "  {\n"
-        "    return sizeof(%1$s);\n"
-        "  }\n\n"
-        "  static bool isSelfContained()\n"
-        "  {\n"
-        "    return %4$s;\n"
-        "  }\n"
-        "};\n\n";
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (!idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST))
-    keyless = "false";
-  if (!sc_struct(_struct))
-    selfcontained = "false";
-  if (idl_fprintf(gen->header.handle, fmt, name, name+2, keyless, selfcontained) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, name, name+2,
+                  idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST) ? "true" : "false",
+                  sc_struct(_struct) ? "true" : "false",
+                  req_xtypes(_struct) ? "true" : "false",
+                  ext) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;

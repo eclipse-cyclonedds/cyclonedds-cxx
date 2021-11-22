@@ -213,13 +213,13 @@ bool xcdr_v2_stream::read_d_header()
 
 bool xcdr_v2_stream::d_header_necessary(const entity_properties_t &props)
 {
-  return (props.e_ext == ext_appendable || props.e_ext == ext_mutable)
+  return (props.e_ext == extensibility::ext_appendable || props.e_ext == extensibility::ext_mutable)
       && !m_key;
 }
 
 bool xcdr_v2_stream::list_necessary(const entity_properties_t &props)
 {
-  return props.e_ext == ext_mutable && !m_key;
+  return props.e_ext == extensibility::ext_mutable && !m_key;
 }
 
 bool xcdr_v2_stream::start_struct(entity_properties_t &props)
@@ -325,7 +325,7 @@ bool xcdr_v2_stream::finish_em_header(entity_properties_t &props)
 
 bool xcdr_v2_stream::em_header_necessary(const entity_properties_t &props)
 {
-  return (props.p_ext == ext_mutable) && !m_key;
+  return (props.p_ext == extensibility::ext_mutable) && !m_key;
 }
 
 }

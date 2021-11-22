@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <list>
 #include <map>
+#include <mutex>
+#include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 
 namespace org {
 namespace eclipse {
@@ -46,24 +48,6 @@ enum bit_bound {
   bb_64_bits = 8
 };
 
-/**
- * @brief
- * Entity extensibility descriptors.
- *
- * @enum extensibility Describes the extensibility of entities.
- *
- * This value is set for entities and their parents.
- *
- * @var extensibility::ext_final The entity representation is complete, no fields can be added or removed.
- * @var extensibility::ext_appendable The entity representation can be extended, no fields can be removed.
- * @var extensibility::ext_mutable The entity representation can be modified, fields can be removed or added.
- */
-enum extensibility {
-  ext_final,
-  ext_appendable,
-  ext_mutable
-};
-
 typedef struct entity_properties entity_properties_t;
 typedef std::list<entity_properties_t> proplist;
 
@@ -78,6 +62,8 @@ DDSCXX_WARNING_MSVC_ON(4251)
     void add_key_endpoint(const std::list<uint32_t> &key_indices);
     operator bool() const {return !empty();}
 };
+
+using org::eclipse::cyclonedds::topic::extensibility;
 
 /**
  * @brief
@@ -96,8 +82,8 @@ struct OMG_DDS_API entity_properties
       m_id(_m_id),
       is_optional(_is_optional) {;}
 
-  extensibility e_ext = ext_final; /**< The extensibility of the entity itself. */
-  extensibility p_ext = ext_final; /**< The extensibility of the entity's parent. */
+  extensibility e_ext = extensibility::ext_final; /**< The extensibility of the entity itself. */
+  extensibility p_ext = extensibility::ext_final; /**< The extensibility of the entity's parent. */
   size_t e_off = 0; /**< The current offset in the stream at which the member field starts, does not include header. */
   size_t d_off = 0; /**< The current offset in the stream at which the struct starts, does not include header.*/
   uint32_t e_sz = 0; /**< The size of the current entity as member field (only used in reading from streams).*/
@@ -156,14 +142,6 @@ struct OMG_DDS_API entity_properties
 
   /**
    * @brief
-   * Resets all flags that are set through streaming.
-   *
-   * Goes recursively through all its children.
-   */
-  void reset_flags();
-
-  /**
-   * @brief
    * Finishing function.
    *
    * Generates the m_members_by_id and m_keys from m_members_by_seq and the supplied indices.
@@ -206,6 +184,12 @@ struct OMG_DDS_API entity_properties
    * @return Whether this contains features that cannot be sent through basic cdr serialization.
    */
   bool requires_xtypes() const;
+
+  /**
+   * @brief
+   * Empties the instance.
+   */
+  void clear();
 private:
 
   /**
@@ -273,29 +257,36 @@ struct OMG_DDS_API final_entry: public entity_properties_t {
 };
 
 template<typename T>
-entity_properties_t& get_type_props() {
-  thread_local static bool initialized = false;
-  thread_local static entity_properties_t props;
-  if (!initialized) {
-    switch (sizeof(T)) {
-      case 1:
-        props.e_bb = bb_8_bits;
-        break;
-      case 2:
-        props.e_bb = bb_16_bits;
-        break;
-      case 4:
-        props.e_bb = bb_32_bits;
-        break;
-      case 8:
-        props.e_bb = bb_64_bits;
-        break;
-    }
-    props.m_members_by_seq.push_back(final_entry());
-    props.m_members_by_id.push_back(final_entry());
-    props.m_keys.push_back(final_entry());
-    initialized = true;
+entity_properties_t get_type_props() {
+  static std::mutex mtx;
+  static entity_properties_t props;
+  static bool initialized = false;
+
+  if (initialized)
+    return props;
+
+  std::lock_guard<std::mutex> lock(mtx);
+  props.clear();
+  key_endpoint keylist;
+  switch (sizeof(T)) {
+    case 1:
+      props.e_bb = bb_8_bits;
+      break;
+    case 2:
+      props.e_bb = bb_16_bits;
+      break;
+    case 4:
+      props.e_bb = bb_32_bits;
+      break;
+    case 8:
+      props.e_bb = bb_64_bits;
+      break;
   }
+  props.m_members_by_seq.push_back(final_entry());
+  props.m_members_by_id.push_back(final_entry());
+  props.m_keys.push_back(final_entry());
+  props.finish(keylist);
+  initialized = true;
   return props;
 }
 

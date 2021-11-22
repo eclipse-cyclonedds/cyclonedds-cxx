@@ -31,6 +31,24 @@ namespace cyclonedds
 namespace topic
 {
 
+/**
+ * @brief
+ * Entity extensibility descriptors.
+ *
+ * @enum extensibility Describes the extensibility of entities.
+ *
+ * This value is set for entities and their parents.
+ *
+ * @var extensibility::ext_final The entity representation is complete, no fields can be added or removed.
+ * @var extensibility::ext_appendable The entity representation can be extended, no fields can be removed.
+ * @var extensibility::ext_mutable The entity representation can be modified, fields can be removed or added.
+ */
+enum class extensibility {
+  ext_final,
+  ext_appendable,
+  ext_mutable
+};
+
 template <class TOPIC> class TopicTraits
 {
 public:
@@ -50,12 +68,12 @@ public:
         return ::std::vector<uint8_t>();
     }
 
-    static bool isKeyless()
+    static constexpr bool isKeyless()
     {
         return true;
     }
 
-    static const char *getTypeName()
+    static constexpr const char *getTypeName()
     {
         return "ExampleName";
     }
@@ -65,14 +83,24 @@ public:
         return NULL;
     }
 
-    static size_t getSampleSize()
+    static constexpr size_t getSampleSize()
     {
         return 0;
     }
 
-    static bool isSelfContained()
+    static constexpr bool isSelfContained()
     {
       return true;
+    }
+
+    static constexpr bool requiresXTypes()
+    {
+      return true;
+    }
+
+    static constexpr extensibility getExtensibility()
+    {
+      return extensibility::ext_final;
     }
 };
 
