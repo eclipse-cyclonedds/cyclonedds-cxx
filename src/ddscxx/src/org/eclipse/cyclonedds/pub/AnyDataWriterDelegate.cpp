@@ -29,7 +29,7 @@
 #include "dds/features.hpp"
 
 #ifdef DDSCXX_HAS_SHM
-#include <dds/ddsi/shm_transport.h>
+#include <dds/ddsi/ddsi_shm_transport.h>
 #endif
 
 
