@@ -136,65 +136,48 @@ public:
     void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info)
     {
       struct ddsi_serdata **cdr_blobs = reinterpret_cast<struct ddsi_serdata **>(c_sample_pointers);
-      uint32_t cpp_sample_size = this->samples_.delegate()->length();
+      const uint32_t cpp_sample_size = this->samples_.delegate()->length();
       for (uint32_t i = 0; i < cpp_sample_size; ++i)
       {
         struct ddsi_serdata * current_blob = cdr_blobs[i];
+        org::eclipse::cyclonedds::topic::CDRBlob &sample_data = (*this->samples_.delegate())[i].delegate().data();
+        // update the data kind
+        sample_data.kind(static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
 #ifdef DDS_HAS_SHM
-        // if the data is over iox_chunk
+        // if the data is transferred using shm
         if (current_blob->iox_chunk && current_blob->iox_subscriber) {
-          // get the data
-          org::eclipse::cyclonedds::topic::CDRBlob & sample_data =
-            (*this->samples_.delegate())[i].delegate().data();
-          // update the data kind
-          sample_data.kind(
-            static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
-          if (sample_data.kind() != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
             // get the size
             auto iox_header = iceoryx_header_from_chunk(current_blob->iox_chunk);
             // if the iox chunk has the data in serialized form
             if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-              // update the header
-              memcpy(sample_data.encoding().data(), current_blob->iox_chunk, 4);
-              // get the actual data
-              sample_data.payload().assign(
-                reinterpret_cast<uint8_t *>(current_blob->iox_chunk) + 4,
-                reinterpret_cast<uint8_t *>(current_blob->iox_chunk) + iox_header->data_size);
-            } else if(iox_header->shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+              copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(current_blob->iox_chunk),
+                                      iox_header->data_size, sample_data.kind(), sample_data);
+            } else if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
               // serialize the data
               auto serialized_size = ddsi_sertype_get_serialized_size(current_blob->type,
-                                                                    current_blob->iox_chunk);
+                                                                      current_blob->iox_chunk);
               // create a buffer to serialize
               std::vector<unsigned char> buffer(serialized_size);
               // serialize into the buffer
               ddsi_sertype_serialize_into(current_blob->type, current_blob->iox_chunk, buffer.data(),
-                                        serialized_size);
-              // update the header
-              memcpy(cdr_blob.encoding().data(), buffer.data(), 4);
-              // get the actual data
-              cdr_blob.payload().assign(buffer.data() + 4, buffer.data() + size);
+                                          serialized_size);
+              // update the CDR blob with the serialized data
+              copy_buffer_to_cdr_blob(buffer.data(), serialized_size, sample_data.kind(), sample_data);
             } else {
               // this shouldn't never happen
               ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR,
-                                     "The received sample over SHM is not in serialized form");
+                                     "The received sample over SHM is not initialized");
             }
             // release the chunk
             free_iox_chunk(static_cast<iox_sub_t *>(current_blob->iox_subscriber), &current_blob->iox_chunk);
-          }
         } else
 #endif
         {
+          std::cerr << "CDR sample holder, no shm, copying blob\n";
           ddsrt_iovec_t blob_content;
           ddsi_serdata_to_ser_ref(current_blob, 0, ddsi_serdata_size(current_blob), &blob_content);
-          org::eclipse::cyclonedds::topic::CDRBlob &sample_data = (*this->samples_.delegate())[i].delegate().data();
-          memcpy(sample_data.encoding().data(), blob_content.iov_base, 4);
-          sample_data.kind(static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
-          if (sample_data.kind() != org::eclipse::cyclonedds::topic::BlobKind::Empty)
-          {
-              sample_data.payload().assign(
-                      reinterpret_cast<uint8_t *>(blob_content.iov_base) + 4,
-                      reinterpret_cast<uint8_t *>(blob_content.iov_base) + blob_content.iov_len);
-          }
+          copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(blob_content.iov_base),
+                                  blob_content.iov_len, sample_data.kind(), sample_data);
           ddsi_serdata_to_ser_unref(current_blob, &blob_content);
           ddsi_serdata_unref(current_blob);
         }
@@ -211,6 +194,19 @@ public:
 private:
     dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob>& samples_;
     uint32_t index_;
+
+    void copy_buffer_to_cdr_blob(const uint8_t * buffer, const size_t size,
+                                 const org::eclipse::cyclonedds::topic::BlobKind data_kind,
+                                 org::eclipse::cyclonedds::topic::CDRBlob & cdr_blob) const
+    {
+      // update the CDR header
+      memcpy(cdr_blob.encoding().data(), buffer, CDR_HEADER_SIZE);
+      // if the data kind is not empty
+      if (data_kind != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
+        // get the actual data from the buffer
+        cdr_blob.payload().assign(buffer + CDR_HEADER_SIZE, buffer + size);
+      }
+    }
 };
 
 template <typename T, typename SamplesFWIterator>
