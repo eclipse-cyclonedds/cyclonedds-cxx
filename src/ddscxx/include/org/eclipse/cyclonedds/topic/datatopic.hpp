@@ -171,12 +171,14 @@ public:
   }
 
   T* getT() {
+    // check if m_t is already set
+    T *t = m_t.load(std::memory_order_acquire);
+    if (t == nullptr) {
 #ifdef DDSCXX_HAS_SHM
-    if (iox_chunk != nullptr && data() == nullptr) {
-      // if the iox chunk has the data in serialized form
-      if (shm_get_data_state(iox_chunk) == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-        T *t = m_t.load(std::memory_order_acquire);
-        if (t == nullptr) {
+      if (iox_chunk != nullptr && data() == nullptr) {
+        auto shm_data_state = shm_get_data_state(iox_chunk);
+        // if the iox chunk has the data in serialized form
+        if (shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
           t = new T();
           // if deserialization failed
           if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(iox_chunk), *t, kind)) {
@@ -189,17 +191,17 @@ public:
             delete t;
             t = exp;
           }
+          return t;
+        } else if (shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+          // return the chunk directly
+          return static_cast<T*>(this->iox_chunk);
+        } else {
+          // Data is in un-initialized state, which shouldn't happen
+          return nullptr;
         }
-        return t;
-      } else {
-        // return the chunk directly
-        return static_cast<T*>(this->iox_chunk);
-      }
-    } else
+      } else
 #endif  // DDSCXX_HAS_SHM
-    {
-      T *t = m_t.load(std::memory_order_acquire);
-      if (t == nullptr) {
+      {
         t = new T();
         // if deserialization failed
         if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(data()), *t, kind)) {
@@ -212,9 +214,10 @@ public:
           delete t;
           t = exp;
         }
+        return t;
       }
-      return t;
     }
+    return t;
   }
 };
 
