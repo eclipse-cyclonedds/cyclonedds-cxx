@@ -122,9 +122,9 @@ AnyDataWriterDelegate::write_cdr(
 
     ser_data->statusinfo = statusinfo;
 
-#ifdef DDSCXX_HAS_SHM
     // if shared memory is supported by the writer
     if(dds_is_shared_memory_available(writer)) {
+#ifdef DDSCXX_HAS_SHM
         void *iox_chunk ;
         // request a loan from the shared memory buffer
         ret = dds_loan_shared_memory_buffer(writer,
@@ -141,8 +141,8 @@ AnyDataWriterDelegate::write_cdr(
         shm_set_data_state(iox_chunk, IOX_CHUNK_CONTAINS_SERIALIZED_DATA);
         // update the loaned iox chunk in serdata
         ser_data->iox_chunk = iox_chunk;
-    }
 #endif
+    }
 
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
