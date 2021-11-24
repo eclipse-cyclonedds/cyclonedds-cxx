@@ -29,7 +29,7 @@
 #include "dds/features.hpp"
 
 #ifdef DDSCXX_HAS_SHM
-#include "dds/ddsi/shm_transport.h"
+#include "dds/ddsi/ddsi_shm_transport.h"
 #endif
 
 constexpr size_t CDR_HEADER_SIZE = 4U;
@@ -171,52 +171,59 @@ public:
   }
 
   T* getT() {
-#ifdef DDSCXX_HAS_SHM
-    if (iox_chunk != nullptr && data() == nullptr) {
-      auto iox_header = iceoryx_header_from_chunk(iox_chunk);
-
-      // if the iox chunk has the data in serialized form
-      if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-        T *t = m_t.load(std::memory_order_acquire);
-        if (t == nullptr) {
-          t = new T();
-          // if deserialization failed
-          if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(iox_chunk), *t, kind)) {
-            delete t;
-            t = nullptr;
-          }
-
-          T *exp = nullptr;
-          if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-            delete t;
-            t = exp;
-          }
-        }
-        return t;
-      } else {
-        // return the chunk directly
-        return static_cast<T*>(this->iox_chunk);
+    // check if m_t is already set
+    T *t = m_t.load(std::memory_order_acquire);
+    // if m_t is not set
+    if (t == nullptr) {
+      // if the data is available on iox_chunk, update and get the sample
+      update_sample_from_iox_chunk(t);
+      // if its not possible to get the sample from iox_chunk
+      if(t == nullptr) {
+        // deserialize and get the sample
+        deserialize_and_update_sample(static_cast<uint8_t *>(data()), t);
       }
-    } else
-#endif  // DDSCXX_HAS_SHM
-    {
-      T *t = m_t.load(std::memory_order_acquire);
-      if (t == nullptr) {
-        t = new T();
-        // if deserialization failed
-        if(!deserialize_sample_from_buffer(static_cast<unsigned char *>(data()), *t, kind)) {
-          delete t;
+    }
+    return t;
+  }
+
+private:
+  void deserialize_and_update_sample(uint8_t * buffer, T *& t) {
+    t = new T();
+    // if deserialization failed
+    if(!deserialize_sample_from_buffer(buffer, *t, kind)) {
+      delete t;
+      t = nullptr;
+    }
+
+    T* exp = nullptr;
+    if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+      delete t;
+      t = exp;
+    }
+  }
+
+  void update_sample_from_iox_chunk(T *& t) {
+#ifdef DDSCXX_HAS_SHM
+    // if data is available on the iox_chunk (and doesn't have a serialized representation)
+    if (iox_chunk != nullptr && data() == nullptr) {
+        auto shm_data_state = shm_get_data_state(iox_chunk);
+        // if the iox chunk has the data in serialized form
+        if (shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+          deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), t);
+        } else if (shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+          // get the chunk directly without any copy
+          t = static_cast<T*>(this->iox_chunk);
+        } else {
+          // Data is in un-initialized state, which shouldn't happen
           t = nullptr;
         }
-
-        T* exp = nullptr;
-        if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-          delete t;
-          t = exp;
-        }
-      }
-      return t;
+      } else {
+      // data is not available on iox_chunk
+      t = nullptr;
     }
+#else
+    t = nullptr;
+#endif  // DDSCXX_HAS_SHM
   }
 };
 

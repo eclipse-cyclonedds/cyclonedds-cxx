@@ -13,7 +13,7 @@
 
 #include "dds/dds.hpp"
 #include "dds/ddsrt/environ.h"
-#include "dds/ddsi/shm_transport.h"
+#include "dds/ddsi/ddsi_shm_transport.h"
 #include "iceoryx_posh/testing/roudi_gtest.hpp"
 #include "HelloWorldData.hpp"
 #include "Space.hpp"
@@ -21,7 +21,6 @@
 #include "iceoryx_posh/popo/subscriber.hpp"
 #include "iceoryx_posh/popo/sample.hpp"
 #include "iceoryx_utils/cxx/optional.hpp"
-#include "dds/ddsi/shm_transport.h"
 
 #include <random>
 
