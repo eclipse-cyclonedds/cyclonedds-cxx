@@ -84,25 +84,25 @@ struct OMG_DDS_API entity_properties
 
   extensibility e_ext = extensibility::ext_final; /**< The extensibility of the entity itself. */
   extensibility p_ext = extensibility::ext_final; /**< The extensibility of the entity's parent. */
-  size_t e_off = 0; /**< The current offset in the stream at which the member field starts, does not include header. */
-  size_t d_off = 0; /**< The current offset in the stream at which the struct starts, does not include header.*/
-  uint32_t e_sz = 0; /**< The size of the current entity as member field (only used in reading from streams).*/
-  uint32_t m_id = 0; /**< The member id of the entity, it is the global field by which the entity is identified. */
-  bool must_understand_local = false; /**< If the reading end cannot parse a field with this header, it must discard the entire object. */
-  bool must_understand_remote = false; /**< If the reading end cannot parse a field with this header, it must discard the entire object. */
-  bool xtypes_necessary = false; /**< Is set if any of the members of this entity require xtypes support.*/
-  bool implementation_extension = false;
-  bool is_last = false; /**< Indicates terminating entry for reading/writing entities, will cause the current subroutine to end and decrement the stack.*/
-  bool ignore = false; /**< Indicates that this field must be ignored.*/
-  bool is_optional = false; /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
-  bool is_key = false; /**< Indicates that this field is a key field.*/
-  bool is_present = false; /**< Indicates that this entity is present in the read stream.*/
-  bit_bound e_bb = bb_unset; /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
+  size_t e_off = 0;                               /**< The current offset in the stream at which the member field starts, does not include header. */
+  size_t d_off = 0;                               /**< The current offset in the stream at which the struct starts, does not include header.*/
+  uint32_t e_sz = 0;                              /**< The size of the current entity as member field (only used in reading from streams).*/
+  uint32_t m_id = 0;                              /**< The member id of the entity, it is the global field by which the entity is identified. */
+  bool must_understand_local = false;             /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
+  bool must_understand_remote = false;            /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
+  bool xtypes_necessary = false;                  /**< Is set if any of the members of this entity require xtypes support.*/
+  bool implementation_extension = false;          /**< Can be set in XCDR_v1 stream parameter list headers.*/
+  bool is_last = false;                           /**< Indicates terminating entry for reading/writing entities, will cause the current subroutine to end and decrement the stack.*/
+  bool ignore = false;                            /**< Indicates that this field must be ignored.*/
+  bool is_optional = false;                       /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
+  bool is_key = false;                            /**< Indicates that this field is a key field.*/
+  bool is_present = false;                        /**< Indicates that this entity is present in the read stream.*/
+  bit_bound e_bb = bb_unset;                      /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
   DDSCXX_WARNING_MSVC_OFF(4251)
-  proplist m_members_by_seq; /**< Fields in normal streaming mode, ordered by their declaration.*/
-  proplist m_members_by_id; /**< Fields in normal streaming mode, ordered by their member id.*/
-  proplist m_keys; /**< Fields in key streaming mode, ordered by their member id.*/
+  proplist m_members_by_seq;                      /**< Fields in normal streaming mode, ordered by their declaration.*/
+  proplist m_members_by_id;                       /**< Fields in normal streaming mode, ordered by their member id.*/
+  proplist m_keys;                                /**< Fields in key streaming mode, ordered by their member id.*/
   DDSCXX_WARNING_MSVC_ON(4251)
 
   /**
@@ -250,12 +250,28 @@ private:
   void set_key_values(const key_endpoint &endpoints);
 };
 
+/**
+ * @brief
+ * Shortcut for creating a property list final entry.
+ *
+ * Sets the is_last field to true.
+ */
 struct OMG_DDS_API final_entry: public entity_properties_t {
   final_entry(): entity_properties_t() {
     is_last = true;
   }
 };
 
+/**
+ * @brief
+ * Type properties getter function for basic types.
+ *
+ * This template function is replaced/implemented by the types implemented through IDL generation.
+ * It generates a static container which is initialized the first time the function is called,
+ * this is then returned.
+ *
+ * @return entity_properties_t "Tree" representing the type.
+ */
 template<typename T>
 entity_properties_t get_type_props() {
   static std::mutex mtx;

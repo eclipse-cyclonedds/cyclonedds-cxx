@@ -20,8 +20,6 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
-entity_properties_t cdr_stream::m_final = final_entry();
-
 void cdr_stream::set_buffer(void* toset, size_t buffer_size)
 {
   m_buffer = static_cast<char*>(toset);

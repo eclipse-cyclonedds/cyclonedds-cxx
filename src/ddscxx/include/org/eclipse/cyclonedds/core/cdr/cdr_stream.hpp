@@ -125,7 +125,7 @@ constexpr endianness native_endianness() { return endianness(DDSRT_ENDIAN); }
  * @var serialization_status::unsupported_xtypes A streamer has attempted to stream a struct requiring xtypes but not supporting it itself.
  * @var serialization_status::must_understand_fail A struct being read contains a field that must be understood but does not recognize or have.
  */
-enum serialization_status {
+enum serialization_status : uint64_t {
   move_bound_exceeded   = 0x1 << 0,
   write_bound_exceeded  = 0x1 << 1,
   read_bound_exceeded   = 0x1 << 2,
@@ -554,7 +554,7 @@ protected:
     stream_mode m_mode = stream_mode::unset;      /**< the current streaming mode*/
     bool m_key = false;                           /**< the current key mode*/
 
-    static entity_properties_t m_final;           /**< A placeholder for the final entry to be returned
+    entity_properties_t m_final = final_entry();  /**< A placeholder for the final entry to be returned
                                                        from next_prop if we are reading from a stream*/
     entity_properties_t m_current_header;         /**< Container for header information being read from a stream*/
 
