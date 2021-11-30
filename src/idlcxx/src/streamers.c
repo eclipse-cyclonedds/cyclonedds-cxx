@@ -712,6 +712,10 @@ generate_entity_properties(
       break;
   }
 
+  if (must_understand(type_spec) &&
+      putf(&streams->props, "  props.m_members_by_seq.back().must_understand_local = true;\n"))
+    return IDL_RETCODE_NO_MEMORY;
+
   switch (get_extensibility(type_spec)) {
     case IDL_APPENDABLE:
       if (putf(&streams->props, "  props.m_members_by_seq.back().e_ext = extensibility::ext_appendable;\n"))

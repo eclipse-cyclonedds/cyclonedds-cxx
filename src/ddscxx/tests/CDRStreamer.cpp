@@ -612,3 +612,103 @@ TEST_F(CDRStreamer, cdr_optional)
   readwrite_test(OAS, OAS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
   readwrite_test(OMS, OMS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
 }
+
+/*verifying reads/writes of structs containing must_understand field*/
+
+TEST_F(CDRStreamer, cdr_must_understand)
+{
+  must_understand_struct MU('a','b','c');
+
+  /*only the basic cdr should reject this as it is a mutable struct */
+  bytes key {
+      'c'
+      };
+  bytes v1 {
+      0x00, 0x01, 0x00, 0x01 /*must_understand_struct.a.mheader*/,
+      'a'/*must_understand_struct.a*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x40, 0x02, 0x00, 0x01 /*must_understand_struct.b.mheader*/,
+      'b'/*must_understand_struct.b*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x40, 0x03, 0x00, 0x01 /*must_understand_struct.c.mheader*/,
+      'c'/*must_understand_struct.c*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
+      };
+  bytes v2 {
+      0x00, 0x00, 0x00, 0x21, /*dheader*/
+      0x40, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader.nextint*/
+      'a', /*must_understand_struct.a*/
+      0x00, 0x00, 0x00, /*padding bytes*/
+      0xC0, 0x00, 0x00, 0x02, /*must_understand_struct.b.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.b.emheader.nextint*/
+      'b', /*must_understand_struct.b*/
+      0x00, 0x00, 0x00, /*padding bytes*/
+      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
+      'c', /*must_understand_struct.c*/
+      };
+  stream_test_fail_basic(MU, v1, v2, key);
+
+  /*these cdr streams for MU do not contain the field b so they must be rejected on read*/
+  bytes v1_missing {
+      0x00, 0x01, 0x00, 0x01 /*must_understand_struct.a.mheader*/,
+      'a'/*must_understand_struct.a*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x40, 0x02, 0x00, 0x01 /*must_understand_struct.b.mheader*/,
+      'c'/*must_understand_struct.c*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
+      };
+  bytes v2_missing {
+      0x00, 0x00, 0x00, 0x15, /*dheader*/
+      0x40, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader.nextint*/
+      'a', /*must_understand_struct.a*/
+      0x00, 0x00, 0x00, /*padding bytes*/
+      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
+      'c', /*must_understand_struct.c*/
+      };
+  VerifyRead(v1_missing, MU, xcdr_v1_stream(endianness::big_endian), false, false);
+  VerifyRead(v2_missing, MU, xcdr_v2_stream(endianness::big_endian), false, false);
+
+  /*these cdr streams contain a field with id 0 which is not in the definition of
+    must_understand_struct but is set to must_understand, and therefore must
+    also be rejected on read*/
+  bytes v1_additional {
+      0x40, 0x00, 0x00, 0x01 /*must_understand field with id = 0 mheader*/,
+      'x'/*must_understand_struct[0]*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x00, 0x01, 0x00, 0x01 /*must_understand_struct.a.mheader*/,
+      'a'/*must_understand_struct.a*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x40, 0x02, 0x00, 0x01 /*must_understand_struct.b.mheader*/,
+      'b'/*must_understand_struct.b*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x40, 0x03, 0x00, 0x01 /*must_understand_struct.c.mheader*/,
+      'c'/*must_understand_struct.c*/,
+      0x00, 0x00, 0x00/*padding bytes*/,
+      0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
+      };
+  bytes v2_additional {
+      0x00, 0x00, 0x00, 0x21, /*dheader*/
+      0x40, 0x00, 0x00, 0x00, /*must_understand field with id = 0 emheader*/
+      0x00, 0x00, 0x00, 0x01, /*nextint*/
+      'x'/*must_understand_struct[0]*/,
+      0x40, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader.nextint*/
+      'a', /*must_understand_struct.a*/
+      0x00, 0x00, 0x00, /*padding bytes*/
+      0xC0, 0x00, 0x00, 0x02, /*must_understand_struct.b.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.b.emheader.nextint*/
+      'b', /*must_understand_struct.b*/
+      0x00, 0x00, 0x00, /*padding bytes*/
+      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
+      'c', /*must_understand_struct.c*/
+      };
+  VerifyRead(v1_missing, MU, xcdr_v1_stream(endianness::big_endian), false, false);
+  VerifyRead(v2_missing, MU, xcdr_v2_stream(endianness::big_endian), false, false);
+}

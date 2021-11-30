@@ -123,6 +123,13 @@ module CDR_testing {
     @key char c;
   };
 
+  //must_understand
+  @mutable struct must_understand_struct {
+    @id(1) char a;
+    @must_understand char b;
+    @key char c;
+  };
+
   //unions
   union un switch (char) {
     case 'a':

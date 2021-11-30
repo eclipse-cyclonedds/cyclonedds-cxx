@@ -485,6 +485,19 @@ bool is_optional(
   return false;
 }
 
+bool must_understand(
+  const void *node)
+{
+  if (idl_is_member(node)) {
+    return ((const idl_member_t *)node)->must_understand.value;
+  } else if (idl_is_declarator(node)
+          || idl_is_type_spec(node)) {
+    return must_understand(idl_parent(node));
+  }
+
+  return false;
+}
+
 static char *
 figure_guard(const char *file)
 {
