@@ -1525,24 +1525,25 @@ void convert_builtin_pubsub(
     ptr->delegate().qos(c_data->qos);
 }
 
+namespace detail {
 #define readtakefunction(TYPE, METHOD, TF, FNCTN)\
-template <> inline LoanedSamples<TYPE> \
-detail::DataReader<TYPE>::METHOD() {\
-    dds::sub::LoanedSamples<TYPE> samples;\
-    detail::LoanedSamplesHolder<TYPE> holder(samples);\
-    status::DataState state;\
-    readtake<TYPE, detail::LoanedSamplesHolder<TYPE> >(\
+template <> inline ::dds::sub::LoanedSamples<TYPE> \
+DataReader<TYPE>::METHOD() {\
+    ::dds::sub::LoanedSamples<TYPE> samples;\
+    LoanedSamplesHolder<TYPE> holder(samples);\
+    ::dds::sub::status::DataState state;\
+    readtake<TYPE, LoanedSamplesHolder<TYPE> >(\
         holder, this->ddsc_entity, TF, state, MAX_SAMPLES, &FNCTN<TYPE>);\
     return samples;\
 }\
 \
-template <> inline LoanedSamples<TYPE> \
-detail::DataReader<TYPE>::METHOD(const Selector& selector) {\
-    dds::sub::LoanedSamples<TYPE> samples;\
-    detail::LoanedSamplesHolder<TYPE> holder(samples);\
+template <> inline ::dds::sub::LoanedSamples<TYPE> \
+DataReader<TYPE>::METHOD(const Selector& selector) {\
+    ::dds::sub::LoanedSamples<TYPE> samples;\
+    LoanedSamplesHolder<TYPE> holder(samples);\
     switch(selector.mode) {\
     case SELECT_MODE_READ:\
-        readtake<TYPE, detail::LoanedSamplesHolder<TYPE> >(\
+        readtake<TYPE, LoanedSamplesHolder<TYPE> >(\
             holder, this->ddsc_entity, TF, selector.state_filter_, selector.max_samples_, &FNCTN<TYPE>);\
         break;\
     default:\
@@ -1553,19 +1554,19 @@ detail::DataReader<TYPE>::METHOD(const Selector& selector) {\
 
 #define iteratorfunction(TYPE, METHOD, TF, FNCTN)\
 template <> template <typename SamplesFWIterator> inline uint32_t \
-detail::DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples) {\
-    detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> holder(samples);\
-    status::DataState state;\
-    readtake<TYPE, detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> >(\
+DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples) {\
+    SamplesFWIteratorHolder<TYPE, SamplesFWIterator> holder(samples);\
+    ::dds::sub::status::DataState state;\
+    readtake<TYPE, SamplesFWIteratorHolder<TYPE, SamplesFWIterator> >(\
         holder, this->ddsc_entity, TF, state, max_samples, &FNCTN<TYPE>);\
     return holder.get_length();\
 }\
 template <> template <typename SamplesFWIterator> inline uint32_t \
-detail::DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples, const Selector& selector) {\
-    detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> holder(samples);\
+DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples, const Selector& selector) {\
+    SamplesFWIteratorHolder<TYPE, SamplesFWIterator> holder(samples);\
     switch(selector.mode) {\
     case SELECT_MODE_READ:\
-        readtake<TYPE, detail::SamplesFWIteratorHolder<TYPE, SamplesFWIterator> >(\
+        readtake<TYPE, SamplesFWIteratorHolder<TYPE, SamplesFWIterator> >(\
             holder, this->ddsc_entity, TF, selector.state_filter_, std::min<uint32_t>(selector.max_samples_, max_samples), &FNCTN<TYPE>);\
         break;\
     default:\
@@ -1574,19 +1575,19 @@ detail::DataReader<TYPE>::METHOD(SamplesFWIterator samples, uint32_t max_samples
     return holder.get_length();\
 }\
 template <> template <typename SamplesBIIterator> inline uint32_t \
-detail::DataReader<TYPE>::METHOD(SamplesBIIterator samples) {\
-    detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> holder(samples);\
-    status::DataState state;\
-    readtake<TYPE, detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> >(\
+DataReader<TYPE>::METHOD(SamplesBIIterator samples) {\
+    SamplesBIIteratorHolder<TYPE, SamplesBIIterator> holder(samples);\
+    ::dds::sub::status::DataState state;\
+    readtake<TYPE, SamplesBIIteratorHolder<TYPE, SamplesBIIterator> >(\
         holder, this->ddsc_entity, TF, state, MAX_SAMPLES, &FNCTN<TYPE>);\
     return holder.get_length();\
 }\
 template <> template <typename SamplesBIIterator> inline uint32_t \
-detail::DataReader<TYPE>::METHOD(SamplesBIIterator samples, const Selector& selector) {\
-    detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> holder(samples);\
+DataReader<TYPE>::METHOD(SamplesBIIterator samples, const Selector& selector) {\
+    SamplesBIIteratorHolder<TYPE, SamplesBIIterator> holder(samples);\
     switch(selector.mode) {\
     case SELECT_MODE_READ:\
-        readtake<TYPE, detail::SamplesBIIteratorHolder<TYPE, SamplesBIIterator> >(\
+        readtake<TYPE, SamplesBIIteratorHolder<TYPE, SamplesBIIterator> >(\
             holder, this->ddsc_entity, TF, selector.state_filter_, selector.max_samples_, &FNCTN<TYPE>);\
         break;\
     default:\
@@ -1619,6 +1620,7 @@ typefunctions(dds::topic::PublicationBuiltinTopicData, convert_builtin_pubsub)
 #undef iteratorfunctions
 #undef typefunctions
 
+}  /* namespace detail */
 }  /* namespace sub */
 }  /* namespace dds */
 
