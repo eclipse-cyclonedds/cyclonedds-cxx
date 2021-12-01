@@ -23,7 +23,12 @@
  * simply include that one. Under toolchains that do not, this header must
  * provide equivalent definitions.
  */
-#include <stdint.h>
+#if defined(__GNUC__) && __GNUC__ < 5
+#define __STDC_FORMAT_MACROS
+#endif
+
+//#include <stdint.h>
+#include <inttypes.h>
 
 // End of implementation
 

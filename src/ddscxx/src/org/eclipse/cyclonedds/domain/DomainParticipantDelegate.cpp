@@ -56,10 +56,6 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     dds_domainid_t did;
     dds_return_t ret;
 
-    if ((id != org::eclipse::cyclonedds::domain::default_id()) && (id > 230)) {
-        ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid domain_id: %d", static_cast<int>(id));
-    }
-
     /* Validate the qos and get the corresponding ddsc qos. */
     qos.delegate().check();
 
@@ -130,10 +126,6 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     dds_qos_t * ddsc_qos;
     dds_domainid_t did;
     dds_return_t ret;
-
-    if ((id != org::eclipse::cyclonedds::domain::default_id()) && (id > 230)) {
-      ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid domain_id: %" PRIu32, id);
-    }
 
     /* Validate the qos and get the corresponding ddsc qos. */
     qos.delegate().check();
