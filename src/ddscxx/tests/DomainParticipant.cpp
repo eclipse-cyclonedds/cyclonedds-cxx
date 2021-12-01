@@ -212,17 +212,6 @@ TEST(DomainParticipant, create_multiple)
     ASSERT_NE(dp2, dds::core::null);
 }
 
-/* Try creating multiple domain participants at the same time. */
-TEST(DomainParticipant, create_invalid)
-{
-    dds::domain::DomainParticipant dp = dds::core::null;
-
-    /* Maximum id is 230. */
-    ASSERT_THROW({
-        dp = dds::domain::DomainParticipant(231);
-    }, dds::core::InvalidArgumentError);
-}
-
 /* Try re-creating domain participant after last one was deleted. */
 TEST(DomainParticipant, recreate_after_delete)
 {
