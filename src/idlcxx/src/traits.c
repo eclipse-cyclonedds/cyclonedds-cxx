@@ -173,9 +173,9 @@ emit_traits(
     "  {\n"
     "    return %4$s;\n"
     "  }\n\n"
-    "  static constexpr bool requiresXTypes()\n"
+    "  static constexpr encoding_version minXCDRVersion()\n"
     "  {\n"
-    "    return %5$s;\n"
+    "    return encoding_version::%5$s;\n"
     "  }\n\n"
     "  static constexpr extensibility getExtensibility()\n"
     "  {\n"
@@ -205,7 +205,7 @@ emit_traits(
   if (idl_fprintf(gen->header.handle, fmt, name, name+2,
                   idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST) ? "true" : "false",
                   sc_struct(_struct) ? "true" : "false",
-                  req_xtypes(_struct) ? "true" : "false",
+                  req_xtypes(_struct) ? "xcdr_v2" : "basic_cdr",
                   ext) < 0)
     return IDL_RETCODE_NO_MEMORY;
 

@@ -50,13 +50,8 @@ using org::eclipse::cyclonedds::core::cdr::basic_cdr_stream;
 using org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream;
 using org::eclipse::cyclonedds::core::cdr::xcdr_v2_stream;
 using org::eclipse::cyclonedds::topic::extensibility;
+using org::eclipse::cyclonedds::topic::encoding_version;
 using org::eclipse::cyclonedds::topic::TopicTraits;
-
-enum class encoding_version {
-  basic_cdr,
-  xcdr_v1,
-  xcdr_v2
-};
 
 template<typename T>
 bool to_key(const T& tokey, ddsi_keyhash_t& hash)
@@ -109,19 +104,20 @@ bool write_header(void *buffer)
 
   switch (TopicTraits<T>::getExtensibility()) {
     case extensibility::ext_final:
-      if (TopicTraits<T>::requiresXTypes())
-        *ptr = PLAIN_CDR2;
-      else
+      if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
         *ptr = PLAIN_CDR;
+      else
+        *ptr = PLAIN_CDR2;
       break;
     case extensibility::ext_appendable:
-      if (TopicTraits<T>::requiresXTypes())
-        *ptr = D_CDR;
+      *ptr = D_CDR;
       break;
     case extensibility::ext_mutable:
-      if (TopicTraits<T>::requiresXTypes())
-        *ptr = PL_CDR2;
+      *ptr = PL_CDR2;
       break;
+    default:
+      assert(0);
+      return false;
   }
 
   if (native_endianness() == endianness::little_endian)
@@ -153,17 +149,17 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
 
   switch (*ptr & ~BO_LITTLE) {
     case PLAIN_CDR:
-      if (TopicTraits<T>::requiresXTypes())
-        ver = encoding_version::xcdr_v1;
-      else
+      if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
         ver = encoding_version::basic_cdr;
+      else
+        ver = encoding_version::xcdr_v1;
       break;
     case PL_CDR:
       ver = encoding_version::xcdr_v1;
       break;
     case PLAIN_CDR2:
-    case PL_CDR2:
     case D_CDR:
+    case PL_CDR2:
       ver = encoding_version::xcdr_v2;
       break;
     default:
@@ -176,17 +172,26 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
 template<typename T>
 bool get_serialized_size(const T& sample, bool as_key, size_t &sz)
 {
-  if (TopicTraits<T>::requiresXTypes()
-   || TopicTraits<T>::getExtensibility() == extensibility::ext_final) {
-    xcdr_v2_stream str;
-    if (!move(str, sample, as_key))
+  switch (TopicTraits<T>::minXCDRVersion()) {
+    case encoding_version::basic_cdr:
+      {
+        basic_cdr_stream str;
+        if (!move(str, sample, as_key))
+          return false;
+        sz = str.position();
+      }
+      break;
+    case encoding_version::xcdr_v2:
+      {
+        xcdr_v2_stream str;
+        if (!move(str, sample, as_key))
+          return false;
+        sz = str.position();
+      }
+      break;
+    default:
+      assert(0);
       return false;
-    sz = str.position();
-  } else {
-    basic_cdr_stream str;
-    if (!move(str, sample, as_key))
-      return false;
-    sz = str.position();
   }
 
   return true;
@@ -200,22 +205,29 @@ bool serialize_into(void *buffer,
 {
   assert(buf_sz >= CDR_HEADER_SIZE);
 
-  if (TopicTraits<T>::requiresXTypes()
-   || TopicTraits<T>::getExtensibility() == extensibility::ext_final) {
-    xcdr_v2_stream str;
-    str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
-    return (write_header<T>(buffer)
-         && write(str, sample, as_key)
-         && finish_header<T>(buffer, buf_sz));
-  } else {
-    basic_cdr_stream str;
-    str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
-    return (write_header<T>(buffer)
-         && write(str, sample, as_key)
-         && finish_header<T>(buffer, buf_sz));
+  switch (TopicTraits<T>::minXCDRVersion()) {
+    case encoding_version::basic_cdr:
+      {
+        basic_cdr_stream str;
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return (write_header<T>(buffer)
+             && write(str, sample, as_key)
+             && finish_header<T>(buffer, buf_sz));
+      }
+      break;
+    case encoding_version::xcdr_v2:
+      {
+        xcdr_v2_stream str;
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return (write_header<T>(buffer)
+             && write(str, sample, as_key)
+             && finish_header<T>(buffer, buf_sz));
+      }
+      break;
+    default:
+      assert(0);
+      return false;
   }
-
-  return false;
 }
 
 /// \brief De-serialize the buffer into the sample
