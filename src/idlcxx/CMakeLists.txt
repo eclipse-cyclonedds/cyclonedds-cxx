@@ -22,7 +22,7 @@ set_target_properties(idlcxx PROPERTIES
    OUTPUT_NAME "cycloneddsidlcxx"
    VERSION ${PROJECT_VERSION}
    SOVERSION ${PROJECT_VERSION_MAJOR}
-   C_STANDARD 11)
+   C_STANDARD 99)
 
 target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
 
