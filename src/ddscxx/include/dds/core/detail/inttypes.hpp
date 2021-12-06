@@ -27,7 +27,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
-//#include <stdint.h>
+#include <stdint.h>
 #include <inttypes.h>
 
 // End of implementation
