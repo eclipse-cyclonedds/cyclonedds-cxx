@@ -116,7 +116,15 @@ if(CMAKE_VERSION VERSION_LESS 3.13)
   endmacro()
 endif()
 
+if(CMAKE_CROSSCOMPILING)
+  set(not_crosscompiling OFF)
+else()
+  set(not_crosscompiling ON)
+endif()
+
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
+
+option(BUILD_IDLLIB "Build IDL preprocessor lib" ${not_crosscompiling})
 
 # Make it easy to enable MSVC, Clang's/gcc's analyzers
 set(ANALYZER "" CACHE STRING "Analyzer to enable on the build.")
