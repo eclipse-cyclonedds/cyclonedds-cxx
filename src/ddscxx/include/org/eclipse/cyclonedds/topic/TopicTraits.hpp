@@ -84,36 +84,92 @@ public:
         return ::std::vector<uint8_t>();
     }
 
+    /**
+     * @brief Returns whether TOPIC contains no key fields.
+     *
+     * Used in creating the CycloneDDS writer and equality comparisons with other topics.
+     * This is one of the traits that is conditionally generated if there are any key fields.
+     *
+     * @return Whether TOPIC does not contain any fields marked as key fields.
+     */
     static constexpr bool isKeyless()
     {
         return true;
     }
 
+    /**
+     * @brief Returns the name of the type of TOPIC.
+     *
+     * Used in creating the correct TopicDescription.
+     * This trait is always generated for user-defined types, and this function is just a placeholder.
+     *
+     * @return The name of the type of TOPIC.
+     */
     static constexpr const char *getTypeName()
     {
-        return "ExampleName";
+        return "";
     }
 
-    static ddsi_sertype *getSerType()
+    /**
+     * @brief Returns an instance of ddsi_sertype for TOPIC.
+     *
+     * Used by CycloneDDS to get a sertype, which contains the functions used by CycloneDDS which are specific to TOPIC.
+     * This trait is always generated for user-defined types, and this function is just a placeholder.
+     *
+     * @return A pointer to a new dssi_sertype.
+     */
+    static inline ddsi_sertype *getSerType()
     {
-        return NULL;
+        return nullptr;
     }
 
+    /**
+     * @brief Returns the size of an instance of TOPIC.
+     *
+     * Used by shared memory implementation to determine the size of the block necessary to contain an instance of TOPIC.
+     *
+     * @return The size of an instance of TOPIC.
+     */
     static constexpr size_t getSampleSize()
     {
-        return 0;
+        return sizeof(TOPIC);
     }
 
+    /**
+     * @brief Returns whether instances of TOPIC reference memory outside its own declaration.
+     *
+     * Used by shared memory implementation.
+     * This trait will be generated as false if any strings or vectors are found anywhere in TOPIC's member tree.
+     *
+     * @return Whether TOPIC is a selfcontained type.
+     */
     static constexpr bool isSelfContained()
     {
       return true;
     }
 
+    /**
+     * @brief Returns the minimum version of XCDR necessary to serialize TOPIC objects.
+     *
+     * Used by the serialization implementation in ddscxx_serdata to determine which serialization method to use.
+     * This trait will be generated as xcdr_v2 if any optional or non-final members are found anywhere in
+     * TOPIC's member tree or if TOPIC itself is not final.
+     *
+     * @return The minimum XCDR version necessary to serialize TOPIC.
+     */
     static constexpr encoding_version minXCDRVersion()
     {
       return encoding_version::basic_cdr;
     }
 
+    /**
+     * @brief Returns the xtypes extensibility of TOPIC.
+     *
+     * Used to determine which encoding type to write in the CDR header.
+     * This trait will be generated if the extensibility of TOPIC differs from final.
+     *
+     * @return The extensibility of TOPIC.
+     */
     static constexpr extensibility getExtensibility()
     {
       return extensibility::ext_final;

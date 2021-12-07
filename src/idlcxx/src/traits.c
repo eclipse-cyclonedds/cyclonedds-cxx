@@ -145,68 +145,61 @@ emit_traits(
   const void* node,
   void* user_data)
 {
-  struct generator *gen = user_data;
-  char *name = NULL;
-  const char *ext = NULL;
-  static const char *fmt =
-    "template <>\n"
-    "class TopicTraits<%1$s>\n"
-    "{\n"
-    "public:\n"
-    "  static constexpr bool isKeyless()\n"
-    "  {\n"
-    "    return %3$s;\n"
-    "  }\n\n"
-    "  static constexpr const char *getTypeName()\n"
-    "  {\n"
-    "    return \"%2$s\";\n" /* skip preceeding "::" according to convention */
-    "  }\n\n"
-    "  static ddsi_sertype *getSerType()\n"
-    "  {\n"
-    "    return static_cast<ddsi_sertype*>(new ddscxx_sertype<%1$s>());\n"
-    "  }\n\n"
-    "  static constexpr size_t getSampleSize()\n"
-    "  {\n"
-    "    return sizeof(%1$s);\n"
-    "  }\n\n"
-    "  static constexpr bool isSelfContained()\n"
-    "  {\n"
-    "    return %4$s;\n"
-    "  }\n\n"
-    "  static constexpr encoding_version minXCDRVersion()\n"
-    "  {\n"
-    "    return encoding_version::%5$s;\n"
-    "  }\n\n"
-    "  static constexpr extensibility getExtensibility()\n"
-    "  {\n"
-    "    return extensibility::ext_%6$s;\n"
-    "  }\n\n"
-    "};\n\n";
-  const idl_struct_t *_struct = node;
-
-  switch (_struct->extensibility.value) {
-    case IDL_FINAL:
-      ext = "final";
-      break;
-    case IDL_APPENDABLE:
-      ext = "appendable";
-      break;
-    case IDL_MUTABLE:
-      ext = "mutable";
-      break;
-  }
-
-  (void)pstate;
   (void)revisit;
   (void)path;
 
-  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0)
+  struct generator *gen = user_data;
+  char *name = NULL;
+  static const char *fmt =
+    "template <> constexpr const char* TopicTraits<%1$s>::getTypeName()\n"
+    "{\n"
+    "  return \"%2$s\";\n" /* skip preceeding "::" according to convention */
+    "}\n\n"
+    "template <> inline ddsi_sertype* TopicTraits<%1$s>::getSerType()\n"
+    "{\n"
+    "  return static_cast<ddsi_sertype*>(new ddscxx_sertype<%1$s>());\n"
+    "}\n\n";
+  static const char *keylessfmt =
+    "template <> constexpr bool TopicTraits<%1$s>::isKeyless()\n"
+    "{\n"
+    "  return false;\n"
+    "}\n\n";
+  static const char *selfcontainedfmt =
+    "template <> constexpr bool TopicTraits<%1$s>::isSelfContained()\n"
+    "{\n"
+    "  return false;\n"
+    "}\n\n";
+  static const char *mincdrversionfmt =
+    "template <> constexpr encoding_version TopicTraits<%1$s>::minXCDRVersion()\n"
+    "{\n"
+    "  return encoding_version::xcdr_v2;\n"
+    "}\n\n";
+  static const char *extensibilityfmt =
+    "template <> constexpr extensibility TopicTraits<%1$s>::getExtensibility()\n"
+    "{\n"
+    "  return extensibility::ext_%2$s;\n"
+    "}\n\n";
+  const idl_struct_t *_struct = node;
+
+  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0 ||
+      idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, fmt, name, name+2,
-                  idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST) ? "true" : "false",
-                  sc_struct(_struct) ? "true" : "false",
-                  req_xtypes(_struct) ? "xcdr_v2" : "basic_cdr",
-                  ext) < 0)
+
+  if (req_xtypes(_struct) &&
+      idl_fprintf(gen->header.handle, mincdrversionfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (!sc_struct(_struct) &&
+      idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST) &&
+      idl_fprintf(gen->header.handle, keylessfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (_struct->extensibility.value != IDL_FINAL &&
+      idl_fprintf(gen->header.handle, extensibilityfmt, name,
+        _struct->extensibility.value == IDL_APPENDABLE ? "appendable" : "mutable") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
