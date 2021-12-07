@@ -142,6 +142,25 @@ emit_topic_type_name(
 }
 
 static idl_retcode_t
+write_blob(
+  FILE *handle,
+  const unsigned char *blob,
+  size_t blob_sz)
+{
+  static const char *byte_fmt = " 0x%1$02x, ";
+
+  for (size_t sz = 0; sz < blob_sz; sz++) {
+    if (idl_fprintf(handle, byte_fmt, blob[sz]) < 0 ||
+        (sz % 16 == 15 && idl_fprintf(handle, "\n") < 0)) {
+      return IDL_RETCODE_NO_MEMORY;
+    }
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+
+static idl_retcode_t
 emit_traits(
   const idl_pstate_t* pstate,
   const bool revisit,
@@ -151,6 +170,10 @@ emit_traits(
 {
   (void)revisit;
   (void)path;
+
+  bool type_info = (pstate->flags & IDL_FLAG_TYPE_INFO) != 0;
+  if (!type_info)
+    return IDL_RETCODE_OK;
 
   struct generator *gen = user_data;
   char *name = NULL;
@@ -183,6 +206,14 @@ emit_traits(
     "{\n"
     "  return extensibility::ext_%2$s;\n"
     "}\n\n";
+  static const char *type_info_hdr1 =
+    "#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT\n"
+    "template<> constexpr const unsigned int TopicTraits<%1$s>::type_map_blob_sz = %2$u;\n"
+    "template<> constexpr const unsigned int TopicTraits<%1$s>::type_info_blob_sz = %3$u;\n"
+    "template<> constexpr const unsigned char TopicTraits<%1$s>::type_map_blob[] = {\n";
+  static const char *type_info_hdr2 =
+    " };\n"
+    "template<> constexpr const unsigned char TopicTraits<%1$s>::type_info_blob[] = {\n";
   const idl_struct_t *_struct = node;
 
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0 ||
@@ -206,7 +237,22 @@ emit_traits(
         _struct->extensibility.value == IDL_APPENDABLE ? "appendable" : "mutable") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  return IDL_RETCODE_OK;
+  idl_retcode_t ret = IDL_RETCODE_OK;
+  idl_typeinfo_typemap_t blobs;
+  if (pstate->generate_typeinfo_typemap(pstate, (const idl_node_t*)node, &blobs) ||
+      idl_fprintf(gen->header.handle, type_info_hdr1, name, blobs.typemap_size, blobs.typeinfo_size) < 0 ||
+      write_blob(gen->header.handle, blobs.typemap, blobs.typemap_size) ||
+      idl_fprintf(gen->header.handle, type_info_hdr2, name) < 0 ||
+      write_blob(gen->header.handle, blobs.typeinfo, blobs.typeinfo_size) ||
+      idl_fprintf(gen->header.handle, " };\n #endif //OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT\n\n") < 0)
+    ret = IDL_RETCODE_NO_MEMORY;
+
+  //cleanup typeinfo_typemap blobs
+  if (blobs.typemap)
+    free (blobs.typemap);
+  if (blobs.typeinfo)
+    free (blobs.typeinfo);
+  return ret;
 }
 
 static idl_retcode_t
@@ -260,7 +306,11 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
-  if (idl_fprintf(generator->header.handle, "}\n}\n}\n}\n\n"
+  if (idl_fprintf(generator->header.handle,
+        "} //namespace topic\n"
+        "} //namespace cyclonedds\n"
+        "} //namespace eclipse\n"
+        "} //namespace org\n\n"
         "namespace dds {\n"
         "namespace topic {\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
