@@ -17,6 +17,7 @@
 #include <cstring>
 #include <vector>
 #include <atomic>
+#include <limits>
 
 #include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
