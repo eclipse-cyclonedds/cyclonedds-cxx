@@ -515,6 +515,12 @@ unroll_sequence(const idl_pstate_t* pstate,
 {
   uint32_t maximum = seq->maximum;
 
+  static const char *consec_start_fmt =
+      "      if (!streamer.start_consecutive())\n"
+      "        return false;\n";
+  static const char *consec_finish_fmt =
+      "      if (!streamer.finish_consecutive())\n"
+      "        return false;\n";
   static const char* fmt1 =
     "      {\n"
     "      uint32_t se_%1$u = uint32_t(%2$s.size());\n";
@@ -531,6 +537,10 @@ unroll_sequence(const idl_pstate_t* pstate,
     "      {\n"
     "      uint32_t se_%1$u = %2$u;\n";
 
+  if (!idl_is_base_type(seq->type_spec) &&
+      multi_putf(streams, ALL, consec_start_fmt))
+      return IDL_RETCODE_NO_MEMORY;
+
   if (multi_putf(streams, READ, fmt1, depth, read_accessor)
    || multi_putf(streams, (WRITE | MOVE), fmt1, depth, accessor)
    || multi_putf(streams, MAX, mfmt, depth, maximum)
@@ -543,8 +553,12 @@ unroll_sequence(const idl_pstate_t* pstate,
     return IDL_RETCODE_NO_MEMORY;
 
   //close sequence
-  if (multi_putf(streams, ALL, "      }  //end sequence\n"))
+  if (multi_putf(streams, ALL, "      }  //end sequence %1$lu\n", depth))
     return IDL_RETCODE_NO_MEMORY;
+
+  if (!idl_is_base_type(seq->type_spec) &&
+       multi_putf(streams, ALL, consec_finish_fmt))
+      return IDL_RETCODE_NO_MEMORY;
 
   if (maximum == 0
    && putf(&streams->max, "      streamer.position(SIZE_MAX);\n"))
@@ -614,17 +628,34 @@ process_entity(
   if (IDL_PRINTA(&accessor, get_instance_accessor, declarator, &loc) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  static const char *consec_start_fmt =
+      "      if (!streamer.start_consecutive())\n"
+      "        return false;\n";
+  static const char *consec_finish_fmt =
+      "      if (!streamer.finish_consecutive())\n"
+      "        return false;\n";
+
   //unroll arrays
   if (idl_is_array(declarator)) {
     uint32_t n_arr = 0;
     const idl_literal_t* lit = (const idl_literal_t*)declarator->const_expr;
     idl_retcode_t ret = IDL_RETCODE_OK;
+
+    if (!idl_is_base_type(type_spec) &&
+        multi_putf(streams, ALL, consec_start_fmt))
+      return IDL_RETCODE_NO_MEMORY;
+
     while (lit) {
       const idl_literal_t* next = (const idl_literal_t*)((const idl_node_t*)lit)->next;
 
       if (next == NULL &&
           (idl_is_base_type(type_spec) || idl_is_enum(type_spec))) {
-        return insert_array_primitives_copy(streams, declarator, lit, type_spec, n_arr, accessor);
+
+        if ((ret = insert_array_primitives_copy(streams, declarator, lit, type_spec, n_arr, accessor)) ||
+            (idl_is_enum(type_spec) &&
+            multi_putf(streams, ALL, consec_finish_fmt)))
+            ret = IDL_RETCODE_NO_MEMORY;
+          return ret;
       } else if ((ret = unroll_array(streams, accessor, n_arr++)) != IDL_RETCODE_OK) {
         return ret;
       }
@@ -651,6 +682,11 @@ process_entity(
     if (write_streaming_functions(streams, type_spec, accessor, read_accessor, loc))
       return IDL_RETCODE_NO_MEMORY;
   }
+
+  if (idl_is_array(declarator) &&
+      !idl_is_base_type(type_spec) &&
+      multi_putf(streams, ALL, consec_finish_fmt))
+      return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
 }

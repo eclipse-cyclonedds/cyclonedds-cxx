@@ -465,6 +465,26 @@ public:
      */
     virtual bool finish_struct(entity_properties_t &props);
 
+    /**
+     * @brief
+     * Function declaration for starting an array or sequence of non-primitive types.
+     *
+     * This function is an effective no-op for all streamers except xcdr_v2.
+     *
+     * @return Always true.
+     */
+    virtual bool start_consecutive() {return true;}
+
+    /**
+     * @brief
+     * Function declaration for finishing an array or sequence of non-primitive types.
+     *
+     * This function is an effective no-op for all streamers except xcdr_v2.
+     *
+     * @return Always true.
+     */
+    virtual bool finish_consecutive() {return true;}
+
 protected:
 
     /**

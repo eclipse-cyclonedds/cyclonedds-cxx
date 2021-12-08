@@ -109,6 +109,26 @@ public:
    */
   bool finish_struct(entity_properties_t &props);
 
+  /**
+   * @brief
+   * Function declaration for starting an array or sequence of non-primitive types.
+   *
+   * This function inserts a d-header placeholder before the start of the consecutive objects.
+   *
+   * @return Whether the d-header was inserted correctly.
+   */
+  bool start_consecutive();
+
+  /**
+   * @brief
+   * Function declaration for finishing an array or sequence of non-primitive types.
+   *
+   * This function finishes the d-header placeholder.
+   *
+   * @return Whether the d-header was finished correctly.
+   */
+  bool finish_consecutive();
+
 private:
 
   static const uint32_t bytes_1;          /**< length field code indicating length is 1 byte*/

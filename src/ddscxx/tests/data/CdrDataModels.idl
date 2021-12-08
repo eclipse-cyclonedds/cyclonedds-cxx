@@ -42,7 +42,7 @@ module CDR_testing {
   };
 
   struct derived : base {
-   string str_d;
+    string str_d;
     char c_d;
   };
 
@@ -63,12 +63,19 @@ module CDR_testing {
     long l[5];
   };
 
-  //typedef
-  typedef sequence<base> sequence_base;
+  //typedefs
+  typedef sequence<char> td_sequence_char;
 
-  struct typedef_struct {
-    @key sequence_base c;
-    sequence_base l;
+  struct typedef_base_struct {
+    @key td_sequence_char c;
+    td_sequence_char l;
+  };
+
+  typedef sequence<base> td_sequence_struct;
+
+  struct typedef_constr_struct {
+    @key td_sequence_struct c;
+    td_sequence_struct l;
   };
 
   //enums
@@ -102,6 +109,12 @@ module CDR_testing {
     @key enum_8 c;
     enum_16 b;
     enum_32 a;
+  };
+
+  //d-headers on sequences and arrays of non-primitives
+  struct d_hdr_sequences {
+    @key enum_8 c[4];
+    sequence<sequence<enum_8> > l;
   };
 
   //optional

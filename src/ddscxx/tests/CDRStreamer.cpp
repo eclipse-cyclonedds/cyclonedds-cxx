@@ -160,10 +160,10 @@ readwrite_test_fail(test_struct, basic_cdr_stream(endianness::big_endian))\
 readwrite_test(test_struct, xcdr_v1_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
 readwrite_test(test_struct, xcdr_v2_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
 
-#define stream_deeper_test(test_struct, cdr_normal_bytes, key_bytes)\
+#define stream_deeper_test(test_struct, cdr_normal_bytes, cdr_delimited_bytes, key_bytes)\
 readwrite_deeper_test(test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream(endianness::big_endian))\
 readwrite_deeper_test(test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
-readwrite_deeper_test(test_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
+readwrite_deeper_test(test_struct, cdr_delimited_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
 
 /*verifying streamer will not read/write beyond the end of the indicated buffer*/
 
@@ -410,9 +410,24 @@ TEST_F(CDRStreamer, cdr_array)
 
 TEST_F(CDRStreamer, cdr_typedef)
 {
-  typedef_struct TDS({base("qwe",'a'),base("wer",'b'),base("ert",'c'),base("rty",'d')},{base("tyu",'e'),base("yui",'f'),base("uio",'g')});
+  typedef_base_struct TBS({'a','b','c','d'},{'e','f','g'});
 
-  bytes TDS_basic_normal {
+  bytes TBS_normal {
+      0x00, 0x00, 0x00, 0x04/*typedef_struct.c.length*/,
+      'a', 'b', 'c', 'd'/*typedef_struct.c.data*/,
+      0x00, 0x00, 0x00, 0x03/*typedef_struct.l.length*/,
+      'e', 'f', 'g'/*typedef_struct.l.data*/,
+      };
+  bytes TBS_key {
+      0x00, 0x00, 0x00, 0x04/*typedef_struct.c.length*/,
+      'a', 'b', 'c', 'd'/*typedef_struct.c.data*/
+      };
+
+  stream_test(TBS, TBS_normal, TBS_key)
+
+  typedef_constr_struct TCS({base("qwe",'a'),base("wer",'b'),base("ert",'c'),base("rty",'d')},{base("tyu",'e'),base("yui",'f'),base("uio",'g')});
+
+  bytes TCS_normal {
       0x00, 0x00, 0x00, 0x04/*typedef_struct.c.length*/,
       0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'q', 'w', 'e', '\0' /*base.str.c_str*/,
       'a'/*base.c*/,
@@ -436,7 +451,33 @@ TEST_F(CDRStreamer, cdr_typedef)
       0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'u', 'i', 'o', '\0' /*base.str.c_str*/,
       'g'/*base.c*/
       };
-  bytes TDS_basic_key {
+  bytes TCS_normal_delimited {
+      0x00, 0x00, 0x00, 0x31/*typedef_struct.c.dheader*/,
+      0x00, 0x00, 0x00, 0x04/*typedef_struct.c.length*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'q', 'w', 'e', '\0' /*base.str.c_str*/,
+      'a'/*base.c*/,
+      0x00, 0x00, 0x00 /*padding bytes (3)*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'w', 'e', 'r', '\0' /*base.str.c_str*/,
+      'b'/*base.c*/,
+      0x00, 0x00, 0x00 /*padding bytes (3)*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'e', 'r', 't', '\0' /*base.str.c_str*/,
+      'c'/*base.c*/,
+      0x00, 0x00, 0x00 /*padding bytes (3)*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'r', 't', 'y', '\0' /*base.str.c_str*/,
+      'd'/*base.c*/,
+      0x00, 0x00, 0x00 /*padding bytes (3)*/,
+      0x00, 0x00, 0x00, 0x25/*typedef_struct.l.dheader*/,
+      0x00, 0x00, 0x00, 0x03/*typedef_struct.l.length*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 't', 'y', 'u', '\0' /*base.str.c_str*/,
+      'e'/*base.c*/,
+      0x00, 0x00, 0x00 /*padding bytes (3)*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'y', 'u', 'i', '\0' /*base.str.c_str*/,
+      'f'/*base.c*/,
+      0x00, 0x00, 0x00 /*padding bytes (3)*/,
+      0x00, 0x00, 0x00, 0x04/*base.str.length*/, 'u', 'i', 'o', '\0' /*base.str.c_str*/,
+      'g'/*base.c*/
+      };
+  bytes TCS_key {
       0x00, 0x00, 0x00, 0x04/*typedef_struct.c.length*/,
       'a'/*base.c*/,
       'b'/*base.c*/,
@@ -444,7 +485,7 @@ TEST_F(CDRStreamer, cdr_typedef)
       'd'/*base.c*/
       };
 
-  stream_deeper_test(TDS, TDS_basic_normal, TDS_basic_key)
+  stream_deeper_test(TCS, TCS_normal, TCS_normal_delimited, TCS_key)
 }
 
 /*verifying reads/writes of a struct containing unions*/
@@ -711,4 +752,68 @@ TEST_F(CDRStreamer, cdr_must_understand)
       };
   VerifyRead(v1_missing, MU, xcdr_v1_stream(endianness::big_endian), false, false);
   VerifyRead(v2_missing, MU, xcdr_v2_stream(endianness::big_endian), false, false);
+}
+
+/*verifying correct insertion of d-headers after opening arrays and sequences of non-primitive types*/
+
+TEST_F(CDRStreamer, d_header_insertion)
+{
+  d_hdr_sequences DS({enum_8::fourth_8, enum_8::third_8, enum_8::second_8, enum_8::first_8},
+                     {{enum_8::fourth_8},
+                      {enum_8::third_8, enum_8::third_8},
+                      {enum_8::second_8, enum_8::second_8, enum_8::second_8},
+                      {enum_8::first_8, enum_8::first_8, enum_8::first_8, enum_8::first_8}});
+
+  bytes DS_key {
+    0x00, 0x00, 0x00, 0x03,
+    0x00, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00 /*d_hdr_sequences.c*/
+    };
+  bytes DS_basic {
+    0x00, 0x00, 0x00, 0x03,
+    0x00, 0x00, 0x00, 0x02,
+    0x00, 0x00, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.c*/
+
+    0x00, 0x00, 0x00, 0x04, /*d_hdr_sequences.l.length*/
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, /*d_hdr_sequences.l[0]*/
+    0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, /*d_hdr_sequences.l[1]*/
+    0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, /*d_hdr_sequences.l[2]*/
+    0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.l[3]*/
+    };
+  bytes DS_v1 {
+    0x03, 0x02, 0x01, 0x00, /*d_hdr_sequences.c*/
+
+    0x00, 0x00, 0x00, 0x04, /*d_hdr_sequences.l.length*/
+    0x00, 0x00, 0x00, 0x01, 0x03, /*d_hdr_sequences.l[0]*/
+    0x00, 0x00, 0x00, /*padding bytes*/
+    0x00, 0x00, 0x00, 0x02, 0x02, 0x02, /*d_hdr_sequences.l[1]*/
+    0x00, 0x00, /*padding bytes*/
+    0x00, 0x00, 0x00, 0x03, 0x01, 0x01, 0x01, /*d_hdr_sequences.l[2]*/
+    0x00, /*padding bytes*/
+    0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.l[3]*/
+    };
+  bytes DS_v2 {
+    0x00, 0x00, 0x00, 0x04, /*d_hdr_sequences.c.d_header*/
+    0x03, 0x02, 0x01, 0x00, /*d_hdr_sequences.c*/
+
+    0x00, 0x00, 0x00, 0x34, /*d_hdr_sequences.l.d_header*/
+    0x00, 0x00, 0x00, 0x04, /*d_hdr_sequences.l.length*/
+    0x00, 0x00, 0x00, 0x05, /*d_hdr_sequences.l[0].d_header*/
+    0x00, 0x00, 0x00, 0x01, 0x03, /*d_hdr_sequences.l[0]*/
+    0x00, 0x00, 0x00, /*padding bytes*/
+    0x00, 0x00, 0x00, 0x06, /*d_hdr_sequences.l[1].d_header*/
+    0x00, 0x00, 0x00, 0x02, 0x02, 0x02, /*d_hdr_sequences.l[1]*/
+    0x00, 0x00, /*padding bytes*/
+    0x00, 0x00, 0x00, 0x07, /*d_hdr_sequences.l[2].d_header*/
+    0x00, 0x00, 0x00, 0x03, 0x01, 0x01, 0x01, /*d_hdr_sequences.l[2]*/
+    0x00, /*padding bytes*/
+    0x00, 0x00, 0x00, 0x08, /*d_hdr_sequences.l[3].d_header*/
+    0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.l[3]*/
+    };
+
+  readwrite_test(DS, DS_basic, DS_key, basic_cdr_stream(endianness::big_endian));
+  readwrite_test(DS, DS_v1, DS_key, xcdr_v1_stream(endianness::big_endian));
+  readwrite_test(DS, DS_v2, DS_key, xcdr_v2_stream(endianness::big_endian));
 }

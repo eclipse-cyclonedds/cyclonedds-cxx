@@ -278,6 +278,51 @@ bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
   return !abort_status() && props.is_present;
 }
 
+bool xcdr_v2_stream::start_consecutive()
+{
+  if (m_key)
+    return true;
+
+  switch (m_mode) {
+    case stream_mode::write:
+      return write_d_header();
+      break;
+    case stream_mode::move:
+    case stream_mode::max:
+      return move_d_header();
+      break;
+    case stream_mode::read:
+      return read_d_header();
+      break;
+    default:
+      assert(0);
+  }
+
+  return true;
+}
+
+bool xcdr_v2_stream::finish_consecutive()
+{
+  if (m_key)
+    return true;
+
+  switch (m_mode) {
+    case stream_mode::write:
+      return finish_d_header();
+      break;
+    case stream_mode::move:
+    case stream_mode::max:
+      break;
+    case stream_mode::read:
+      m_buffer_end.pop();
+      break;
+    default:
+      assert(0);
+  }
+
+  return true;
+}
+
 bool xcdr_v2_stream::write_em_header(entity_properties_t &props)
 {
   uint32_t mheader = (props.must_understand_local ? must_understand : 0)
