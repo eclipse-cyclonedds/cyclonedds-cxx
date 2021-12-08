@@ -1375,9 +1375,7 @@ process_typedef_decl(
   static const char* fmt =
     "template<typename T, std::enable_if_t<std::is_base_of<cdr_stream, T>::value, bool> = true >\n"
     "bool {T}_%1$s(T& streamer, {C}%2$s& instance) {\n"
-    "  (void)instance;\n"
-    "  auto prop = get_type_props<%3$s>();\n"
-    "  prop.is_present = true;\n";
+    "  (void)instance;\n";
   char* name = NULL;
   if (IDL_PRINTA(&name, get_cpp11_name_typedef, declarator, streams->generator) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -1386,22 +1384,31 @@ process_typedef_decl(
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, declarator, streams->generator) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  char* unrolled_name = NULL;
   const idl_type_spec_t* ts = type_spec;
   while (idl_is_sequence(ts)) {
     ts = ((const idl_sequence_t*)type_spec)->type_spec;
   }
-  if (IDL_PRINTA(&unrolled_name, get_cpp11_fully_scoped_name, ts, streams->generator) < 0)
+
+  if (multi_putf(streams, ALL, fmt, name, fullname))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (multi_putf(streams, ALL, fmt, name, fullname, unrolled_name))
-    return IDL_RETCODE_NO_MEMORY;
+  if (!idl_is_base_type(ts)) {
+    char* unrolled_name = NULL;
+    if (IDL_PRINTA(&unrolled_name, get_cpp11_fully_scoped_name, ts, streams->generator) < 0 ||
+        multi_putf(streams, ALL, "  auto prop = get_type_props<%1$s>();\n  prop.is_present = true;\n", unrolled_name))
+      return IDL_RETCODE_NO_MEMORY;
+  }
 
   if (process_entity(pstate, streams, declarator, type_spec, loc))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (multi_putf(streams, ALL, "  return prop.is_present && !streamer.abort_status();\n}\n\n"))
-    return IDL_RETCODE_NO_MEMORY;
+  if (idl_is_base_type(ts)) {
+    if (multi_putf(streams, ALL, "  return true;\n}\n\n"))
+      return IDL_RETCODE_NO_MEMORY;
+  } else {
+    if (multi_putf(streams, ALL, "  return prop.is_present && !streamer.abort_status();\n}\n\n"))
+      return IDL_RETCODE_NO_MEMORY;
+  }
 
   return flush(streams->generator, streams);
 }
