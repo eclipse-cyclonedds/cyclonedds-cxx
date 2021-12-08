@@ -32,9 +32,7 @@ bool basic_cdr_stream::start_struct(entity_properties_t &props)
   if (props.requires_xtypes() && status(unsupported_xtypes))
     return false;
 
-  record_struct_start(props);
-
-  return true;
+  return cdr_stream::start_struct(props);
 }
 
 }

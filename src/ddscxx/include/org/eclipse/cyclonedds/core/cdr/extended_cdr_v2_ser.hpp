@@ -41,6 +41,14 @@ public:
 
   /**
    * @brief
+   * Resets the state of the stream as before streaming began.
+   *
+   * Will reset the stack of delimiters in addition to what is reset by cdr_stream::reset.
+   */
+  void reset();
+
+  /**
+   * @brief
    * Starts a new member.
    *
    * Determines whether a header is necessary for this entity through em_header_necessary, and if it is, handles the header.
@@ -115,6 +123,10 @@ private:
   static const uint32_t id_mask;          /**< mask for member ids*/
   static const uint32_t must_understand;  /**< must understand member field flag*/
 
+  DDSCXX_WARNING_MSVC_OFF(4251)
+  std::stack<size_t> m_delimiters;        /**< locations of sequence delimiters */
+  DDSCXX_WARNING_MSVC_ON(4251)
+
   /**
    * @brief
    * Reads a D-header from the stream.
@@ -143,7 +155,7 @@ private:
    *
    * @return Whether the write was succesful.
    */
-  bool write_d_header() {return write(*this, uint32_t(0));}
+  bool write_d_header();
 
   /**
    * @brief
@@ -201,11 +213,9 @@ private:
    * @brief
    * Finishes the write operation of the D-header.
    *
-   * @param[in, out] props The entity whose D-header to finish.
-   *
    * @return Whether the header was read succesfully.
    */
-  bool finish_d_header(entity_properties_t &props);
+  bool finish_d_header();
 
   /**
    * @brief

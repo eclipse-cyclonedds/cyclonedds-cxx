@@ -85,7 +85,6 @@ struct OMG_DDS_API entity_properties
   extensibility e_ext = extensibility::ext_final; /**< The extensibility of the entity itself. */
   extensibility p_ext = extensibility::ext_final; /**< The extensibility of the entity's parent. */
   size_t e_off = 0;                               /**< The current offset in the stream at which the member field starts, does not include header. */
-  size_t d_off = 0;                               /**< The current offset in the stream at which the struct starts, does not include header.*/
   uint32_t e_sz = 0;                              /**< The size of the current entity as member field (only used in reading from streams).*/
   uint32_t m_id = 0;                              /**< The member id of the entity, it is the global field by which the entity is identified. */
   bool must_understand_local = false;             /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/

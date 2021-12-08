@@ -147,7 +147,7 @@ bool cdr_stream::start_member(entity_properties_t &prop, bool)
 
 bool cdr_stream::start_struct(entity_properties_t &props)
 {
-  record_struct_start(props);
+  props.is_present = true;
 
   return true;
 }
@@ -164,12 +164,6 @@ void cdr_stream::go_to_next_member(entity_properties_t &prop)
     position(prop.e_off + prop.e_sz);
     alignment(0);  //we made a jump, so we do not know the current alignment
   }
-}
-
-void cdr_stream::record_struct_start(entity_properties_t &props)
-{
-  props.is_present = true;
-  props.d_off = position();
 }
 
 void cdr_stream::check_struct_completeness(entity_properties_t &props, member_list_type list_type)

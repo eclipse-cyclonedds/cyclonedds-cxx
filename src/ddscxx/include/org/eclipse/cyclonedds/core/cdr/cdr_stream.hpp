@@ -229,7 +229,7 @@ public:
      * Will set the current offset, alignment to 0, clear the stack and fault status.
      * Will retain the buffer pointer and size.
      */
-    void reset();
+    virtual void reset();
 
     /**
      * @brief
@@ -503,16 +503,6 @@ protected:
      * @param[in,out] prop The member who will be skipped.
      */
     void go_to_next_member(entity_properties_t &prop);
-
-    /**
-     * @brief
-     * Records the start of a struct.
-     *
-     * Will record the struct start and set the struct present flag to true.
-     *
-     * @param[in,out] props The struct whose start is recorded.
-     */
-    void record_struct_start(entity_properties_t &props);
 
     /**
      * @brief

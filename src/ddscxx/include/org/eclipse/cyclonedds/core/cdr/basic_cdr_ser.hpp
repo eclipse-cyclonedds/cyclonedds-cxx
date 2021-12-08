@@ -48,18 +48,17 @@ public:
    */
   void skip_entity(const entity_properties_t &) { status(serialization_status::unsupported_xtypes); }
 
-    /**
-     * @brief
-     * Function declaration for starting a parameter list.
-     *
-     * This function is called by the generated functions for the entity, and will trigger the necessary actions on starting a new struct.
-     * I.E. starting a new parameter list, writing headers.
-     *
-     * @param[in,out] props The entity whose members might be represented by a parameter list.
-     *
-     * @return Whether the operation was completed succesfully.
-     */
-    bool start_struct(entity_properties_t &props);
+  /**
+   * @brief
+   * Start a new struct.
+   *
+   * This function is called by the generated streaming functions, and will start a parameter list, if that is relevant for it.
+   *
+   * @param[in, out] props The entity whose members might be represented by a parameter list.
+   *
+   * @return Whether the operation was completed succesfully.
+   */
+  bool start_struct(entity_properties_t &props);
 
   /**
    * @brief

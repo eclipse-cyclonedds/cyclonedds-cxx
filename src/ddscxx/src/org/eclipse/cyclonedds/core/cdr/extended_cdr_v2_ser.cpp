@@ -84,6 +84,13 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
   return true;
 }
 
+bool xcdr_v2_stream::write_d_header()
+{
+  align(4, true);
+  m_delimiters.push(position());
+  return write(*this, uint32_t(0));
+}
+
 bool xcdr_v2_stream::write_optional_tag(bool present)
 {
   return write(*this, present ? uint8_t(1) : uint8_t(0));
@@ -244,7 +251,7 @@ bool xcdr_v2_stream::start_struct(entity_properties_t &props)
     }
   }
 
-  record_struct_start(props);
+  cdr_stream::start_struct(props);
 
   return true;
 }
@@ -253,7 +260,7 @@ bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
 {
   switch (m_mode) {
     case stream_mode::write:
-      if (d_header_necessary(props) && !finish_d_header(props))
+      if (d_header_necessary(props) && !finish_d_header())
         return false;
       break;
     case stream_mode::read:
@@ -284,17 +291,20 @@ bool xcdr_v2_stream::move_em_header()
   return move(*this, uint32_t(0)) && move(*this, uint32_t(0));
 }
 
-bool xcdr_v2_stream::finish_d_header(entity_properties_t &props)
+bool xcdr_v2_stream::finish_d_header()
 {
   auto current_position = position();
-  uint32_t d_sz = static_cast<uint32_t>(current_position - props.d_off);
+  auto d_off = m_delimiters.top();
+  m_delimiters.pop();
+  uint32_t d_sz = static_cast<uint32_t>(current_position - d_off - 4);
 
   if (d_sz == 0)
     return true;
 
   auto current_alignment = alignment();
 
-  position(props.d_off - 4);
+  position(d_off);
+  alignment(4);
   if (!write(*this, d_sz))
     return false;
 
@@ -302,6 +312,12 @@ bool xcdr_v2_stream::finish_d_header(entity_properties_t &props)
   alignment(current_alignment);
 
   return true;
+}
+
+void xcdr_v2_stream::reset()
+{
+  cdr_stream::reset();
+  m_delimiters = std::stack<size_t>();
 }
 
 bool xcdr_v2_stream::finish_em_header(entity_properties_t &props)
@@ -325,7 +341,7 @@ bool xcdr_v2_stream::finish_em_header(entity_properties_t &props)
 
 bool xcdr_v2_stream::em_header_necessary(const entity_properties_t &props)
 {
-  return (props.p_ext == extensibility::ext_mutable) && !m_key;
+  return props.p_ext == extensibility::ext_mutable && !m_key;
 }
 
 }
