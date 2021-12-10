@@ -652,6 +652,15 @@ TEST_F(CDRStreamer, cdr_optional)
   readwrite_test(OFS, OFS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
   readwrite_test(OAS, OAS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
   readwrite_test(OMS, OMS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
+
+  optional_array_struct ORS('a',std::optional<std::array<char,5> >({'b','c','d', 'e', 'f'}));
+  bytes ORS_v2{
+          'a', 1, 'b', 'c', 'd', 'e', 'f'
+          },
+        ORS_key{
+          'a'};
+
+  readwrite_test(ORS, ORS_v2, ORS_key, xcdr_v2_stream(endianness::big_endian));
 }
 
 /*verifying reads/writes of structs containing must_understand field*/

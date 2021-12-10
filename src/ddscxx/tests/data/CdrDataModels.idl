@@ -136,6 +136,11 @@ module CDR_testing {
     @key char c;
   };
 
+  struct optional_array_struct {
+    @key char c;
+    @optional char l[5];
+  };
+
   //must_understand
   @mutable struct must_understand_struct {
     @id(1) char a;

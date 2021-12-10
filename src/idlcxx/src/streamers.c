@@ -111,11 +111,11 @@ static int get_instance_accessor(char* str, size_t size, const void* node, void*
   } else {
     const char *opt = "";
     if (loc.type & OPTIONAL)
-      opt = "*";
+      opt = ".value()";
 
     const idl_declarator_t* decl = (const idl_declarator_t*)node;
     const char* name = get_cpp11_name(decl);
-    return idl_snprintf(str, size, "%s%s.%s()", opt, loc.parent, name);
+    return idl_snprintf(str, size, "%s.%s()%s", loc.parent, name, opt);
   }
 }
 
