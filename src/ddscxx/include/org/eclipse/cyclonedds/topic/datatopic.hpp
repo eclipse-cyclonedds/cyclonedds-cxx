@@ -39,9 +39,9 @@ constexpr size_t CDR_HEADER_SIZE = 4U;
 #define BO_LITTLE   0X01
 #define PLAIN_CDR   0x00
 #define PL_CDR      0x02
-#define PLAIN_CDR2  0x10
-#define PL_CDR2     0x12
-#define D_CDR       0x14
+#define PLAIN_CDR2  0x06
+#define D_CDR       0x08
+#define PL_CDR2     0x0A
 
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
