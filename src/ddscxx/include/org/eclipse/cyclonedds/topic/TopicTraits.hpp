@@ -28,12 +28,27 @@
 #include "dds/ddsi/ddsi_typelib.h"
 #include "dds/ddsi/ddsi_cdrstream.h"
 
+struct ddsi_sertype;
+template <typename T, class S> class ddscxx_sertype;
+
 namespace org
 {
 namespace eclipse
 {
 namespace cyclonedds
 {
+
+namespace core
+{
+namespace cdr
+{
+//forward declarations of streamer types
+class basic_cdr_stream;
+class xcdr_v1_stream;
+class xcdr_v2_stream;
+}
+}
+
 namespace topic
 {
 
@@ -104,13 +119,24 @@ public:
     /**
      * @brief Returns an instance of ddsi_sertype for TOPIC.
      *
-     * Used by CycloneDDS to get a sertype, which contains the functions used by CycloneDDS which are specific to TOPIC.
-     * This trait is always generated for user-defined types, and this function is just a placeholder.
+     * Used by CycloneDDS-CXX to get a sertype, which contains the functions used by CycloneDDS which are specific to TOPIC.
      *
+     * @param[in] kind The serialization of the of the sertype to create.
      * @return A pointer to a new dssi_sertype.
      */
-    static inline ddsi_sertype *getSerType()
+    static ddsi_sertype *getSerType(encoding_version kind = minXCDRVersion())
     {
+        switch (kind) {
+            case encoding_version::basic_cdr:
+                return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>());
+                break;
+            case encoding_version::xcdr_v1:
+                return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream>());
+                break;
+            case encoding_version::xcdr_v2:
+                return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,org::eclipse::cyclonedds::core::cdr::xcdr_v2_stream>());
+                break;
+        }
         return nullptr;
     }
 

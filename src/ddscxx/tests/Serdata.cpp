@@ -32,7 +32,7 @@ public:
 
     void SetUp()
     {
-        m_st = org::eclipse::cyclonedds::topic::TopicTraits<Endianness::Msg>::getSerType();
+        m_st = org::eclipse::cyclonedds::topic::TopicTraits<Endianness::Msg>::getSerType(encoding_version::basic_cdr);
         sd = new ddscxx_serdata<Endianness::Msg>(m_st,SDK_DATA);
         ASSERT_NE(sd,nullptr);
 
@@ -145,7 +145,7 @@ TEST_F(Serdata, serialization_big_endianness)
     Endianness::Msg msg({0x4,0x5,0x6},
                      4278255360); //(0xFF00FF00 LE)
 
-    auto d = static_cast<const ddscxx_serdata<Endianness::Msg>*>(serdata_from_sample<Endianness::Msg>(
+    auto d = static_cast<const ddscxx_serdata<Endianness::Msg>*>(serdata_from_sample<Endianness::Msg, basic_cdr_stream>(
         m_st,
         SDK_DATA,
         static_cast<const void*>(&msg)));

@@ -127,6 +127,30 @@ org::eclipse::cyclonedds::sub::create_builtin_reader(
     return reader;
 }
 
+template<>
+ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::ParticipantBuiltinTopicData>::getSerType(encoding_version)
+{
+    return nullptr;
+}
+
+template<>
+ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::TopicBuiltinTopicData>::getSerType(encoding_version)
+{
+    return nullptr;
+}
+
+template<>
+ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::PublicationBuiltinTopicData>::getSerType(encoding_version)
+{
+    return nullptr;
+}
+
+template<>
+ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::SubscriptionBuiltinTopicData>::getSerType(encoding_version)
+{
+    return nullptr;
+}
+
 org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type
 org::eclipse::cyclonedds::sub::BuiltinSubscriberDelegate::get_builtin_reader(
     SubscriberDelegate& subscriber,

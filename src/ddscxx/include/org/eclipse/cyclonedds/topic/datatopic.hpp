@@ -96,7 +96,27 @@ static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
   return static_cast<const void*>(static_cast<const unsigned char*>(ptr) + n);
 }
 
-template<typename T>
+template<typename T,
+         class S,
+         std::enable_if_t<std::is_same<basic_cdr_stream, S>::value, bool> = true >
+bool write_header(void *buffer)
+{
+  memset(buffer, 0x0, 4);
+
+  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
+
+  assert(TopicTraits<T>::getExtensibility() == extensibility::ext_final);
+  *ptr = PLAIN_CDR;
+
+  if (native_endianness() == endianness::little_endian)
+    *ptr |= BO_LITTLE;
+
+  return true;
+}
+
+template<typename T,
+         class S,
+         std::enable_if_t<std::is_same<xcdr_v2_stream, S>::value, bool> = true >
 bool write_header(void *buffer)
 {
   memset(buffer, 0x0, 4);
@@ -105,10 +125,7 @@ bool write_header(void *buffer)
 
   switch (TopicTraits<T>::getExtensibility()) {
     case extensibility::ext_final:
-      if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
-        *ptr = PLAIN_CDR;
-      else
-        *ptr = PLAIN_CDR2;
+      *ptr = PLAIN_CDR2;
       break;
     case extensibility::ext_appendable:
       *ptr = D_CDR;
@@ -116,9 +133,31 @@ bool write_header(void *buffer)
     case extensibility::ext_mutable:
       *ptr = PL_CDR2;
       break;
-    default:
-      assert(0);
-      return false;
+  }
+
+  if (native_endianness() == endianness::little_endian)
+    *ptr |= BO_LITTLE;
+
+  return true;
+}
+
+template<typename T,
+         class S,
+         std::enable_if_t<std::is_same<xcdr_v1_stream, S>::value, bool> = true >
+bool write_header(void *buffer)
+{
+  memset(buffer, 0x0, 4);
+
+  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
+
+  switch (TopicTraits<T>::getExtensibility()) {
+    case extensibility::ext_final:
+    case extensibility::ext_appendable:
+      *ptr = PLAIN_CDR;
+      break;
+    case extensibility::ext_mutable:
+      *ptr = PL_CDR;
+      break;
   }
 
   if (native_endianness() == endianness::little_endian)
@@ -200,35 +239,18 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
   return true;
 }
 
-template<typename T>
+template<typename T, class S>
 bool get_serialized_size(const T& sample, bool as_key, size_t &sz)
 {
-  switch (TopicTraits<T>::minXCDRVersion()) {
-    case encoding_version::basic_cdr:
-      {
-        basic_cdr_stream str;
-        if (!move(str, sample, as_key))
-          return false;
-        sz = str.position();
-      }
-      break;
-    case encoding_version::xcdr_v2:
-      {
-        xcdr_v2_stream str;
-        if (!move(str, sample, as_key))
-          return false;
-        sz = str.position();
-      }
-      break;
-    default:
-      assert(0);
-      return false;
-  }
+  S str;
+  if (!move(str, sample, as_key))
+    return false;
+  sz = str.position();
 
   return true;
 }
 
-template<typename T>
+template<typename T, class S>
 bool serialize_into(void *buffer,
                     size_t buf_sz,
                     const T &sample,
@@ -236,29 +258,11 @@ bool serialize_into(void *buffer,
 {
   assert(buf_sz >= CDR_HEADER_SIZE);
 
-  switch (TopicTraits<T>::minXCDRVersion()) {
-    case encoding_version::basic_cdr:
-      {
-        basic_cdr_stream str;
-        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
-        return (write_header<T>(buffer)
-             && write(str, sample, as_key)
-             && finish_header<T>(buffer, buf_sz));
-      }
-      break;
-    case encoding_version::xcdr_v2:
-      {
-        xcdr_v2_stream str;
-        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
-        return (write_header<T>(buffer)
-             && write(str, sample, as_key)
-             && finish_header<T>(buffer, buf_sz));
-      }
-      break;
-    default:
-      assert(0);
-      return false;
-  }
+  S str;
+  str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+  return (write_header<T,S>(buffer)
+        && write(str, sample, as_key)
+        && finish_header<T>(buffer, buf_sz));
 }
 
 /// \brief De-serialize the buffer into the sample
@@ -308,135 +312,7 @@ bool deserialize_sample_from_buffer(void *buffer,
   return false;
 }
 
-template <typename T>
-class ddscxx_sertype : public ddsi_sertype {
-public:
-  static const ddsi_sertype_ops ddscxx_sertype_ops;
-  ddscxx_sertype();
-};
-
-template <typename T>
-class ddscxx_serdata : public ddsi_serdata {
-  size_t m_size{ 0 };
-  std::unique_ptr<unsigned char[]> m_data{ nullptr };
-  ddsi_keyhash_t m_key;
-  bool m_key_md5_hashed = false;
-  std::atomic<T *> m_t{ nullptr };
-
-public:
-  bool hash_populated = false;
-  static const ddsi_serdata_ops ddscxx_serdata_ops;
-  ddscxx_serdata(const ddsi_sertype* type, ddsi_serdata_kind kind);
-  ~ddscxx_serdata() { delete m_t.load(std::memory_order_acquire); }
-
-  void resize(size_t requested_size);
-  size_t size() const { return m_size; }
-  void* data() const { return m_data.get(); }
-  ddsi_keyhash_t& key() { return m_key; }
-  const ddsi_keyhash_t& key() const { return m_key; }
-  bool& key_md5_hashed() { return m_key_md5_hashed; }
-  const bool& key_md5_hashed() const { return m_key_md5_hashed; }
-  void populate_hash();
-
-  T* setT(const T* toset)
-  {
-    assert(toset);
-    T* t = m_t.load(std::memory_order_acquire);
-    if (t == nullptr) {
-      t = new T(*toset);
-      T* exp = nullptr;
-      if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-        delete t;
-        t = exp;
-      }
-    } else {
-      *t = *toset;
-    }
-    return t;
-  }
-
-  T* getT() {
-    // check if m_t is already set
-    T *t = m_t.load(std::memory_order_acquire);
-    // if m_t is not set
-    if (t == nullptr) {
-      // if the data is available on iox_chunk, update and get the sample
-      update_sample_from_iox_chunk(t);
-      // if its not possible to get the sample from iox_chunk
-      if(t == nullptr) {
-        // deserialize and get the sample
-        deserialize_and_update_sample(static_cast<uint8_t *>(data()), size(), t);
-      }
-    }
-    return t;
-  }
-
-private:
-  void deserialize_and_update_sample(uint8_t * buffer, size_t sz, T *& t) {
-    t = new T();
-    // if deserialization failed
-    if(!deserialize_sample_from_buffer(buffer, sz, *t, kind)) {
-      delete t;
-      t = nullptr;
-    }
-
-    T* exp = nullptr;
-    if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
-      delete t;
-      t = exp;
-    }
-  }
-
-  void update_sample_from_iox_chunk(T *& t) {
-#ifdef DDSCXX_HAS_SHM
-    // if data is available on the iox_chunk (and doesn't have a serialized representation)
-    if (iox_chunk != nullptr && data() == nullptr) {
-        auto shm_data_state = shm_get_data_state(iox_chunk);
-        // if the iox chunk has the data in serialized form
-        if (shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-          //size of iox chunk?
-          deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), SIZE_MAX, t);
-        } else if (shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
-          // get the chunk directly without any copy
-          t = static_cast<T*>(this->iox_chunk);
-        } else {
-          // Data is in un-initialized state, which shouldn't happen
-          t = nullptr;
-        }
-      } else {
-      // data is not available on iox_chunk
-      t = nullptr;
-    }
-#else
-    t = nullptr;
-#endif  // DDSCXX_HAS_SHM
-  }
-};
-
-template <typename T>
-void ddscxx_serdata<T>::populate_hash()
-{
-  if (hash_populated)
-    return;
-
-  key_md5_hashed() = to_key(*getT(), key());
-  if (!key_md5_hashed())
-  {
-    ddsi_keyhash_t buf;
-    ddsrt_md5_state_t md5st;
-    ddsrt_md5_init(&md5st);
-    ddsrt_md5_append(&md5st, static_cast<const ddsrt_md5_byte_t*>(key().value), 16);
-    ddsrt_md5_finish(&md5st, static_cast<ddsrt_md5_byte_t*>(buf.value));
-    memcpy(&(hash), buf.value, 4);
-  }
-  else
-  {
-    memcpy(&(hash), key().value, 4);
-  }
-
-  hash ^= type->serdata_basehash;
-  hash_populated = true;
-}
+template <typename T> class ddscxx_serdata;
 
 template <typename T>
 bool serdata_eqkey(const ddsi_serdata* a, const ddsi_serdata* b)
@@ -544,26 +420,7 @@ ddsi_serdata *serdata_from_keyhash(
   return nullptr;
 }
 
-template <typename T>
-void ddscxx_serdata<T>::resize(size_t requested_size)
-{
-  if (!requested_size) {
-    m_size = 0;
-    m_data.reset();
-    return;
-  }
-
-  /* FIXME: CDR padding in DDSI makes me do this to avoid reading beyond the bounds
-  when copying data to network.  Should fix Cyclone to handle that more elegantly.  */
-  size_t n_pad_bytes = (0 - requested_size) % 4;
-  m_data.reset(new unsigned char[requested_size + n_pad_bytes]);
-  m_size = requested_size + n_pad_bytes;
-
-  // zero the very end. The caller isn't necessarily going to overwrite it.
-  std::memset(calc_offset(m_data.get(), static_cast<ptrdiff_t>(requested_size)), '\0', n_pad_bytes);
-}
-
-template <typename T>
+template <typename T, class S>
 ddsi_serdata *serdata_from_sample(
   const ddsi_sertype* typecmn,
   enum ddsi_serdata_kind kind,
@@ -574,13 +431,13 @@ ddsi_serdata *serdata_from_sample(
   const auto& msg = *static_cast<const T*>(sample);
   size_t sz = 0;
 
-  if (!get_serialized_size(msg, kind == SDK_KEY, sz))
+  if (!get_serialized_size<T,S>(msg, kind == SDK_KEY, sz))
     goto failure;
 
   sz += CDR_HEADER_SIZE;
   d->resize(sz);
 
-  if (!serialize_into(d->data(), sz, msg, kind == SDK_KEY))
+  if (!serialize_into<T,S>(d->data(), sz, msg, kind == SDK_KEY))
     goto failure;
 
   d->key_md5_hashed() = to_key(msg, d->key());
@@ -632,7 +489,7 @@ bool serdata_to_sample(
   return deserialize_sample_from_buffer(ptr->data(), ptr->size(), msg);
 }
 
-template <typename T>
+template <typename T, class S>
 ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
 {
   /* Cast away const: the serialized ddsi_serdata itself is not touched: only its C++ representation
@@ -645,13 +502,13 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
 
   auto t = d->getT();
   size_t sz = 0;
-  if (t == nullptr || !get_serialized_size(*t, true, sz))
+  if (t == nullptr || !get_serialized_size<T,S>(*t, true, sz))
     goto failure;
 
   sz += CDR_HEADER_SIZE;
   d1->resize(sz);
 
-  if (!serialize_into(d1->data(), sz, *t, true))
+  if (!serialize_into<T,S>(d1->data(), sz, *t, true))
     goto failure;
 
   d1->key_md5_hashed() = to_key(*t, d1->key());
@@ -768,27 +625,59 @@ ddsi_serdata * serdata_from_iox_buffer(
 }
 #endif
 
-template <typename T>
-const ddsi_serdata_ops ddscxx_serdata<T>::ddscxx_serdata_ops = {
+template<typename T,
+         class S >
+struct ddscxx_serdata_ops: public ddsi_serdata_ops {
+  ddscxx_serdata_ops(): ddsi_serdata_ops {
   &serdata_eqkey<T>,
   &serdata_size<T>,
   &serdata_from_ser<T>,
   &serdata_from_ser_iov<T>,
   &serdata_from_keyhash<T>,
-  &serdata_from_sample<T>,
+  &serdata_from_sample<T, S>,
   &serdata_to_ser<T>,
   &serdata_to_ser_ref<T>,
   &serdata_to_ser_unref<T>,
   &serdata_to_sample<T>,
-  &serdata_to_untyped<T>,
+  &serdata_to_untyped<T, S>,
   &serdata_untyped_to_sample<T>,
   &serdata_free<T>,
   &serdata_print<T>,
-  &serdata_get_keyhash<T>,
+  &serdata_get_keyhash<T>
 #ifdef DDSCXX_HAS_SHM
-  &serdata_iox_size<T>,
-  &serdata_from_iox_buffer<T>
+  , &serdata_iox_size<T>
+  , &serdata_from_iox_buffer<T>
 #endif
+  } { ; }
+};
+
+template <typename T>
+class ddscxx_serdata : public ddsi_serdata {
+  size_t m_size{ 0 };
+  std::unique_ptr<unsigned char[]> m_data{ nullptr };
+  ddsi_keyhash_t m_key;
+  bool m_key_md5_hashed = false;
+  std::atomic<T *> m_t{ nullptr };
+
+public:
+  bool hash_populated = false;
+  ddscxx_serdata(const ddsi_sertype* type, ddsi_serdata_kind kind);
+  ~ddscxx_serdata() { delete m_t.load(std::memory_order_acquire); }
+
+  void resize(size_t requested_size);
+  size_t size() const { return m_size; }
+  void* data() const { return m_data.get(); }
+  ddsi_keyhash_t& key() { return m_key; }
+  const ddsi_keyhash_t& key() const { return m_key; }
+  bool& key_md5_hashed() { return m_key_md5_hashed; }
+  const bool& key_md5_hashed() const { return m_key_md5_hashed; }
+  void populate_hash();
+  T* setT(const T* toset);
+  T* getT();
+
+private:
+  void deserialize_and_update_sample(uint8_t * buffer, size_t sz, T *& t);
+  void update_sample_from_iox_chunk(T *& t);
 };
 
 template <typename T>
@@ -800,38 +689,133 @@ ddscxx_serdata<T>::ddscxx_serdata(const ddsi_sertype* type, ddsi_serdata_kind ki
 }
 
 template <typename T>
-ddscxx_sertype<T>::ddscxx_sertype()
-  : ddsi_sertype{}
+void ddscxx_serdata<T>::resize(size_t requested_size)
 {
-  uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
-                    DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
-#ifdef DDSCXX_HAS_SHM
-  flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
-      DDSI_SERTYPE_FLAG_FIXED_SIZE : 0);
-#endif
+  if (!requested_size) {
+    m_size = 0;
+    m_data.reset();
+    return;
+  }
 
-  ddsi_sertype_init_flags(
-      static_cast<ddsi_sertype*>(this),
-      org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
-      &ddscxx_sertype<T>::ddscxx_sertype_ops,
-      &ddscxx_serdata<T>::ddscxx_serdata_ops,
-      flags);
+  /* FIXME: CDR padding in DDSI makes me do this to avoid reading beyond the bounds
+  when copying data to network.  Should fix Cyclone to handle that more elegantly.  */
+  size_t n_pad_bytes = (0 - requested_size) % 4;
+  m_data.reset(new unsigned char[requested_size + n_pad_bytes]);
+  m_size = requested_size + n_pad_bytes;
 
-  if (org::eclipse::cyclonedds::topic::TopicTraits<T>::minXCDRVersion() == encoding_version::xcdr_v2)
-    min_xcdrv = CDR_ENC_VERSION_2;
-
-#ifdef DDSCXX_HAS_SHM
-  // update the size of the type, if its fixed
-  // this needs to be done after sertype init! TODO need an API in Cyclone DDS to set this
-  this->iox_size =
-      static_cast<uint32_t>(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
-#endif
+  // zero the very end. The caller isn't necessarily going to overwrite it.
+  std::memset(calc_offset(m_data.get(), static_cast<ptrdiff_t>(requested_size)), '\0', n_pad_bytes);
 }
 
 template <typename T>
+void ddscxx_serdata<T>::populate_hash()
+{
+  if (hash_populated)
+    return;
+
+  key_md5_hashed() = to_key(*getT(), key());
+  if (!key_md5_hashed())
+  {
+    ddsi_keyhash_t buf;
+    ddsrt_md5_state_t md5st;
+    ddsrt_md5_init(&md5st);
+    ddsrt_md5_append(&md5st, static_cast<const ddsrt_md5_byte_t*>(key().value), 16);
+    ddsrt_md5_finish(&md5st, static_cast<ddsrt_md5_byte_t*>(buf.value));
+    memcpy(&(hash), buf.value, 4);
+  }
+  else
+  {
+    memcpy(&(hash), key().value, 4);
+  }
+
+  hash ^= type->serdata_basehash;
+  hash_populated = true;
+}
+
+template <typename T>
+T* ddscxx_serdata<T>::setT(const T* toset)
+{
+  assert(toset);
+  T* t = m_t.load(std::memory_order_acquire);
+  if (t == nullptr) {
+    t = new T(*toset);
+    T* exp = nullptr;
+    if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+      delete t;
+      t = exp;
+    }
+  } else {
+    *t = *toset;
+  }
+  return t;
+}
+
+template <typename T>
+T* ddscxx_serdata<T>::getT() {
+  // check if m_t is already set
+  T *t = m_t.load(std::memory_order_acquire);
+  // if m_t is not set
+  if (t == nullptr) {
+    // if the data is available on iox_chunk, update and get the sample
+    update_sample_from_iox_chunk(t);
+    // if its not possible to get the sample from iox_chunk
+    if(t == nullptr) {
+      // deserialize and get the sample
+      deserialize_and_update_sample(static_cast<uint8_t *>(data()), size(), t);
+    }
+  }
+  return t;
+}
+
+template <typename T>
+void ddscxx_serdata<T>::deserialize_and_update_sample(uint8_t * buffer, size_t sz, T *& t) {
+  t = new T();
+  // if deserialization failed
+  if(!deserialize_sample_from_buffer(buffer, sz, *t, kind)) {
+    delete t;
+    t = nullptr;
+  }
+
+  T* exp = nullptr;
+  if (!m_t.compare_exchange_strong(exp, t, std::memory_order_seq_cst)) {
+    delete t;
+    t = exp;
+  }
+}
+
+template <typename T>
+void ddscxx_serdata<T>::update_sample_from_iox_chunk(T *& t) {
+#ifdef DDSCXX_HAS_SHM
+  // if data is available on the iox_chunk (and doesn't have a serialized representation)
+  if (iox_chunk != nullptr && data() == nullptr) {
+      auto shm_data_state = shm_get_data_state(iox_chunk);
+      // if the iox chunk has the data in serialized form
+      if (shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+        //size of iox chunk?
+        deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), SIZE_MAX, t);
+      } else if (shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+        // get the chunk directly without any copy
+        t = static_cast<T*>(this->iox_chunk);
+      } else {
+        // Data is in un-initialized state, which shouldn't happen
+        t = nullptr;
+      }
+    } else {
+    // data is not available on iox_chunk
+    t = nullptr;
+  }
+#else
+  t = nullptr;
+#endif  // DDSCXX_HAS_SHM
+}
+
+template <typename T, class S>
+class ddscxx_sertype;
+
+template <typename T, class S>
 void sertype_free(ddsi_sertype* tpcmn)
 {
-  auto tp = static_cast<ddscxx_sertype<T>*>(tpcmn);
+  auto tp = static_cast<ddscxx_sertype<T,S>*>(tpcmn);
   ddsi_sertype_fini(tpcmn);
   delete tp;
 }
@@ -904,14 +888,14 @@ uint32_t sertype_hash(const ddsi_sertype* tpcmn)
   return 0x0;
 }
 
-template <typename T>
+template <typename T, class S>
 size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
 {
   const auto& msg = *static_cast<const T*>(sample);
 
   // get the serialized size of the sample (with out serializing)
   size_t sz = 0;
-  if (!get_serialized_size(msg, false, sz)) {
+  if (!get_serialized_size<T,S>(msg, false, sz)) {
     // the max value is treated as an error in the Cyclone core
     return SIZE_MAX;
   }
@@ -919,7 +903,7 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
   return sz + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
 }
 
-template <typename T>
+template <typename T, class S>
 bool sertype_serialize_into(const ddsi_sertype*,
                             const void * sample,
                             void * dst_buffer,
@@ -928,14 +912,16 @@ bool sertype_serialize_into(const ddsi_sertype*,
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
 
-  return serialize_into(dst_buffer, sz, msg, false);
+  return serialize_into<T,S>(dst_buffer, sz, msg, false);
 }
 
-template <typename T>
-const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
+template<typename T,
+         class S >
+struct ddscxx_sertype_ops: public ddsi_sertype_ops {
+  ddscxx_sertype_ops(): ddsi_sertype_ops {
   ddsi_sertype_v0,
   nullptr,
-  sertype_free<T>,
+  sertype_free<T,S>,
   sertype_zero_samples<T>,
   sertype_realloc_samples<T>,
   sertype_free_samples<T>,
@@ -952,9 +938,54 @@ const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   nullptr,
   nullptr,
   #endif //OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-  nullptr, // derive_sertype
-  sertype_get_serialized_size<T>,
-  sertype_serialize_into<T>
+  TopicTraits<T>::deriveSertype,
+  sertype_get_serialized_size<T,S>,
+  sertype_serialize_into<T,S>
+    } { ; }
 };
+
+template <typename T,
+          class S >
+class ddscxx_sertype : public ddsi_sertype {
+public:
+  static const ddscxx_sertype_ops<T,S> sertype_ops;
+  static const ddscxx_serdata_ops<T,S> serdata_ops;
+  ddscxx_sertype();
+};
+
+template <typename T, class S>
+const ddscxx_sertype_ops<T,S> ddscxx_sertype<T,S>::sertype_ops;
+
+template <typename T, class S>
+const ddscxx_serdata_ops<T,S> ddscxx_sertype<T,S>::serdata_ops;
+
+template <typename T, class S>
+ddscxx_sertype<T,S>::ddscxx_sertype()
+  : ddsi_sertype{}
+{
+  uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
+                    DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
+#ifdef DDSCXX_HAS_SHM
+  flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
+      DDSI_SERTYPE_FLAG_FIXED_SIZE : 0);
+#endif
+
+  ddsi_sertype_init_flags(
+      static_cast<ddsi_sertype*>(this),
+      org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
+      &sertype_ops,
+      &serdata_ops,
+      flags);
+
+  if (org::eclipse::cyclonedds::topic::TopicTraits<T>::minXCDRVersion() == encoding_version::xcdr_v2)
+    min_xcdrv = CDR_ENC_VERSION_2;
+
+#ifdef DDSCXX_HAS_SHM
+  // update the size of the type, if its fixed
+  // this needs to be done after sertype init! TODO need an API in Cyclone DDS to set this
+  this->iox_size =
+      static_cast<uint32_t>(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
+#endif
+}
 
 #endif  // DDSCXXDATATOPIC_HPP_

@@ -181,10 +181,6 @@ emit_traits(
     "template <> constexpr const char* TopicTraits<%1$s>::getTypeName()\n"
     "{\n"
     "  return \"%2$s\";\n" /* skip preceeding "::" according to convention */
-    "}\n\n"
-    "template <> inline ddsi_sertype* TopicTraits<%1$s>::getSerType()\n"
-    "{\n"
-    "  return static_cast<ddsi_sertype*>(new ddscxx_sertype<%2$s>());\n"
     "}\n\n";
   static const char *keylessfmt =
     "template <> constexpr bool TopicTraits<%1$s>::isKeyless()\n"
@@ -289,7 +285,6 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
 
   if (idl_fprintf(generator->header.handle,
         "#include \"dds/topic/TopicTraits.hpp\"\n"
-        "#include \"org/eclipse/cyclonedds/topic/TopicTraits.hpp\"\n"
         "#include \"org/eclipse/cyclonedds/topic/datatopic.hpp\"\n\n"
         "namespace org {\n"
         "namespace eclipse {\n"
