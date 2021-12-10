@@ -15,6 +15,28 @@ function(IDLCXX_GENERATE)
   cmake_parse_arguments(
     IDLCXX "" "${one_value_keywords}" "${multi_value_keywords}" "" ${ARGN})
 
+  if (CMAKE_CROSSCOMPILING)
+    find_program(_idlc_executable idlc NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+    find_library(_idlcxx_shared_lib cycloneddsidlcxx NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+
+    if (_idlc_executable)
+      set(_idlc_depends "")
+    else()
+      message(FATAL_ERROR "Cannot find idlc executable")
+    endif()
+
+    if (_idlcxx_shared_lib)
+      set(_idlcxx_depends "")
+    else()
+      message(FATAL_ERROR "Cannot find idlcxx shared library")
+    endif()
+  else()
+    set(_idlc_executable CycloneDDS::idlc)
+    set(_idlc_depends CycloneDDS::idlc)
+    set(_idlcxx_shared_lib "$<TARGET_FILE:CycloneDDS-CXX::idlcxx>")
+    set(_idlcxx_depends CycloneDDS-CXX::idlcxx)
+  endif()
+
   if(NOT IDLCXX_TARGET AND NOT IDLCXX_FILES)
     # assume deprecated invocation: TARGET FILE [FILE..]
     list(GET IDLCXX_UNPARSED_ARGUMENTS 0 IDLCXX_TARGET)
@@ -55,9 +77,9 @@ function(IDLCXX_GENERATE)
     list(APPEND _headers "${_header}")
     add_custom_command(
       OUTPUT   "${_header}"
-      COMMAND  CycloneDDS::idlc
-      ARGS     -l $<TARGET_FILE:CycloneDDS-CXX::idlcxx> ${IDLCXX_ARGS} ${_file}
-      DEPENDS  ${_files} CycloneDDS::idlc CycloneDDS-CXX::idlcxx)
+      COMMAND  ${_idlc_executable}
+      ARGS     -l ${_idlcxx_shared_lib} ${IDLCXX_ARGS} ${_file}
+      DEPENDS  ${_files} ${_idlc_depends} ${_idlcxx_depends})
   endforeach()
 
   add_custom_target("${_target}_generate" DEPENDS ${_headers})

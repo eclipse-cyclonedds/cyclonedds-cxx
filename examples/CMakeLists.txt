@@ -11,6 +11,8 @@
 #
 set(CMAKE_INSTALL_EXAMPLESDIR "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/examples")
 
+include("${CMAKE_SOURCE_DIR}/src/idlcxx/Generate.cmake")
+
 install(
   FILES helloworld/publisher.cpp
         helloworld/subscriber.cpp
