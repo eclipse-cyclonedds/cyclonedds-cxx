@@ -330,7 +330,7 @@ dds::topic::detail::Topic<T>::discover_topic(
     if (ret == DDS_RETCODE_OK) {
         qos.delegate().ddsc_qos(ddsc_qos);
     }
-    dds_free(ddsc_qos);
+    dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to get the qos from discovered topic");
 
     /*
