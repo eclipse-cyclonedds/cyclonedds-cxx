@@ -500,7 +500,7 @@ dds::sub::detail::DataReader<T>::common_constructor(
 #endif
 
     dds_entity_t ddsc_reader = dds_create_reader(ddsc_sub, ddsc_top, ddsc_qos, NULL);
-    dds_free(ddsc_qos);
+    dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_reader, "Could not create DataReader.");
 
     this->AnyDataReaderDelegate::td_.delegate()->incrNrDependents();

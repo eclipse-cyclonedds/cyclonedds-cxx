@@ -390,7 +390,7 @@ dds::pub::detail::DataWriter<T>::DataWriter(
     std::string name = topic.name() + "_datawriter";
 
     dds_entity_t ddsc_writer = dds_create_writer (ddsc_pub, ddsc_topic, ddsc_qos, NULL);
-    dds_free(ddsc_qos);
+    dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_writer, "Could not create DataWriter.");
     topic_.delegate()->incrNrDependents();
 
