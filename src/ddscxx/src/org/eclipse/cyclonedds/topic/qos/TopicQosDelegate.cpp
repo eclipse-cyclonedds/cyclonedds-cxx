@@ -128,6 +128,22 @@ TopicQosDelegate::policy(const dds::core::policy::Ownership& ownership)
     ownership_ = ownership;
 }
 
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+void
+TopicQosDelegate::policy(const dds::core::policy::DataRepresentation& datarepresentation)
+{
+    datarepresentation.delegate().check();
+    datarepresentation_ = datarepresentation;
+}
+
+void
+TopicQosDelegate::policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement)
+{
+    typeconsistencyenforcement.delegate().check();
+    typeconsistencyenforcement_ = typeconsistencyenforcement;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
 dds_qos_t*
 TopicQosDelegate::ddsc_qos() const
 {
@@ -150,6 +166,10 @@ TopicQosDelegate::ddsc_qos() const
     priority_    .delegate().set_c_policy(qos);
     lifespan_    .delegate().set_c_policy(qos);
     ownership_   .delegate().set_c_policy(qos);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_.delegate().set_c_policy(qos);
+    typeconsistencyenforcement_.delegate().set_c_policy(qos);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     return qos;
 }
 
@@ -172,6 +192,10 @@ TopicQosDelegate::ddsc_qos(const dds_qos_t* qos)
     priority_    .delegate().set_iso_policy(qos);
     lifespan_    .delegate().set_iso_policy(qos);
     ownership_   .delegate().set_iso_policy(qos);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_.delegate().set_iso_policy(qos);
+    typeconsistencyenforcement_.delegate().set_iso_policy(qos);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 }
 
 void
@@ -198,6 +222,10 @@ TopicQosDelegate::named_qos(const struct _DDS_NamedTopicQos &qos)
     priority_    .delegate().v_policy((v_transportPolicy&)       (q->transport_priority));
     lifespan_    .delegate().v_policy((v_lifespanPolicy&)        (q->lifespan)          );
     ownership_   .delegate().v_policy((v_ownershipPolicy&)       (q->ownership)         );
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_.delegate().v_policy((v_dataRepresentationPolicy&)(q->datarepresentation));
+    typeconsistencyenforcement_.delegate().v_policy((v_TypeConsistencyEnforcementPolicy&)(q->typeconsistencyenforcement));
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 #endif
 }
 
@@ -226,7 +254,12 @@ TopicQosDelegate::operator ==(const TopicQosDelegate& other) const
            other.resources_   == resources_   &&
            other.priority_    == priority_    &&
            other.lifespan_    == lifespan_    &&
-           other.ownership_   == ownership_;
+           other.ownership_   == ownership_
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+        && other.datarepresentation_ == datarepresentation_
+        && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+           ;
 }
 
 }

@@ -66,10 +66,9 @@ class policy_name { };
 
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-typedef uint16_t DataRepresentationId;
-
-typedef std::vector<DataRepresentationId> DataRepresentationIdSeq;
-#endif
+typedef dds::core::policy::detail::DataRepresentation
+DataRepresentation;
+#endif  //OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 typedef dds::core::policy::detail::Deadline
 Deadline;
@@ -142,6 +141,11 @@ TopicData;
 typedef dds::core::policy::detail::TransportPriority
 TransportPriority;
 
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+typedef dds::core::policy::detail::TypeConsistencyEnforcement
+TypeConsistencyEnforcement;
+#endif  //OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
 typedef dds::core::policy::detail::UserData
 UserData;
 
@@ -152,11 +156,6 @@ WriterDataLifecycle;
 typedef ::dds::core::policy::detail::DurabilityService
 DurabilityService;
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
-
-#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-/** @todo - Known issue. */
-#endif
-
 
 
 OMG_DDS_POLICY_TRAITS(UserData,             1)
@@ -189,6 +188,10 @@ OMG_DDS_POLICY_TRAITS(Lifespan,             21)
 OMG_DDS_POLICY_TRAITS(DurabilityService,    22)
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
 
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+OMG_DDS_POLICY_TRAITS(DataRepresentation,   23)
+OMG_DDS_POLICY_TRAITS(TypeConsistencyEnforcement, 24)
+#endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
 }

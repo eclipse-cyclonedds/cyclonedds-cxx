@@ -56,6 +56,10 @@ public:
     void policy(const dds::core::policy::OwnershipStrength& strength);
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
     void policy(const dds::core::policy::WriterDataLifecycle&   lifecycle);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    void policy(const dds::core::policy::DataRepresentation& datarepresentation);
+    void policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -88,6 +92,10 @@ private:
     dds::core::policy::OwnershipStrength       strength_;
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
     dds::core::policy::WriterDataLifecycle     lifecycle_;
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    dds::core::policy::DataRepresentation      datarepresentation_;
+    dds::core::policy::TypeConsistencyEnforcement typeconsistencyenforcement_;
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 };
 
 
@@ -263,6 +271,30 @@ DataWriterQosDelegate::policy<dds::core::policy::WriterDataLifecycle>()
 {
     return lifecycle_;
 }
+
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+template<> inline const  dds::core::policy::DataRepresentation&
+DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>() const
+{
+    return datarepresentation_;
+}
+template<> inline dds::core::policy::DataRepresentation&
+DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>()
+{
+    return datarepresentation_;
+}
+
+template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
+DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() const
+{
+    return typeconsistencyenforcement_;
+}
+template<> inline dds::core::policy::TypeConsistencyEnforcement&
+DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
+{
+    return typeconsistencyenforcement_;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
 }

@@ -21,6 +21,8 @@
 
 #include <dds/core/detail/conformance.hpp>
 #include <dds/core/SafeEnumeration.hpp>
+#include <vector>
+#include <cstdint>
 
 namespace dds
 {
@@ -51,6 +53,19 @@ struct OwnershipKind_def
 };
 
 typedef dds::core::safe_enum<OwnershipKind_def> OwnershipKind;
+
+struct DataRepresentationId_def
+{
+    enum Type: std::int16_t
+    {
+      XCDR1 = 0,  /**< Old style CDR serialization, does NOT support extensible types.*/
+      XML = 1,    /**< XML representation, not supported by writers at this moment.*/
+      XCDR2 = 2   /**< New style CDR serialization, DOES support extensible types.*/
+    };
+};
+
+typedef dds::core::safe_enum<DataRepresentationId_def> DataRepresentationId;
+typedef std::vector<DataRepresentationId> DataRepresentationIdSeq;
 
 struct DurabilityKind_def
 {
@@ -228,18 +243,16 @@ struct LivelinessKind_def
 };
 typedef dds::core::safe_enum<LivelinessKind_def> LivelinessKind;
 
-struct TypeConsistencyEnforcementKind_def
+struct TypeConsistencyKind_def
 {
     enum Type
     {
-        EXACT_TYPE_TYPE_CONSISTENCY,
-        EXACT_NAME_TYPE_CONSISTENCY,
-        DECLARED_TYPE_CONSISTENCY,
-        ASSIGNABLE_TYPE_CONSISTENCY
+        DISALLOW_TYPE_COERCION,
+        ALLOW_TYPE_COERCION
     };
 };
 
-typedef dds::core::safe_enum<TypeConsistencyEnforcementKind_def> TypeConsistencyEnforcementKind;
+typedef dds::core::safe_enum<TypeConsistencyKind_def> TypeConsistencyKind;
 
 }
 }

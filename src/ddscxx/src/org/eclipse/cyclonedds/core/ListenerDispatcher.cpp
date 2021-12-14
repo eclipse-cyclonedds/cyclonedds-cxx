@@ -17,7 +17,6 @@
 
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
 #include <org/eclipse/cyclonedds/core/ListenerDispatcher.hpp>
-#include <org/eclipse/cyclonedds/topic/DataRepresentation.hpp>
 #include <dds/topic/AnyTopic.hpp>
 #include <org/eclipse/cyclonedds/topic/AnyTopicDelegate.hpp>
 #include <org/eclipse/cyclonedds/pub/AnyDataWriterDelegate.hpp>

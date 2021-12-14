@@ -20,8 +20,6 @@
 
 #include <vector>
 
-#include "org/eclipse/cyclonedds/topic/DataRepresentation.hpp"
-
 struct ddsi_sertype;
 
 namespace org
@@ -36,10 +34,6 @@ namespace topic
 template <class TOPIC> class TopicTraits
 {
 public:
-    static ::org::eclipse::cyclonedds::topic::DataRepresentationId_t getDataRepresentationId()
-    {
-        return ::org::eclipse::cyclonedds::topic::INVALID_REPRESENTATION;
-    }
 
     static ::std::vector<uint8_t> getMetaData()
     {

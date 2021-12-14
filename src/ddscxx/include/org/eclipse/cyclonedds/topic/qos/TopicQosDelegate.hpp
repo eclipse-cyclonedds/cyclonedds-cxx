@@ -54,6 +54,10 @@ public:
     void policy(const dds::core::policy::TransportPriority&  priority);
     void policy(const dds::core::policy::Lifespan&           lifespan);
     void policy(const dds::core::policy::Ownership&          ownership);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    void policy(const dds::core::policy::DataRepresentation& datarepresentation);
+    void policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -84,6 +88,10 @@ private:
     dds::core::policy::TransportPriority      priority_;
     dds::core::policy::Lifespan               lifespan_;
     dds::core::policy::Ownership              ownership_;
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    dds::core::policy::DataRepresentation     datarepresentation_;
+    dds::core::policy::TypeConsistencyEnforcement typeconsistencyenforcement_;
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 };
 
 
@@ -247,6 +255,30 @@ TopicQosDelegate::policy<dds::core::policy::Ownership>()
 {
     return ownership_;
 }
+
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+template<> inline const  dds::core::policy::DataRepresentation&
+TopicQosDelegate::policy<dds::core::policy::DataRepresentation>() const
+{
+    return datarepresentation_;
+}
+template<> inline dds::core::policy::DataRepresentation&
+TopicQosDelegate::policy<dds::core::policy::DataRepresentation>()
+{
+    return datarepresentation_;
+}
+
+template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
+TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() const
+{
+    return typeconsistencyenforcement_;
+}
+template<> inline dds::core::policy::TypeConsistencyEnforcement&
+TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
+{
+    return typeconsistencyenforcement_;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
 }

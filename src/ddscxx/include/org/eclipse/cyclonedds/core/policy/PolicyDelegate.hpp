@@ -902,14 +902,75 @@ private:
 
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
-class OMG_DDS_API DataRepresentationDelegate { };
+class OMG_DDS_API DataRepresentationDelegate
+{
+public:
+    DataRepresentationDelegate(const DataRepresentationDelegate& other);
+    explicit DataRepresentationDelegate(const dds::core::policy::DataRepresentationIdSeq& value);
+    DataRepresentationDelegate& operator=(const DataRepresentationDelegate& other) = default;
+
+    void value(const dds::core::policy::DataRepresentationIdSeq &value);
+    const dds::core::policy::DataRepresentationIdSeq& value() const;
+
+    bool operator ==(const DataRepresentationDelegate& other) const;
+
+    void check() const;
+
+    void set_iso_policy(const dds_qos_t* qos);
+    void set_c_policy(dds_qos_t* qos) const;
+
+private:
+    dds::core::policy::DataRepresentationIdSeq value_;
+};
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
-
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
-class OMG_DDS_API TypeConsistencyEnforcementDelegate { };
+class OMG_DDS_API TypeConsistencyEnforcementDelegate {
+public:
+    TypeConsistencyEnforcementDelegate(const TypeConsistencyEnforcementDelegate& other);
+    explicit TypeConsistencyEnforcementDelegate(dds::core::policy::TypeConsistencyKind kind,
+                                                bool ignore_sequence_bounds,
+                                                bool ignore_string_bounds,
+                                                bool ignore_member_names,
+                                                bool prevent_type_widening,
+                                                bool force_type_validation);
+    TypeConsistencyEnforcementDelegate& operator=(const TypeConsistencyEnforcementDelegate& other) = default;
+
+    void kind(dds::core::policy::TypeConsistencyKind kind);
+    dds::core::policy::TypeConsistencyKind kind() const;
+
+    void ignore_sequence_bounds(bool ignore_sequence_bounds);
+    bool ignore_sequence_bounds() const;
+
+    void ignore_string_bounds(bool ignore_string_bounds);
+    bool ignore_string_bounds() const;
+
+    void ignore_member_names(bool ignore_member_names);
+    bool ignore_member_names() const;
+
+    void prevent_type_widening(bool prevent_type_widening);
+    bool prevent_type_widening() const;
+
+    void force_type_validation(bool force_type_validation);
+    bool force_type_validation() const;
+
+    bool operator ==(const TypeConsistencyEnforcementDelegate& other) const;
+
+    void check() const;
+
+    void set_iso_policy(const dds_qos_t* qos);
+    void set_c_policy(dds_qos_t* qos) const;
+
+private:
+    dds::core::policy::TypeConsistencyKind kind_;
+    bool ignore_sequence_bounds_;
+    bool ignore_string_bounds_;
+    bool ignore_member_names_;
+    bool prevent_type_widening_;
+    bool force_type_validation_;
+};
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
