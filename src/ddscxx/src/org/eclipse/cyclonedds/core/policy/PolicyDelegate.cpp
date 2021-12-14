@@ -1624,16 +1624,255 @@ void WriterDataLifecycleDelegate::set_c_policy(dds_qos_t* qos) const
 }
 
 
-#ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+//==============================================================================
 
-class DataRepresentationDelegate { };
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
+DataRepresentationDelegate::DataRepresentationDelegate(const DataRepresentationDelegate& other)
+    : value_(other.value_)
+{
+}
+
+DataRepresentationDelegate::DataRepresentationDelegate(const dds::core::policy::DataRepresentationIdSeq& value)
+    : value_(value)
+{
+    this->check();
+}
+
+void DataRepresentationDelegate::value(const dds::core::policy::DataRepresentationIdSeq &value)
+{
+    value_ = value;
+}
+
+const dds::core::policy::DataRepresentationIdSeq& DataRepresentationDelegate::value() const
+{
+    return value_;
+}
+
+bool DataRepresentationDelegate::operator ==(const DataRepresentationDelegate& other) const
+{
+    return other.value() == value_;
+}
+
+void DataRepresentationDelegate::check() const
+{
+    /* The kind correctness is enforced by the compiler: nothing to check. */
+}
+
+void DataRepresentationDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    uint32_t n = 0;
+    dds_data_representation_id_t *value = NULL;
+    decltype(value_) tmp;
+    if (dds_qget_data_representation(qos, &n, &value) && n > 0 && value != NULL) {
+        for (uint32_t i = 0; i < n; i++) {
+            switch (value[i]) {
+                case DDS_DATA_REPRESENTATION_XCDR1:
+                    tmp.push_back(dds::core::policy::DataRepresentationId::XCDR1);
+                    break;
+                case DDS_DATA_REPRESENTATION_XML:
+                    tmp.push_back(dds::core::policy::DataRepresentationId::XML);
+                    break;
+                case DDS_DATA_REPRESENTATION_XCDR2:
+                    tmp.push_back(dds::core::policy::DataRepresentationId::XCDR2);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    value_ = tmp;
+
+    if (value)
+      dds_free(value);
+}
+
+void DataRepresentationDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    const auto value = value_;
+    std::vector<dds_data_representation_id_t> reps;
+    for (const auto & v:value) {
+        switch (v.underlying()) {
+        case dds::core::policy::DataRepresentationId::XCDR1:
+            reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XCDR1));
+            break;
+        case dds::core::policy::DataRepresentationId::XML:
+            reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XML));
+            break;
+        case dds::core::policy::DataRepresentationId::XCDR2:
+            reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XCDR2));
+            break;
+        }
+    }
+    dds_qset_data_representation(qos, static_cast<uint32_t>(reps.size()), reps.data());
+}
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+//==============================================================================
 
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
-class TypeConsistencyEnforcementDelegate { };
+TypeConsistencyEnforcementDelegate::TypeConsistencyEnforcementDelegate(const TypeConsistencyEnforcementDelegate& other):
+    kind_(other.kind_),
+    ignore_sequence_bounds_(other.ignore_sequence_bounds_),
+    ignore_string_bounds_(other.ignore_string_bounds_),
+    ignore_member_names_(other.ignore_member_names_),
+    prevent_type_widening_(other.prevent_type_widening_),
+    force_type_validation_(other.force_type_validation_)
+{
+
+}
+
+TypeConsistencyEnforcementDelegate::TypeConsistencyEnforcementDelegate(
+    dds::core::policy::TypeConsistencyKind kind,
+    bool ignore_sequence_bounds,
+    bool ignore_string_bounds,
+    bool ignore_member_names,
+    bool prevent_type_widening,
+    bool force_type_validation):
+        kind_(kind),
+        ignore_sequence_bounds_(ignore_sequence_bounds),
+        ignore_string_bounds_(ignore_string_bounds),
+        ignore_member_names_(ignore_member_names),
+        prevent_type_widening_(prevent_type_widening),
+        force_type_validation_(force_type_validation)
+{
+    this->check();
+}
+
+void TypeConsistencyEnforcementDelegate::kind(dds::core::policy::TypeConsistencyKind kind)
+{
+    kind_ = kind;
+}
+
+dds::core::policy::TypeConsistencyKind TypeConsistencyEnforcementDelegate::kind() const
+{
+    return kind_;
+}
+
+void TypeConsistencyEnforcementDelegate::ignore_sequence_bounds(bool ignore_sequence_bounds)
+{
+    ignore_sequence_bounds_ = ignore_sequence_bounds;
+}
+
+bool TypeConsistencyEnforcementDelegate::ignore_sequence_bounds() const
+{
+    return ignore_sequence_bounds_;
+}
+
+void TypeConsistencyEnforcementDelegate::ignore_string_bounds(bool ignore_string_bounds)
+{
+    ignore_string_bounds_ = ignore_string_bounds;
+}
+
+bool TypeConsistencyEnforcementDelegate::ignore_string_bounds() const
+{
+    return ignore_string_bounds_;
+}
+
+void TypeConsistencyEnforcementDelegate::ignore_member_names(bool ignore_member_names)
+{
+    ignore_member_names_ = ignore_member_names;
+}
+
+bool TypeConsistencyEnforcementDelegate::ignore_member_names() const
+{
+    return ignore_member_names_;
+}
+
+void TypeConsistencyEnforcementDelegate::prevent_type_widening(bool prevent_type_widening)
+{
+    prevent_type_widening_ = prevent_type_widening;
+}
+
+bool TypeConsistencyEnforcementDelegate::prevent_type_widening() const
+{
+    return prevent_type_widening_;
+}
+
+void TypeConsistencyEnforcementDelegate::force_type_validation(bool force_type_validation)
+{
+    force_type_validation_ = force_type_validation;
+}
+
+bool TypeConsistencyEnforcementDelegate::force_type_validation() const
+{
+    return force_type_validation_;
+}
+
+bool TypeConsistencyEnforcementDelegate::operator ==(const TypeConsistencyEnforcementDelegate& other) const
+{
+    return other.kind() == kind_ &&
+           other.ignore_sequence_bounds() == ignore_sequence_bounds_ &&
+           other.ignore_string_bounds() == ignore_string_bounds_ &&
+           other.ignore_member_names() == ignore_member_names_ &&
+           other.prevent_type_widening() == prevent_type_widening_ &&
+           other.force_type_validation() == force_type_validation_;
+}
+
+void TypeConsistencyEnforcementDelegate::check() const
+{
+    /* The kind correctness is enforced by the compiler: nothing to check. */
+}
+
+void TypeConsistencyEnforcementDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    dds_type_consistency_kind_t kind = DDS_TYPE_CONSISTENCY_DISALLOW_TYPE_COERCION;
+    bool ignore_sequence_bounds = false;
+    bool ignore_string_bounds = false;
+    bool ignore_member_names = false;
+    bool prevent_type_widening = false;
+    bool force_type_validation = false;
+
+    if (dds_qget_type_consistency(qos,
+                                  &kind,
+                                  &ignore_sequence_bounds,
+                                  &ignore_string_bounds,
+                                  &ignore_member_names,
+                                  &prevent_type_widening,
+                                  &force_type_validation)) {
+        switch (kind) {
+            case DDS_TYPE_CONSISTENCY_DISALLOW_TYPE_COERCION:
+                kind_ = dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION;
+                break;
+            case DDS_TYPE_CONSISTENCY_ALLOW_TYPE_COERCION:
+                kind_ = dds::core::policy::TypeConsistencyKind::ALLOW_TYPE_COERCION;
+                break;
+            default:
+                return;
+        }
+        ignore_sequence_bounds_ = ignore_sequence_bounds;
+        ignore_string_bounds_ = ignore_string_bounds;
+        ignore_member_names_ = ignore_member_names;
+        prevent_type_widening_ = prevent_type_widening;
+        force_type_validation_ = force_type_validation;
+    }
+}
+
+void TypeConsistencyEnforcementDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    dds_type_consistency_kind_t kind = DDS_TYPE_CONSISTENCY_DISALLOW_TYPE_COERCION;
+    switch (kind_.underlying()) {
+        case dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION:
+            kind = DDS_TYPE_CONSISTENCY_DISALLOW_TYPE_COERCION;
+            break;
+        case dds::core::policy::TypeConsistencyKind::ALLOW_TYPE_COERCION:
+            kind = DDS_TYPE_CONSISTENCY_ALLOW_TYPE_COERCION;
+            break;
+        default:
+            return;
+    }
+    dds_qset_type_consistency (
+        qos,
+        kind,
+        ignore_sequence_bounds_,
+        ignore_string_bounds_,
+        ignore_member_names_,
+        prevent_type_widening_,
+        force_type_validation_);
+}
+
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 

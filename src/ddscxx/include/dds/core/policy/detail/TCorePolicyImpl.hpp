@@ -996,26 +996,24 @@ int32_t TDurabilityService<D>::max_samples_per_instance() const
 
 //TDataRepresentation
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
 template <typename D>
-TDataRepresentation<D>::TDataRepresentation(const dds::core::policy::DataRepresentationIdSeq& value);
+TDataRepresentation<D>::TDataRepresentation(const dds::core::policy::DataRepresentationIdSeq& value) : dds::core::Value<D>(value) { }
 
 template <typename D>
 TDataRepresentation<D>::TDataRepresentation(const TDataRepresentation& other) : dds::core::Value<D>(other.delegate()) { }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
 template <typename D>
-TDataRepresentation<D>& TDataRepresentation<D>::value(const dds::core::policy::DataRepresentationIdSeq& value);
+const dds::core::policy::DataRepresentationIdSeq& TDataRepresentation<D>::value() const
+{
+    return this->delegate().value();
+}
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
 template <typename D>
-const dds::core::policy::DataRepresentationIdSeq TDataRepresentation<D>::value() const;
+TDataRepresentation<D>& TDataRepresentation<D>::value(const dds::core::policy::DataRepresentationIdSeq &value)
+{
+    this->delegate().value(value);
+    return *this;
+}
 
 #endif  // defined(OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT)
 
@@ -1023,23 +1021,95 @@ const dds::core::policy::DataRepresentationIdSeq TDataRepresentation<D>::value()
 
 //TTypeConsistencyEnforcement
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
 template <typename D>
-TTypeConsistencyEnforcement<D>::TTypeConsistencyEnforcement(dds::core::policy::TypeConsistencyEnforcementKind::Type kind) { }
+TTypeConsistencyEnforcement<D>::TTypeConsistencyEnforcement(
+    dds::core::policy::TypeConsistencyKind::Type kind,
+    bool ignore_sequence_bounds,
+    bool ignore_string_bounds,
+    bool ignore_member_names,
+    bool prevent_type_widening,
+    bool force_type_validation) : dds::core::Value<D>(kind, ignore_sequence_bounds, ignore_string_bounds, ignore_member_names, prevent_type_widening, force_type_validation) { }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
 template <typename D>
-TTypeConsistencyEnforcement<D>& TTypeConsistencyEnforcement<D>::kind(dds::core::policy::TypeConsistencyEnforcementKind::Typekind) { }
+TTypeConsistencyEnforcement<D>::TTypeConsistencyEnforcement(const TTypeConsistencyEnforcement& other) : dds::core::Value<D>(other.delegate()) { }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
 template <typename D>
-dds::core::policy::TypeConsistencyEnforcementKind::Type TTypeConsistencyEnforcement<D>::kind() const { }
+TTypeConsistencyEnforcement<D>& TTypeConsistencyEnforcement<D>::kind(dds::core::policy::TypeConsistencyKind::Type kind)
+{
+    this->delegate().kind(kind);
+    return *this;
+}
+
+template <typename D>
+dds::core::policy::TypeConsistencyKind::Type TTypeConsistencyEnforcement<D>::kind() const
+{
+    return this->delegate().kind();
+}
+
+template <typename D>
+TTypeConsistencyEnforcement<D>&  TTypeConsistencyEnforcement<D>::ignore_sequence_bounds(bool ignore_sequence_bounds)
+{
+  this->delegate().ignore_sequence_bounds(ignore_sequence_bounds);
+  return *this;
+}
+
+template <typename D>
+bool TTypeConsistencyEnforcement<D>::ignore_sequence_bounds() const
+{
+    return this->delegate().ignore_sequence_bounds();
+}
+
+template <typename D>
+TTypeConsistencyEnforcement<D>&  TTypeConsistencyEnforcement<D>::ignore_string_bounds(bool ignore_string_bounds)
+{
+  this->delegate().ignore_string_bounds(ignore_string_bounds);
+  return *this;
+}
+
+template <typename D>
+bool TTypeConsistencyEnforcement<D>::ignore_string_bounds() const
+{
+    return this->delegate().ignore_string_bounds();
+}
+
+template <typename D>
+TTypeConsistencyEnforcement<D>&  TTypeConsistencyEnforcement<D>::ignore_member_names(bool ignore_member_names)
+{
+  this->delegate().ignore_member_names(ignore_member_names);
+  return *this;
+}
+
+template <typename D>
+bool TTypeConsistencyEnforcement<D>::ignore_member_names() const
+{
+    return this->delegate().ignore_member_names();
+}
+
+template <typename D>
+TTypeConsistencyEnforcement<D>&  TTypeConsistencyEnforcement<D>::prevent_type_widening(bool prevent_type_widening)
+{
+  this->delegate().prevent_type_widening(prevent_type_widening);
+  return *this;
+}
+
+template <typename D>
+bool TTypeConsistencyEnforcement<D>::prevent_type_widening() const
+{
+    return this->delegate().prevent_type_widening();
+}
+
+template <typename D>
+TTypeConsistencyEnforcement<D>&  TTypeConsistencyEnforcement<D>::force_type_validation(bool force_type_validation)
+{
+  this->delegate().force_type_validation(force_type_validation);
+  return *this;
+}
+
+template <typename D>
+bool TTypeConsistencyEnforcement<D>::force_type_validation() const
+{
+    return this->delegate().force_type_validation();
+}
 
 #endif  // defined(OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT)
 

@@ -1629,23 +1629,53 @@ public:
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+/**
+ * \copydoc DCPS_QoS_DataRepresentation
+ */
 template <typename D>
 class TDataRepresentation : public dds::core::Value<D>
 {
-
 public:
+    /**
+     * Creates a TDataRepresentation QoS instance
+     *
+     * @param value the representations supported
+     */
     explicit TDataRepresentation(
-        const dds::core::policy::DataRepresentationIdSeq& value);
+        const dds::core::policy::DataRepresentationIdSeq &value = {dds::core::policy::DataRepresentationId::XCDR1});
 
-    TDataRepresentation(const TDataRepresentation& other)
-        : dds::core::Value<D>(other.value())
-    { }
+    /**
+     * Copies a TDataRepresentation QoS instance
+     *
+     * @param other the TDataRepresentation QoS instance to copy
+     */
+    TDataRepresentation(const TDataRepresentation& other);
+
+    /**
+     * Copies a TDataRepresentation QoS instance
+     *
+     * @param other the TDataRepresentation QoS instance to copy
+     *
+     * @return reference to the TDataRepresentation QoS instance that was copied to
+     */
+    TDataRepresentation& operator=(const TDataRepresentation& other) = default;
+
 public:
-    TDataRepresentation& value(const dds::core::policy::DataRepresentationIdSeq& value);
+    /**
+     * Set the supported representations
+     *
+     * @param value the representations to set
+     *
+     * @return the representations that were set
+     */
+    TDataRepresentation& value(const dds::core::policy::DataRepresentationIdSeq &value);
 
-    const dds::core::policy::DataRepresentationIdSeq value() const;
-
-    dds::core::policy::DataRepresentationIdSeq&
+    /**
+     * Get the supported representations
+     *
+     * @return the supported representations
+     */
+    const dds::core::policy::DataRepresentationIdSeq& value() const;
 };
 
 #endif  // defined(OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT)
@@ -1655,15 +1685,141 @@ public:
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+/**
+ * \copydoc DCPS_QoS_TypeConsistencyEnforcement
+ */
 template <typename D>
 class TTypeConsistencyEnforcement : public dds::core::Value<D>
 {
 public:
-    explicit TTypeConsistencyEnforcement(dds::core::policy::TypeConsistencyEnforcementKind::Type kind);
+    /**
+     * Constructs a copy of a TTypeConsistencyEnforcement QoS instance
+     *
+     * @param other The instance to copy.
+     */
+    TTypeConsistencyEnforcement(const TTypeConsistencyEnforcement& other);
+
+    /**
+     * Constructs an initialized TTypeConsistencyEnforcement QoS instance
+     *
+     * @param kind the kind of type consistency
+     * @param ignore_sequence_bounds whether to ignore sequence bounds
+     * @param ignore_string_bounds whether to string bounds
+     * @param ignore_member_names whether to ignore members names
+     * @param prevent_type_widening whether to prevent type widening
+     * @param force_type_validation whether to force type validation
+     */
+    explicit TTypeConsistencyEnforcement(
+        dds::core::policy::TypeConsistencyKind::Type kind = dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION,
+        bool ignore_sequence_bounds = false,
+        bool ignore_string_bounds = false,
+        bool ignore_member_names = false,
+        bool prevent_type_widening = true,
+        bool force_type_validation = false);
+
+    /**
+     * Copies a TTypeConsistencyEnforcement QoS instance
+     *
+     * @param other the instance to copy
+     */
+    TTypeConsistencyEnforcement& operator=(const TTypeConsistencyEnforcement& other) = default;
 
 public:
-    TTypeConsistencyEnforcement& kind(dds::core::policy::TypeConsistencyEnforcementKind::Type kind);
-    dds::core::policy::TypeConsistencyEnforcementKind::Type  kind() const;
+    /**
+     * Set the kind of type consistency enforcement
+     *
+     * @param kind the kind of enforcement to set
+     *
+     * @return the type consistency enforcement that was changed
+     */
+    TTypeConsistencyEnforcement& kind(dds::core::policy::TypeConsistencyKind::Type kind);
+
+    /**
+     * Get the kind of type consistency enforcement
+     *
+     * @return the kind of type consistency enforcement
+     */
+    dds::core::policy::TypeConsistencyKind::Type  kind() const;
+
+    /**
+     * Sets whether sequence bounds can be ignored in type consistency
+     *
+     * @param ignore_sequence_bounds whether to ignore sequence bounds
+     *
+     * @return the type consistency enforcement that was changed
+     */
+    TTypeConsistencyEnforcement&  ignore_sequence_bounds(bool ignore_sequence_bounds);
+
+    /**
+     * Get whether sequence bounds are to be ignored
+     *
+     * @return whether sequence bounds are ignored
+     */
+    bool ignore_sequence_bounds() const;
+
+    /**
+     * Sets whether string bounds can be ignored in type consistency
+     *
+     * @param ignore_string_bounds whether to ignore string bounds
+     *
+     * @return the type consistency enforcement that was changed
+     */
+    TTypeConsistencyEnforcement&  ignore_string_bounds(bool ignore_string_bounds);
+
+    /**
+     * Get whether string bounds are to be ignored
+     *
+     * @return whether string bounds are ignored
+     */
+    bool ignore_string_bounds() const;
+
+    /**
+     * Sets whether member names can be ignored in type consistency
+     *
+     * @param ignore_member_names whether to ignore member names
+     *
+     * @return the type consistency enforcement that was changed
+     */
+    TTypeConsistencyEnforcement&  ignore_member_names(bool ignore_member_names);
+
+    /**
+     * Get whether member names are to be ignored
+     *
+     * @return whether member names are ignored
+     */
+    bool ignore_member_names() const;
+
+    /**
+     * Sets whether type widening is to be prevented in type consistency
+     *
+     * @param prevent_type_widening whether to prevent type widening
+     *
+     * @return the type consistency enforcement that was changed
+     */
+    TTypeConsistencyEnforcement&  prevent_type_widening(bool prevent_type_widening);
+
+    /**
+     * Get whether type widening is to be prevented
+     *
+     * @return type widening is to be prevented
+     */
+    bool prevent_type_widening() const;
+
+    /**
+     * Sets whether type validation is to be forced in type consistency
+     *
+     * @param force_type_validation whether to force type validation
+     *
+     * @return the type consistency enforcement that was changed
+     */
+    TTypeConsistencyEnforcement&  force_type_validation(bool force_type_validation);
+
+    /**
+     * Get whether type validation is to be forced
+     *
+     * @return whether type validation is to be forced
+     */
+    bool force_type_validation() const;
 };
 
 #endif  // defined(OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT)

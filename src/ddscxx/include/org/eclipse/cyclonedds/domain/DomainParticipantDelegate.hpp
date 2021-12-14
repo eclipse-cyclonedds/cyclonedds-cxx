@@ -37,7 +37,6 @@
 #include <org/eclipse/cyclonedds/core/EntityDelegate.hpp>
 #include <org/eclipse/cyclonedds/core/ObjectSet.hpp>
 #include <org/eclipse/cyclonedds/core/EntitySet.hpp>
-#include <org/eclipse/cyclonedds/topic/DataRepresentation.hpp>
 #include "org/eclipse/cyclonedds/domain/Domain.hpp"
 #include "org/eclipse/cyclonedds/domain/DomainWrap.hpp"
 

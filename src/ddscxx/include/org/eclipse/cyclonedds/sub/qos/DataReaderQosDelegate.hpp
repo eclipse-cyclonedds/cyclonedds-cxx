@@ -52,6 +52,10 @@ public:
     void policy(const dds::core::policy::Ownership&           ownership);
     void policy(const dds::core::policy::TimeBasedFilter&     tfilter);
     void policy(const dds::core::policy::ReaderDataLifecycle& lifecycle);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    void policy(const dds::core::policy::DataRepresentation&  datarepresentation);
+    void policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -80,6 +84,10 @@ private:
     dds::core::policy::Ownership               ownership_;
     dds::core::policy::TimeBasedFilter         tfilter_;
     dds::core::policy::ReaderDataLifecycle     lifecycle_;
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    dds::core::policy::DataRepresentation      datarepresentation_;
+    dds::core::policy::TypeConsistencyEnforcement typeconsistencyenforcement_;
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 };
 
 
@@ -243,6 +251,30 @@ DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>()
 {
     return lifecycle_;
 }
+
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+template<> inline const  dds::core::policy::DataRepresentation&
+DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>() const
+{
+    return datarepresentation_;
+}
+template<> inline dds::core::policy::DataRepresentation&
+DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>()
+{
+    return datarepresentation_;
+}
+
+template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
+DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() const
+{
+    return typeconsistencyenforcement_;
+}
+template<> inline dds::core::policy::TypeConsistencyEnforcement&
+DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
+{
+    return typeconsistencyenforcement_;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
 }

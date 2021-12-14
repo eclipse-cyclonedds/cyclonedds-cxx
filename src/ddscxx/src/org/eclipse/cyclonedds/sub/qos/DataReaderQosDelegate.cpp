@@ -125,6 +125,22 @@ DataReaderQosDelegate::policy(const dds::core::policy::ReaderDataLifecycle& life
     lifecycle_ = lifecycle;
 }
 
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+void
+DataReaderQosDelegate::policy(const dds::core::policy::DataRepresentation& datarepresentation)
+{
+    datarepresentation.delegate().check();
+    datarepresentation_ = datarepresentation;
+}
+
+void
+DataReaderQosDelegate::policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement)
+{
+    typeconsistencyenforcement.delegate().check();
+    typeconsistencyenforcement_ = typeconsistencyenforcement;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
 dds_qos_t*
 DataReaderQosDelegate::ddsc_qos() const
 {
@@ -141,6 +157,10 @@ DataReaderQosDelegate::ddsc_qos() const
     reliability_ .delegate().set_c_policy(qos);
     resources_   .delegate().set_c_policy(qos);
     user_data_   .delegate().set_c_policy(qos);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_.delegate().set_c_policy(qos);
+    typeconsistencyenforcement_.delegate().set_c_policy(qos);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     return qos;
 }
 
@@ -160,6 +180,10 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos)
     reliability_ .delegate().set_iso_policy(qos);
     resources_   .delegate().set_iso_policy(qos);
     user_data_   .delegate().set_iso_policy(qos);
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_.delegate().set_iso_policy(qos);
+    typeconsistencyenforcement_.delegate().set_iso_policy(qos);
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 }
 
 void
@@ -184,6 +208,10 @@ DataReaderQosDelegate::named_qos(const struct _DDS_NamedDataReaderQos &qos)
     reliability_ .delegate().v_policy((v_reliabilityPolicy&)    (q->reliability)          );
     resources_   .delegate().v_policy((v_resourcePolicy&)       (q->resource_limits)      );
     user_data_   .delegate().v_policy((v_builtinUserDataPolicy&)(q->user_data)            );
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_.delegate().v_policy((v_dataRepresentationPolicy&)(q->datarepresentation));
+    typeconsistencyenforcement_.delegate().v_policy((v_typeConsistencyEnforcementPolicy&)(q->typeconsistencyenforcement));
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 #endif
 }
 
@@ -210,7 +238,12 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
            other.resources_   == resources_   &&
            other.ownership_   == ownership_   &&
            other.tfilter_     == tfilter_     &&
-           other.lifecycle_   == lifecycle_;
+           other.lifecycle_   == lifecycle_
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+        && other.datarepresentation_ == datarepresentation_
+        && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+           ;
 }
 
 DataReaderQosDelegate&
@@ -225,6 +258,10 @@ DataReaderQosDelegate::operator =(const org::eclipse::cyclonedds::topic::qos::To
     history_     = tqos.policy<dds::core::policy::History>();
     resources_   = tqos.policy<dds::core::policy::ResourceLimits>();
     ownership_   = tqos.policy<dds::core::policy::Ownership>();
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    datarepresentation_ = tqos.policy<dds::core::policy::DataRepresentation>();
+    typeconsistencyenforcement_ = tqos.policy<dds::core::policy::TypeConsistencyEnforcement>();
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     return *this;
 }
 

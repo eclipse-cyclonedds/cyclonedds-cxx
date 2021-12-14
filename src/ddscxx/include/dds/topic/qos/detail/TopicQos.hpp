@@ -50,6 +50,8 @@
  * dds::core::policy::TransportPriority | Priority hint for transport layer (@ref DCPS_QoS_TransportPriority "info") | TransportPriority::TTransportPriority(0)
  * dds::core::policy::Lifespan          | Maximum duration of validity of data (@ref DCPS_QoS_Lifespan "info")       | Lifespan::Lifespan(infinite)
  * dds::core::policy::Ownership         | Exclusive ownership or not (@ref DCPS_QoS_Ownership "info")                | Ownership::Shared()
+ * dds::core::policy::DataRepresentation | Supported data representation kinds (@ref DCPS_QoS_DataRepresentation "info") | DataRepresentation::DataRepresentation(dds::core::policy::DataRepresentationId::XCDR1)
+ * dds::core::policy::TypeConsistencyEnforcement | Type consistency enforcement policies (@ref DCPS_QoS_TypeConsistencyEnforcement "info") | dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION
  *
  * A QosPolicy can be set when the Topic is created or modified with the set
  * qos operation.

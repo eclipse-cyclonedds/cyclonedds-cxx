@@ -42,6 +42,10 @@ OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::TopicData,           TopicData)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::GroupData,           GroupData)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::TransportPriority,   TransportPriority)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::Lifespan,            Lifespan)
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::DataRepresentation,  DataRepresentation)
+OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::TypeConsistencyEnforcement, TypeConsistencyEnforcement)
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::DurabilityService,   DurabilityService)
