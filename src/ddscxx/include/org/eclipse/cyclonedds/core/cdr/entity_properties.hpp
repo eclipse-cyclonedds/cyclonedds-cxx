@@ -17,7 +17,7 @@
 #include <list>
 #include <map>
 #include <mutex>
-#include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
+#include "cdr_enums.hpp"
 
 namespace org {
 namespace eclipse {
@@ -62,8 +62,6 @@ DDSCXX_WARNING_MSVC_ON(4251)
     void add_key_endpoint(const std::list<uint32_t> &key_indices);
     operator bool() const {return !empty();}
 };
-
-using org::eclipse::cyclonedds::topic::extensibility;
 
 /**
  * @brief

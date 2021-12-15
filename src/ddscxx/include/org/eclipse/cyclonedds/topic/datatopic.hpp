@@ -50,8 +50,8 @@ using org::eclipse::cyclonedds::core::cdr::cdr_stream;
 using org::eclipse::cyclonedds::core::cdr::basic_cdr_stream;
 using org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream;
 using org::eclipse::cyclonedds::core::cdr::xcdr_v2_stream;
-using org::eclipse::cyclonedds::topic::extensibility;
-using org::eclipse::cyclonedds::topic::encoding_version;
+using org::eclipse::cyclonedds::core::cdr::extensibility;
+using org::eclipse::cyclonedds::core::cdr::encoding_version;
 using org::eclipse::cyclonedds::topic::TopicTraits;
 
 template<typename T>
