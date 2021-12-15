@@ -27,6 +27,7 @@
 #include "dds/ddsi/ddsi_sertype.h"
 #include "dds/ddsi/ddsi_typelib.h"
 #include "dds/ddsi/ddsi_cdrstream.h"
+#include "org/eclipse/cyclonedds/core/cdr/cdr_enums.hpp"
 
 struct ddsi_sertype;
 template <typename T, class S> class ddscxx_sertype;
@@ -52,39 +53,8 @@ class xcdr_v2_stream;
 namespace topic
 {
 
-/**
- * @brief
- * Entity extensibility descriptors.
- *
- * @enum extensibility Describes the extensibility of entities.
- *
- * This value is set for entities and their parents.
- *
- * @var extensibility::ext_final The entity representation is complete, no fields can be added or removed.
- * @var extensibility::ext_appendable The entity representation can be extended, no fields can be removed.
- * @var extensibility::ext_mutable The entity representation can be modified, fields can be removed or added.
- */
-enum class extensibility {
-  ext_final,
-  ext_appendable,
-  ext_mutable
-};
-
-/**
- * @brief
- * Encoding version descriptors.
- *
- * @enum encoding_version Describes the CDR encoding version of entities.
- *
- * @var encoding_version::basic_cdr Basic CDR encoding, does not support any xtypes functionality.
- * @var encoding_version::xcdr_v1 Version 1 Xtypes CDR encoding (deprecated).
- * @var encoding_version::xcdr_v2 Version 2 XTypes CDR encoding.
- */
-enum class encoding_version {
-  basic_cdr,
-  xcdr_v1,
-  xcdr_v2
-};
+using org::eclipse::cyclonedds::core::cdr::extensibility;
+using org::eclipse::cyclonedds::core::cdr::encoding_version;
 
 template <class TOPIC> class TopicTraits
 {
