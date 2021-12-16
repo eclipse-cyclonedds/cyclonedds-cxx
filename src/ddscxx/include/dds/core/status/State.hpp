@@ -208,6 +208,13 @@ public:
         return *this;
     }
 
+    inline StatusMask operator | (const dds::core::status::StatusMask& mask) const
+    {
+        auto res = StatusMask(*this);
+        res |= mask;
+        return res;
+    }
+
     /**
      * Get all StatusMasks
      *
