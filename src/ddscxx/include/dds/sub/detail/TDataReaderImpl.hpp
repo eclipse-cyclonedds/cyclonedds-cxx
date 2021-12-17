@@ -511,7 +511,11 @@ dds::sub::detail::DataReader<T>::common_constructor(
 }
 
 template <typename T>
+#if __cplusplus >= 201402L && (__cplusplus <= 201703L || __clang__)
 dds::sub::detail::DataReader<T>::~DataReader<T>()
+#else
+dds::sub::detail::DataReader<T>::~DataReader()
+#endif
 {
     if (!this->closed) {
         try {

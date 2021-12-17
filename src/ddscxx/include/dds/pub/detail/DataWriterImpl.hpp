@@ -400,7 +400,11 @@ dds::pub::detail::DataWriter<T>::DataWriter(
 }
 
 template <typename T>
+#if __cplusplus >= 201402L && (__cplusplus < 201703L || __clang__)
 dds::pub::detail::DataWriter<T>::~DataWriter<T>()
+#else
+dds::pub::detail::DataWriter<T>::~DataWriter()
+#endif
 {
     if (!this->closed) {
         try {

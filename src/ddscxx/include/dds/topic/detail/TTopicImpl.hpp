@@ -206,9 +206,12 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
     this->AnyTopicDelegate::set_sample(&this->sample_);
 }
 
-
 template <typename T>
+#if __cplusplus >= 201402L && (__cplusplus <= 201703L || __clang__)
 dds::topic::detail::Topic<T>::~Topic<T>()
+#else
+dds::topic::detail::Topic<T>::~Topic()
+#endif
 {
     if (!closed) {
         try {

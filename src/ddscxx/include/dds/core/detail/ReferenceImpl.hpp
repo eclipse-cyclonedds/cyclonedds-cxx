@@ -60,7 +60,11 @@ dds::core::Reference<DELEGATE>::Reference(const DELEGATE_REF_T& p) : impl_(p)
 }
 
 template <typename DELEGATE>
+#if __cplusplus >= 201402L && (__cplusplus <= 201703L || __clang__)
 dds::core::Reference<DELEGATE>::~Reference<DELEGATE>()
+#else
+dds::core::Reference<DELEGATE>::~Reference()
+#endif
 {
 }
 
