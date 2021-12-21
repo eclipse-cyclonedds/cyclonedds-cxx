@@ -16,10 +16,10 @@
 #include <org/eclipse/cyclonedds/core/type_helpers.hpp>
 #include <org/eclipse/cyclonedds/core/cdr/entity_properties.hpp>
 #include <stdint.h>
-#include <string>
 #include <stdexcept>
 #include <stack>
 #include <cassert>
+#include <string>
 #include <dds/core/macros.hpp>
 
 namespace org {
@@ -420,10 +420,8 @@ public:
      * This function is called by the instance implementation switchbox, when it encounters an id which
      * does not resolve to an id pointing to a member it knows. It will move to the next entity in the
      * stream.
-     *
-     * @param[in] prop The entity to skip/ignore.
      */
-    virtual void skip_entity(const entity_properties_t &prop);
+    virtual void skip_entity();
 
     /**
      * @brief
@@ -446,7 +444,7 @@ public:
      * This function is called by the generated functions for the entity, and will trigger the necessary actions on starting a new struct.
      * I.E. starting a new parameter list, writing headers.
      *
-     * @param[in,out] props The entity whose members might be represented by a parameter list.
+     * @param[in, out] props The entity whose members might be represented by a parameter list.
      *
      * @return Whether the operation was completed succesfully.
      */
@@ -459,7 +457,7 @@ public:
      * This function is called by the generated functions for the entity, and will trigger the necessary actions on finishing the current struct.
      * I.E. finishing headers, writing length fields.
      *
-     * @param[in,out] props The entity whose members might be represented by a parameter list.
+     * @param[in, out] props The entity whose members might be represented by a parameter list.
      *
      * @return Whether the struct is complete and correct.
      */
@@ -514,7 +512,7 @@ protected:
      *
      * Will record the member start and set the member present flag to true.
      *
-     * @param[in,out] prop The member whose start is recorded.
+     * @param[in, out] prop The member whose start is recorded.
      */
     void record_member_start(entity_properties_t &prop);
 
@@ -523,10 +521,8 @@ protected:
      * Skips a member entry.
      *
      * In the case a read has failed, this will go to the next member.
-     *
-     * @param[in,out] prop The member who will be skipped.
      */
-    void go_to_next_member(entity_properties_t &prop);
+    void go_to_next_member();
 
     /**
      * @brief
@@ -534,7 +530,7 @@ protected:
      *
      * Checks whether all fields which must be understood are present.
      *
-     * @param[in,out] props The struct whose start is recorded.
+     * @param[in, out] props The struct whose start is recorded.
      * @param[in] list_type Which list must be checked for entries.
      */
     void check_struct_completeness(entity_properties_t &props, member_list_type list_type);
@@ -574,15 +570,511 @@ protected:
 
     DDSCXX_WARNING_MSVC_OFF(4251)
     std::stack<size_t> m_buffer_end;              /**< the end of reading at the current level*/
+    std::stack<uint32_t> m_entity_offsets;        /**< the entity offsets at the current level*/
+    std::stack<uint32_t> m_entity_sizes;          /**< the entity sizes at the current level*/
     std::stack<proplist::iterator> m_stack;       /**< Stack of iterators currently being handled*/
     DDSCXX_WARNING_MSVC_ON(4251)
 };
+
+ /**
+ * @brief
+ * Sequence type stream manipulation functions
+ *
+ * These will "unwrap" the sequence type. Bounds checking and length field streaming
+ * are done before calling the corresponding streaming function on the contained
+ * entities.
+ */
+
+/**
+ * @brief
+ * Sequence type read function.
+ *
+ * Reads the sequence length from the stream and checks whether the
+ * maximum length does not exceed any bounds of the sequence.
+ * It will resize the container and call reads for all entities in
+ * the sequence.
+ * This function is only enabled for non-arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[out] toread The variable to read into.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A,
+          std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+bool read_sequence(S &str, V<T, A>& toread, entity_properties_t &props, const size_t *max_sz)
+{
+  uint32_t vec_length = 0;
+  if (!str.start_consecutive(false, false) ||
+      !read(str,vec_length))
+    return false;
+
+  //do length checks (if necessary)
+  uint32_t read_length = vec_length;
+  if (max_sz && *max_sz)
+    vec_length = std::min<uint32_t>(static_cast<uint32_t>(*max_sz),vec_length);
+
+  //do read for entries in vector
+  toread.resize(vec_length);
+  for (auto &e:toread) {
+    if (!read(str, e, props, max_sz ? max_sz+1 : nullptr))
+      return false;
+  }
+
+  //dummy reads for entries beyond the sequence's maximum size
+  for (uint32_t i = vec_length; i < read_length; i++) {
+    T dummy;
+    if (!read(str, dummy, props, max_sz ? max_sz+1 : nullptr))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+/**
+ * @brief
+ * Sequence type read function.
+ *
+ * Reads the sequence length from the stream and checks whether the
+ * maximum length does not exceed any bounds of the sequence.
+ * It will resize the container and call the primitive type read
+ * function as there a bulk copy is done.
+ * This function is only enabled for arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[out] toread The variable to read into.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+bool read_sequence(S &str, V<T, A>& toread, entity_properties_t &props, const size_t *max_sz)
+{
+  uint32_t vec_length = 0;
+  if (!str.start_consecutive(false, props.is_primitive_type) ||
+      !read(str,vec_length))
+    return false;
+
+  //do length checks (if necessary)
+  uint32_t read_length = vec_length;
+  if (max_sz && *max_sz)
+    vec_length = std::min<uint32_t>(static_cast<uint32_t>(*max_sz),vec_length);
+
+  //do read for entries in vector
+  toread.resize(vec_length);
+  if (read_length && !read(str, toread[0], props, max_sz, vec_length))
+    return false;
+
+  //dummy reads for entries beyond the sequence's maximum size
+  if (read_length > vec_length &&
+      !move(str, T(), props, max_sz, read_length-vec_length))
+    return false;
+
+  return str.finish_consecutive();
+}
+
+/**
+ * @brief
+ * Sequence type write function.
+ *
+ * Checks whether the maximum length does not exceed any bounds of
+ * the sequence and then writes the sequence length to the stream.
+ * It will then call reads for all entities in the sequence.
+ * This function is only enabled for non-arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is written to.
+ * @param[in] towrite The variable to write.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A,
+          std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+bool write_sequence(S &str, const V<T, A>& towrite, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(false, false) ||
+      (max_sz && *max_sz && towrite.size() > *max_sz) ||
+      !write(str,static_cast<uint32_t>(towrite.size())))
+    return false;
+
+  //do write for entries in vector
+  for (const auto & w:towrite) {
+    if (!write(str, w, props, max_sz ? max_sz+1 : nullptr))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+/**
+ * @brief
+ * Sequence type write function.
+ *
+ * Checks whether the maximum length does not exceed any bounds of
+ * the sequence and then writes the sequence length to the stream.
+ * It will then call the primitive type write function as there the
+ * bulk copy is done.
+ * This function is only enabled for arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is written to.
+ * @param[in] towrite The variable to write.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+bool write_sequence(S &str, const V<T, A>& towrite, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(false, props.is_primitive_type) ||
+      (max_sz && *max_sz && towrite.size() > *max_sz) ||
+      !write(str,static_cast<uint32_t>(towrite.size())))
+    return false;
+
+  //do write for entries in vector
+  return (0 == towrite.size() || write(str, towrite[0], props, max_sz, towrite.size())) &&
+         str.finish_consecutive();
+}
+
+/**
+ * @brief
+ * Sequence type move function.
+ *
+ * Checks whether the maximum length does not exceed any bounds of
+ * the sequence and then moves the stream by the sequence number.
+ * It will then call the move for all entities in the sequence.
+ * This function is only enabled for non-arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] tomove The variable the cursor is moved by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A,
+          std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+bool move_sequence(S &str, const V<T, A>& tomove, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(false, false) ||
+      (max_sz && *max_sz && tomove.size() > *max_sz) ||
+      !move(str,uint32_t()))
+    return false;
+
+  //do move for entries in vector
+  for (const auto & w:tomove) {
+    if (!move(str, w, props, max_sz ? max_sz+1 : nullptr))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+/**
+ * @brief
+ * Sequence type move function.
+ *
+ * Checks whether the maximum length does not exceed any bounds of
+ * the sequence and then moves the stream for the length field.
+ * It will then call the primitive type move function as there the
+ * simple move is done.
+ * This function is only enabled for arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] tomove The variable the cursor is moved by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+bool move_sequence(S &str, const V<T, A>& tomove, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(false, props.is_primitive_type) ||
+      (max_sz && *max_sz && tomove.size() > *max_sz) ||
+      !move(str,uint32_t()))
+    return false;
+
+  //do move for entries in vector
+  return (0 == tomove.size() || move(str, tomove[0], props, max_sz, tomove.size())) &&
+         str.finish_consecutive();
+}
+
+/**
+ * @brief
+ * Sequence type max function.
+ *
+ * This will either set the cursor to SIZE_MAX if no max_sz is provided
+ * or max_sz points to 0, otherwise it will call a max operation for the
+ * maximum number of entries in the bounded function.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template< typename S,
+          template<typename, typename> class V,
+          typename T,
+          typename A>
+bool max_sequence(S &str, const V<T, A>&, entity_properties_t &props, const size_t *max_sz)
+{
+  T dummy;
+  for (size_t i = 0; max_sz && i < *max_sz; i++) {
+    if (!max(str, dummy, props, max_sz))
+      return false;
+  }
+
+  if (!max_sz || !*max_sz)
+    str.position(SIZE_MAX);
+
+  return true;
+}
+
+//arrays
+
+template< typename S,
+          template<typename, size_t> class A,
+          typename T,
+          size_t N,
+          std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+bool read_array(S &str, A<T, N>& toread, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(true, props.is_primitive_type))
+    return false;
+
+  //do read for entries in array
+  for (auto & r:toread) {
+    if (!read(str, r, props, max_sz))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+template< typename S,
+          template<typename, size_t> class A,
+          typename T,
+          size_t N,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+bool read_array(S &str, A<T,N>& toread, entity_properties_t &props, const size_t *max_sz)
+{
+  return str.start_consecutive(true, props.is_primitive_type) &&
+         read(str, toread[0], props, max_sz, N) &&
+         str.finish_consecutive();
+}
+
+template< typename S,
+          template<typename, size_t> class A,
+          typename T,
+          size_t N,
+          std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+bool write_array(S &str, const A<T, N>& towrite, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(true, props.is_primitive_type))
+    return false;
+
+  //do write for entries in array
+  for (const auto & w:towrite) {
+    if (!write(str, w, props, max_sz))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+template< typename S,
+          template<typename, size_t> class A,
+          typename T,
+          size_t N,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+bool write_array(S &str, const A<T,N>& towrite, entity_properties_t &props, const size_t *max_sz)
+{
+  return str.start_consecutive(true, props.is_primitive_type) &&
+         write(str, towrite[0], props, max_sz, N) &&
+         str.finish_consecutive();
+}
+
+template< typename S,
+          template<typename, size_t> class A,
+          typename T,
+          size_t N,
+          std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+bool move_array(S &str, const A<T, N>& tomove, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(true, props.is_primitive_type))
+    return false;
+
+  //do move for entries in array
+  for (const auto & w:tomove) {
+    if (!move(str, w, props, max_sz))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+template< typename S,
+          template<typename, size_t> class A,
+          typename T,
+          size_t N,
+          std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+bool move_array(S &str, const A<T,N>& tomove, entity_properties_t &props, const size_t *max_sz)
+{
+  return str.start_consecutive(true, props.is_primitive_type) &&
+         move(str, tomove[0], props, max_sz, N) &&
+         str.finish_consecutive();
+}
+
+template< typename S,
+          template<typename,size_t> class A,
+          typename T,
+          size_t N >
+bool max_array(S &str, const A<T, N>& tomax, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!str.start_consecutive(true, props.is_primitive_type))
+    return false;
+
+  //do max for entries in array
+  for (const auto & w:tomax) {
+    if (!max(str, w, props, max_sz))
+      return false;
+  }
+
+  return str.finish_consecutive();
+}
+
+//optionals
+
+template< typename S,
+          template<typename> class O,
+          typename T >
+bool read_optional(S &str, O<T> &toread, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!toread)
+    toread = T();
+
+  return read(str, toread.value(), props, max_sz);
+}
+
+template< typename S,
+          template<typename> class O,
+          typename T >
+bool write_optional(S &str, const O<T> &towrite, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!towrite)
+    return true;
+
+  return write(str, towrite.value(), props, max_sz);
+}
+
+template< typename S,
+          template<typename> class O,
+          typename T >
+bool move_optional(S &str, const O<T> &tomove, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!tomove)
+    return true;
+
+  return move(str, tomove.value(), props, max_sz);
+}
+
+template< typename S,
+          template<typename> class O,
+          typename T >
+bool max_optional(S &str, const O<T> &, entity_properties_t &props, const size_t *max_sz)
+{
+  return max(str, T(), props, max_sz);
+}
+
+//externals
+
+template< typename S,
+          template<typename> class E,
+          typename T >
+bool read_external(S &str, E<T> &toread, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!toread)
+    toread = new T();
+
+  return read(str, *toread, props, max_sz);
+}
+
+template< typename S,
+          template<typename> class E,
+          typename T >
+bool write_external(S &str, const E<T> &towrite, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!towrite)
+    return false;
+
+  return write(str, *towrite, props, max_sz);
+}
+
+template< typename S,
+          template<typename> class E,
+          typename T >
+bool move_external(S &str, const E<T> &tomove, entity_properties_t &props, const size_t *max_sz)
+{
+  if (!tomove)
+    return false;
+
+  return move(str, *tomove, props, max_sz);
+}
+
+template< typename S,
+          template<typename> class E,
+          typename T >
+bool max_external(S &str, const E<T> &, entity_properties_t &props, const size_t *max_sz)
+{
+  return max(str, T(), props, max_sz);
+}
 
 /**
  * @brief
  * Primitive type stream manipulation functions.
  *
- * These are "endpoints" for write functions, since composit
+ * These are "endpoints" for streaming functions, since composit
  * (sequence/array/constructed type) functions will decay to these
  * calls.
  */
@@ -595,19 +1087,24 @@ protected:
  * Reads the value from the current position of the stream str into
  * toread, will swap bytes if necessary.
  * Moves the cursor of the stream by the size of T.
- * This function is only enabled for arithmetic types and enums.
+ * This function is only enabled for arithmetic types.
  *
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read into.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  * @param[in] N The number of entities to read.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool read(S &str, T& toread, size_t N = 1)
+bool read(S &str, T& toread, entity_properties_t &props, const size_t *max_sz = nullptr, size_t N = 1)
 {
+  (void) max_sz;
+  assert(N);
+
+  props.is_present = false;
   if (str.position() == SIZE_MAX
    || !str.align(sizeof(T), false)
    || !str.bytes_available(sizeof(T)*N))
@@ -627,7 +1124,24 @@ bool read(S &str, T& toread, size_t N = 1)
 
   str.incr_position(sizeof(T)*N);
 
+  props.is_present = true;
   return true;
+}
+
+/**
+ * @brief
+ * Primitive type read function (short version).
+ *
+ * Same as the long version, only no feedback is given through an entity properties parameter.
+ * Used as subroutines in larger entity write functions, e.g.: delimiters between members, or
+ * length fields for sequences and strings.
+ */
+template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
+                                               && std::is_base_of<cdr_stream, S>::value, bool> = true >
+bool read(S &str, T& toread)
+{
+  auto props = get_type_props<T>();
+  return read(str, toread, props);
 }
 
 /**
@@ -642,6 +1156,7 @@ bool read(S &str, T& toread, size_t N = 1)
  *
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read.
+ * @param[in, out] props The properties of the variable being read.
  * @param[in] N The number of entities to read.
  *
  * @return Whether the operation was completed succesfully.
@@ -649,8 +1164,9 @@ bool read(S &str, T& toread, size_t N = 1)
 template<typename S, typename T, typename I, std::enable_if_t<std::is_integral<I>::value
                                                && std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true>
-bool read_enum_impl(S& str, T& toread, size_t N)
+bool read_enum_impl(S& str, T& toread, entity_properties_t &props, const size_t *, size_t N)
 {
+  assert(N);
   T *ptr = &toread;
   I holder = 0;
   for (size_t i = 0; i < N; i++, ptr++)
@@ -659,6 +1175,7 @@ bool read_enum_impl(S& str, T& toread, size_t N)
       return false;
     *ptr = enum_conversion<T>(holder);
   }
+  props.is_present = true;
   return true;
 }
 
@@ -674,15 +1191,20 @@ bool read_enum_impl(S& str, T& toread, size_t N)
  *
  * @param[in, out] str The stream which is written to.
  * @param[in] towrite The variable to write.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  * @param[in] N The number of entities to write.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool write(S& str, const T& towrite, size_t N = 1)
+bool write(S& str, const T& towrite, entity_properties_t &props, const size_t *max_sz = nullptr, size_t N = 1)
 {
+  assert(N);
+  (void) max_sz;
+
+  props.is_present = false;
   if (str.position() == SIZE_MAX
    || !str.align(sizeof(T), true)
    || !str.bytes_available(sizeof(T)*N))
@@ -702,7 +1224,24 @@ bool write(S& str, const T& towrite, size_t N = 1)
 
   str.incr_position(sizeof(T)*N);
 
+  props.is_present = true;
   return true;
+}
+
+/**
+ * @brief
+ * Primitive type write function (short version).
+ *
+ * Same as the long version, only no feedback is given through an entity properties parameter.
+ * Used as subroutines in larger entity write functions, e.g.: delimiters between members, or
+ * length fields for sequences and strings.
+ */
+template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
+                                               && std::is_base_of<cdr_stream, S>::value, bool> = true >
+bool write(S& str, const T& towrite)
+{
+  auto props = get_type_props<T>();
+  return write(str, towrite, props);
 }
 
 /**
@@ -725,17 +1264,20 @@ bool write(S& str, const T& towrite, size_t N = 1)
 template<typename S, typename T, typename I, std::enable_if_t<std::is_integral<I>::value
                                                && std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true>
-bool write_enum_impl(S& str, const T& towrite, size_t N)
+bool write_enum_impl(S& str, const T& towrite, entity_properties_t &props, const size_t *max_sz, size_t N)
 {
+  assert(N);
   const T *ptr = &towrite;
+  props.is_present = false;
   if (sizeof(T) == sizeof(I)) {
-      if (!write(str, *reinterpret_cast<const I*>(ptr), N))
+      if (!write(str, *reinterpret_cast<const I*>(ptr), props, max_sz, N))
         return false;
   } else {
     for (size_t i = 0; i < N; i++, ptr++)
       if (!write(str, *reinterpret_cast<const I*>(ptr)))
         return false;
   }
+  props.is_present = true;
   return true;
 }
 
@@ -749,24 +1291,45 @@ bool write_enum_impl(S& str, const T& towrite, size_t N)
  * This function is only enabled for arithmetic types.
  *
  * @param[in, out] str The stream whose cursor is moved.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  * @param[in] N The number of entities to move.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool move(S& str, const T&, size_t N = 1)
+bool move(S& str, const T&, entity_properties_t &props, const size_t *max_sz = nullptr, size_t N = 1)
 {
-  if (str.position() == SIZE_MAX)
-    return true;
+  assert(N);
+  (void) max_sz;
 
-  if (!str.align(sizeof(T), false))
-    return false;
+  props.is_present = false;
+  if (str.position() != SIZE_MAX) {
+    if (!str.align(sizeof(T), false))
+      return false;
 
-  str.incr_position(sizeof(T)*N);
+    str.incr_position(sizeof(T)*N);
+  }
 
+  props.is_present = true;
   return true;
+}
+
+/**
+ * @brief
+ * Primitive type move function (short version).
+ *
+ * Same as the long version, only no feedback is given through an entity properties parameter.
+ * Used as subroutines in larger entity write functions, e.g.: delimiters between members, or
+ * length fields for sequences and strings.
+ */
+template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
+                                               && std::is_base_of<cdr_stream, S>::value, bool> = true >
+bool move(S& str, const T& tomove)
+{
+  auto props = get_type_props<T>();
+  return move(str, tomove, props);
 }
 
 /**
@@ -783,24 +1346,26 @@ bool move(S& str, const T&, size_t N = 1)
  * This function is only enabled for arithmetic types.
  *
  * @param[in, out] str The stream whose cursor is moved.
- * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ * @param[in] tomax The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  * @param[in] N The number of entities at most to move.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool max(S& str, const T& max_sz, size_t N = 1)
+bool max(S& str, const T& tomax, entity_properties_t &props, const size_t *max_sz = nullptr, size_t N = 1)
 {
-  return move(str, max_sz, N);
+  assert(N);
+  return move(str, tomax, props, max_sz, N);
 }
 
  /**
  * @brief
  * String type stream manipulation functions
  *
- * These are "endpoints" for write functions, since compound
+ * These are "endpoints" for streaming functions, since compound
  * (sequence/array/constructed type) functions will decay to these
  * calls.
  */
@@ -811,17 +1376,20 @@ bool max(S& str, const T& max_sz, size_t N = 1)
  *
  * Reads the length from str, but then initializes toread with at most N characters from it.
  * It does move the cursor by length read, since that is the number of characters in the stream.
- * If N is 0, then the string is taken to be unbounded.
+ * If max_sz is null or points to 0, then the string is taken to be unbounded.
+ * This template function will be specialized for the string class being used.
  *
  * @param[in, out] str The stream to read from.
  * @param[out] toread The string to read to.
- * @param[in] N The maximum number of characters to read from the stream.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool read_string(S& str, T& toread, size_t N)
+template<typename S, typename T >
+bool read_string(S& str, T& toread, entity_properties_t &props, const size_t *max_sz)
 {
+  props.is_present = false;
   if (str.position() == SIZE_MAX)
     return false;
 
@@ -835,17 +1403,18 @@ bool read_string(S& str, T& toread, size_t N)
    && str.status(serialization_status::illegal_field_value))
     return false;
 
-  if (N && string_length > N + 1)
+  if (max_sz && *max_sz && string_length > *max_sz + 1)
     return false;
 
   auto cursor = str.get_cursor();
-  toread.assign(cursor, cursor + std::min<size_t>(string_length - 1, N ? N : SIZE_MAX));  //remove 1 for terminating NULL
+  toread.assign(cursor, cursor + std::min<size_t>(string_length - 1, (max_sz && *max_sz) ? *max_sz : SIZE_MAX));  //remove 1 for terminating NULL
 
   str.incr_position(string_length);
 
   //aligned to chars
   str.alignment(1);
 
+  props.is_present = true;
   return true;
 }
 
@@ -855,24 +1424,28 @@ bool read_string(S& str, T& toread, size_t N)
  *
  * Attempts to write the length of towrite to str, where the bound is checked.
  * Then writes the contents of towrite to str.
- * If N is 0, then the string is taken to be unbounded.
+ * If max_sz is null or points to 0, then the string is taken to be unbounded.
+ * This template function will be specialized for the string class being used.
  *
  * @param[in, out] str The stream to write to.
  * @param[in] towrite The string to write.
- * @param[in] N The maximum number of characters to write to the stream.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool write_string(S& str, const T& towrite, size_t N)
+template<typename S, typename T >
+bool write_string(S& str, const T& towrite, entity_properties_t &props, const size_t *max_sz)
 {
+  props.is_present = false;
   if (str.position() == SIZE_MAX)
     return false;
 
   size_t string_length = towrite.length() + 1;  //add 1 extra for terminating NULL
 
-  if (N
-   && string_length > N + 1
+  if (max_sz
+   && *max_sz
+   && string_length > *max_sz + 1
    && str.status(serialization_status::write_bound_exceeded))
       return false;
 
@@ -887,6 +1460,7 @@ bool write_string(S& str, const T& towrite, size_t N)
   //aligned to chars
   str.alignment(1);
 
+  props.is_present = true;
   return true;
 }
 
@@ -896,35 +1470,39 @@ bool write_string(S& str, const T& towrite, size_t N)
  *
  * Attempts to move the cursor for the length field, where the bound is checked.
  * Then moves the cursor for the length of the string.
- * If N is 0, then the string is taken to be unbounded.
+ * If max_sz is null or points to 0, then the string is taken to be unbounded.
+ * This template function will be specialized for the string class being used.
  *
- * @param[in, out] str The stream whose cursor is moved.
- * @param[in] toincr The string used to move the cursor.
- * @param[in] N The maximum number of characters in the string which the stream is moved by.
+ * @param[in, out] str The stream to move its cursor.
+ * @param[in] toincr The string to move the cursor by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool move_string(S& str, const T& toincr, size_t N)
+template<typename S, typename T >
+bool move_string(S& str, const T &toincr, entity_properties_t &props, const size_t *max_sz)
 {
-  if (str.position() == SIZE_MAX)
-    return true;
+  props.is_present = false;
+  if (str.position() != SIZE_MAX) {
+    size_t string_length = toincr.length() + 1;  //add 1 extra for terminating NULL
 
-  size_t string_length = toincr.length() + 1;  //add 1 extra for terminating NULL
+    if (max_sz
+     && *max_sz
+     && string_length > *max_sz + 1
+     && str.status(serialization_status::move_bound_exceeded))
+        return false;
 
-  if (N
-   && string_length > N + 1
-   && str.status(serialization_status::move_bound_exceeded))
+    if (!move(str, uint32_t()))
       return false;
 
-  if (!move(str, uint32_t()))
-    return false;
+    str.incr_position(string_length);
 
-  str.incr_position(string_length);
+    //aligned to chars
+    str.alignment(1);
+  }
 
-  //aligned to chars
-  str.alignment(1);
-
+  props.is_present = true;
   return true;
 }
 
@@ -935,22 +1513,28 @@ bool move_string(S& str, const T& toincr, size_t N)
  * Similar to the string move function, with the additional checks that no move
  * is done if the cursor is already at its maximum position, and that the cursor
  * is set to its maximum position if the bound is equal to 0 (unbounded).
+ * If max_sz is null or points to 0, then the string is taken to be unbounded.
+ * This template function will be specialized for the string class being used.
  *
- * @param[in, out] str The stream whose cursor is moved.
- * @param[in] max_sz The string used to move the cursor.
- * @param[in] N The maximum number of characters in the string which the stream is at most moved by.
+ * @param[in, out] str The stream to move its cursor.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
-bool max_string(S& str, const T& max_sz, size_t N)
+template<typename S, typename T >
+bool max_string(S& str, const T&, entity_properties_t &props, const size_t *max_sz)
 {
-  if (N == 0)
+  props.is_present = false;
+  if (!max_sz || !*max_sz) {
     str.position(SIZE_MAX); //unbounded string, theoretical length unlimited
-  else
-    return move_string(str, max_sz, N);
-
-  return true;
+    props.is_present = true;
+    return true;
+  } else {
+    T dummy;
+    dummy.resize(*max_sz);
+    return move_string(str, dummy, props, max_sz);
+  }
 }
 
 }

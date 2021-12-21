@@ -56,10 +56,12 @@ bool cdr_stream::finish_member(entity_properties_t &prop, bool)
 
   if (!prop.is_present) {
     if (m_mode == stream_mode::read)
-      go_to_next_member(prop);
+      go_to_next_member();
     else
       return false;
   }
+
+  m_entity_offsets.pop();
 
   return true;
 }
@@ -130,11 +132,14 @@ void cdr_stream::reset()
   m_status = 0;
   m_buffer_end = std::stack<size_t>({m_buffer_size});
   m_stack = std::stack<proplist::iterator>();
+  m_entity_offsets = std::stack<uint32_t>();
+  m_entity_sizes = std::stack<uint32_t>();
 }
 
-void cdr_stream::skip_entity(const entity_properties_t &prop)
+void cdr_stream::skip_entity()
 {
-  incr_position(prop.e_sz);
+  incr_position(m_entity_sizes.top());
+  m_entity_sizes.pop();
   alignment(0);
 }
 
@@ -154,14 +159,14 @@ bool cdr_stream::start_struct(entity_properties_t &props)
 
 void cdr_stream::record_member_start(entity_properties_t &prop)
 {
-  prop.e_off = position();
+  m_entity_offsets.push(static_cast<uint32_t>(position()));
   prop.is_present = true;
 }
 
-void cdr_stream::go_to_next_member(entity_properties_t &prop)
+void cdr_stream::go_to_next_member()
 {
-  if (prop.e_sz > 0 && m_mode == stream_mode::read) {
-    position(prop.e_off + prop.e_sz);
+  if (m_entity_sizes.top() > 0 && m_mode == stream_mode::read) {
+    position(m_entity_offsets.top() + m_entity_sizes.top());
     alignment(0);  //we made a jump, so we do not know the current alignment
   }
 }

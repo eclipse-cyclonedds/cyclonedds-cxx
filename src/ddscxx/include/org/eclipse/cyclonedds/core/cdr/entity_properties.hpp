@@ -86,8 +86,6 @@ struct OMG_DDS_API entity_properties
 
   extensibility e_ext = extensibility::ext_final; /**< The extensibility of the entity itself. */
   extensibility p_ext = extensibility::ext_final; /**< The extensibility of the entity's parent. */
-  size_t e_off = 0;                               /**< The current offset in the stream at which the member field starts, does not include header. */
-  uint32_t e_sz = 0;                              /**< The size of the current entity as member field (only used in reading from streams).*/
   uint32_t m_id = 0;                              /**< The member id of the entity, it is the global field by which the entity is identified. */
   bool must_understand_local = false;             /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
   bool must_understand_remote = false;            /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
@@ -98,6 +96,7 @@ struct OMG_DDS_API entity_properties
   bool is_optional = false;                       /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
   bool is_key = false;                            /**< Indicates that this field is a key field.*/
   bool is_present = false;                        /**< Indicates that this entity is present in the read stream.*/
+  bool is_primitive_type = false;                 /**< Indicates that this entity is a primitive type (non-string/non-enum base type).*/
   bit_bound e_bb = bb_unset;                      /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
   DDSCXX_WARNING_MSVC_OFF(4251)
@@ -255,6 +254,7 @@ entity_properties_t get_type_props() {
   entity_properties_t props;
   static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
   props.e_bb = bit_bound(sizeof(T));
+  props.is_primitive_type = true;
   return props;
 }
 

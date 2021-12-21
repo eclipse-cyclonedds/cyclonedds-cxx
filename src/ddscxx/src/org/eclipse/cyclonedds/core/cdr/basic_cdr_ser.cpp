@@ -23,6 +23,7 @@ entity_properties_t& basic_cdr_stream::next_entity(entity_properties_t &props, b
   if (abort_status())
     return m_final;
 
+  m_entity_sizes.push(0);
   auto &prop = next_prop(props, m_key ? member_list_type::key : member_list_type::member_by_seq, firstcall);
   return prop;
 }

@@ -46,7 +46,7 @@ public:
    * As the basic cdr stream does not have anything that requires delimiting between entities,
    * this function is not supported.
    */
-  void skip_entity(const entity_properties_t &) { status(serialization_status::unsupported_xtypes); }
+  void skip_entity() { status(serialization_status::unsupported_xtypes); }
 
   /**
    * @brief
@@ -92,11 +92,13 @@ public:
  *
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read into.
+ * @param[in,out] props The properties of the entity to read.
+ * @param[in] max_sz The maximum sizes of any sequences to be read.
  * @param[in] N The number of entities to read.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool read(basic_cdr_stream& str, T& toread, size_t N = 1) {
-  return read_enum_impl<basic_cdr_stream,T,uint32_t>(str, toread, N);
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
+bool read(basic_cdr_stream& str, T& toread, entity_properties_t &props, const size_t *max_sz, size_t N = 1) {
+  return read_enum_impl<basic_cdr_stream,T,uint32_t>(str, toread, props, max_sz, N);
 }
 
 /**
@@ -105,11 +107,13 @@ bool read(basic_cdr_stream& str, T& toread, size_t N = 1) {
  *
  * @param[in, out] str The stream which is written to.
  * @param[in] towrite The variable to write.
+ * @param[in,out] props The properties of the entity to write.
+ * @param[in] max_sz The maximum sizes of any sequences to be written.
  * @param[in] N The number of entities to write.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool write(basic_cdr_stream& str, const T& towrite, size_t N = 1) {
-  return write_enum_impl<basic_cdr_stream,T,uint32_t>(str, towrite, N);
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
+bool write(basic_cdr_stream& str, const T& towrite, entity_properties_t &props, const size_t *max_sz, size_t N = 1) {
+  return write_enum_impl<basic_cdr_stream,T,uint32_t>(str, towrite, props, max_sz, N);
 }
 
 /**
@@ -117,11 +121,13 @@ bool write(basic_cdr_stream& str, const T& towrite, size_t N = 1) {
  * Moves the cursor of the stream by the size the enum would take up.
  *
  * @param[in, out] str The stream whose cursor is moved.
+ * @param[in,out] props The properties of the entity to move.
+ * @param[in] max_sz The maximum sizes of any sequences to be moved.
  * @param[in] N The number of entities to move.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool move(basic_cdr_stream& str, const T&, size_t N = 1) {
-  return move(str, uint32_t(0), N);
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
+bool move(basic_cdr_stream& str, const T&, entity_properties_t &props, const size_t *max_sz, size_t N = 1) {
+  return move(str, uint32_t(0), props, max_sz, N);
 }
 
 /**
@@ -129,11 +135,13 @@ bool move(basic_cdr_stream& str, const T&, size_t N = 1) {
  * Moves the cursor of the stream by the size the enum would take up (maximum size version).
  *
  * @param[in, out] str The stream whose cursor is moved.
+ * @param[in,out] props The properties of the entity to move.
+ * @param[in] max_sz The maximum sizes of any sequences to be moved.
  * @param[in] N The number of entities at most to move.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool max(basic_cdr_stream& str, const T&, size_t N = 1) {
-  return max(str, uint32_t(0), N);
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
+bool max(basic_cdr_stream& str, const T&, entity_properties_t &props, const size_t *max_sz, size_t N = 1) {
+  return max(str, uint32_t(0), props, max_sz, N);
 }
 
 }

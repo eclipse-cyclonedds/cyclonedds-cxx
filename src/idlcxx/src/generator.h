@@ -18,14 +18,20 @@
 struct generator {
   const char *path;
   char *array_format;
+  char *array_generic;
   const char *array_include;
   char *sequence_format;
+  char *sequence_generic;
   const char *sequence_include;
+  bool bseq_uses_size_template;
   char *bounded_sequence_format;
+  char *bounded_sequence_generic;
   const char *bounded_sequence_include;
   char *string_format;
   const char *string_include;
+  bool bstr_uses_size_template;
   char *bounded_string_format;
+  char *bounded_string_generic;
   const char *bounded_string_include;
   char *optional_format;
   const char *optional_include;

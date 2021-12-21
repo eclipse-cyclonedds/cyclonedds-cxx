@@ -44,7 +44,7 @@ bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
           return false;
         break;
       case stream_mode::read:
-        m_buffer_end.push(position() + prop.e_sz);
+        m_buffer_end.push(position() + m_entity_sizes.top());
         break;
       default:
         break;
@@ -82,6 +82,7 @@ entity_properties_t& xcdr_v1_stream::next_entity(entity_properties_t &props, boo
   if (abort_status())
     return m_final;
 
+  m_entity_sizes.push(0);
   member_list_type ml = member_list_type::member_by_seq;
   if (m_key)
     ml = member_list_type::key;
@@ -98,8 +99,7 @@ entity_properties_t& xcdr_v1_stream::next_entity(entity_properties_t &props, boo
         if (!read_header(temp))
           break;
 
-        prop.e_sz = temp.e_sz;
-        if (prop.e_sz)
+        if (m_entity_sizes.top())
           return prop;
       } else {
         return prop;
@@ -117,13 +117,12 @@ entity_properties_t& xcdr_v1_stream::next_entity(entity_properties_t &props, boo
 
       if (!read_header(m_current_header) || !m_current_header)
         break;
-      else if (0 == m_current_header.e_sz)
+      else if (0 == m_entity_sizes.top())
         continue;
 
       auto p = std::equal_range(ptr->begin(), ptr->end(), m_current_header, entity_properties_t::member_id_comp);
       if (p.first != ptr->end() && (p.first->m_id == m_current_header.m_id || (!(*p.first) && !m_current_header))) {
         p.first->must_understand_remote = m_current_header.must_understand_remote;
-        p.first->e_sz = m_current_header.e_sz;
         return *(p.first);
       } else {
         return m_current_header;
@@ -150,7 +149,6 @@ bool xcdr_v1_stream::read_header(entity_properties_t &out)
     return false;
 
   out.m_id = smallid & pid_mask;
-  out.e_sz = smalllength;
   out.must_understand_remote = pid_flag_must_understand & smallid;
   out.implementation_extension = pid_flag_impl_extension & smallid;
   switch (out.m_id) {
@@ -168,7 +166,7 @@ bool xcdr_v1_stream::read_header(entity_properties_t &out)
        || !read(*this, largelength))
         return false;
 
-      out.e_sz = largelength;
+      m_entity_sizes.top() = largelength;
       out.must_understand_remote = pl_extended_flag_must_understand & memberheader;
       out.implementation_extension = pl_extended_flag_impl_extension & memberheader;
       out.m_id = pl_extended_mask & memberheader;
@@ -177,6 +175,8 @@ bool xcdr_v1_stream::read_header(entity_properties_t &out)
     default:
       if (out.m_id > pid_ignore)
         status(invalid_pl_entry);
+      else
+        m_entity_sizes.top() = smalllength;
   }
 
   return true;
@@ -202,16 +202,16 @@ bool xcdr_v1_stream::finish_write_header(entity_properties_t &props)
   auto current_position = position();
   auto current_alignment = alignment();
 
-  props.e_sz = static_cast<uint32_t>(current_position - props.e_off);
+  m_entity_sizes.top() = static_cast<uint32_t>(current_position - m_entity_offsets.top());
 
   if (extended_header(props)) {
-    position(props.e_off-4);
-    if (!write(*this, props.e_sz))
+    position(m_entity_offsets.top()-4);
+    if (!write(*this, m_entity_sizes.top()))
       return false;
   } else {
-    position(props.e_off-2);
+    position(m_entity_offsets.top()-2);
     alignment(2);
-    if (!write(*this, uint16_t(props.e_sz)))
+    if (!write(*this, uint16_t(m_entity_sizes.top())))
       return false;
   }
 
