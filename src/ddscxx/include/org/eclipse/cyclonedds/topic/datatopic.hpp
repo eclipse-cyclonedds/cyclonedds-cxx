@@ -807,12 +807,11 @@ const ddsi_sertype_ops ddscxx_sertype<T>::ddscxx_sertype_ops = {
   sertype_free_samples<T>,
   sertype_equal<T>,
   sertype_hash<T>,
-  nullptr, // typeid_hash
-  nullptr, // serialized_size
-  nullptr, // serialize
-  nullptr, // deserialize
+  nullptr, // type_id
+  nullptr, // type_map
+  nullptr, // type_info
   nullptr, // assignable_from
-  nullptr, //derive_sertype sertype_default_derive_sertype?
+  nullptr, // derive_sertype
   sertype_get_serialized_size<T>,
   sertype_serialize_into<T>
 };
