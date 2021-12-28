@@ -349,7 +349,7 @@ int get_cpp11_default_value(
 {
   struct generator *gen = user_data;
   const idl_enumerator_t *enumerator;
-  const idl_type_spec_t *unaliased = idl_unalias(node, 0u);
+  const idl_type_spec_t *unaliased = idl_strip(node, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   const char *value = NULL;
 
   if (idl_is_array(unaliased))
@@ -569,7 +569,7 @@ register_types(
   (void)revisit;
   (void)path;
 
-  type_spec = idl_unalias(idl_type_spec(node), 0);
+  type_spec = idl_strip(idl_type_spec(node), IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   loc = idl_location(type_spec);
   assert(type_spec && loc);
   if (pstate->sources)
@@ -581,7 +581,7 @@ register_types(
   if (idl_is_array(node) || idl_is_array(type_spec))
     gen->uses_array = true;
 
-  type_spec = idl_unalias(idl_type_spec(node), IDL_UNALIAS_IGNORE_ARRAY);
+  type_spec = idl_strip(idl_type_spec(node), IDL_STRIP_ALIASES | IDL_STRIP_ALIASES_ARRAY | IDL_STRIP_FORWARD);
   loc = idl_location(type_spec);
   assert(type_spec && loc);
   /* do not include headers if required by types in includes */
