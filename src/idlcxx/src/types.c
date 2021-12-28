@@ -48,7 +48,7 @@ emit_member(
   name = get_cpp11_name(node);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  type_spec = idl_unalias(type_spec, 0);
+  type_spec = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   if (idl_is_array(type_spec))
     value = "{ }";
   else if (!idl_is_enum(type_spec) && !idl_is_base_type(type_spec))
@@ -95,7 +95,7 @@ emit_parameter(
   else
     type_spec = idl_type_spec(node);
 
-  simple = idl_mask(idl_unalias(type_spec, 0)) & (IDL_BASE_TYPE|IDL_ENUM);
+  simple = idl_mask(idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD)) & (IDL_BASE_TYPE|IDL_ENUM);
   sep = is_first(node) ? "" : ",\n";
   fmt = simple ? "%s    %s %s"
                : "%s    const %s& %s";
@@ -158,7 +158,7 @@ emit_member_methods(
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  type_spec = idl_unalias(type_spec, 0);
+  type_spec = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   if (idl_mask(type_spec) & (IDL_BASE_TYPE | IDL_ENUM))
     fmt = "  %1$s %2$s() const { return this->%2$s_; }\n"
           "  %1$s& %2$s() { return this->%2$s_; }\n"
@@ -646,7 +646,7 @@ emit_case_methods(
   if (IDL_PRINTA(&value, get_cpp11_value, branch->labels->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  simple = (idl_mask(idl_unalias(branch->type_spec, 0)) & (IDL_BASE_TYPE|IDL_ENUM)) != 0;
+  simple = (idl_mask(idl_strip(branch->type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD)) & (IDL_BASE_TYPE|IDL_ENUM)) != 0;
 
   /* const-getter */
   fmt = simple ? "  %1$s %2$s() const\n  {\n"
