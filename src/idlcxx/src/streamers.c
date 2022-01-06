@@ -310,14 +310,11 @@ write_string_streaming_functions(
   uint32_t maximum = ((const idl_string_t*)type_spec)->maximum;
 
   static const char* fmt =
-    "      if (!{T}_string(streamer, %1$s%2$s, %3$"PRIu32"))\n"
+    "      if (!{T}_string(streamer, %1$s, %2$"PRIu32"))\n"
     "        return false;\n";
-  char *type = NULL;
 
-  if (IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0
-   || multi_putf(streams, WRITE | MOVE, fmt, accessor, "", maximum)
-   || multi_putf(streams, MAX, fmt, type, "()", maximum)
-   || multi_putf(streams, READ, fmt, read_accessor, "", maximum, type))
+  if (multi_putf(streams, CONST, fmt, accessor, maximum)
+   || multi_putf(streams, READ, fmt, read_accessor, maximum))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -331,15 +328,12 @@ write_typedef_streaming_functions(
   const char* read_accessor)
 {
   static const char* fmt =
-    "      if (!{T}_%1$s(streamer, %2$s%3$s))\n"
+    "      if (!{T}_%1$s(streamer, %2$s))\n"
     "        return false;\n";
   char* name = NULL;
-  char* type = NULL;
   if (IDL_PRINTA(&name, get_cpp11_name_typedef, type_spec, streams->generator) < 0
-   || IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0
-   || multi_putf(streams, WRITE | MOVE, fmt, name, accessor, "")
-   || multi_putf(streams, MAX, fmt, name, type, "()")
-   || multi_putf(streams, READ, fmt, name, read_accessor, ""))
+   || multi_putf(streams, CONST, fmt, name, accessor)
+   || multi_putf(streams, READ, fmt, name, read_accessor))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -348,19 +342,15 @@ write_typedef_streaming_functions(
 static idl_retcode_t
 write_constructed_type_streaming_functions(
   struct streams* streams,
-  const idl_type_spec_t* type_spec,
   const char* accessor,
   const char* read_accessor)
 {
   static const char* fmt =
-    "      if (!{T}(streamer, %1$s%2$s, prop))\n"
+    "      if (!{T}(streamer, %1$s, prop))\n"
     "        return false;\n";
-  char *type = NULL;
 
-  if (IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0
-   || multi_putf(streams, WRITE | MOVE, fmt, accessor, "")
-   || multi_putf(streams, MAX, fmt, type, "()")
-   || multi_putf(streams, READ, fmt, read_accessor, ""))
+  if (multi_putf(streams, CONST, fmt, accessor)
+   || multi_putf(streams, READ, fmt, read_accessor))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -374,13 +364,12 @@ write_base_type_streaming_functions(
   const char* read_accessor,
   instance_location_t loc)
 {
-  const char* e_prop = idl_is_enum(type_spec) ? ", prop" : "";
-  const char* fmt =
-    "      if (!{T}(streamer, %1$s%2$s%3$s))\n"
+  const char* fmt = idl_is_enum(type_spec) ?
+    "      if (!{T}(streamer, %1$s, prop))\n"
+    "        return false;\n" :
+    "      if (!{T}(streamer, %1$s))\n"
     "        return false;\n";
   const char* rfmt = fmt;
-  const char* mfmt = fmt;
-  char *type = NULL;
 
   if (loc.type & SEQUENCE
    && idl_mask(type_spec) == IDL_BOOL) {
@@ -397,18 +386,10 @@ write_base_type_streaming_functions(
       "        if (!{T}(streamer, bool(%1$s)))\n"
       "          return false;\n"
       "      }\n";
-
-    mfmt =
-      "      {\n"
-      "        if (!{T}(streamer, bool()))\n"
-      "          return false;\n"
-      "      }\n";
   }
 
-  if (IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0
-   || multi_putf(streams, WRITE | MOVE, fmt, accessor, "", e_prop)
-   || multi_putf(streams, MAX, mfmt, type, "()", e_prop)
-   || multi_putf(streams, READ, rfmt, read_accessor, "", e_prop))
+  if (multi_putf(streams, CONST, fmt, accessor)
+   || multi_putf(streams, READ, rfmt, read_accessor))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -427,7 +408,7 @@ write_streaming_functions(
   else if (idl_is_string(type_spec))
     return write_string_streaming_functions(streams, type_spec, accessor, read_accessor);
   else if (idl_is_union(type_spec) || idl_is_struct(type_spec))
-    return write_constructed_type_streaming_functions(streams, type_spec, accessor, read_accessor);
+    return write_constructed_type_streaming_functions(streams, accessor, read_accessor);
   else
     return write_base_type_streaming_functions(streams, type_spec, accessor, read_accessor, loc);
 }
