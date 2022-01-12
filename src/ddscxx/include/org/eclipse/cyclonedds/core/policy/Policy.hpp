@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -42,6 +42,33 @@
         static const std::string& name(); \
     };
 
+namespace org
+{
+namespace eclipse
+{
+namespace cyclonedds
+{
+namespace core
+{
+namespace policy
+{
+template <typename Policy>
+class policy_id;
+template <typename Policy>
+class policy_name;
+
+/*
+ * Proprietary policies values
+ */
+typedef org::eclipse::cyclonedds::core::policy::TIgnoreLocal<org::eclipse::cyclonedds::core::policy::IgnoreLocalDelegate> IgnoreLocal;
+
+}
+}
+}
+}
+}
+
+
 namespace dds
 {
 namespace core
@@ -52,6 +79,10 @@ template <typename Policy>
 class policy_id;
 template <typename Policy>
 class policy_name;
+
+/* Currently, the spec ends with id 22.
+ * Be sure to leave some space for the future. So start with 100. */
+LITE_POLICY_TRAITS(org::eclipse::cyclonedds::core::policy::IgnoreLocal, 100)
 }
 }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2006 to 2020 ADLINK Technology Limited and others
+ * Copyright(c) 2006 to 2021 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -52,6 +52,7 @@ public:
     void policy(const dds::core::policy::Ownership&           ownership);
     void policy(const dds::core::policy::TimeBasedFilter&     tfilter);
     void policy(const dds::core::policy::ReaderDataLifecycle& lifecycle);
+    void policy(const org::eclipse::cyclonedds::core::policy::IgnoreLocal& ignorelocal);
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -80,6 +81,7 @@ private:
     dds::core::policy::Ownership               ownership_;
     dds::core::policy::TimeBasedFilter         tfilter_;
     dds::core::policy::ReaderDataLifecycle     lifecycle_;
+    org::eclipse::cyclonedds::core::policy::IgnoreLocal ignorelocal_;
 };
 
 
@@ -242,6 +244,19 @@ inline dds::core::policy::ReaderDataLifecycle&
 DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>()
 {
     return lifecycle_;
+}
+
+
+template<>
+inline const org::eclipse::cyclonedds::core::policy::IgnoreLocal&
+DataReaderQosDelegate::policy<org::eclipse::cyclonedds::core::policy::IgnoreLocal>() const
+{
+    return ignorelocal_;
+}
+template<> inline org::eclipse::cyclonedds::core::policy::IgnoreLocal&
+DataReaderQosDelegate::policy<org::eclipse::cyclonedds::core::policy::IgnoreLocal>()
+{
+    return ignorelocal_;
 }
 
 }
