@@ -162,7 +162,7 @@ emit_traits(
   static const char *keylessfmt =
     "template <> constexpr bool TopicTraits<%1$s>::isKeyless()\n"
     "{\n"
-    "  return false;\n"
+    "  return true;\n"
     "}\n\n";
   static const char *selfcontainedfmt =
     "template <> constexpr bool TopicTraits<%1$s>::isSelfContained()\n"
