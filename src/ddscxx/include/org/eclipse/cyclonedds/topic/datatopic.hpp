@@ -785,6 +785,9 @@ ddscxx_sertype<T>::ddscxx_sertype()
       &ddscxx_serdata<T>::ddscxx_serdata_ops,
       flags);
 
+  if (org::eclipse::cyclonedds::topic::TopicTraits<T>::minXCDRVersion() == encoding_version::xcdr_v2)
+    min_xcdrv = CDR_ENC_VERSION_2;
+
 #ifdef DDSCXX_HAS_SHM
   // update the size of the type, if its fixed
   // this needs to be done after sertype init! TODO need an API in Cyclone DDS to set this
