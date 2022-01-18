@@ -126,6 +126,8 @@ public:
 
             this->lifespan_qos = this->publisher.default_datawriter_qos();
             this->lifespan_qos.policy(dds::core::policy::Lifespan(dds::core::Duration(10, 0)));
+            //this policy is implicitly set when no datarepresentation is selected
+            this->lifespan_qos.policy(dds::core::policy::DataRepresentation({dds::core::policy::DataRepresentationId::XCDR1}));
         }
     }
 
