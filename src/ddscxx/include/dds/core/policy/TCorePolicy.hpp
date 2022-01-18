@@ -1642,7 +1642,7 @@ public:
      * @param value the representations supported
      */
     explicit TDataRepresentation(
-        const dds::core::policy::DataRepresentationIdSeq &value = {dds::core::policy::DataRepresentationId::XCDR1});
+        const dds::core::policy::DataRepresentationIdSeq &value = { });
 
     /**
      * Copies a TDataRepresentation QoS instance
