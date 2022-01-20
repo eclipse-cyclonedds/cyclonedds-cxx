@@ -118,6 +118,14 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
 
+if(CMAKE_CROSSCOMPILING)
+  set(not_crosscompiling OFF)
+else()
+  set(not_crosscompiling ON)
+endif()
+
+option(BUILD_IDLCXX "Build IDL preprocessor" ${not_crosscompiling})
+
 # Make it easy to enable MSVC, Clang's/gcc's analyzers
 set(ANALYZER "" CACHE STRING "Analyzer to enable on the build.")
 if(ANALYZER)
