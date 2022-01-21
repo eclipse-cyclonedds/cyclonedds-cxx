@@ -966,7 +966,8 @@ process_case(
         (simple && IDL_PRINTA(&value, get_cpp11_default_value, _case->type_spec, streams->generator) < 0))
       return IDL_RETCODE_NO_MEMORY;
 
-    if (putf(&streams->read, read_start, type, value)
+    if (multi_putf(streams, (WRITE | MOVE), "      {\n")
+     || putf(&streams->read, read_start, type, value)
      || multi_putf(streams, ALL, get_props, type)
      || putf(&streams->max, max_start))
       return IDL_RETCODE_NO_MEMORY;
@@ -980,7 +981,7 @@ process_case(
     if (multi_putf(streams, ALL, check_props))
       return IDL_RETCODE_NO_MEMORY;
 
-    if (multi_putf(streams, (WRITE | MOVE), "      break;\n")
+    if (multi_putf(streams, (WRITE | MOVE), "      break; }\n")
      || putf(&streams->read, read_end, name)
      || putf(&streams->max, max_end))
       return IDL_RETCODE_NO_MEMORY;
