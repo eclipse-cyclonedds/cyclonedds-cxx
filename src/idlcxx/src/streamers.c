@@ -923,7 +923,8 @@ process_case(
   struct streams *streams = user_data;
   const idl_case_t* _case = (const idl_case_t*)node;
   const idl_switch_type_spec_t* _switch = ((const idl_union_t*)_case->node.parent)->switch_type_spec;
-  bool single = (idl_degree(_case->labels) == 1),
+  const idl_union_t* _union = (const idl_union_t*)_case->node.parent;
+  bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
        simple = idl_is_base_type(_case->type_spec),
        constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
@@ -978,7 +979,7 @@ process_case(
      || (_switch->key.value && multi_putf(streams, ALL, "      } //!streamer.is_key()\n")))
       return IDL_RETCODE_NO_MEMORY;
 
-    if (multi_putf(streams, ALL, check_props))
+    if (multi_putf(streams, READ, check_props))
       return IDL_RETCODE_NO_MEMORY;
 
     if (multi_putf(streams, (WRITE | MOVE), "      break; }\n")
@@ -986,8 +987,15 @@ process_case(
      || putf(&streams->max, max_end))
       return IDL_RETCODE_NO_MEMORY;
 
-    if (idl_next(_case))
+    if (idl_next(_case)) {
       return IDL_RETCODE_OK;
+    } else {
+      //if last entry, and no default case was present for this union
+      const idl_case_label_t *def = _union->default_case;
+      if (idl_is_union(def->node.parent) &&
+          multi_putf(streams, READ, "    default:\n      instance._d(d);\n"))
+        return IDL_RETCODE_NO_MEMORY;
+    }
 
     if (multi_putf(streams, NOMAX, "  }\n"))
       return IDL_RETCODE_NO_MEMORY;
@@ -1295,7 +1303,7 @@ process_switch_type_spec(
   void *user_data)
 {
   static const char *fmt =
-    "  auto d = instance._d();\n"
+    "  {C}auto d = instance._d();\n"
     "  if (!{T}(streamer, d))\n"
     "    return false;\n";
   static const char *mfmt =
@@ -1332,13 +1340,16 @@ process_union(
   static const char *pfmt =
     "  streamer.position(union_max);\n"
     "  streamer.alignment(alignment_max);\n";
+  static const char *mfmt =
+    "  props.is_present = true;\n";
 
   char *fullname = NULL;
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, node, streams->generator) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   if (revisit) {
-    if (putf(&streams->max, pfmt)
+    if (multi_putf(streams, MAX, pfmt)
+     || multi_putf(streams, MOVE | MAX, mfmt)
      || print_constructed_type_close(user_data, node))
       return IDL_RETCODE_NO_MEMORY;
 
