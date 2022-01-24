@@ -157,7 +157,7 @@ emit_traits(
     "}\n\n"
     "template <> inline ddsi_sertype* TopicTraits<%1$s>::getSerType()\n"
     "{\n"
-    "  return static_cast<ddsi_sertype*>(new ddscxx_sertype<%1$s>());\n"
+    "  return static_cast<ddsi_sertype*>(new ddscxx_sertype<%2$s>());\n"
     "}\n\n";
   static const char *keylessfmt =
     "template <> constexpr bool TopicTraits<%1$s>::isKeyless()\n"

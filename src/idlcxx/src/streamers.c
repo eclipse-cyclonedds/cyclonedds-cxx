@@ -968,8 +968,8 @@ process_case(
 
     if (multi_putf(streams, (WRITE | MOVE), "      {\n")
      || putf(&streams->read, read_start, type, value)
-     || multi_putf(streams, ALL, get_props, type)
-     || putf(&streams->max, max_start))
+     || putf(&streams->max, max_start)
+     || multi_putf(streams, ALL, get_props, type+2))
       return IDL_RETCODE_NO_MEMORY;
 
     //only read the field if the union is not read as a key stream
@@ -1404,13 +1404,13 @@ process_typedef_decl(
 
   const idl_type_spec_t* ts = type_spec;
   while (idl_is_sequence(ts)) {
-    ts = ((const idl_sequence_t*)type_spec)->type_spec;
+    ts = ((const idl_sequence_t*)ts)->type_spec;
   }
 
   if (multi_putf(streams, ALL, fmt, name, fullname))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (!idl_is_base_type(ts)) {
+  if (!idl_is_base_type(ts) && !idl_is_string(ts) && !idl_is_alias(ts)) {
     char* unrolled_name = NULL;
     if (IDL_PRINTA(&unrolled_name, get_cpp11_fully_scoped_name, ts, streams->generator) < 0 ||
         multi_putf(streams, ALL, "  auto prop = get_type_props<%1$s>();\n  prop.is_present = true;\n", unrolled_name))
@@ -1420,7 +1420,7 @@ process_typedef_decl(
   if (process_entity(pstate, streams, declarator, type_spec, loc))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (idl_is_base_type(ts)) {
+  if (idl_is_base_type(ts) || idl_is_string(ts) || idl_is_alias(ts)) {
     if (multi_putf(streams, ALL, "  return true;\n}\n\n"))
       return IDL_RETCODE_NO_MEMORY;
   } else {
