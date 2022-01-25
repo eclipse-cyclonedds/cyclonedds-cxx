@@ -147,22 +147,52 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
   else
     end = endianness::big_endian;
 
-  switch (*ptr & ~BO_LITTLE) {
-    case PLAIN_CDR:
-      if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
-        ver = encoding_version::basic_cdr;
-      else
-        ver = encoding_version::xcdr_v1;
+  auto field = *ptr & ~BO_LITTLE;
+  switch (TopicTraits<T>::getExtensibility()) {
+    case extensibility::ext_final:
+      switch (field) {
+        case PLAIN_CDR:
+          if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
+            ver = encoding_version::basic_cdr;
+          else
+            ver = encoding_version::xcdr_v1;
+          break;
+        case PLAIN_CDR2:
+          ver = encoding_version::xcdr_v2;
+          break;
+        default:
+          assert(0);
+          return false;
+      }
       break;
-    case PL_CDR:
-      ver = encoding_version::xcdr_v1;
+    case extensibility::ext_appendable:
+      switch (field) {
+        case PL_CDR:
+          ver = encoding_version::xcdr_v1;
+          break;
+        case D_CDR:
+          ver = encoding_version::xcdr_v2;
+          break;
+        default:
+          assert(0);
+          return false;
+      }
       break;
-    case PLAIN_CDR2:
-    case D_CDR:
-    case PL_CDR2:
-      ver = encoding_version::xcdr_v2;
+    case extensibility::ext_mutable:
+      switch (field) {
+        case PL_CDR:
+          ver = encoding_version::xcdr_v1;
+          break;
+        case PL_CDR2:
+          ver = encoding_version::xcdr_v2;
+          break;
+        default:
+          assert(0);
+          return false;
+      }
       break;
     default:
+      assert(0);
       return false;
   }
 
