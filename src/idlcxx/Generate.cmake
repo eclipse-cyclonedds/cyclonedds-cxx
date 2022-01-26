@@ -11,8 +11,8 @@
 #
 
 function(IDLCXX_GENERATE)
-  set(one_value_keywords TARGET)
-  set(multi_value_keywords FILES FEATURES INCLUDES)
+  set(one_value_keywords TARGET DEFAULT_EXTENSIBILITY)
+  set(multi_value_keywords FILES FEATURES INCLUDES WARNINGS)
   cmake_parse_arguments(
     IDLCXX "" "${one_value_keywords}" "${multi_value_keywords}" "" ${ARGN})
 
@@ -37,6 +37,8 @@ function(IDLCXX_GENERATE)
     FILES ${IDLCXX_FILES}
     FEATURES ${IDLCXX_FEATURES}
     INCLUDES ${IDLCXX_INCLUDES}
+    WARNINGS ${IDLCXX_WARNINGS}
+    DEFAULT_EXTENSIBILITY ${IDLC_DEFAULT_EXTENSIBILITY}
     SUFFIXES .hpp
     DEPENDS ${_idlcxx_depends}
   )

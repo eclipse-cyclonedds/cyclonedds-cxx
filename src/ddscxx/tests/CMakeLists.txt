@@ -11,7 +11,7 @@
 #
 find_package(GTest REQUIRED)
 
-idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldData.idl data/Serialization.idl)
+idlcxx_generate(TARGET ddscxx_test_types FILES data/Space.idl data/HelloWorldData.idl data/Serialization.idl WARNINGS no-implicit-extensibility)
 
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
