@@ -140,7 +140,7 @@ emit_traits(
         "};\n\n";
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (!idl_is_keyless(node, pstate->flags & IDL_FLAG_KEYLIST))
+  if (!idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST))
     keyless = "false";
   if (!sc_struct(_struct))
     selfcontained = "false";

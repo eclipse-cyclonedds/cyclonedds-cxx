@@ -743,7 +743,7 @@ static const char *bnd_str_flags[] = { PRIu32, NULL };
 #if _WIN32
 __declspec(dllexport)
 #endif
-idl_retcode_t generate(const idl_pstate_t *pstate)
+idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t *config)
 {
   idl_retcode_t ret = IDL_RETCODE_NO_MEMORY;
   char *dir = NULL, *basename = NULL, *empty = "";
@@ -754,6 +754,7 @@ idl_retcode_t generate(const idl_pstate_t *pstate)
   assert(pstate->paths->name);
   path = pstate->sources->path->name;
   assert(path);
+  (void) config;
 
   /* use relative directory if user provided a relative path, use current
      word directory otherwise */
