@@ -16,7 +16,7 @@ if(NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl)
+idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl WARNINGS no-implicit-extensibility)
 
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
