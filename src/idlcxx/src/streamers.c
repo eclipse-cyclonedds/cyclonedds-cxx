@@ -349,7 +349,7 @@ write_constructed_type_streaming_functions(
   streams->keys++;
 
   if (idl_is_constr_type(type_spec) &&
-      !idl_is_keyless(type_spec, pstate->flags & IDL_FLAG_KEYLIST))
+      !idl_is_keyless(type_spec, pstate->config.flags & IDL_FLAG_KEYLIST))
   {
     fmt = "  key_%2$s(streamer, %1$s);\n";
     if (streams->swapped)
@@ -718,7 +718,7 @@ process_member(
 
   type_spec = ((const idl_member_t *)node)->type_spec;
   /* only use the @key annotations when you do not use the keylist */
-  if (!(pstate->flags & IDL_FLAG_KEYLIST) &&
+  if (!(pstate->config.flags & IDL_FLAG_KEYLIST) &&
       ((const idl_member_t *)node)->key.value)
     loc.type |= KEY_INSTANCE;
 
@@ -1063,7 +1063,7 @@ process_struct(
     bool keylist;
     const idl_struct_t *_struct = ((const idl_struct_t *)node);
 
-    keylist = (pstate->flags & IDL_FLAG_KEYLIST) && _struct->keylist;
+    keylist = (pstate->config.flags & IDL_FLAG_KEYLIST) && _struct->keylist;
 
     if (print_constructed_type_open(user_data, node))
       return IDL_RETCODE_NO_MEMORY;
