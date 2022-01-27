@@ -184,32 +184,20 @@ void entity_properties::propagate_flags()
   }
 }
 
-void entity_properties::populate_from_seq(keep_in_propagate to_keep)
+void entity_properties::populate_from_seq()
 {
   m_members_by_id = m_members_by_seq;
   m_members_by_id.sort(member_id_comp);
   m_keys = m_members_by_id;
 
-  if (to_keep & members_by_seq) {
-    for (auto &member:m_members_by_seq)
-      member.populate_from_seq(members_by_seq);
-  } else {
-    m_members_by_seq.clear();
-  }
+  for (auto &member:m_members_by_seq)
+    member.populate_from_seq();
 
-  if (to_keep & members_by_id) {
-    for (auto &member:m_members_by_id)
-      member.populate_from_seq(members_by_id);
-  } else {
-    m_members_by_id.clear();
-  }
+  for (auto &member:m_members_by_id)
+    member.populate_from_seq();
 
-  if (to_keep & keys) {
-    for (auto &member:m_keys)
-      member.populate_from_seq(keys);
-  } else {
-    m_keys.clear();
-  }
+  for (auto &member:m_keys)
+    member.populate_from_seq();
 
 }
 

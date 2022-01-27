@@ -212,33 +212,14 @@ private:
   void propagate_flags();
 
   /**
-   * @brief Represents which representations to keep in the function populate_from_seq.
-   *
-   * Used to remove unnecessary branches in the entity_properties tree.
-   *
-   * @var keep_in_propagate::all Keep all representations (only used at root level).
-   * @var keep_in_propagate::members_by_seq Keep only the m_members_by_seq representation.
-   * @var keep_in_propagate::members_by_id Keep only the m_members_by_id representation.
-   * @var keep_in_propagate::keys Keep only the m_keys representation.
-   */
-  enum keep_in_propagate {
-    members_by_seq = 1,
-    members_by_id = 2,
-    keys = 4,
-    all = members_by_seq+members_by_id+keys
-  };
-
-  /**
    * @brief
    * Other representations population function.
    *
    * Generates the m_members_by_id and m_keys representations from m_members_by_seq.
    * Will discard unnecessary representations as indicated by to_keep.
    * Is called recursively on all representations which are kept.
-   *
-   * @param[in] to_keep Which representations to keep.
    */
-  void populate_from_seq(keep_in_propagate to_keep = all);
+  void populate_from_seq();
 
   /**
    * @brief
