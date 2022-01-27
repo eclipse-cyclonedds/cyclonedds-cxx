@@ -11,7 +11,7 @@
 #
 function(IDLCXX_GENERATE)
   set(one_value_keywords TARGET)
-  set(multi_value_keywords FILES FEATURES)
+  set(multi_value_keywords FILES FEATURES INCLUDES)
   cmake_parse_arguments(
     IDLCXX "" "${one_value_keywords}" "${multi_value_keywords}" "" ${ARGN})
 
@@ -42,6 +42,13 @@ function(IDLCXX_GENERATE)
     list(APPEND IDLCXX_ARGS "-f" ${_feature})
   endforeach()
 
+  # add directories to include search list
+  if(IDLCXX_INCLUDES)
+    foreach(_dir ${IDLCXX_INCLUDES})
+      list(APPEND IDLCXX_INCLUDE_DIRS "-I" ${_dir})
+    endforeach()
+  endif()
+
   set(_dir ${CMAKE_CURRENT_BINARY_DIR})
   set(_target ${IDLCXX_TARGET})
   foreach(_file ${IDLCXX_FILES})
@@ -56,7 +63,7 @@ function(IDLCXX_GENERATE)
     add_custom_command(
       OUTPUT   "${_header}"
       COMMAND  CycloneDDS::idlc
-      ARGS     -l $<TARGET_FILE:CycloneDDS-CXX::idlcxx> ${IDLCXX_ARGS} ${_file}
+      ARGS     -l $<TARGET_FILE:CycloneDDS-CXX::idlcxx> ${IDLCXX_ARGS} ${IDLCXX_INCLUDE_DIRS} ${_file}
       DEPENDS  ${_files} CycloneDDS::idlc CycloneDDS-CXX::idlcxx)
   endforeach()
 
