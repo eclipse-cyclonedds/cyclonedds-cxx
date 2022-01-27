@@ -592,6 +592,19 @@ insert_array_primitives_copy(
   return IDL_RETCODE_OK;
 }
 
+static const idl_type_spec_t *
+resolve_root(
+  const idl_type_spec_t *type_spec)
+{
+  if (idl_is_alias(type_spec)) {
+    return resolve_root(((const idl_declarator_t*)type_spec)->node.parent);
+  } else if (idl_is_typedef(type_spec)) {
+    return resolve_root(((const idl_typedef_t*)type_spec)->type_spec);
+  } else {
+    return type_spec;
+  }
+}
+
 static idl_retcode_t
 process_entity(
   const idl_pstate_t *pstate,
@@ -616,13 +629,15 @@ process_entity(
       "      if (!streamer.finish_consecutive())\n"
       "        return false;\n";
 
+  const idl_type_spec_t *root_type_spec = resolve_root(type_spec);
+
   //unroll arrays
   if (idl_is_array(declarator)) {
     uint32_t n_arr = 0;
     const idl_literal_t* lit = (const idl_literal_t*)declarator->const_expr;
     idl_retcode_t ret = IDL_RETCODE_OK;
 
-    if (!idl_is_base_type(type_spec) &&
+    if (!idl_is_base_type(root_type_spec) &&
         multi_putf(streams, ALL, consec_start_fmt))
       return IDL_RETCODE_NO_MEMORY;
 
@@ -665,7 +680,7 @@ process_entity(
   }
 
   if (idl_is_array(declarator) &&
-      !idl_is_base_type(type_spec) &&
+      !idl_is_base_type(root_type_spec) &&
       multi_putf(streams, ALL, consec_finish_fmt))
       return IDL_RETCODE_NO_MEMORY;
 
