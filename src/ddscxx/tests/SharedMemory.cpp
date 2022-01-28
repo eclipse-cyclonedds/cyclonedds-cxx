@@ -152,7 +152,7 @@ public:
     if (this->participant == dds::core::null) {
       // configuration to enable shared memory communication
       static const std::string shm_config {
-        "<CycloneDDS><Domain><SharedMemory><Enable>true</Enable><SubQueueCapacity>256</SubQueueCapacity><SubHistoryRequest>16</SubHistoryRequest><PubHistoryCapacity>16</PubHistoryCapacity><LogLevel>verbose</LogLevel></SharedMemory></Domain></CycloneDDS>"};
+        "<CycloneDDS><Domain><SharedMemory><Enable>true</Enable><LogLevel>verbose</LogLevel></SharedMemory></Domain></CycloneDDS>"};
 
       this->participant = dds::domain::DomainParticipant(
         0,
