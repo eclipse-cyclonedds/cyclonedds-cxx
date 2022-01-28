@@ -30,7 +30,7 @@ following installed on your host:
  * C and C++ compilers (most commonly GCC on Linux, Visual Studio on Windows,
    Xcode on macOS);
  * [Git](https://git-scm.com/) version control system;
- * [CMake](https://cmake.org/download/), version 3.7 or later;
+ * [CMake](https://cmake.org/download/), version 3.10 or later;
  * [Eclipse Cyclone DDS](https://github.com/eclipse-cyclonedds/cyclonedds/)
 
 *Eclipse Cyclone DDS* has dependencies of its own, most notably Bison. To
