@@ -119,10 +119,11 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-# Preprocess headers to make the documentation more readable. The steps
-# involved have been converted from a Python script into CMake logic. This is
-# better solved in another way, but it will have to do for now.
 if(BUILD_DOCS)
+  find_package(Doxygen REQUIRED)
+
+  # Preprocess headers to make the documentation more readable.
+  set(script "${PROJECT_SOURCE_DIR}/src/ddscxx/documentation.cmake")
   set(input_dir "${CMAKE_CURRENT_SOURCE_DIR}/include")
   set(output_dir "${CMAKE_CURRENT_BINARY_DIR}/include")
   file(GLOB_RECURSE headers RELATIVE "${input_dir}" CONFIGURE_DEPENDS "include/*.hpp")
@@ -156,44 +157,7 @@ if(BUILD_DOCS)
     list(REMOVE_ITEM headers ${header})
   endforeach()
 
-  # Template class names that must be replaced.
-  set(templates
-    "TBuiltinTopic" "TDomainParticipant" "TEntity" "TInstanceHandle"
-    "TQosProvider" "TCondition" "TGuardCondtion" "TStatusCondition"
-    "TWaitSet" "TCorePolicy" "TQosPolicy" "TStatus" "TDomainParticipant"
-    "TCoherentSet" "TPublisher" "TSuspendedPublication" "TCoherentAccess"
-    "TDataReader" "TGenerationCount" "TQuery" "TRank" "TSample" "TSubscriber"
-    "TReadCondition" "TFilter" "TGuardCondition" "THolder" "TDHolder"
-    "TAnyDataReader" "TAnyTopic" "TAnyDataWriter"
-    # XTypes
-    "TAnnotation" "TCollectionTypes" "TDynamic" "TMember" "TStruct" "TType"
-    "TCollectionType" "TExtensibilityAnnotation" "TidAnnotation"
-    "TKeyAnnotation" "TPrimitiveType" "TSequenceType" "TStringType"
-    "TUnionForwardDeclaration" "TVerbatimAnnotation" "TBitBoundAnnotation"
-    "TBitsetAnnotation" "TMapType" "TMustUnderstandAnnotation"
-    "TNestedAnnotation" "TIdAnnotation" "TUnionForwardDeclaration"
-    # QoS
-    "TUserData" "TGroupData" "TTopic" "TTransportPriority" "TLifespan"
-    "TDeadline" "TLatencyBudget" "TTimeBasedFilter" "TPartition" "TOwnership"
-    "TWriterDataLifecycle" "TReaderDataLifecycle" "TDurability" "TPresentation"
-    "TReliability" "TDestinationOrder" "THistory" "TResourceLimits"
-    "TLiveliness" "TDurabilityService" "TShare" "TProductData"
-    "TSubscriptionKey" "TDataRepresentation" "TRequestedDeadlineMissedStatus"
-    "TInconsistentTopicStatus" "TOffered" "TRequested"
-    # TBuiltinStuff
-    "TSubscription" "TPublication" "TParticipant" "TTopicBuiltinTopicData"
-    "TCM" "TBuiltinTopicTypes" "TBytesTopicType" "TKeyedBytesTopicType"
-    "TKeyedStringTopicType" "TStringTopicType"
-    # Streams
-    "TStreamDataReader" "TStreamDataWriter" "TCorePolicy" "TStreamSample"
-    "TStreamFlush")
-
-  # Sequences with DELAGATE that must be removed.
-  set(delegates
-    "template <typename DELEGATE>" "<typename DELEGATE>" "<D>" "<DELEGATE>"
-    "< DELEGATE >" "template <typename D>" "< DELEGATE<T> >"
-    ", template <typename Q> class DELEGATE" ", DELEGATE")
-
+  set(input_files)
   foreach(input ${headers})
     set(output "${input}")
     foreach(fromto ${rename})
@@ -202,32 +166,16 @@ if(BUILD_DOCS)
         break()
       endif()
     endforeach()
-
-    file(READ "${input_dir}/${input}" content)
-
-    # Rename the struct to the typedef and remove the typedef from the sources
-    # for readability.
-    set(safe_enum "typedef +dds::core::safe_enum<([a-zA-Z0-9_]+)> +([a-zA-Z0-9]+)")
-    string(REGEX MATCHALL "${safe_enum};" typedefs "${content}")
-    foreach(typedef ${typedefs})
-      string(REGEX REPLACE "${safe_enum}" "\\1" struct_name "${typedef}")
-      string(REGEX REPLACE "${safe_enum}" "\\2" typedef_name "${typedef}")
-      string(REPLACE "${struct_name}" "${typedef_name}" content "${content}")
-      string(REGEX REPLACE "${safe_enum};" "" content "${content}")
-    endforeach()
-
-    foreach(search ${templates})
-      string(SUBSTRING ${search} 1 -1 replace)
-      string(REPLACE ${search} ${replace} content "${content}")
-    endforeach()
-    foreach(search ${delegates})
-      string(REPLACE ${search} "" content "${content}")
-    endforeach()
-    file(WRITE "${output_dir}/${output}" "${content}")
+    add_custom_command(
+      OUTPUT "${output_dir}/${output}"
+      COMMAND "${CMAKE_COMMAND}" -DINPUT_FILE="${input_dir}/${input}"
+                                 -DOUTPUT_DIRECTORY="${output_dir}"
+                                 -DOUTPUT_FILE="${output}"
+                                 -P "${script}"
+      DEPENDS "${input_dir}/${input}" "${script}")
     list(APPEND input_files "${output_dir}/${output}")
   endforeach()
 
-  find_package(Doxygen REQUIRED)
   set(DOXYGEN_PROJECT_NAME "Eclipse CycloneDDS C++ API Reference Guide")
   set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_CURRENT_BINARY_DIR}/include")
   set(DOXYGEN_EXCLUDE_PATTERNS
