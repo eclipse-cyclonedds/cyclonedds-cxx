@@ -115,9 +115,12 @@ public:
    *
    * This function inserts a d-header placeholder before the start of the consecutive objects.
    *
+   *@param[in] is_array True when the consecutive entries is an array, false when it is a sequence.
+   *@param[in] primitive Whether the consecutive entities are primitives (base types, not enums, strings, typedefs and arrays are resolved though)
+   *
    * @return Whether the d-header was inserted correctly.
    */
-  bool start_consecutive();
+  bool start_consecutive(bool is_array, bool primitive);
 
   /**
    * @brief
@@ -130,6 +133,10 @@ public:
   bool finish_consecutive();
 
 private:
+  typedef struct consecutives {
+    bool is_array;
+    bool d_header_present;
+  } consecutives_t;
 
   static const uint32_t bytes_1;          /**< length field code indicating length is 1 byte*/
   static const uint32_t bytes_2;          /**< length field code indicating length is 2 bytes*/
@@ -144,6 +151,7 @@ private:
   static const uint32_t must_understand;  /**< must understand member field flag*/
 
   DDSCXX_WARNING_MSVC_OFF(4251)
+  std::stack<consecutives_t> m_consecutives; /**< stack of consecutive entries, uses to determine whether or not to finish a d_header*/
   std::stack<size_t> m_delimiters;        /**< locations of sequence delimiters */
   DDSCXX_WARNING_MSVC_ON(4251)
 

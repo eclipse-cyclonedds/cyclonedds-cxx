@@ -497,7 +497,7 @@ unroll_sequence(const idl_pstate_t* pstate,
   uint32_t maximum = seq->maximum;
 
   static const char *consec_start_fmt =
-      "      if (!streamer.start_consecutive())\n"
+      "      if (!streamer.start_consecutive(false, %1$s))\n"
       "        return false;\n";
   static const char *consec_finish_fmt =
       "      if (!streamer.finish_consecutive())\n"
@@ -518,9 +518,9 @@ unroll_sequence(const idl_pstate_t* pstate,
     "      {\n"
     "      uint32_t se_%1$u = %2$u;\n";
 
-  if (!idl_is_base_type(seq->type_spec) &&
-      multi_putf(streams, ALL, consec_start_fmt))
-      return IDL_RETCODE_NO_MEMORY;
+  const idl_type_spec_t *root_type_spec = idl_strip(seq->type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
+  if (multi_putf(streams, ALL, consec_start_fmt, idl_is_base_type(root_type_spec) && !idl_is_array(root_type_spec) ? "true" : "false"))
+    return IDL_RETCODE_NO_MEMORY;
 
   if (multi_putf(streams, READ, fmt1, depth, read_accessor)
    || multi_putf(streams, (WRITE | MOVE), fmt1, depth, accessor)
@@ -537,9 +537,8 @@ unroll_sequence(const idl_pstate_t* pstate,
   if (multi_putf(streams, ALL, "      }  //end sequence %1$lu\n", depth))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (!idl_is_base_type(seq->type_spec) &&
-       multi_putf(streams, ALL, consec_finish_fmt))
-      return IDL_RETCODE_NO_MEMORY;
+  if (multi_putf(streams, ALL, consec_finish_fmt))
+    return IDL_RETCODE_NO_MEMORY;
 
   if (maximum == 0
    && putf(&streams->max, "      streamer.position(SIZE_MAX);\n"))
@@ -548,25 +547,7 @@ unroll_sequence(const idl_pstate_t* pstate,
   return IDL_RETCODE_OK;
 }
 
-static idl_retcode_t
-unroll_array(
-  struct streams* streams,
-  char *accessor,
-  uint32_t array_depth)
-{
-  if (array_depth) {
-    static const char* afmt = "      for ({C}auto & a_%1$u:a_%2$u)\n";
-    if (multi_putf(streams, ALL, afmt, array_depth+1, array_depth))
-      return IDL_RETCODE_NO_MEMORY;
-  } else {
-    static const char* afmt = "      for ({C}auto & a_%1$u:%2$s)\n";
-    if (multi_putf(streams, ALL, afmt, array_depth+1, accessor))
-      return IDL_RETCODE_NO_MEMORY;
-  }
-
-  return IDL_RETCODE_OK;
-}
-
+/* TODO!!! add writing of blocks of primitives/enums back in
 static idl_retcode_t
 insert_array_primitives_copy(
   struct streams *streams,
@@ -590,20 +571,7 @@ insert_array_primitives_copy(
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
-}
-
-static const idl_type_spec_t *
-resolve_root(
-  const idl_type_spec_t *type_spec)
-{
-  if (idl_is_alias(type_spec)) {
-    return resolve_root(((const idl_declarator_t*)type_spec)->node.parent);
-  } else if (idl_is_typedef(type_spec)) {
-    return resolve_root(((const idl_typedef_t*)type_spec)->type_spec);
-  } else {
-    return type_spec;
-  }
-}
+}*/
 
 static idl_retcode_t
 process_entity(
@@ -623,44 +591,41 @@ process_entity(
     return IDL_RETCODE_NO_MEMORY;
 
   static const char *consec_start_fmt =
-      "      if (!streamer.start_consecutive())\n"
+      "      if (!streamer.start_consecutive(true, %1$s))\n"
       "        return false;\n";
   static const char *consec_finish_fmt =
       "      if (!streamer.finish_consecutive())\n"
       "        return false;\n";
+  static const char *array_iterate1 =
+       "      for ({C}auto & a_%1$u:%2$s) {  //array depth %1$u\n";
+  static const char *array_iterate2 =
+       "      for ({C}auto & a_%1$u:a_%2$u) {  //array depth %1$u\n";
+  static const char *array_close =
+       "      }  //array depth %1$u\n";
 
-  const idl_type_spec_t *root_type_spec = resolve_root(type_spec);
+  const idl_type_spec_t *root_type_spec = idl_strip(type_spec, 0);
 
   //unroll arrays
+  uint32_t n_arr = 0;
   if (idl_is_array(declarator)) {
-    uint32_t n_arr = 0;
     const idl_literal_t* lit = (const idl_literal_t*)declarator->const_expr;
-    idl_retcode_t ret = IDL_RETCODE_OK;
-
-    if (!idl_is_base_type(root_type_spec) &&
-        multi_putf(streams, ALL, consec_start_fmt))
+    if (multi_putf(streams, ALL, consec_start_fmt, idl_is_base_type(root_type_spec) ? "true" : "false"))
       return IDL_RETCODE_NO_MEMORY;
 
     while (lit) {
-      const idl_literal_t* next = (const idl_literal_t*)((const idl_node_t*)lit)->next;
-
-      if (next == NULL &&
-          (idl_is_base_type(type_spec) || idl_is_enum(type_spec))) {
-
-        if ((ret = insert_array_primitives_copy(streams, declarator, lit, type_spec, n_arr, accessor)) ||
-            (idl_is_enum(type_spec) &&
-            multi_putf(streams, ALL, consec_finish_fmt)))
-            ret = IDL_RETCODE_NO_MEMORY;
-          return ret;
-      } else if ((ret = unroll_array(streams, accessor, n_arr++)) != IDL_RETCODE_OK) {
-        return ret;
+      const idl_literal_t* next = idl_next(lit);
+      if (n_arr == 0) {
+        if (multi_putf(streams, ALL, array_iterate1, n_arr+1, accessor))  //write iteration over initial array
+          return IDL_RETCODE_NO_MEMORY;
+      } else {
+        if (multi_putf(streams, ALL, array_iterate2, n_arr+1, n_arr))  //write iteration over deeper array
+          return IDL_RETCODE_NO_MEMORY;
       }
-
+      n_arr++;
       lit = next;
     }
 
-    //update accessor to become "a_$n_arr$"
-    if (IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)
+    if (IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)  //update accessor to become "a_$n_arr$"
       return IDL_RETCODE_NO_MEMORY;
   }
 
@@ -679,12 +644,15 @@ process_entity(
       return IDL_RETCODE_NO_MEMORY;
   }
 
-  if (idl_is_array(declarator) &&
-      !idl_is_base_type(root_type_spec) &&
-      multi_putf(streams, ALL, consec_finish_fmt))
+  while (n_arr) {
+    if (multi_putf(streams, ALL, array_close, n_arr--))
       return IDL_RETCODE_NO_MEMORY;
+  }
 
-  return IDL_RETCODE_OK;
+  if (idl_is_array(declarator))
+    return multi_putf(streams, ALL, consec_finish_fmt);
+  else
+    return IDL_RETCODE_OK;
 }
 
 static idl_extensibility_t
@@ -710,8 +678,11 @@ generate_entity_properties(
   struct streams *streams,
   uint32_t member_id)
 {
-  while (idl_is_sequence(type_spec)) {
-    type_spec = ((const idl_sequence_t*)type_spec)->type_spec;
+  while (idl_is_alias(type_spec) || idl_is_sequence(type_spec)) {
+    if (idl_is_alias(type_spec))
+      type_spec = idl_strip(type_spec, 0);
+    if (idl_is_sequence(type_spec))
+      type_spec = ((const idl_sequence_t*)type_spec)->type_spec;
   }
 
   const char *opt = is_optional(type_spec) ? "true" : "false";

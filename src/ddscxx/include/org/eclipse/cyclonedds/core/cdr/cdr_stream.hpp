@@ -469,11 +469,15 @@ public:
      * @brief
      * Function declaration for starting an array or sequence of non-primitive types.
      *
+     * This function is used to keep track of whether delimiters need to be and have been written to the stream.
      * This function is an effective no-op for all streamers except xcdr_v2.
+     *
+     * @param[in] is_array True when the consecutive entries is an array, false when it is a sequence.
+     * @param[in] primitive Whether the consecutive entities are primitives (base types, not enums, strings, typedefs and arrays are resolved though)
      *
      * @return Always true.
      */
-    virtual bool start_consecutive() {return true;}
+    virtual bool start_consecutive(bool is_array, bool primitive) { (void) is_array; (void) primitive; return true;}
 
     /**
      * @brief

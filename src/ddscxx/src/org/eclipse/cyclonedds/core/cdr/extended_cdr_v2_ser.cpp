@@ -59,6 +59,7 @@ bool xcdr_v2_stream::start_member(entity_properties_t &prop, bool is_set)
       break;
   }
 
+  m_consecutives.push({false, false});
   record_member_start(prop);
   return true;
 }
@@ -80,6 +81,8 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
     default:
       break;
   }
+
+  m_consecutives.pop();
 
   return true;
 }
@@ -278,25 +281,41 @@ bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
   return !abort_status() && props.is_present;
 }
 
-bool xcdr_v2_stream::start_consecutive()
+bool xcdr_v2_stream::start_consecutive(bool is_array, bool primitive)
 {
   if (m_key)
     return true;
 
-  switch (m_mode) {
-    case stream_mode::write:
-      return write_d_header();
-      break;
-    case stream_mode::move:
-    case stream_mode::max:
-      return move_d_header();
-      break;
-    case stream_mode::read:
-      return read_d_header();
-      break;
-    default:
-      assert(0);
+  bool d_hdr_necessary =  false;
+  if (!primitive) {
+    if (is_array) {
+      d_hdr_necessary = m_consecutives.size() == 0 || !m_consecutives.top().is_array;
+    } else {
+      d_hdr_necessary = true;
+    }
   }
+
+  if (d_hdr_necessary) {
+    switch (m_mode) {
+      case stream_mode::write:
+        if (!write_d_header())
+          return false;
+        break;
+      case stream_mode::move:
+      case stream_mode::max:
+        if (!move_d_header())
+          return false;
+        break;
+      case stream_mode::read:
+        if (!read_d_header())
+          return false;
+        break;
+      default:
+        assert(0);
+    }
+  }
+
+  m_consecutives.push({is_array, d_hdr_necessary});
 
   return true;
 }
@@ -306,18 +325,24 @@ bool xcdr_v2_stream::finish_consecutive()
   if (m_key)
     return true;
 
-  switch (m_mode) {
-    case stream_mode::write:
-      return finish_d_header();
-      break;
-    case stream_mode::move:
-    case stream_mode::max:
-      break;
-    case stream_mode::read:
-      m_buffer_end.pop();
-      break;
-    default:
-      assert(0);
+  assert(m_consecutives.size());
+  bool d_hdr = m_consecutives.top().d_header_present;
+  m_consecutives.pop();
+  if (d_hdr) {
+    switch (m_mode) {
+      case stream_mode::write:
+        if (!finish_d_header())
+          return false;
+        break;
+      case stream_mode::move:
+      case stream_mode::max:
+        break;
+      case stream_mode::read:
+        m_buffer_end.pop();
+        break;
+      default:
+        assert(0);
+    }
   }
 
   return true;
