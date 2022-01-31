@@ -284,21 +284,21 @@ bool deserialize_sample_from_buffer(void *buffer,
     case encoding_version::basic_cdr:
       {
         basic_cdr_stream str(end);
-        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz);
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
         return read(str, sample, data_kind == SDK_KEY);
       }
       break;
     case encoding_version::xcdr_v1:
       {
         xcdr_v1_stream str(end);
-        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz);
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
         return read(str, sample, data_kind == SDK_KEY);
       }
       break;
     case encoding_version::xcdr_v2:
       {
         xcdr_v2_stream str(end);
-        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz);
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
         return read(str, sample, data_kind == SDK_KEY);
       }
       break;
