@@ -1094,8 +1094,6 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
   static const char *sfmt =
     "  if (!streamer.start_struct(props))\n"
     "    return false;\n";
-  static const char *vfmt =
-    "  (void) props;\n";
 
   const char *estr = NULL;
   switch (get_extensibility(node)) {
@@ -1113,7 +1111,7 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
    || putf(&streams->props, pfmt1, name, pfmt2)
    || idl_fprintf(streams->generator->header.handle, pfmt1, name, ";\n\n") < 0
    || (estr && putf(&streams->props, "  props.e_ext = extensibility::%1$s;\n", estr))
-   || multi_putf(streams, ALL, idl_is_union(node) ? vfmt : sfmt))
+   || multi_putf(streams, ALL, sfmt))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1142,12 +1140,9 @@ print_switchbox_open(struct streams *streams)
 
 static idl_retcode_t
 print_constructed_type_close(
-  struct streams *streams,
-  const idl_node_t *node)
+  struct streams *streams)
 {
-  const char *fmt = idl_is_union(node) ?
-    "  return true;\n"
-    "}\n\n" :
+  const char *fmt =
     "  return streamer.finish_struct(props);\n"
     "}\n\n";
   static const char *pfmt =
@@ -1263,7 +1258,7 @@ process_struct(
 
   if (revisit) {
     if (print_switchbox_close(user_data)
-     || print_constructed_type_close(user_data, node)
+     || print_constructed_type_close(user_data)
      || print_entry_point_functions(streams, fullname))
       return IDL_RETCODE_NO_MEMORY;
 
@@ -1336,7 +1331,7 @@ process_union(
   if (revisit) {
     if (multi_putf(streams, MAX, pfmt)
      || multi_putf(streams, MOVE | MAX, mfmt)
-     || print_constructed_type_close(user_data, node))
+     || print_constructed_type_close(user_data))
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);
