@@ -122,8 +122,6 @@ public:
 
             this->timebased_qos = this->subscriber.default_datareader_qos();
             this->timebased_qos.policy(dds::core::policy::TimeBasedFilter(dds::core::Duration(10, 0)));
-            //this policy is implicitly set when no datarepresentation is selected
-            this->timebased_qos.policy(dds::core::policy::DataRepresentation({dds::core::policy::DataRepresentationId::XCDR1}));
         }
     }
 
