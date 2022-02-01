@@ -1689,22 +1689,25 @@ void DataRepresentationDelegate::set_iso_policy(const dds_qos_t* qos)
 
 void DataRepresentationDelegate::set_c_policy(dds_qos_t* qos) const
 {
-    const auto value = value_;
-    std::vector<dds_data_representation_id_t> reps;
-    for (const auto & v:value) {
-        switch (v.underlying()) {
-        case dds::core::policy::DataRepresentationId::XCDR1:
-            reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XCDR1));
-            break;
-        case dds::core::policy::DataRepresentationId::XML:
-            reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XML));
-            break;
-        case dds::core::policy::DataRepresentationId::XCDR2:
-            reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XCDR2));
-            break;
+    if(value_.size())
+    {
+        const auto value = value_;
+        std::vector<dds_data_representation_id_t> reps;
+        for (const auto & v:value) {
+            switch (v.underlying()) {
+            case dds::core::policy::DataRepresentationId::XCDR1:
+                reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XCDR1));
+                break;
+            case dds::core::policy::DataRepresentationId::XML:
+                reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XML));
+                break;
+            case dds::core::policy::DataRepresentationId::XCDR2:
+                reps.push_back(static_cast<dds_data_representation_id_t>(DDS_DATA_REPRESENTATION_XCDR2));
+                break;
+            }
         }
+        dds_qset_data_representation(qos, static_cast<uint32_t>(reps.size()), reps.data());
     }
-    dds_qset_data_representation(qos, static_cast<uint32_t>(reps.size()), reps.data());
 }
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
