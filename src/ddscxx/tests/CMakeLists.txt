@@ -20,6 +20,7 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
   data/EntityProperties.idl
   data/EntityProperties_pragma.idl
   data/ExtendedTypesModels.idl
+  data/RegressionModels.idl
   WARNINGS no-implicit-extensibility)
 
 configure_file(
@@ -59,7 +60,8 @@ set(sources
   Util.cpp
   CDRStreamer.cpp
   GeneratedEntities.cpp
-  ExtendedTypes.cpp)
+  ExtendedTypes.cpp
+  Regression.cpp)
 
 if(ENABLE_SHM)
   # Add shared memory tests
