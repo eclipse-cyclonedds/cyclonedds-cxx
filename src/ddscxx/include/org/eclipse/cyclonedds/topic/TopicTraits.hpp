@@ -28,6 +28,7 @@
 #include "dds/ddsi/ddsi_typelib.h"
 #include "dds/ddsi/ddsi_cdrstream.h"
 #include "org/eclipse/cyclonedds/core/cdr/cdr_enums.hpp"
+#include "dds/features.hpp"
 
 struct ddsi_sertype;
 template <typename T, class S> class ddscxx_sertype;
@@ -162,7 +163,7 @@ public:
       return extensibility::ext_final;
     }
 
-#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+#ifdef DDSCXX_HAS_TYPE_DISCOVERY
     /**
      * @brief Returns the typeid for TOPIC.
      *
