@@ -203,7 +203,7 @@ emit_traits(
     "  return extensibility::ext_%2$s;\n"
     "}\n\n";
   static const char *type_info_hdr1 =
-    "#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT\n"
+    "#ifdef DDSCXX_HAS_TYPE_DISCOVERY\n"
     "template<> constexpr const unsigned int TopicTraits<%1$s>::type_map_blob_sz = %2$u;\n"
     "template<> constexpr const unsigned int TopicTraits<%1$s>::type_info_blob_sz = %3$u;\n"
     "template<> constexpr const unsigned char TopicTraits<%1$s>::type_map_blob[] = {\n";
@@ -240,7 +240,7 @@ emit_traits(
       write_blob(gen->header.handle, blobs.typemap, blobs.typemap_size) ||
       idl_fprintf(gen->header.handle, type_info_hdr2, name) < 0 ||
       write_blob(gen->header.handle, blobs.typeinfo, blobs.typeinfo_size) ||
-      idl_fprintf(gen->header.handle, " };\n #endif //OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT\n\n") < 0)
+      idl_fprintf(gen->header.handle, " };\n#endif //DDSCXX_HAS_TYPE_DISCOVERY\n\n") < 0)
     ret = IDL_RETCODE_NO_MEMORY;
 
   //cleanup typeinfo_typemap blobs

@@ -4,4 +4,10 @@
 /* Whether or not support for shared memory is included */
 #cmakedefine DDSCXX_HAS_SHM @DDSCXX_HAS_SHM@
 
+/* Whether or not support for type discovery is included */
+#cmakedefine DDSCXX_HAS_TYPE_DISCOVERY @DDSCXX_HAS_TYPE_DISCOVERY@
+
+/* Whether or not support for topic discovery is included */
+#cmakedefine DDSCXX_HAS_TOPIC_DISCOVERY @DDSCXX_HAS_TOPIC_DISCOVERY@
+
 #endif /* __OMG_DDS_DDSCXX_FEATURES_HPP__ */
