@@ -675,8 +675,8 @@ static idl_retcode_t
 generate_entity_properties(
   const idl_node_t *parent,
   const idl_type_spec_t *type_spec,
-  struct streams *streams,
-  uint32_t member_id)
+  const idl_declarator_t *decl,
+  struct streams *streams)
 {
   while (idl_is_alias(type_spec) || idl_is_sequence(type_spec)) {
     if (idl_is_alias(type_spec))
@@ -685,7 +685,7 @@ generate_entity_properties(
       type_spec = ((const idl_sequence_t*)type_spec)->type_spec;
   }
 
-  const char *opt = is_optional(type_spec) ? "true" : "false";
+  const char *opt = is_optional(decl) ? "true" : "false";
   if (idl_is_struct(type_spec)
    || idl_is_union(type_spec)) {
     char *type = NULL;
@@ -695,10 +695,10 @@ generate_entity_properties(
     /* structs and unions need to set their properties as members through the set_member_props
      * function as they are copied from the static references of the class*/
     if (putf(&streams->props, "  props.m_members_by_seq.push_back(get_type_props<%1$s>());\n"
-                              "  props.m_members_by_seq.back().set_member_props(%2$"PRIu32",%3$s);\n", type, member_id, opt))
+                              "  props.m_members_by_seq.back().set_member_props(%2$"PRIu32",%3$s);\n", type, decl->id.value, opt))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (putf(&streams->props, "  props.m_members_by_seq.push_back(entity_properties_t(%1$"PRIu32",%2$s));\n", member_id, opt))
+    if (putf(&streams->props, "  props.m_members_by_seq.push_back(entity_properties_t(%1$"PRIu32",%2$s));\n", decl->id.value, opt))
       return IDL_RETCODE_NO_MEMORY;
   }
 
@@ -879,7 +879,7 @@ process_member(
     if (is_optional(mem))
       loc.type |= OPTIONAL;
 
-    if (generate_entity_properties(mem->node.parent, type_spec, streams, declarator->id.value))
+    if (generate_entity_properties(mem->node.parent, type_spec, declarator, streams))
       return IDL_RETCODE_NO_MEMORY;
 
     // only use the @key annotations when you do not use the keylist

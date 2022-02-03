@@ -26,5 +26,14 @@ struct s_u {
   @key V c;
 };
 
+typedef long td_l;
+
+@final struct s_o_td {
+  @optional td_l c;
+};
+
+@final struct s_o {
+  @optional long c;
+};
 
 };

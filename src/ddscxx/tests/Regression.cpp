@@ -115,3 +115,28 @@ TEST_F(Regression, member_completeness_unions)
 
   readwrite_test(model, union_bytes, xcdr_v2_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, optional_of_typedef)
+{
+  bytes s_o_absent_bytes =
+  {
+    0x00                    //s_o.present(false)
+  };
+  bytes s_o_present_bytes =
+  {
+    0x01, 0x00, 0x00, 0x00, //s_o.present(true)
+    0x78, 0x56, 0x34, 0x12  //s_o.c(0x12345678)
+  };
+
+  s_o     s_1;  //optional of primitive
+  s_o_td  s_2;  //optional of typedeffed primitive
+
+  readwrite_test(s_1, s_o_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s_2, s_o_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+
+  s_1.c() = 0x12345678;
+  s_2.c() = s_1.c();
+
+  readwrite_test(s_1, s_o_present_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s_2, s_o_present_bytes, xcdr_v2_stream(endianness::little_endian));
+}
