@@ -140,3 +140,52 @@ TEST_F(Regression, optional_of_typedef)
   readwrite_test(s_1, s_o_present_bytes, xcdr_v2_stream(endianness::little_endian));
   readwrite_test(s_2, s_o_present_bytes, xcdr_v2_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, optionals_delimiters_unbalance)
+{
+  bytes s_o_2_all_absent_bytes =
+  {
+    0x00, 0x00, 0x00, 0x00,  //s_o_2.dheader(0)
+  };
+  bytes s_o_2_c_absent_bytes =
+  {
+    0x0C, 0x00, 0x00, 0x00,  //s_o_2.dheader(12)
+    0x01, 0x00, 0x00, 0x40,  //s_o_2.d.emheader(id = 1, lc = nextint)
+    0x04, 0x00, 0x00, 0x00,  //s_o_2.d.emheader.nextint(4)
+    0xBB, 0x00, 0x00, 0x00   //s_o_2.d(187)
+  };
+  bytes s_o_2_d_absent_bytes =
+  {
+    0x0C, 0x00, 0x00, 0x00,  //s_o_2.dheader(12)
+    0x00, 0x00, 0x00, 0x40,  //s_o_2.c.emheader(id = 0, lc = nextint)
+    0x04, 0x00, 0x00, 0x00,  //s_o_2.c.emheader.nextint(4)
+    0xAA, 0x00, 0x00, 0x00,  //s_o_2.c(170)
+  };
+  bytes s_o_2_all_present_bytes =
+  {
+    0x18, 0x00, 0x00, 0x00,  //s_o_2.dheader(24)
+    0x00, 0x00, 0x00, 0x40,  //s_o_2.c.emheader(id = 0, lc = nextint)
+    0x04, 0x00, 0x00, 0x00,  //s_o_2.c.emheader.nextint(4)
+    0xAA, 0x00, 0x00, 0x00,  //s_o_2.c(170)
+    0x01, 0x00, 0x00, 0x40,  //s_o_2.d.emheader(id = 1, lc = nextint)
+    0x04, 0x00, 0x00, 0x00,  //s_o_2.d.emheader.nextint(4)
+    0xBB, 0x00, 0x00, 0x00   //s_o_2.d(187)
+  };
+
+  s_o_2 s;
+
+  readwrite_test(s, s_o_2_all_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+
+  s.d() = 187;
+
+  readwrite_test(s, s_o_2_c_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+
+  s.d().reset();
+  s.c() = 170;
+
+  readwrite_test(s, s_o_2_d_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+
+  s.d() = 187;
+
+  readwrite_test(s, s_o_2_all_present_bytes, xcdr_v2_stream(endianness::little_endian));
+}

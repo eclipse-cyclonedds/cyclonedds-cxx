@@ -36,4 +36,8 @@ typedef long td_l;
   @optional long c;
 };
 
+@topic @mutable struct s_o_2 {
+  @optional long c;
+  @optional long d;
+};
 };

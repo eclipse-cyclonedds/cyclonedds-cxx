@@ -52,7 +52,7 @@ bool xcdr_v2_stream::start_member(entity_properties_t &prop, bool is_set)
       }
       break;
     case stream_mode::read:
-      if (em_header_necessary(prop) && is_set)
+      if (em_header_necessary(prop))
         m_buffer_end.push(position() + prop.e_sz);
       break;
     default:
@@ -75,7 +75,7 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
       }
       break;
     case stream_mode::read:
-      if (em_header_necessary(prop) && is_set)
+      if (em_header_necessary(prop))
         m_buffer_end.pop();
       break;
     default:
