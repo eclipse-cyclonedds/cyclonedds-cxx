@@ -189,3 +189,15 @@ TEST_F(Regression, optionals_delimiters_unbalance)
 
   readwrite_test(s, s_o_2_all_present_bytes, xcdr_v2_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, propagate_xtypes_version_reqs)
+{
+  using org::eclipse::cyclonedds::topic::TopicTraits;
+  using org::eclipse::cyclonedds::topic::encoding_version;
+  using org::eclipse::cyclonedds::topic::extensibility;
+
+  ASSERT_EQ(TopicTraits<td_1>::getExtensibility(), extensibility::ext_appendable);
+  ASSERT_EQ(TopicTraits<td_1>::minXCDRVersion(), encoding_version::xcdr_v2);
+  ASSERT_EQ(TopicTraits<td_3>::getExtensibility(), extensibility::ext_final);
+  ASSERT_EQ(TopicTraits<td_3>::minXCDRVersion(), encoding_version::xcdr_v2);
+}

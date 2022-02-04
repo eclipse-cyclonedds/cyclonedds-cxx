@@ -40,4 +40,15 @@ typedef long td_l;
   @optional long c;
   @optional long d;
 };
+
+@nested @appendable struct td_1 {
+  long l;
+};
+
+typedef sequence<td_1> td_2;
+
+@topic @final struct td_3 {
+  td_2 c;
+};
+
 };

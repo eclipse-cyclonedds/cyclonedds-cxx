@@ -48,6 +48,10 @@ static bool req_xtypes(const void *node)
       if (req_xtypes(mem))
         return true;
     }
+  } else if (idl_is_alias(node)) {
+    return req_xtypes(idl_type_spec(idl_parent(node)));
+  } else if (idl_is_sequence(node)) {
+    return req_xtypes(((const idl_sequence_t*)node)->type_spec);
   } else if (idl_is_union(node)) {
     const idl_union_t *un = (const idl_union_t*)node;
 
