@@ -1,4 +1,5 @@
 /*
+ * Copyright(c) 2022 ZettaScale Technology and others
  * Copyright(c) 2020 ADLINK Technology Limited and others
  *
  * This program and the accompanying materials are made available under the
@@ -433,6 +434,7 @@ void ddscxx_serdata<T>::populate_hash()
     memcpy(&(hash), key().value, 4);
   }
 
+  hash ^= type->serdata_basehash;
   hash_populated = true;
 }
 
