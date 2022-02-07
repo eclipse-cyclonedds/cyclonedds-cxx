@@ -1,0 +1,49 @@
+module Entity_testing {
+  struct P1_u {
+    char a;
+    char b;
+  };
+  #pragma keylist P1_u
+
+  struct P1_k {
+    char a;
+    char b;
+  };
+  #pragma keylist P1_k b
+
+  struct P2_u_u {
+    P1_u a;
+    P1_u b;
+  };
+  #pragma keylist P2_u_u
+
+  struct P2_k_u {
+    P1_u a;
+    P1_u b;
+  };
+  #pragma keylist P2_k_u b.a
+
+  struct P2_k_k {
+    P1_k a;
+    P1_k b;
+  };
+  #pragma keylist P2_k_k a.b
+
+  struct P3_u_u {
+    P2_u_u a;
+    P2_u_u b;
+  };
+  #pragma keylist P3_u_u
+
+  struct P3_k_u {
+    P2_k_u a;
+    P2_k_u b;
+  };
+  #pragma keylist P3_k_u a.a.a a.b.a b.a.a b.b.a
+
+  struct P3_k_k {
+    P2_k_k a;
+    P2_k_k b;
+  };
+  #pragma keylist P3_k_k a.a.b a.b.b b.a.b b.b.b
+};

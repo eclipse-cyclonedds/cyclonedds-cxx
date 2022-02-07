@@ -17,7 +17,6 @@
 #include <cstring>
 #include <vector>
 #include <atomic>
-#include <limits>
 
 #include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
@@ -25,6 +24,9 @@
 #include "dds/ddsi/q_xmsg.h"
 #include "dds/ddsi/ddsi_serdata.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
+#include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v1_ser.hpp"
+#include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v2_ser.hpp"
+#include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 #include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 #include "dds/features.hpp"
@@ -34,33 +36,41 @@
 #endif
 
 constexpr size_t CDR_HEADER_SIZE = 4U;
+#define BO_LITTLE   0X01
+#define PLAIN_CDR   0x00
+#define PL_CDR      0x02
+#define PLAIN_CDR2  0x06
+#define D_CDR       0x08
+#define PL_CDR2     0x0A
 
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
-using org::eclipse::cyclonedds::core::cdr::swap_necessary;
+using org::eclipse::cyclonedds::core::cdr::cdr_stream;
 using org::eclipse::cyclonedds::core::cdr::basic_cdr_stream;
+using org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream;
+using org::eclipse::cyclonedds::core::cdr::xcdr_v2_stream;
+using org::eclipse::cyclonedds::topic::extensibility;
+using org::eclipse::cyclonedds::topic::encoding_version;
+using org::eclipse::cyclonedds::topic::TopicTraits;
 
-template<class streamer, typename T>
-bool to_key(streamer& str, const T& tokey, ddsi_keyhash_t& hash)
+template<typename T>
+bool to_key(const T& tokey, ddsi_keyhash_t& hash)
 {
-  str.reset_position();
-  key_move(str, tokey);
+  basic_cdr_stream str(endianness::big_endian);
+  if (!move(str, tokey, true))
+    return false;
   size_t sz = str.position();
   size_t padding = 16 - sz % 16;
   if (sz != 0 && padding == 16) padding = 0;
   std::vector<unsigned char> buffer(sz + padding);
   memset(buffer.data() + sz, 0x0, padding);
-  str.set_buffer(buffer.data());
-  /* TODO: what is key endianness to be used here?
-   * since, this may be different between nodes, and if this value is used
-   * for global lookups or the like, this
-   * may cause discrepancies. */
-  key_write(str, tokey);
+  str.set_buffer(buffer.data(), sz);
+  if (!write(str, tokey, true))
+    return false;
   static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
   if (fptr == NULL)
   {
-    str.set_buffer(nullptr);
-    key_max(str, tokey);
+    max(str, tokey, true);
     if (str.position() <= 16)
     {
       //bind to unmodified function which just copies buffer into the keyhash
@@ -85,6 +95,171 @@ static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
   return static_cast<const void*>(static_cast<const unsigned char*>(ptr) + n);
 }
 
+template<typename T>
+bool write_header(void *buffer)
+{
+  memset(buffer, 0x0, 4);
+
+  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
+
+  switch (TopicTraits<T>::getExtensibility()) {
+    case extensibility::ext_final:
+      if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
+        *ptr = PLAIN_CDR;
+      else
+        *ptr = PLAIN_CDR2;
+      break;
+    case extensibility::ext_appendable:
+      *ptr = D_CDR;
+      break;
+    case extensibility::ext_mutable:
+      *ptr = PL_CDR2;
+      break;
+    default:
+      assert(0);
+      return false;
+  }
+
+  if (native_endianness() == endianness::little_endian)
+    *ptr |= BO_LITTLE;
+
+  return true;
+}
+
+template<typename T>
+bool finish_header(void *buffer, size_t bytes_written)
+{
+  auto alignbytes = static_cast<unsigned char>(4 % (4 - bytes_written % 4));
+  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 3));
+
+  *ptr = alignbytes;
+
+  return true;
+}
+
+template<typename T>
+bool read_header(const void *buffer, encoding_version &ver, endianness &end)
+{
+  auto ptr = static_cast<const unsigned char*>(calc_offset(buffer, 1));
+
+  if (*ptr & BO_LITTLE)
+    end = endianness::little_endian;
+  else
+    end = endianness::big_endian;
+
+  auto field = *ptr & ~BO_LITTLE;
+  switch (TopicTraits<T>::getExtensibility()) {
+    case extensibility::ext_final:
+      switch (field) {
+        case PLAIN_CDR:
+          if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
+            ver = encoding_version::basic_cdr;
+          else
+            ver = encoding_version::xcdr_v1;
+          break;
+        case PLAIN_CDR2:
+          ver = encoding_version::xcdr_v2;
+          break;
+        default:
+          assert(0);
+          return false;
+      }
+      break;
+    case extensibility::ext_appendable:
+      switch (field) {
+        case PL_CDR:
+          ver = encoding_version::xcdr_v1;
+          break;
+        case D_CDR:
+          ver = encoding_version::xcdr_v2;
+          break;
+        default:
+          assert(0);
+          return false;
+      }
+      break;
+    case extensibility::ext_mutable:
+      switch (field) {
+        case PL_CDR:
+          ver = encoding_version::xcdr_v1;
+          break;
+        case PL_CDR2:
+          ver = encoding_version::xcdr_v2;
+          break;
+        default:
+          assert(0);
+          return false;
+      }
+      break;
+    default:
+      assert(0);
+      return false;
+  }
+
+  return true;
+}
+
+template<typename T>
+bool get_serialized_size(const T& sample, bool as_key, size_t &sz)
+{
+  switch (TopicTraits<T>::minXCDRVersion()) {
+    case encoding_version::basic_cdr:
+      {
+        basic_cdr_stream str;
+        if (!move(str, sample, as_key))
+          return false;
+        sz = str.position();
+      }
+      break;
+    case encoding_version::xcdr_v2:
+      {
+        xcdr_v2_stream str;
+        if (!move(str, sample, as_key))
+          return false;
+        sz = str.position();
+      }
+      break;
+    default:
+      assert(0);
+      return false;
+  }
+
+  return true;
+}
+
+template<typename T>
+bool serialize_into(void *buffer,
+                    size_t buf_sz,
+                    const T &sample,
+                    bool as_key)
+{
+  assert(buf_sz >= CDR_HEADER_SIZE);
+
+  switch (TopicTraits<T>::minXCDRVersion()) {
+    case encoding_version::basic_cdr:
+      {
+        basic_cdr_stream str;
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return (write_header<T>(buffer)
+             && write(str, sample, as_key)
+             && finish_header<T>(buffer, buf_sz));
+      }
+      break;
+    case encoding_version::xcdr_v2:
+      {
+        xcdr_v2_stream str;
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return (write_header<T>(buffer)
+             && write(str, sample, as_key)
+             && finish_header<T>(buffer, buf_sz));
+      }
+      break;
+    default:
+      assert(0);
+      return false;
+  }
+}
+
 /// \brief De-serialize the buffer into the sample
 /// \param[in] buffer The buffer to be de-serialized
 /// \param[out] sample Type to which the buffer will be de-serialized
@@ -93,35 +268,43 @@ static inline const void* calc_offset(const void* ptr, ptrdiff_t n)
 /// \return True if the deserialization is successful
 ///         False if the deserialization failed
 template <typename T>
-bool deserialize_sample_from_buffer(unsigned char * buffer,
-                                    T & sample,
+bool deserialize_sample_from_buffer(void *buffer,
+                                    size_t buf_sz,
+                                    T &sample,
                                     const ddsi_serdata_kind data_kind=SDK_DATA)
 {
-  endianness stream_endianness = endianness::big_endian;
-  if (*(buffer + 1) == 0x1) {
-    stream_endianness = endianness::little_endian;
+  assert(data_kind != SDK_EMPTY);
+
+  encoding_version ver;
+  endianness end;
+  if (!read_header<T>(buffer, ver, end))
+    return false;
+
+  switch (ver) {
+    case encoding_version::basic_cdr:
+      {
+        basic_cdr_stream str(end);
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return read(str, sample, data_kind == SDK_KEY);
+      }
+      break;
+    case encoding_version::xcdr_v1:
+      {
+        xcdr_v1_stream str(end);
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return read(str, sample, data_kind == SDK_KEY);
+      }
+      break;
+    case encoding_version::xcdr_v2:
+      {
+        xcdr_v2_stream str(end);
+        str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
+        return read(str, sample, data_kind == SDK_KEY);
+      }
+      break;
   }
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE));
-  switch (data_kind) {
-    case SDK_KEY:
-      if (swap_necessary(stream_endianness))
-        key_read_swapped(str, sample);
-      else
-        key_read(str, sample);
-      break;
-    case SDK_DATA:
-      if (swap_necessary(stream_endianness))
-        read_swapped(str, sample);
-      else
-        read(str, sample);
-      break;
-    case SDK_EMPTY:
-      assert(0);
-  }
-
-  return !str.abort_status();
+  return false;
 }
 
 template <typename T>
@@ -181,17 +364,17 @@ public:
       // if its not possible to get the sample from iox_chunk
       if(t == nullptr) {
         // deserialize and get the sample
-        deserialize_and_update_sample(static_cast<uint8_t *>(data()), t);
+        deserialize_and_update_sample(static_cast<uint8_t *>(data()), size(), t);
       }
     }
     return t;
   }
 
 private:
-  void deserialize_and_update_sample(uint8_t * buffer, T *& t) {
+  void deserialize_and_update_sample(uint8_t * buffer, size_t sz, T *& t) {
     t = new T();
     // if deserialization failed
-    if(!deserialize_sample_from_buffer(buffer, *t, kind)) {
+    if(!deserialize_sample_from_buffer(buffer, sz, *t, kind)) {
       delete t;
       t = nullptr;
     }
@@ -210,7 +393,8 @@ private:
         auto shm_data_state = shm_get_data_state(iox_chunk);
         // if the iox chunk has the data in serialized form
         if (shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-          deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), t);
+          //size of iox chunk?
+          deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), SIZE_MAX, t);
         } else if (shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
           // get the chunk directly without any copy
           t = static_cast<T*>(this->iox_chunk);
@@ -234,8 +418,7 @@ void ddscxx_serdata<T>::populate_hash()
   if (hash_populated)
     return;
 
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  key_md5_hashed() = to_key(str, *getT(), key());
+  key_md5_hashed() = to_key(*getT(), key());
   if (!key_md5_hashed())
   {
     ddsi_keyhash_t buf;
@@ -301,9 +484,7 @@ ddsi_serdata *serdata_from_ser(
 
   if (d->getT())
   {
-    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    str.set_buffer(calc_offset(d->data(), 4));
-    d->key_md5_hashed() = to_key(str, *d->getT(), d->key());
+    d->key_md5_hashed() = to_key(*d->getT(), d->key());
     d->populate_hash();
   }
   else
@@ -339,9 +520,7 @@ ddsi_serdata *serdata_from_ser_iov(
 
   T* ptr = d->getT();
   if (ptr) {
-    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-    str.set_buffer(calc_offset(d->data(), 4));
-    d->key_md5_hashed() = to_key(str, *ptr, d->key());
+    d->key_md5_hashed() = to_key(*ptr, d->key());
     d->populate_hash();
   } else {
     delete d;
@@ -359,7 +538,7 @@ ddsi_serdata *serdata_from_keyhash(
 {
   (void)keyhash;
   (void)type;
-  //replace with (if key_size_max <= 16) then populate the data class with the key hash (key_read)
+  //replace with (if key_size_max <= 16) then populate the data class with the key hash
   return nullptr;
 }
 
@@ -388,45 +567,21 @@ ddsi_serdata *serdata_from_sample(
   enum ddsi_serdata_kind kind,
   const void* sample)
 {
+  assert(kind != SDK_EMPTY);
   auto d = new ddscxx_serdata<T>(typecmn, kind);
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
   const auto& msg = *static_cast<const T*>(sample);
-  unsigned char *ptr = nullptr;
   size_t sz = 0;
 
-  if (kind == SDK_KEY)
-    key_move(str, msg);
-  else
-    move(str, msg);
-
-  if (str.abort_status())
+  if (!get_serialized_size(msg, kind == SDK_KEY, sz))
     goto failure;
 
-  sz = 4 + str.position();  //4 bytes extra to also include the header
+  sz += CDR_HEADER_SIZE;
   d->resize(sz);
-  ptr = static_cast<unsigned char*>(d->data());
-  memset(ptr, 0x0, 4);
-  if (native_endianness() == endianness::little_endian)
-    *(ptr + 1) = 0x1;
 
-  str.set_buffer(calc_offset(d->data(), 4));
-  switch (kind)
-  {
-  case SDK_KEY:
-    key_write(str, msg);
-    break;
-  case SDK_DATA:
-    write(str, msg);
-    break;
-  case SDK_EMPTY:
-    assert(0);
-  }
-
-  if (str.abort_status())
+  if (!serialize_into(d->data(), sz, msg, kind == SDK_KEY))
     goto failure;
 
-  str.reset_position();
-  d->key_md5_hashed() = to_key(str, msg, d->key());
+  d->key_md5_hashed() = to_key(msg, d->key());
   d->setT(&msg);
   d->populate_hash();
   return d;
@@ -472,7 +627,7 @@ bool serdata_to_sample(
   auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
   auto& msg = *static_cast<T*>(sample);
-  return deserialize_sample_from_buffer(static_cast<unsigned char*>(ptr->data()), msg);
+  return deserialize_sample_from_buffer(ptr->data(), ptr->size(), msg);
 }
 
 template <typename T>
@@ -484,32 +639,21 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
    */
   auto d = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
   auto d1 = new ddscxx_serdata<T>(d->type, SDK_KEY);
-  unsigned char *ptr = nullptr;
   d1->type = nullptr;
 
-  basic_cdr_stream str;
   auto t = d->getT();
-  if (t == nullptr)
+  size_t sz = 0;
+  if (t == nullptr || !get_serialized_size(*t, true, sz))
     goto failure;
 
-  key_move(str, *t);
-  if (str.abort_status())
-    goto failure;
-  d1->resize(4 + str.position());
+  sz += CDR_HEADER_SIZE;
+  d1->resize(sz);
 
-  ptr = static_cast<unsigned char*>(d1->data());
-  memset(ptr, 0x0, 4);
-  if (native_endianness() == endianness::little_endian)
-    *(ptr + 1) = 0x1;
-
-  str.set_buffer(calc_offset(d1->data(), 4));  //4 offset due to header field
-  key_write(str, *t);
-  if (str.abort_status())
+  if (!serialize_into(d1->data(), sz, *t, true))
     goto failure;
 
-  d1->key_md5_hashed() = to_key(str, *t, d1->key());
+  d1->key_md5_hashed() = to_key(*t, d1->key());
   d1->hash = d->hash;
-  d1->hash_populated = true;
 
   return d1;
 
@@ -531,7 +675,7 @@ bool serdata_untyped_to_sample(
   auto d = static_cast<const ddscxx_serdata<T>*>(dcmn);
   T* ptr = static_cast<T*>(sample);
 
-  return deserialize_sample_from_buffer(static_cast<unsigned char*>(d->data()), *ptr, SDK_KEY);
+  return deserialize_sample_from_buffer(d->data(), d->size(), *ptr, SDK_KEY);
 }
 
 template <typename T>
@@ -610,9 +754,8 @@ ddsi_serdata * serdata_from_iox_buffer(
     }
 
     // key handling
-    org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
     const auto& msg = *static_cast<const T*>(d->iox_chunk);
-    d->key_md5_hashed() = to_key(str, msg, d->key());
+    d->key_md5_hashed() = to_key(msg, d->key());
     d->populate_hash();
 
     return d;
@@ -671,6 +814,9 @@ ddscxx_sertype<T>::ddscxx_sertype()
       &ddscxx_sertype<T>::ddscxx_sertype_ops,
       &ddscxx_serdata<T>::ddscxx_serdata_ops,
       flags);
+
+  if (org::eclipse::cyclonedds::topic::TopicTraits<T>::minXCDRVersion() == encoding_version::xcdr_v2)
+    min_xcdrv = CDR_ENC_VERSION_2;
 
 #ifdef DDSCXX_HAS_SHM
   // update the size of the type, if its fixed
@@ -762,39 +908,25 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
   const auto& msg = *static_cast<const T*>(sample);
 
   // get the serialized size of the sample (with out serializing)
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  move(str, msg);
-
-  if (str.abort_status()) {
+  size_t sz = 0;
+  if (!get_serialized_size(msg, false, sz)) {
     // the max value is treated as an error in the Cyclone core
-    return std::numeric_limits<size_t>::max();
+    return SIZE_MAX;
   }
 
-  return str.position() + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
+  return sz + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
 }
 
 template <typename T>
 bool sertype_serialize_into(const ddsi_sertype*,
                             const void * sample,
                             void * dst_buffer,
-                            size_t)
+                            size_t sz)
 {
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
 
-  // set the endianess
-  auto ptr = static_cast<unsigned char*>(dst_buffer);
-  memset(ptr, 0x0, 4);
-  if (native_endianness() == endianness::little_endian)
-    *(ptr + 1) = 0x1;
-
-  // serialize the sample into the destination buffer
-  org::eclipse::cyclonedds::core::cdr::basic_cdr_stream str;
-  // TODO(Sumanth), considering the header offset
-  str.set_buffer(calc_offset(dst_buffer, 4));
-  write(str, msg);
-
-  return !str.abort_status();
+  return serialize_into(dst_buffer, sz, msg, false);
 }
 
 template <typename T>

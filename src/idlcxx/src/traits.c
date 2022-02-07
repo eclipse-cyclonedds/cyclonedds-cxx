@@ -33,6 +33,52 @@ static bool sc_union(const idl_union_t *_union)
   return true;
 }
 
+static bool req_xtypes(const void *node)
+{
+  if (idl_is_struct(node)) {
+    const idl_struct_t* str = (const idl_struct_t*)node;
+    if (str->inherit_spec && req_xtypes(str->inherit_spec->base))
+      return true;
+
+    if (str->extensibility.value != IDL_FINAL)
+      return true;
+
+    idl_member_t *mem = NULL;
+    IDL_FOREACH(mem, str->members) {
+      if (req_xtypes(mem))
+        return true;
+    }
+  } else if (idl_is_alias(node)) {
+    return req_xtypes(idl_type_spec(idl_parent(node)));
+  } else if (idl_is_sequence(node)) {
+    return req_xtypes(((const idl_sequence_t*)node)->type_spec);
+  } else if (idl_is_union(node)) {
+    const idl_union_t *un = (const idl_union_t*)node;
+
+    if (un->extensibility.value != IDL_FINAL
+     || req_xtypes(un->switch_type_spec->type_spec))
+      return true;
+
+    const idl_case_t *cs = NULL;
+    IDL_FOREACH(cs, un->cases) {
+      if (req_xtypes(cs->type_spec) || cs->external.value)
+        return true;
+    }
+  } else if (idl_is_enum(node)) {
+    const idl_enum_t *en = (const idl_enum_t*)node;
+
+    return en->extensibility.value != IDL_FINAL;
+  } else if (idl_is_member(node)) {
+    const idl_member_t *mem = (const idl_member_t*)node;
+    return  mem->optional.value ||
+            mem->external.value ||
+            mem->must_understand.value ||
+            req_xtypes(mem->type_spec);
+  }
+
+  return false;
+}
+
 static bool sc_struct(const idl_struct_t *str)
 {
   const idl_member_t *mem = NULL;
@@ -103,48 +149,61 @@ emit_traits(
   const void* node,
   void* user_data)
 {
-  struct generator *gen = user_data;
-  char *name = NULL;
-  const char *fmt, *keyless = "true", *selfcontained = "true";
-  const idl_struct_t *_struct = node;
-
-  (void)pstate;
   (void)revisit;
   (void)path;
 
-  fmt = "template <>\n"
-        "class TopicTraits<%1$s>\n"
-        "{\n"
-        "public:\n"
-        "  static bool isKeyless()\n"
-        "  {\n"
-        "    return %3$s;\n"
-        "  }\n\n"
-        "  static const char *getTypeName()\n"
-        "  {\n"
-        "    return \"%2$s\";\n" /* skip preceeding "::" according to convention */
-        "  }\n\n"
-        "  static ddsi_sertype *getSerType()\n"
-        "  {\n"
-        "    auto *st = new ddscxx_sertype<%1$s>();\n"
-        "    return static_cast<ddsi_sertype*>(st);\n"
-        "  }\n\n"
-        "  static size_t getSampleSize()\n"
-        "  {\n"
-        "    return sizeof(%1$s);\n"
-        "  }\n\n"
-        "  static bool isSelfContained()\n"
-        "  {\n"
-        "    return %4$s;\n"
-        "  }\n"
-        "};\n\n";
-  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0)
+  struct generator *gen = user_data;
+  char *name = NULL;
+  static const char *fmt =
+    "template <> constexpr const char* TopicTraits<%1$s>::getTypeName()\n"
+    "{\n"
+    "  return \"%2$s\";\n" /* skip preceeding "::" according to convention */
+    "}\n\n"
+    "template <> inline ddsi_sertype* TopicTraits<%1$s>::getSerType()\n"
+    "{\n"
+    "  return static_cast<ddsi_sertype*>(new ddscxx_sertype<%2$s>());\n"
+    "}\n\n";
+  static const char *keylessfmt =
+    "template <> constexpr bool TopicTraits<%1$s>::isKeyless()\n"
+    "{\n"
+    "  return true;\n"
+    "}\n\n";
+  static const char *selfcontainedfmt =
+    "template <> constexpr bool TopicTraits<%1$s>::isSelfContained()\n"
+    "{\n"
+    "  return false;\n"
+    "}\n\n";
+  static const char *mincdrversionfmt =
+    "template <> constexpr encoding_version TopicTraits<%1$s>::minXCDRVersion()\n"
+    "{\n"
+    "  return encoding_version::xcdr_v2;\n"
+    "}\n\n";
+  static const char *extensibilityfmt =
+    "template <> constexpr extensibility TopicTraits<%1$s>::getExtensibility()\n"
+    "{\n"
+    "  return extensibility::ext_%2$s;\n"
+    "}\n\n";
+  const idl_struct_t *_struct = node;
+
+  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0 ||
+      idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (!idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST))
-    keyless = "false";
-  if (!sc_struct(_struct))
-    selfcontained = "false";
-  if (idl_fprintf(gen->header.handle, fmt, name, name+2, keyless, selfcontained) < 0)
+
+  if (req_xtypes(_struct) &&
+      idl_fprintf(gen->header.handle, mincdrversionfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (!sc_struct(_struct) &&
+      idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST) &&
+      idl_fprintf(gen->header.handle, keylessfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (_struct->extensibility.value != IDL_FINAL &&
+      idl_fprintf(gen->header.handle, extensibilityfmt, name,
+        _struct->extensibility.value == IDL_APPENDABLE ? "appendable" : "mutable") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -189,8 +248,7 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
         "namespace org {\n"
         "namespace eclipse {\n"
         "namespace cyclonedds {\n"
-        "namespace topic {\n"
-        "/* all traits not explicitly set are defaulted to the values in TopicTraits.hpp */\n\n") < 0)
+        "namespace topic {\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   memset(&visitor, 0, sizeof(visitor));

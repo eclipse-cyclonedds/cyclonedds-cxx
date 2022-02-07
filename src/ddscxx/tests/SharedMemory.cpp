@@ -293,7 +293,7 @@ public:
         // sample and deserialize the data and then compare with the sent data
         auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
         T msg;
-        deserialize_sample_from_buffer(buf_ptr, msg);
+        deserialize_sample_from_buffer(buf_ptr, SIZE_MAX, msg);
         ASSERT_EQ(msg, test_data);
       } else if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
         // the chunk already has deserialized data and can be compared directly
