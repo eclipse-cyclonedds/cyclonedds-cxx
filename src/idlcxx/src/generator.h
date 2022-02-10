@@ -13,6 +13,7 @@
 #define GENERATOR_H
 
 #include <stdio.h>
+#include "idlc/generator.h"
 
 struct generator {
   const char *path;
@@ -47,6 +48,7 @@ struct generator {
     FILE *handle;
     char *path;
   } impl;
+  const idlc_generator_config_t *config;
 };
 
 const char *get_cpp11_name(const void *);

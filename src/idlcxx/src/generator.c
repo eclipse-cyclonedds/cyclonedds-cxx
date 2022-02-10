@@ -21,7 +21,6 @@
 #include "idl/string.h"
 #include "idl/stream.h"
 #include "idl/visit.h"
-#include "idlc/generator.h"
 
 #include "generator.h"
 
@@ -815,7 +814,6 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
   assert(pstate->paths->name);
   path = pstate->sources->path->name;
   assert(path);
-  (void) config;
 
   /* use relative directory if user provided a relative path, use current
      word directory otherwise */
@@ -843,6 +841,7 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
 
   memset(&gen, 0, sizeof(gen));
   gen.path = file;
+  gen.config = config;
 
   sep = dir[0] == '\0' ? "" : "/";
   if (idl_asprintf(&gen.header.path, "%s%s%s.hpp", dir, sep, basename) < 0)
