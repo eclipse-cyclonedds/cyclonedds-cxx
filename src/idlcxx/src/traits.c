@@ -171,10 +171,6 @@ emit_traits(
   (void)revisit;
   (void)path;
 
-  bool type_info = (pstate->flags & IDL_FLAG_TYPE_INFO) != 0;
-  if (!type_info)
-    return IDL_RETCODE_OK;
-
   struct generator *gen = user_data;
   char *name = NULL;
   static const char *fmt =
@@ -235,7 +231,8 @@ emit_traits(
 
   idl_retcode_t ret = IDL_RETCODE_OK;
   idl_typeinfo_typemap_t blobs;
-  if (pstate->generate_typeinfo_typemap(pstate, (const idl_node_t*)node, &blobs) ||
+  if (gen->config && gen->config->generate_typeinfo_typemap && gen->config->generate_type_info) {
+    if (gen->config->generate_typeinfo_typemap(pstate, (const idl_node_t*)node, &blobs) ||
       idl_fprintf(gen->header.handle, type_info_hdr1, name, blobs.typemap_size, blobs.typeinfo_size) < 0 ||
       write_blob(gen->header.handle, blobs.typemap, blobs.typemap_size) ||
       idl_fprintf(gen->header.handle, type_info_hdr2, name) < 0 ||
@@ -243,11 +240,13 @@ emit_traits(
       idl_fprintf(gen->header.handle, " };\n#endif //DDSCXX_HAS_TYPE_DISCOVERY\n\n") < 0)
     ret = IDL_RETCODE_NO_MEMORY;
 
-  //cleanup typeinfo_typemap blobs
-  if (blobs.typemap)
-    free (blobs.typemap);
-  if (blobs.typeinfo)
-    free (blobs.typeinfo);
+    //cleanup typeinfo_typemap blobs
+    if (blobs.typemap)
+      free (blobs.typemap);
+    if (blobs.typeinfo)
+      free (blobs.typeinfo);
+  }
+
   return ret;
 }
 
