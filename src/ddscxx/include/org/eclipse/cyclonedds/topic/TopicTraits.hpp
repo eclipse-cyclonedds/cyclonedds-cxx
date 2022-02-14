@@ -177,7 +177,11 @@ public:
      */
     static ddsi_typeid_t* getTypeId(const struct ddsi_sertype *, ddsi_typeid_kind_t kind)
     {
-        return ddsi_typeinfo_typeid(TopicTraits<TOPIC>::getTypeInfo(NULL), kind);
+        auto ptr = TopicTraits<TOPIC>::getTypeInfo(NULL);
+        auto id = ddsi_typeinfo_typeid(ptr, kind);
+        ddsi_typeinfo_fini(ptr);
+        ddsrt_free(ptr);
+        return id;
     }
 
     /**
@@ -256,20 +260,25 @@ public:
      */
     static struct ddsi_sertype* deriveSertype(const struct ddsi_sertype *, dds_data_representation_id_t data_representation, dds_type_consistency_enforcement_qospolicy_t)
     {
+        struct ddsi_sertype *ptr = nullptr;
         if (minXCDRVersion() == encoding_version::basic_cdr) {
             switch (data_representation) {
                 case DDS_DATA_REPRESENTATION_XCDR1:
-                    return getSerType(encoding_version::basic_cdr);
+                    ptr = getSerType(encoding_version::basic_cdr);
                     break;
                 case DDS_DATA_REPRESENTATION_XCDR2:
-                    return getSerType(encoding_version::xcdr_v2);
+                    ptr = getSerType(encoding_version::xcdr_v2);
                     break;
             }
         } else if (minXCDRVersion() == encoding_version::xcdr_v2) {
             if (data_representation == DDS_DATA_REPRESENTATION_XCDR2)
-              return getSerType(encoding_version::xcdr_v2);
+              ptr = getSerType(encoding_version::xcdr_v2);
         }
-        return nullptr;
+        if (ptr) {
+            uint32_t refc = ddsrt_atomic_ld32 (&ptr->flags_refc);
+            ddsrt_atomic_st32 (&ptr->flags_refc, refc & ~DDSI_SERTYPE_REFC_MASK);
+        }
+        return ptr;
     }
 };
 
