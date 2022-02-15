@@ -49,7 +49,14 @@ using org::eclipse::cyclonedds::core::cdr::extensibility;
 using org::eclipse::cyclonedds::core::cdr::encoding_version;
 using org::eclipse::cyclonedds::topic::TopicTraits;
 
-template<typename T>
+template<typename T, std::enable_if_t<TopicTraits<T>::isKeyless(), bool> = true >
+bool to_key(const T&, ddsi_keyhash_t& hash)
+{
+  memset(&(hash.value), 0x0, sizeof(hash.value));
+  return true;  //return true here, as all instances have the same hash value, and hashing is pointless
+}
+
+template<typename T, std::enable_if_t<!TopicTraits<T>::isKeyless(), bool> = true >
 bool to_key(const T& tokey, ddsi_keyhash_t& hash)
 {
   basic_cdr_stream str(endianness::big_endian);
