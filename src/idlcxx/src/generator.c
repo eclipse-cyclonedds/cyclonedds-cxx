@@ -484,6 +484,19 @@ bool is_optional(
   return false;
 }
 
+bool is_external(
+  const void *node)
+{
+  if (idl_is_member(node) || idl_is_case(node)) {
+    return idl_is_external(node);
+  } else if (idl_is_declarator(node)
+          || idl_is_type_spec(node)) {
+    return is_external(idl_parent(node));
+  }
+
+  return false;
+}
+
 bool must_understand(
   const void *node)
 {
@@ -588,7 +601,7 @@ register_union(
 }
 
 static idl_retcode_t
-register_optional(
+register_optional_or_external(
   const idl_pstate_t *pstate,
   bool revisit,
   const idl_path_t *path,
@@ -603,6 +616,9 @@ register_optional(
 
   if (is_optional(node))
     gen->uses_optional = true;
+
+  if (idl_is_external(node))
+    gen->uses_external = true;
 
   return IDL_RETCODE_OK;
 }
@@ -675,10 +691,11 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 
   /* determine which "system" headers to include */
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_MEMBER | IDL_CONST | IDL_TYPEDEF;
+  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_MEMBER | IDL_CONST | IDL_TYPEDEF | IDL_CASE;
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &register_types;
   visitor.accept[IDL_ACCEPT_TYPEDEF] = &register_types;
-  visitor.accept[IDL_ACCEPT_MEMBER] = &register_optional;
+  visitor.accept[IDL_ACCEPT_MEMBER] = &register_optional_or_external;
+  visitor.accept[IDL_ACCEPT_CASE] = &register_optional_or_external;
   visitor.accept[IDL_ACCEPT_SEQUENCE] = &register_types;
   visitor.accept[IDL_ACCEPT_CONST] = &register_types;
   visitor.accept[IDL_ACCEPT_UNION] = &register_union;
@@ -705,7 +722,7 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   }
 
   { int len = 0;
-    const char *incs[9];
+    const char *incs[10];
 
     if (generator->uses_integers)
       incs[len++] = "<cstdint>";
@@ -725,6 +742,8 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
     }
     if (generator->uses_optional)
       incs[len++] = generator->optional_include;
+    if (generator->uses_external)
+      incs[len++] = generator->external_include;
 
     for (int i=0, j; i < len; i++) {
       for (j=0; j < i && strcmp(incs[i], incs[j]) != 0; j++) ;
@@ -787,6 +806,8 @@ const char *bnd_str_tmpl = "std::string";
 const char *bnd_str_inc = "<string>";
 const char *opt_tmpl = "std::optional";
 const char *opt_inc = "<optional>";
+const char *ext_tmpl = "dds::core::external";
+const char *ext_inc = "<dds/core/External.hpp>";
 const char *uni_tmpl = "std::variant";
 const char *uni_get_tmpl = "std::get";
 const char *uni_inc = "<variant>";
@@ -866,6 +887,8 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
     goto err_bnd_str;
   if (makefmtp(&gen.optional_format, opt_tmpl, NULL, NULL) < 0)
     goto err_opt;
+  if (makefmtp(&gen.external_format, ext_tmpl, NULL, NULL) < 0)
+    goto err_ext;
   if (makefmtp(&gen.union_format, uni_tmpl, NULL, NULL) < 0)
     goto err_uni;
   if (makefmtp(&gen.union_getter_format, uni_get_tmpl, NULL, NULL) < 0)
@@ -878,6 +901,7 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
   gen.bounded_string_include = bnd_str_inc;
   gen.optional_include = opt_inc;
   gen.union_include = uni_inc;
+  gen.external_include = ext_inc;
 
   ret = generate_nosetup(pstate, &gen);
 
@@ -885,6 +909,8 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
 err_uni_get:
   free(gen.union_format);
 err_uni:
+  free(gen.external_format);
+err_ext:
   free(gen.optional_format);
 err_opt:
   free(gen.bounded_string_format);

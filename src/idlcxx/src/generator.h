@@ -29,6 +29,8 @@ struct generator {
   const char *bounded_string_include;
   char *optional_format;
   const char *optional_include;
+  char *external_format;
+  const char *external_include;
   char *union_format;
   char *union_getter_format;
   const char *union_include;
@@ -40,6 +42,7 @@ struct generator {
   bool uses_bounded_string;
   bool uses_union;
   bool uses_optional;
+  bool uses_external;
   struct {
     FILE *handle;
     char *path;
@@ -69,6 +72,9 @@ int get_cpp11_value(
   char *str, size_t size, const void *node, void *user_data);
 
 bool is_optional(
+  const void *node);
+
+bool is_external(
   const void *node);
 
 bool must_understand(

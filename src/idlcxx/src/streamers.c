@@ -93,7 +93,8 @@ enum instance_mask {
   UNION_BRANCH      = 0x1 << 1,
   SEQUENCE          = 0x1 << 2,
   ARRAY             = 0x1 << 3,
-  OPTIONAL          = 0x1 << 4
+  OPTIONAL          = 0x1 << 4,
+  EXTERNAL          = 0x1 << 5
 };
 
 struct instance_location {
@@ -109,13 +110,15 @@ static int get_instance_accessor(char* str, size_t size, const void* node, void*
   if (loc.type & TYPEDEF) {
     return idl_snprintf(str, size, "%s", loc.parent);
   } else {
-    const char *opt = "";
-    if (loc.type & OPTIONAL)
-      opt = ".value()";
+    const char *fmt = "%s.%s()";
+    if (loc.type & EXTERNAL)
+      fmt = "(*%s.%s())";
+    else if (loc.type & OPTIONAL)
+      fmt = "%s.%s().value()";
 
     const idl_declarator_t* decl = (const idl_declarator_t*)node;
     const char* name = get_cpp11_name(decl);
-    return idl_snprintf(str, size, "%s.%s()%s", loc.parent, name, opt);
+    return idl_snprintf(str, size, fmt, loc.parent, name);
   }
 }
 
@@ -811,7 +814,14 @@ add_member_start(
   if (multi_putf(streams, ALL, "      if (!streamer.start_member(prop"))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (is_optional(decl)) {
+  if (is_external(decl)) {
+    if (multi_putf(streams, ALL, "))\n        return false;\n", accessor)
+     || multi_putf(streams, READ, "      if (!%1$s)\n"
+                                  "        %1$s = std::make_shared<%2$s>();\n", accessor, type)
+     || multi_putf(streams, (WRITE|MOVE), "      if (!%1$s)\n"
+                                  "        return false;\n", accessor))
+      return IDL_RETCODE_NO_MEMORY;
+  } else if (is_optional(decl)) {
     if (multi_putf(streams, ALL, ", %1$s.has_value()))\n        return false;\n", accessor)
      || multi_putf(streams, (WRITE|MOVE), "      if (%1$s.has_value()) {\n", accessor)
      || multi_putf(streams, READ, "      %1$s = %2$s();\n", accessor, type))
@@ -876,6 +886,8 @@ process_member(
       return IDL_RETCODE_NO_MEMORY;
 
     instance_location_t loc = {.parent = "instance"};
+    if (is_external(mem))
+      loc.type |= EXTERNAL;
     if (is_optional(mem))
       loc.type |= OPTIONAL;
 
