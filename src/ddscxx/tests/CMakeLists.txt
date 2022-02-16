@@ -61,7 +61,8 @@ set(sources
   CDRStreamer.cpp
   GeneratedEntities.cpp
   ExtendedTypes.cpp
-  Regression.cpp)
+  Regression.cpp
+  External.cpp)
 
 if(ENABLE_SHM)
   # Add shared memory tests
