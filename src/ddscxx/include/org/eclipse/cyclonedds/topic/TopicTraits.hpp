@@ -18,19 +18,12 @@
 #ifndef CYCLONEDDS_TOPIC_TOPICTRAITS_HPP_
 #define CYCLONEDDS_TOPIC_TOPICTRAITS_HPP_
 
-#include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/heap.h"
-#include "dds/ddsrt/mh3.h"
-#include "dds/ddsrt/md5.h"
-#include "dds/ddsi/q_radmin.h"
 #include "dds/ddsi/ddsi_serdata.h"
-#include "dds/ddsi/ddsi_sertype.h"
-#include "dds/ddsi/ddsi_typelib.h"
-#include "dds/ddsi/ddsi_cdrstream.h"
 #include "org/eclipse/cyclonedds/core/cdr/cdr_enums.hpp"
 #include "dds/features.hpp"
 
-struct ddsi_sertype;
+//forward declaration of c++ sertype wrapper
 template <typename T, class S> class ddscxx_sertype;
 
 namespace org

@@ -19,18 +19,13 @@
 #include <vector>
 #include <atomic>
 
-#include "dds/ddsrt/endian.h"
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsi/q_radmin.h"
-#include "dds/ddsi/q_xmsg.h"
-#include "dds/ddsi/ddsi_serdata.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v1_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v2_ser.hpp"
 #include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
-#include "dds/ddsi/ddsi_keyhash.h"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
-#include "dds/features.hpp"
 
 #ifdef DDSCXX_HAS_SHM
 #include "dds/ddsi/ddsi_shm_transport.h"
