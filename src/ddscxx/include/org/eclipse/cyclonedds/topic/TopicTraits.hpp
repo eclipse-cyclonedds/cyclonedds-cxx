@@ -47,8 +47,12 @@ class xcdr_v2_stream;
 namespace topic
 {
 
-using org::eclipse::cyclonedds::core::cdr::extensibility;
-using org::eclipse::cyclonedds::core::cdr::encoding_version;
+using core::cdr::extensibility;
+using core::cdr::encoding_version;
+using core::cdr::allowable_encodings_t;
+using core::cdr::basic_cdr_stream;
+using core::cdr::xcdr_v1_stream;
+using core::cdr::xcdr_v2_stream;
 
 template <class TOPIC> class TopicTraits
 {
@@ -85,23 +89,17 @@ public:
      *
      * Used by CycloneDDS-CXX to get a sertype, which contains the functions used by CycloneDDS which are specific to TOPIC.
      *
-     * @param[in] kind The serialization of the of the sertype to create.
+     * @param[in] kinds The serialization of the of the sertype to create.
      * @return A pointer to a new dssi_sertype.
      */
-    static ddsi_sertype *getSerType(encoding_version kind = minXCDRVersion())
+    static ddsi_sertype *getSerType(allowable_encodings_t kinds = allowableEncodings())
     {
-        switch (kind) {
-            case encoding_version::basic_cdr:
-                return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>());
-                break;
-            case encoding_version::xcdr_v1:
-                return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream>());
-                break;
-            case encoding_version::xcdr_v2:
-                return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,org::eclipse::cyclonedds::core::cdr::xcdr_v2_stream>());
-                break;
-        }
-        return nullptr;
+        if (kinds & allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
+            return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,basic_cdr_stream>());
+        else if (kinds & allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR2)
+            return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,xcdr_v2_stream>());
+        else
+            return nullptr;
     }
 
     /**
@@ -126,21 +124,19 @@ public:
      */
     static constexpr bool isSelfContained()
     {
-      return true;
+        return true;
     }
 
     /**
-     * @brief Returns the minimum version of XCDR necessary to serialize TOPIC objects.
+     * @brief Returns the allowable encodings for this topic.
      *
-     * Used by the serialization implementation in ddscxx_serdata to determine which serialization method to use.
-     * This trait will be generated as xcdr_v2 if any optional or non-final members are found anywhere in
-     * TOPIC's member tree or if TOPIC itself is not final.
+     * Used to determine which encoding type to write in combination with the data representation QoS.
      *
-     * @return The minimum XCDR version necessary to serialize TOPIC.
+     * @return The allowable encodings of TOPIC.
      */
-    static constexpr encoding_version minXCDRVersion()
+    static constexpr allowable_encodings_t allowableEncodings()
     {
-      return encoding_version::basic_cdr;
+        return 0xFFFFFFFFu;
     }
 
     /**
@@ -153,7 +149,7 @@ public:
      */
     static constexpr extensibility getExtensibility()
     {
-      return extensibility::ext_final;
+        return extensibility::ext_final;
     }
 
 #ifdef DDSCXX_HAS_TYPE_DISCOVERY
@@ -219,23 +215,19 @@ public:
      * Returns a nullptr if no type can be derived succesfully.
      *
      * @param[in] data_representation The type of data representation to use.
+     *
      * @return The pointer to the derived sertype.
      */
     static struct ddsi_sertype* deriveSertype(const struct ddsi_sertype *, dds_data_representation_id_t data_representation, dds_type_consistency_enforcement_qospolicy_t)
     {
         struct ddsi_sertype *ptr = nullptr;
-        if (minXCDRVersion() == encoding_version::basic_cdr) {
-            switch (data_representation) {
-                case DDS_DATA_REPRESENTATION_XCDR1:
-                    ptr = getSerType(encoding_version::basic_cdr);
-                    break;
-                case DDS_DATA_REPRESENTATION_XCDR2:
-                    ptr = getSerType(encoding_version::xcdr_v2);
-                    break;
-            }
-        } else if (minXCDRVersion() == encoding_version::xcdr_v2) {
-            if (data_representation == DDS_DATA_REPRESENTATION_XCDR2)
-              ptr = getSerType(encoding_version::xcdr_v2);
+        switch (data_representation) {
+          case DDS_DATA_REPRESENTATION_XCDR1:
+              ptr = getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR1);
+              break;
+          case DDS_DATA_REPRESENTATION_XCDR2:
+              ptr = getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR2);
+              break;
         }
         if (ptr) {
             uint32_t refc = ddsrt_atomic_ld32 (&ptr->flags_refc);

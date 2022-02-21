@@ -196,7 +196,7 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
     case extensibility::ext_final:
       switch (field) {
         case PLAIN_CDR:
-          if (TopicTraits<T>::minXCDRVersion() == encoding_version::basic_cdr)
+          if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
             ver = encoding_version::basic_cdr;
           else
             ver = encoding_version::xcdr_v1;
@@ -205,7 +205,6 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
           ver = encoding_version::xcdr_v2;
           break;
         default:
-          assert(0);
           return false;
       }
       break;
@@ -218,7 +217,6 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
           ver = encoding_version::xcdr_v2;
           break;
         default:
-          assert(0);
           return false;
       }
       break;
@@ -231,12 +229,10 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
           ver = encoding_version::xcdr_v2;
           break;
         default:
-          assert(0);
           return false;
       }
       break;
     default:
-      assert(0);
       return false;
   }
 
@@ -311,9 +307,9 @@ bool deserialize_sample_from_buffer(void *buffer,
         return read(str, sample, data_kind == SDK_KEY);
       }
       break;
+    default:
+      return false;
   }
-
-  return false;
 }
 
 template <typename T> class ddscxx_serdata;
@@ -946,28 +942,26 @@ template <typename T, class S>
 ddscxx_sertype<T,S>::ddscxx_sertype()
   : ddsi_sertype{}
 {
-  uint32_t flags = (org::eclipse::cyclonedds::topic::TopicTraits<T>::isKeyless() ?
-                    DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
+  uint32_t flags = (TopicTraits<T>::isKeyless() ? DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0);
 #ifdef DDSCXX_HAS_SHM
-  flags |= (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() ?
+  flags |= (TopicTraits<T>::isSelfContained() ?
       DDSI_SERTYPE_FLAG_FIXED_SIZE : 0);
 #endif
 
   ddsi_sertype_init_flags(
       static_cast<ddsi_sertype*>(this),
-      org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeName(),
+      TopicTraits<T>::getTypeName(),
       &sertype_ops,
       &serdata_ops,
       flags);
 
-  if (org::eclipse::cyclonedds::topic::TopicTraits<T>::minXCDRVersion() == encoding_version::xcdr_v2)
-    min_xcdrv = CDR_ENC_VERSION_2;
+  allowed_data_representation = TopicTraits<T>::allowableEncodings();
 
 #ifdef DDSCXX_HAS_SHM
   // update the size of the type, if its fixed
   // this needs to be done after sertype init! TODO need an API in Cyclone DDS to set this
   this->iox_size =
-      static_cast<uint32_t>(org::eclipse::cyclonedds::topic::TopicTraits<T>::getSampleSize());
+      static_cast<uint32_t>(TopicTraits<T>::getSampleSize());
 #endif
 }
 

@@ -32,7 +32,7 @@ public:
 
     void SetUp()
     {
-        m_st = org::eclipse::cyclonedds::topic::TopicTraits<Endianness::Msg>::getSerType(encoding_version::basic_cdr);
+        m_st = org::eclipse::cyclonedds::topic::TopicTraits<Endianness::Msg>::getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR1);
         sd = new ddscxx_serdata<Endianness::Msg>(m_st,SDK_DATA);
         ASSERT_NE(sd,nullptr);
 
@@ -242,7 +242,7 @@ using kh_t = std::array<unsigned char, 16>;
 template<typename T>
 static void test_keyhash(const T& sample, const kh_t& expected, const kh_t& expected_md5)
 {
-    auto st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType(encoding_version::basic_cdr);
+    auto st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR1);
     auto sd = serdata_from_sample<T, org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>(st, SDK_DATA, &sample);
     struct ddsi_keyhash khraw, khraw_md5;
     serdata_get_keyhash<T>(sd, &khraw, false);

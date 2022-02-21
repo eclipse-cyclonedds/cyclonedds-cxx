@@ -17,52 +17,6 @@
 
 #include "generator.h"
 
-static bool req_xtypes(const void *node)
-{
-  if (idl_is_struct(node)) {
-    const idl_struct_t* str = (const idl_struct_t*)node;
-    if (str->inherit_spec && req_xtypes(str->inherit_spec->base))
-      return true;
-
-    if (str->extensibility.value != IDL_FINAL)
-      return true;
-
-    idl_member_t *mem = NULL;
-    IDL_FOREACH(mem, str->members) {
-      if (req_xtypes(mem))
-        return true;
-    }
-  } else if (idl_is_alias(node)) {
-    return req_xtypes(idl_type_spec(idl_parent(node)));
-  } else if (idl_is_sequence(node)) {
-    return req_xtypes(((const idl_sequence_t*)node)->type_spec);
-  } else if (idl_is_union(node)) {
-    const idl_union_t *un = (const idl_union_t*)node;
-
-    if (un->extensibility.value != IDL_FINAL
-     || req_xtypes(un->switch_type_spec->type_spec))
-      return true;
-
-    const idl_case_t *cs = NULL;
-    IDL_FOREACH(cs, un->cases) {
-      if (req_xtypes(cs->type_spec) || cs->external.value)
-        return true;
-    }
-  } else if (idl_is_enum(node)) {
-    const idl_enum_t *en = (const idl_enum_t*)node;
-
-    return en->extensibility.value != IDL_FINAL;
-  } else if (idl_is_member(node)) {
-    const idl_member_t *mem = (const idl_member_t*)node;
-    return  mem->optional.value ||
-            mem->external.value ||
-            mem->must_understand.value ||
-            req_xtypes(mem->type_spec);
-  }
-
-  return false;
-}
-
 static idl_retcode_t
 emit_topic_type_name(
   const idl_pstate_t* pstate,
@@ -149,10 +103,10 @@ emit_traits(
     "{\n"
     "  return false;\n"
     "}\n\n";
-  static const char *mincdrversionfmt =
-    "template <> constexpr encoding_version TopicTraits<%1$s>::minXCDRVersion()\n"
+  static const char *datarepsfmt =
+    "template <> constexpr allowable_encodings_t TopicTraits<%1$s>::allowableEncodings()\n"
     "{\n"
-    "  return encoding_version::xcdr_v2;\n"
+    "  return 0x%2$Xu;\n"
     "}\n\n";
   static const char *extensibilityfmt =
     "template <> constexpr extensibility TopicTraits<%1$s>::getExtensibility()\n"
@@ -172,9 +126,13 @@ emit_traits(
       idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (req_xtypes(node) &&
-      idl_fprintf(gen->header.handle, mincdrversionfmt, name) < 0)
-    return IDL_RETCODE_NO_MEMORY;
+  allowable_data_representations_t reps = idl_allowable_data_representations(node);
+  if (idl_requires_xcdr2(node))
+    reps &= (allowable_data_representations_t)~IDL_DATAREPRESENTATION_FLAG_XCDR1;
+
+  if (reps != 0xFFFFFFFF &&
+      idl_fprintf(gen->header.handle, datarepsfmt, name, reps) < 0)
+      return IDL_RETCODE_NO_MEMORY;
 
   if (!is_selfcontained(node) &&
       idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)

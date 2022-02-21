@@ -196,10 +196,8 @@ TEST_F(Regression, propagate_xtypes_version_reqs)
   using org::eclipse::cyclonedds::topic::encoding_version;
   using org::eclipse::cyclonedds::topic::extensibility;
 
-  ASSERT_EQ(TopicTraits<td_1>::getExtensibility(), extensibility::ext_appendable);
-  ASSERT_EQ(TopicTraits<td_1>::minXCDRVersion(), encoding_version::xcdr_v2);
-  ASSERT_EQ(TopicTraits<td_3>::getExtensibility(), extensibility::ext_final);
-  ASSERT_EQ(TopicTraits<td_3>::minXCDRVersion(), encoding_version::xcdr_v2);
+  EXPECT_EQ(TopicTraits<td_1>::getExtensibility(), extensibility::ext_appendable);
+  EXPECT_EQ(TopicTraits<td_3>::getExtensibility(), extensibility::ext_final);
 }
 
 TEST_F(Regression, union_duplicate_types)
