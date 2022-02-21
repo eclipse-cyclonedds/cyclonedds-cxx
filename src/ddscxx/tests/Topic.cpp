@@ -12,8 +12,7 @@
 #include "dds/dds.hpp"
 #include <gtest/gtest.h>
 #include "Space.hpp"
-
-
+#include "TraitsModels.hpp"
 
 /**
  * Dummy listener for the Topic tests
@@ -416,4 +415,45 @@ TEST_F(Topic, use_after_deletion)
     ASSERT_THROW({
         this->topic.inconsistent_topic_status();
     }, dds::core::NullReferenceError);
+}
+
+using org::eclipse::cyclonedds::topic::extensibility;
+using org::eclipse::cyclonedds::core::cdr::allowable_encodings_t;
+using org::eclipse::cyclonedds::topic::encoding_version;
+
+template<typename T>
+void test_representations(extensibility ext, allowable_encodings_t encodings)
+{
+  using org::eclipse::cyclonedds::topic::TopicTraits;
+
+  EXPECT_EQ(TopicTraits<T>::getExtensibility(), ext);
+
+  auto encs = TopicTraits<T>::allowableEncodings();
+  EXPECT_EQ(encs, encodings);
+
+  auto st_basic = TopicTraits<T>::getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR1),
+       st_xcdrv2 = TopicTraits<T>::getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR2);
+
+  //check that the sertypes you can get match the encoding version
+  EXPECT_EQ((encs & DDS_DATA_REPRESENTATION_FLAG_XCDR1) != 0, st_basic != nullptr);
+  EXPECT_EQ((encs & DDS_DATA_REPRESENTATION_FLAG_XCDR2) != 0, st_xcdrv2 != nullptr);
+
+  //cleanup
+  if (st_basic) {
+    dds_free(st_basic->type_name);
+    delete static_cast<ddscxx_sertype<T,org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>*>(st_basic);
+  }
+
+  if (st_xcdrv2) {
+    dds_free(st_xcdrv2->type_name);
+    delete static_cast<ddscxx_sertype<T,org::eclipse::cyclonedds::core::cdr::xcdr_v2_stream>*>(st_xcdrv2);
+  }
+}
+
+TEST_F(Topic, data_representation)
+{
+  test_representations<traits_models::s_2>(extensibility::ext_final, 0xFFFFFFFF);
+  test_representations<traits_models::td_1>(extensibility::ext_appendable, 0xFFFFFFFE);
+  test_representations<traits_models::td_3>(extensibility::ext_final, 0xFFFFFFFE);
+  test_representations<traits_models::s_3>(extensibility::ext_final, DDS_DATA_REPRESENTATION_FLAG_XCDR2);
 }

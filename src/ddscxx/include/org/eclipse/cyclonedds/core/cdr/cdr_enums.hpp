@@ -43,14 +43,18 @@ enum class extensibility {
  * @enum encoding_version Describes the CDR encoding version of entities.
  *
  * @var encoding_version::basic_cdr Basic CDR encoding, does not support any xtypes functionality.
+ * @xml encoding_version::xml XML encoding.
  * @var encoding_version::xcdr_v1 Version 1 Xtypes CDR encoding (deprecated).
  * @var encoding_version::xcdr_v2 Version 2 XTypes CDR encoding.
  */
 enum class encoding_version {
   basic_cdr,
+  xml,
   xcdr_v1,
   xcdr_v2
 };
+
+typedef uint32_t allowable_encodings_t;
 
 }
 }

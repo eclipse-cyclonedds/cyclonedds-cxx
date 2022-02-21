@@ -1,0 +1,26 @@
+module traits_models {
+
+@nested struct s_1 {
+string d[2];
+};
+
+@final
+struct s_2 {
+s_1 c[2];
+};
+
+@appendable struct td_1 {
+  long l;
+};
+
+typedef sequence<td_1> td_2;
+
+@final struct td_3 {
+  td_2 c;
+};
+
+@data_representation(XCDR2) struct s_3 {
+  long l;
+};
+
+};

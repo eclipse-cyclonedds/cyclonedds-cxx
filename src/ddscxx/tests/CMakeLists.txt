@@ -22,6 +22,7 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
   data/ExtendedTypesModels.idl
   data/RegressionModels.idl
   data/ExternalModels.idl
+  data/TraitsModels.idl
   WARNINGS no-implicit-extensibility)
 
 configure_file(
