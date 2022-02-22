@@ -208,3 +208,32 @@ module CDR_testing {
   };
 
 };
+
+module DataModels_testing {
+
+  enum test_enum {
+    e_0,
+    e_1,
+    e_2
+  };
+
+  struct explicit_defaults_struct {
+    @default(123) long l;
+    @default(.456) double d;
+    @default('a') char c;
+    @default("def") string s;
+    /*
+    the idl parser does not yet support enumerator values as annotation parameters
+    @default(e_0) test_enum e;
+    */
+  };
+
+  struct implicit_defaults_struct {
+    long l;
+    double d;
+    char c;
+    string s;
+    test_enum e;
+  };
+
+};

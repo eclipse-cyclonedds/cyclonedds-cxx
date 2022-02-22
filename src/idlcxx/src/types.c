@@ -50,16 +50,26 @@ emit_member(
   else
     type_spec = idl_type_spec(node);
 
+  const idl_member_t *mem = idl_parent(node);
+  assert(idl_is_member(mem));
+
   name = get_cpp11_name(node);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
   type_spec = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
-  if (idl_is_array(type_spec))
+  value = NULL;
+  if (idl_is_array(type_spec)) {
     value = "{ }";
-  else if (!idl_is_enum(type_spec) && !idl_is_base_type(type_spec) && !idl_is_bitmask(type_spec))
-    value = NULL;
-  else if (IDL_PRINTA(&value, get_cpp11_default_value, type_spec, gen) < 0)
-    return IDL_RETCODE_NO_MEMORY;
+  } else if (idl_is_enum(type_spec) || idl_is_base_type(type_spec) || idl_is_string(type_spec) || idl_is_bitmask(type_spec)) {
+    if (mem->value.annotation) {
+      if ((idl_is_base_type(type_spec) || idl_is_string(type_spec)) && IDL_PRINTA(&value, get_cpp11_value, mem->value.value, gen) < 0)
+        return IDL_RETCODE_NO_MEMORY;
+      else if (idl_is_enum(type_spec) || idl_is_bitmask(type_spec))
+        return IDL_RETCODE_UNSUPPORTED;  //implement writing enum/bitmask value
+    } else if (!idl_is_string(type_spec) && IDL_PRINTA(&value, get_cpp11_default_value, type_spec, gen) < 0) {
+      return IDL_RETCODE_NO_MEMORY;
+    }
+  }
 
   fmt = " %1$s %2$s_%3$s%4$s;\n";
   if (is_optional(node) || is_external(node)) {
