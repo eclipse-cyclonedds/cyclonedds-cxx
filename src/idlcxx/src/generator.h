@@ -65,6 +65,9 @@ int get_cpp11_fully_scoped_name(
 int get_cpp11_name_typedef(
   char *str, size_t size, const void *node, void *user_data);
 
+int get_cpp11_base_type_const_value(
+  char *str, size_t size, const void *node, void *user_data);
+
 int get_cpp11_default_value(
   char *str, size_t size, const void *node, void *user_data);
 

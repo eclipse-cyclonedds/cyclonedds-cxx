@@ -64,7 +64,8 @@ set(sources
   GeneratedEntities.cpp
   ExtendedTypes.cpp
   Regression.cpp
-  External.cpp)
+  External.cpp
+  DataModels.cpp)
 
 if(ENABLE_SHM)
   # Add shared memory tests

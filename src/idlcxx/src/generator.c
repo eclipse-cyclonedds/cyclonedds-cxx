@@ -403,7 +403,7 @@ int get_cpp11_default_value(
   return idl_snprintf(str, size, "%s", value);
 }
 
-static int get_cpp11_base_type_const_value(
+int get_cpp11_base_type_const_value(
   char *str, size_t size, const void *node, void *user_data)
 {
   const idl_literal_t *literal = node;
