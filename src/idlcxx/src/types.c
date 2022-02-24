@@ -474,32 +474,6 @@ emit_const(
 }
 
 static idl_retcode_t
-emit_variant(
-  const idl_pstate_t *pstate,
-  bool revisit,
-  const idl_path_t *path,
-  const void *node,
-  void *user_data)
-{
-  struct generator *gen = user_data;
-  char *type = NULL;
-  const char *sep;
-  const idl_case_t *_case = node;
-
-  (void)pstate;
-  (void)revisit;
-  (void)path;
-
-  sep = !idl_previous(_case) ? "" : ", ";
-  if (IDL_PRINTA(&type, get_cpp11_type, _case->type_spec, gen) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, "%s%s", sep, type) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
-  return IDL_RETCODE_OK;
-}
-
-static idl_retcode_t
 emit_case(
   const idl_pstate_t *pstate,
   bool revisit,
@@ -703,6 +677,106 @@ emit_case_methods(
   return IDL_RETCODE_OK;
 }
 
+static idl_retcode_t is_same_type(
+  const idl_pstate_t *pstate,
+  const idl_type_spec_t *type_a,
+  const idl_declarator_t *decl_a,
+  const idl_type_spec_t *type_b,
+  const idl_declarator_t *decl_b,
+  bool *outval)
+{
+  assert(pstate);
+  assert(type_a);
+  assert(decl_a);
+  assert(type_b);
+  assert(decl_b);
+  assert(outval);
+
+  uint32_t a_sz[255] = {0};  /*this should be more than enough nested arrays*/
+  size_t i = 0;
+  const idl_const_expr_t *ce = NULL;
+  IDL_FOREACH(ce, decl_a->const_expr) {
+    a_sz[i++] = ((const idl_literal_t*)ce)->value.uint32;
+    if (i >= 255) {
+      idl_error(pstate, idl_location(decl_a),
+        "@maximum array depth exceeded in type comparison");
+      return IDL_RETCODE_NO_MEMORY;
+    }
+  }
+
+  while (idl_is_alias(type_a) || idl_is_forward(type_a)) {
+    if (idl_is_forward(type_a)) {
+      const idl_forward_t *fw = (const idl_forward_t *)type_a;
+      type_a = fw->type_spec;
+    } else if (idl_is_alias(type_a)) {
+      const idl_typedef_t *td = (const idl_typedef_t *)((const idl_node_t*)type_a)->parent;
+      type_a = td->type_spec;
+      decl_a = td->declarators;
+      IDL_FOREACH(ce, decl_a->const_expr) {
+        a_sz[i++] = ((const idl_literal_t*)ce)->value.uint32;
+        if (i >= 255) {
+          idl_error(pstate, idl_location(decl_a),
+            "@maximum array depth exceeded in type comparison");
+          return IDL_RETCODE_NO_MEMORY;
+        }
+      }
+    }
+  }
+
+  size_t j = 0;
+  *outval = false;
+  IDL_FOREACH(ce, decl_b->const_expr) {
+    if (j >= i ||
+        a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
+      return IDL_RETCODE_OK;
+  }
+
+  while (idl_is_alias(type_b) || idl_is_forward(type_b)) {
+    if (idl_is_forward(type_b)) {
+      const idl_forward_t *fw = (const idl_forward_t *)type_b;
+      type_b = fw->type_spec;
+    } else if (idl_is_alias(type_b)) {
+      const idl_typedef_t *td = (const idl_typedef_t *)((const idl_node_t*)type_b)->parent;
+      type_b = td->type_spec;
+      decl_b = td->declarators;
+      IDL_FOREACH(ce, decl_b->const_expr) {
+        if (j >= i ||
+            a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
+          return IDL_RETCODE_OK;
+      }
+    }
+  }
+
+  if (type_a == type_b) {
+    *outval = true;
+    return IDL_RETCODE_OK;
+  }
+
+  if (idl_type(type_a) != idl_type(type_b))
+    return IDL_RETCODE_OK;
+
+  switch (idl_type(type_a)) {
+    case IDL_SEQUENCE:
+      return is_same_type(pstate,
+                          ((const idl_sequence_t *)type_a)->type_spec, decl_a,
+                          ((const idl_sequence_t *)type_b)->type_spec, decl_b,
+                          outval);
+      break;
+    case IDL_STRING:
+      *outval = ((const idl_string_t *)type_a)->maximum == ((const idl_string_t *)type_b)->maximum;
+      break;
+    case IDL_WSTRING:
+    case IDL_FIXED_PT:
+      /*these still need to be implemented*/
+      return IDL_RETCODE_UNSUPPORTED;
+      break;
+    default:
+      *outval = true;
+  }
+
+  return IDL_RETCODE_OK;
+}
+
 static idl_retcode_t
 emit_union(
   const idl_pstate_t *pstate,
@@ -711,7 +785,7 @@ emit_union(
   const void *node,
   void *user_data)
 {
-  idl_retcode_t ret;
+  idl_retcode_t ret = IDL_RETCODE_OK;
   struct generator *gen = user_data;
   char *type, *value;
   const char *name, *fmt;
@@ -732,6 +806,7 @@ emit_union(
   if (IDL_PRINTA(&value, get_cpp11_value, _union->default_case->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  /*open union definition*/
   fmt = "class %1$s\n"
         "{\n"
         "private:\n"
@@ -740,15 +815,57 @@ emit_union(
   if (idl_fprintf(gen->header.handle, fmt, name, type, gen->union_format) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  /* variant */
-  visitor.visit = IDL_CASE;
-  visitor.accept[IDL_ACCEPT_CASE] = emit_variant;
-  if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
-    return ret;
-  if (idl_fprintf(gen->header.handle, "> m__u;\n\n") < 0)
+  /*count number of cases*/
+  size_t ncases = 0;
+  const idl_case_t *_case = NULL;
+  IDL_FOREACH(_case, _union->cases) {
+    ncases++;
+  }
+
+  const idl_case_t **cases = ncases ? malloc(sizeof(const idl_case_t *)*ncases) : NULL;
+  if (!cases)
+    return IDL_RETCODE_NO_MEMORY;
+
+  size_t i = 0;
+  /*deduplicate types in cases*/
+  IDL_FOREACH(_case, _union->cases) {
+    bool type_already_present = false;
+    for (size_t j = 0; j < i && !type_already_present; j++) {
+      if ((ret = is_same_type(pstate, cases[j]->type_spec, cases[j]->declarator, _case->type_spec, _case->declarator, &type_already_present)))
+        goto cleanup;
+    }
+
+    if (!type_already_present)
+      cases[i++] = _case;
+  }
+
+  /*print deduplicated types in variant holder*/
+  for (size_t j = 0; j < i && ret == IDL_RETCODE_OK; j++) {
+    const char *sep = j ? ", " : "";
+    char *variant_type = NULL;
+    /*suppress error C6263 (using _alloca in a loop, danger of stack overflow)
+      other solutions will be more complex and error sensitive*/
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 6263 )
+#endif
+    if (IDL_PRINTA(&variant_type, get_cpp11_type, cases[j]->type_spec, gen) < 0)
+      ret = IDL_RETCODE_NO_MEMORY;
+#ifdef _WIN32
+#pragma warning ( pop )
+#endif
+    if (idl_fprintf(gen->header.handle, "%s%s", sep, variant_type) < 0)
+      ret = IDL_RETCODE_NO_MEMORY;
+  }
+cleanup:
+  free((void*)cases);
+  if (ret)
     return ret;
 
-  /**/
+  if (idl_fprintf(gen->header.handle, "> m__u;\n\n") < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  /*add default discriminator and validation*/
   fmt = "  static const %1$s _default_discriminator = %2$s;\n\n"
         "  static %1$s _is_discriminator(const %1$s d)\n"
         "  {\n"
@@ -781,9 +898,9 @@ emit_union(
 
   if (idl_mask(_union->default_case) == IDL_DEFAULT_CASE_LABEL) {
     /* default case is present */
-    const idl_case_t* _case = idl_parent(_union->default_case);
+    const idl_case_t* default_case = idl_parent(_union->default_case);
     char *default_type = NULL;
-    if (IDL_PRINTA(&default_type, get_cpp11_type, _case->type_spec, gen) < 0)
+    if (IDL_PRINTA(&default_type, get_cpp11_type, default_case->type_spec, gen) < 0)
       return IDL_RETCODE_NO_MEMORY;
 
     /* add default constructor for type of default branch */
