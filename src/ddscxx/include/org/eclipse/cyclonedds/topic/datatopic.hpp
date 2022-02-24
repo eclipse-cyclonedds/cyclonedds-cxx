@@ -20,10 +20,10 @@
 #include <atomic>
 
 #include "dds/ddsrt/md5.h"
-#include "dds/ddsi/q_radmin.h"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v1_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v2_ser.hpp"
+#include "org/eclipse/cyclonedds/core/cdr/fragchain.hpp"
 #include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
@@ -332,28 +332,9 @@ ddsi_serdata *serdata_from_ser(
   size_t size)
 {
   auto d = new ddscxx_serdata<T>(type, kind);
-
-  uint32_t off = 0;
-  assert(fragchain->min == 0);
-  assert(fragchain->maxp1 >= off);    //CDR header must be in first fragment
-
   d->resize(size);
-
   auto cursor = static_cast<unsigned char*>(d->data());
-  while (fragchain) {
-    if (fragchain->maxp1 > off) {
-      //only copy if this fragment adds data
-      const unsigned char* payload =
-        NN_RMSG_PAYLOADOFF(fragchain->rmsg, NN_RDATA_PAYLOAD_OFF(fragchain));
-      auto src = payload + off - fragchain->min;
-      auto n_bytes = fragchain->maxp1 - off;
-      memcpy(cursor, src, n_bytes);
-      cursor += n_bytes;
-      off = fragchain->maxp1;
-      assert(off <= size);
-    }
-    fragchain = fragchain->nextfrag;
-  }
+  org::eclipse::cyclone::core::cdr::serdata_from_ser_copyin_fragchain (cursor, fragchain, size);
 
   if (d->getT())
   {

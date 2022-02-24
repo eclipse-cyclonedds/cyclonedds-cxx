@@ -34,6 +34,7 @@ set(sources
     src/org/eclipse/cyclonedds/core/InstanceHandleDelegate.cpp
     src/org/eclipse/cyclonedds/core/EntitySet.cpp
     src/org/eclipse/cyclonedds/core/MiscUtils.cpp
+    src/org/eclipse/cyclonedds/core/cdr/fragchain.cpp
     src/org/eclipse/cyclonedds/core/cdr/cdr_stream.cpp
     src/org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.cpp
     src/org/eclipse/cyclonedds/core/cdr/entity_properties.cpp
