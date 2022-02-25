@@ -1,0 +1,11 @@
+module external_testing {
+
+  @topic struct external_struct {
+
+    @external long external_long;
+    @external string external_string;
+    @external sequence<double> external_sequence_double;
+
+  };
+
+};
