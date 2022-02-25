@@ -11,6 +11,8 @@
  */
 #include "dds/dds.hpp"
 #include <dds/core/External.hpp>
+#include <thread>
+#include "ExternalModels.hpp"
 
 #include <gtest/gtest.h>
 
@@ -85,4 +87,85 @@ TEST(External, locking)
   EXPECT_NO_THROW(ei1.lock(););
 
   EXPECT_TRUE(ei1.is_locked());
+}
+
+TEST(External, reading_writing)
+{
+  using external_testing::external_struct;
+
+  dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+
+  dds::topic::Topic<external_struct> topic(participant, "external_testing__external_struct");
+
+  dds::pub::Publisher publisher(participant);
+  dds::pub::DataWriter<external_struct> writer(publisher, topic);
+
+  dds::sub::Subscriber subscriber(participant);
+  dds::sub::DataReader<external_struct> reader(subscriber, topic);
+
+  auto start = std::chrono::high_resolution_clock::now(); //wait for a maximum interval
+  bool timedout = false;
+  while (!timedout) {
+    //wait for reader & writer to have found eachother
+    if (writer.publication_matched_status().current_count() > 0 ||
+        reader.subscription_matched_status().current_count() > 0)
+      break;
+
+    if ((std::chrono::high_resolution_clock::now()-start) > std::chrono::duration<double>(1))
+      timedout = true;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  }
+
+  ASSERT_FALSE(timedout);
+
+  //create message
+  external_struct msg;
+  //attempt to write with external fields not set
+  EXPECT_THROW(writer.write(msg);, dds::core::InvalidArgumentError);
+
+  msg.external_long(new int(123456));
+  msg.external_string(std::make_shared<std::string>("i am external string"));
+  auto ptr = std::make_shared<std::vector<double> >(std::vector<double>({123.456,234.567,345.678}));
+  msg.external_sequence_double(ptr);
+
+  //check that ptr has refcount = 2 (ptr + msg)
+  EXPECT_EQ(ptr.use_count(),2);
+
+  //write message
+  ASSERT_NO_THROW(writer.write(msg));
+
+  //read message
+  size_t samplesread = 0;
+  start = std::chrono::high_resolution_clock::now(); //wait for a maximum interval
+  while (!samplesread && !timedout) {
+    auto samples = reader.take();
+
+    //check for received messages
+    for (const auto &sample:samples) {
+      if (!sample.info().valid())
+        continue;
+
+      const external_struct &data = sample.data();
+      EXPECT_NE(msg, data);
+      //different pointers
+      EXPECT_NE(msg.external_long(), data.external_long());
+      EXPECT_NE(msg.external_string(), data.external_string());
+      EXPECT_NE(msg.external_sequence_double(), data.external_sequence_double());
+      //same values
+      EXPECT_EQ(*msg.external_long(), *data.external_long());
+      EXPECT_EQ(*msg.external_string(), *data.external_string());
+      EXPECT_EQ(*msg.external_sequence_double(), *data.external_sequence_double());
+
+      samplesread++;
+    }
+
+    if ((std::chrono::high_resolution_clock::now()-start) > std::chrono::duration<double>(1))
+      timedout = true;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  }
+
+  EXPECT_FALSE(timedout);
+  EXPECT_EQ(samplesread,1);
 }
