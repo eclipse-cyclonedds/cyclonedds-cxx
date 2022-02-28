@@ -916,9 +916,7 @@ struct ddscxx_sertype_ops: public ddsi_sertype_ops {
   TopicTraits<T>::getTypeId,
   TopicTraits<T>::getTypeMap,
   TopicTraits<T>::getTypeInfo,
-  TopicTraits<T>::assignableFrom,
   #else
-  nullptr,
   nullptr,
   nullptr,
   nullptr,
