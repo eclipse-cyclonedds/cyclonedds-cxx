@@ -205,36 +205,6 @@ public:
         return ddsi_typeinfo_deser(&cdr);
     }
 
-    /**
-     * @brief Checks assignability between TOPIC and another type.
-     *
-     * Checks whether an instance object of type A can be assigned to one of type B.
-     * This is allowed when all members in A also, occur in B.
-     *
-     * @param[in] sertype_a The first type to compare.
-     * @param[in] type_pair_b The second type to compare (both minimal and complete representations).
-     *
-     * @return Whether this is so.
-     */
-    static bool assignableFrom(const struct ddsi_sertype *sertype_a, const struct ddsi_type_pair *type_pair_b)
-    {
-        assert (type_pair_b);
-        struct ddsi_domaingv *gv = static_cast<struct ddsi_domaingv *>(ddsrt_atomic_ldvoidp (&sertype_a->gv));
-        ddsi_typeid_t *type_id = TopicTraits<TOPIC>::getTypeId (sertype_a, DDSI_TYPEID_KIND_MINIMAL);
-        assert (type_id);
-        struct ddsi_type *type_a = ddsi_type_lookup_locked (gv, type_id);
-        ddsi_typeid_fini (type_id);
-        dds_free (type_id);
-        if (!type_a) {
-            type_id = TopicTraits<TOPIC>::getTypeId (sertype_a, DDSI_TYPEID_KIND_COMPLETE);
-            type_a = ddsi_type_lookup_locked (gv, type_id);
-            assert (type_id);
-            ddsi_typeid_fini (type_id);
-            dds_free (type_id);
-        }
-        return ddsi_is_assignable_from (gv, type_a, type_pair_b);
-    }
-
 private:
     static const unsigned int type_map_blob_sz; /**< Size of blob of the cdr serialized type map, needs to be instantiated for all declared types.*/
     static const unsigned int type_info_blob_sz; /**< Size of blob of the cdr serialized type info, needs to be instantiated for all declared types.*/
