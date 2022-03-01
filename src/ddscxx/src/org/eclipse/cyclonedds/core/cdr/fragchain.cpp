@@ -34,7 +34,7 @@ void serdata_from_ser_copyin_fragchain (unsigned char * __restrict cursor, const
       memcpy(cursor, src, n_bytes);
       cursor += n_bytes;
       off = fragchain->maxp1;
-      if (off <= size) {
+      if (off > size) {
         assert(false);
         throw dds::core::InvalidDataError("Fragchain contained fewer bytes than indicated size");
       }
