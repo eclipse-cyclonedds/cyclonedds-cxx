@@ -961,7 +961,7 @@ process_case(
 
     char *accessor = NULL, *type = NULL, *value = NULL;
     if (IDL_PRINTA(&accessor, get_instance_accessor, _case->declarator, &loc) < 0 ||
-        IDL_PRINTA(&type, get_cpp11_type, _case->type_spec, streams->generator) < 0 ||
+        IDL_PRINTA(&type, get_cpp11_type, _case, streams->generator) < 0 ||
         (simple && IDL_PRINTA(&value, get_cpp11_default_value, _case->type_spec, streams->generator) < 0))
       return IDL_RETCODE_NO_MEMORY;
 

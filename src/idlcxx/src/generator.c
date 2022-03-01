@@ -333,7 +333,13 @@ int get_cpp11_name_typedef(
 int get_cpp11_type(
   char *str, size_t size, const void *node, void *user_data)
 {
-  if (idl_is_base_type(node))
+  if (idl_is_case(node)) {
+    const idl_case_t *_case = node;
+    if (idl_is_array(_case->declarator))
+      return get_cpp11_array_type(str, size, _case->declarator, user_data);
+    else
+      return get_cpp11_type(str, size, _case->type_spec, user_data);
+  } else if (idl_is_base_type(node))
     return get_cpp11_base_type(str, size, node, user_data);
   else if (idl_is_templ_type(node))
     return get_cpp11_templ_type(str, size, node, user_data);
