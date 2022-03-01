@@ -63,10 +63,12 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
   if (!move(str, tokey, true))
     return false;
   size_t sz = str.position();
-  size_t padding = 16 - sz % 16;
-  if (sz != 0 && padding == 16) padding = 0;
+  size_t padding = 0;
+  if (sz < 16)
+    padding = (16 - sz % 16)%16;
   std::vector<unsigned char> buffer(sz + padding);
-  memset(buffer.data() + sz, 0x0, padding);
+  if (padding)
+    memset(buffer.data() + sz, 0x0, padding);
   str.set_buffer(buffer.data(), sz);
   if (!write(str, tokey, true))
     return false;
