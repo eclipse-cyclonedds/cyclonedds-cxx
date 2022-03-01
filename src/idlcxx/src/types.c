@@ -630,7 +630,7 @@ emit_case_methods(
     "  }\n\n";
 
   name = get_cpp11_name(branch->declarator);
-  if (IDL_PRINTA(&type, get_cpp11_type, branch->type_spec, gen) < 0)
+  if (IDL_PRINTA(&type, get_cpp11_type, branch, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
   if (IDL_PRINTA(&discr_type, get_cpp11_type, _union->switch_type_spec->type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -849,7 +849,7 @@ emit_union(
 #pragma warning( push )
 #pragma warning( disable : 6263 )
 #endif
-    if (IDL_PRINTA(&variant_type, get_cpp11_type, cases[j]->type_spec, gen) < 0)
+    if (IDL_PRINTA(&variant_type, get_cpp11_type, cases[j], gen) < 0)
       ret = IDL_RETCODE_NO_MEMORY;
 #ifdef _WIN32
 #pragma warning ( pop )
@@ -900,7 +900,7 @@ cleanup:
     /* default case is present */
     const idl_case_t* default_case = idl_parent(_union->default_case);
     char *default_type = NULL;
-    if (IDL_PRINTA(&default_type, get_cpp11_type, default_case->type_spec, gen) < 0)
+    if (IDL_PRINTA(&default_type, get_cpp11_type, default_case, gen) < 0)
       return IDL_RETCODE_NO_MEMORY;
 
     /* add default constructor for type of default branch */
