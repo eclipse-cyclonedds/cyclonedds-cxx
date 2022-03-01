@@ -73,3 +73,12 @@ module Endianness
     U u;
   };
 };
+
+module Keyhash
+{
+  struct NoKey      { unsigned long x; };
+  struct SmallKey   { @key unsigned long k; unsigned long x; };
+  struct LargeKey   { @key unsigned long a[5]; unsigned long x; };
+  struct StringKey  { @key string s; unsigned long x; };
+  struct BStringKey { @key string<11> s; unsigned long x; };
+};
