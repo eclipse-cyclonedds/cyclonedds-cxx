@@ -1326,6 +1326,7 @@ process_union(
   void* user_data)
 {
   struct streams *streams = user_data;
+  const idl_union_t *_union = node;
 
   (void)pstate;
   (void)path;
@@ -1343,7 +1344,8 @@ process_union(
   if (revisit) {
     if (multi_putf(streams, MAX, pfmt)
      || multi_putf(streams, MOVE | MAX, mfmt)
-     || print_constructed_type_close(user_data))
+     || print_constructed_type_close(user_data)
+     || print_entry_point_functions(streams, fullname))
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);

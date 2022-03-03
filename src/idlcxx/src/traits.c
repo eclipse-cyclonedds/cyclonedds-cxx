@@ -207,16 +207,19 @@ emit_traits(
     " };\n"
     "template<> constexpr const unsigned char TopicTraits<%1$s>::type_info_blob[] = {\n";
   const idl_struct_t *_struct = node;
+  const idl_union_t *_union = node;
+  bool selfcontained = idl_is_struct(node) ? sc_struct(_struct) : sc_union(_union);
+  idl_extensibility_t ext = idl_is_struct(node) ? _struct->extensibility.value : _union->extensibility.value;
 
-  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, _struct, gen) < 0 ||
+  if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0 ||
       idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (req_xtypes(_struct) &&
+  if (req_xtypes(node) &&
       idl_fprintf(gen->header.handle, mincdrversionfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (!sc_struct(_struct) &&
+  if (!selfcontained &&
       idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -224,9 +227,8 @@ emit_traits(
       idl_fprintf(gen->header.handle, keylessfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (_struct->extensibility.value != IDL_FINAL &&
-      idl_fprintf(gen->header.handle, extensibilityfmt, name,
-        _struct->extensibility.value == IDL_APPENDABLE ? "appendable" : "mutable") < 0)
+  if (ext != IDL_FINAL &&
+      idl_fprintf(gen->header.handle, extensibilityfmt, name, ext == IDL_APPENDABLE ? "appendable" : "mutable") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   idl_retcode_t ret = IDL_RETCODE_OK;
@@ -292,8 +294,9 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
     return IDL_RETCODE_NO_MEMORY;
 
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_STRUCT;
+  visitor.visit = IDL_STRUCT | IDL_UNION;
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_traits;
+  visitor.accept[IDL_ACCEPT_UNION] = &emit_traits;
   assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
@@ -310,6 +313,7 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
     return IDL_RETCODE_NO_MEMORY;
 
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_topic_type_name;
+  visitor.accept[IDL_ACCEPT_UNION] = &emit_topic_type_name;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
@@ -317,6 +321,7 @@ generate_traits(const idl_pstate_t *pstate, struct generator *generator)
     return IDL_RETCODE_NO_MEMORY;
 
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_register_topic_type;
+  visitor.accept[IDL_ACCEPT_UNION] = &emit_register_topic_type;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
 
