@@ -7,16 +7,50 @@ module Space {
     };
 
     struct Type1 {
-	long	long_1; //@Key
-	long	long_2;
-	long	long_3;
+        @key long long_1;
+        long long_2;
+        long long_3;
     };
-#pragma keylist Type1 long_1
+
     struct Type2 {
-	long	long_1; //@Key
-	long	long_2;
-	long	long_3;
-	Enumeration enum_1;
+        @key long long_1;
+        long long_2;
+        long long_3;
+        Enumeration enum_1;
     };
-#pragma keylist Type2 long_1
+};
+
+module TraitTest {
+    struct StructDefault {
+        long l;
+    };
+
+    @nested struct StructNested {
+        long l;
+    };
+
+    @topic struct StructTopic {
+        long l;
+    };
+
+    union UnionDefault switch(long) {
+        case 1:
+            long l;
+        case 2:
+            double d;
+    };
+
+    @nested union UnionNested switch(long) {
+        case 1:
+            long l;
+        case 2:
+            double d;
+    };
+
+    @topic union UnionTopic switch(long) {
+        case 1:
+            long l;
+        case 2:
+            double d;
+    };
 };

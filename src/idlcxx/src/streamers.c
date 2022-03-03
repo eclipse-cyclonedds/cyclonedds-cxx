@@ -1271,7 +1271,7 @@ process_struct(
   if (revisit) {
     if (print_switchbox_close(user_data)
      || print_constructed_type_close(user_data)
-     || print_entry_point_functions(streams, fullname))
+     || (!_struct->nested.value && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);
@@ -1345,7 +1345,7 @@ process_union(
     if (multi_putf(streams, MAX, pfmt)
      || multi_putf(streams, MOVE | MAX, mfmt)
      || print_constructed_type_close(user_data)
-     || print_entry_point_functions(streams, fullname))
+     || (!_union->nested.value && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);

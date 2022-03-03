@@ -312,6 +312,20 @@ TEST_F(Topic, traits)
     ASSERT_STREQ(dds::topic::topic_type_name<Space::Type1>::value().c_str(), "Space::Type1");
     ASSERT_NE(dds::topic::is_topic_type<Space::Type2>::value, 0);
     ASSERT_STREQ(dds::topic::topic_type_name<Space::Type2>::value().c_str(), "Space::Type2");
+
+    EXPECT_NE(dds::topic::is_topic_type<TraitTest::StructDefault>::value, 0);
+    EXPECT_STREQ(dds::topic::topic_type_name<TraitTest::StructDefault>::value().c_str(), "TraitTest::StructDefault");
+    EXPECT_EQ(dds::topic::is_topic_type<TraitTest::StructNested>::value, 0);
+    EXPECT_STREQ(dds::topic::topic_type_name<TraitTest::StructNested>::value().c_str(), "Undefined");
+    EXPECT_NE(dds::topic::is_topic_type<TraitTest::StructTopic>::value, 0);
+    EXPECT_STREQ(dds::topic::topic_type_name<TraitTest::StructTopic>::value().c_str(), "TraitTest::StructTopic");
+
+    EXPECT_NE(dds::topic::is_topic_type<TraitTest::UnionDefault>::value, 0);
+    EXPECT_STREQ(dds::topic::topic_type_name<TraitTest::UnionDefault>::value().c_str(), "TraitTest::UnionDefault");
+    EXPECT_EQ(dds::topic::is_topic_type<TraitTest::UnionNested>::value, 0);
+    EXPECT_STREQ(dds::topic::topic_type_name<TraitTest::UnionNested>::value().c_str(), "Undefined");
+    EXPECT_NE(dds::topic::is_topic_type<TraitTest::UnionTopic>::value, 0);
+    EXPECT_STREQ(dds::topic::topic_type_name<TraitTest::UnionTopic>::value().c_str(), "TraitTest::UnionTopic");
 }
 
 TEST_F(Topic, use_after_close)
