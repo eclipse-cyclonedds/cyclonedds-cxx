@@ -1456,6 +1456,9 @@ process_enum(
   const idl_enumerator_t *enumerator;
   uint32_t value;
   const char *enum_name = NULL;
+  idl_retcode_t ret = IDL_RETCODE_OK;
+  uint32_t *already_encountered = NULL,
+           n = 0;
 
   (void)pstate;
   (void)revisit;
@@ -1472,24 +1475,30 @@ process_enum(
    || idl_fprintf(gen->header.handle, fmt, fullname, fullname, ";\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  //array of values already encountered
-  uint32_t already_encountered[232],
-           n_already_encountered = 0;
+  /*count the number of enumerators*/
+  IDL_FOREACH(enumerator, _enum->enumerators) {
+    n++;
+  }
 
+  if (n && !(already_encountered = malloc(sizeof(uint32_t)*n)))
+    return IDL_RETCODE_NO_MEMORY;
+
+  n = 0;
+
+  /*go over all enumerators*/
   IDL_FOREACH(enumerator, _enum->enumerators) {
     enum_name = get_cpp11_name(enumerator);
     value = enumerator->value.value;
     bool already_present = false;
-    for (uint32_t i = 0; i < n_already_encountered && !already_present; i++) {
+    /*check for duplicates*/
+    for (uint32_t i = 0; i < n && !already_present; i++) {
       if (value == already_encountered[i])
         already_present = true;
     }
     if (already_present)
       continue;
 
-    if (n_already_encountered >= 232)  //protection against buffer overflow in already_encountered[]
-      return IDL_RETCODE_ILLEGAL_EXPRESSION;
-    already_encountered[n_already_encountered++] = value;
+    already_encountered[n++] = value;
 
     if (putf(&str->props, "    %scase %"PRIu32":\n"
                           "    return %s::%s;\n"
@@ -1497,9 +1506,17 @@ process_enum(
                           enumerator == _enum->default_enumerator ? "default:\n    " : "",
                           value,
                           fullname,
-                          enum_name) < 0)
-      return IDL_RETCODE_NO_MEMORY;
+                          enum_name) < 0) {
+      ret = IDL_RETCODE_NO_MEMORY;
+      break;
+    }
   }
+
+  /*cleanup*/
+  if (already_encountered)
+    free(already_encountered);
+  if (ret)
+    return ret;
 
   if (putf(&str->props,"  }\n}\n\n"))
     return IDL_RETCODE_NO_MEMORY;
