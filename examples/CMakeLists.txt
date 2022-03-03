@@ -11,6 +11,11 @@
 #
 set(CMAKE_INSTALL_EXAMPLESDIR "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/examples")
 
+# this is a work-around for cross-builds failing with:
+#   CMake Error at examples/helloworld/CMakeLists.txt:19 (idlcxx_generate):
+#   Unknown CMake command "idlcxx_generate".
+include("${CMAKE_SOURCE_DIR}/src/idlcxx/Generate.cmake")
+
 install(
   FILES helloworld/publisher.cpp
         helloworld/subscriber.cpp
