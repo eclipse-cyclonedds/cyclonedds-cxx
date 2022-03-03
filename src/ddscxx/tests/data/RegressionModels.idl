@@ -41,7 +41,7 @@ typedef long td_l;
   @optional long d;
 };
 
-@nested @appendable struct td_1 {
+@topic @appendable struct td_1 {
   long l;
 };
 

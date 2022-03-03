@@ -120,6 +120,11 @@ emit_topic_type_name(
   (void)revisit;
   (void)path;
 
+  if (idl_is_struct(node) && ((const idl_struct_t *)node)->nested.value)
+    return IDL_RETCODE_OK;
+  else if (idl_is_union(node) && ((const idl_union_t *)node)->nested.value)
+    return IDL_RETCODE_OK;
+
   struct generator *gen = user_data;
   char *name = NULL;
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0)
@@ -208,6 +213,11 @@ emit_traits(
     "template<> constexpr const unsigned char TopicTraits<%1$s>::type_info_blob[] = {\n";
   const idl_struct_t *_struct = node;
   const idl_union_t *_union = node;
+  if (idl_is_struct(node) && _struct->nested.value)
+    return IDL_RETCODE_OK;
+  else if (idl_is_union(node) && _union->nested.value)
+    return IDL_RETCODE_OK;
+
   bool selfcontained = idl_is_struct(node) ? sc_struct(_struct) : sc_union(_union);
   idl_extensibility_t ext = idl_is_struct(node) ? _struct->extensibility.value : _union->extensibility.value;
 
@@ -262,15 +272,19 @@ emit_register_topic_type(
 {
   struct generator *gen = user_data;
   char *name = NULL;
-  const char *fmt;
+  static const char *fmt = "REGISTER_TOPIC_TYPE(%s)\n";
 
   (void)pstate;
   (void)revisit;
   (void)path;
 
+  if (idl_is_struct(node) && ((const idl_struct_t *)node)->nested.value)
+    return IDL_RETCODE_OK;
+  else if (idl_is_union(node) && ((const idl_union_t *)node)->nested.value)
+    return IDL_RETCODE_OK;
+
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  fmt = "REGISTER_TOPIC_TYPE(%s)\n";
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
