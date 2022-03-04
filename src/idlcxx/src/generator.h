@@ -89,6 +89,9 @@ bool is_selfcontained(
 idl_extensibility_t get_extensibility(
   const void *node);
 
+idl_type_t unalias_bitmask(
+  const idl_node_t *node);
+
 idl_retcode_t
 generate_streamers(const idl_pstate_t *pstate, struct generator *generator);
 

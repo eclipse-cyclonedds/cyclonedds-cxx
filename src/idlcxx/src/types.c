@@ -51,7 +51,7 @@ emit_member(
   type_spec = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   if (idl_is_array(type_spec))
     value = "{ }";
-  else if (!idl_is_enum(type_spec) && !idl_is_base_type(type_spec))
+  else if (!idl_is_enum(type_spec) && !idl_is_base_type(type_spec) && !idl_is_bitmask(type_spec))
     value = NULL;
   else if (IDL_PRINTA(&value, get_cpp11_default_value, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -446,6 +446,55 @@ emit_module(
 }
 
 static idl_retcode_t
+emit_bitmask(
+  const idl_pstate_t* pstate,
+  const bool revisit,
+  const idl_path_t* path,
+  const void* node,
+  void* user_data)
+{
+  (void)pstate;
+  (void)path;
+  (void)revisit;
+
+  struct generator *gen = user_data;
+  const idl_bitmask_t *bm = node;
+  const idl_bit_value_t *bv = NULL;
+  uint16_t bit_bound = bm->bit_bound.value;
+
+  /*convert largest bit position to sizes of native int types*/
+  if (bit_bound > 32)
+    bit_bound = 64;
+  else if (bit_bound > 16)
+    bit_bound = 32;
+  else if (bit_bound > 8)
+    bit_bound = 16;
+  else
+    bit_bound = 8;
+
+  static const char *open_bitmask =
+    "enum %sBits {\n",
+                    *bitmask_entry =
+    "  %s = UINT%u_C(0x1) << %u%s\n",
+                    *close_bitmask =
+    "};\n"
+    "typedef uint%u_t %s;\n\n";
+
+  if (idl_fprintf(gen->header.handle, open_bitmask, bm->name->identifier) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  IDL_FOREACH(bv, bm->bit_values) {
+    if (idl_fprintf(gen->header.handle, bitmask_entry, bv->name->identifier, bit_bound, bv->position.value, bv->node.next ? "," : "") < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  };
+
+  if (idl_fprintf(gen->header.handle, close_bitmask, bit_bound, bm->name->identifier) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
 emit_const(
   const idl_pstate_t* pstate,
   const bool revisit,
@@ -687,29 +736,30 @@ static idl_retcode_t is_same_type(
 {
   assert(pstate);
   assert(type_a);
-  assert(decl_a);
   assert(type_b);
-  assert(decl_b);
   assert(outval);
 
-  uint32_t a_sz[255] = {0};  /*this should be more than enough nested arrays*/
+  /* container for array sizes in nested arrays
+     255 should be more than enough nested arrays*/
+  uint32_t a_sz[255] = {0};
   size_t i = 0;
   const idl_const_expr_t *ce = NULL;
-  IDL_FOREACH(ce, decl_a->const_expr) {
-    a_sz[i++] = ((const idl_literal_t*)ce)->value.uint32;
-    if (i >= 255) {
-      idl_error(pstate, idl_location(decl_a),
-        "@maximum array depth exceeded in type comparison");
-      return IDL_RETCODE_NO_MEMORY;
+  if (decl_a) {
+    IDL_FOREACH(ce, decl_a->const_expr) {
+      a_sz[i++] = ((const idl_literal_t*)ce)->value.uint32;
+      if (i >= 255) {
+        idl_error(pstate, idl_location(decl_a),
+          "@maximum array depth exceeded in type comparison");
+        return IDL_RETCODE_NO_MEMORY;
+      }
     }
   }
 
   while (idl_is_alias(type_a) || idl_is_forward(type_a)) {
     if (idl_is_forward(type_a)) {
-      const idl_forward_t *fw = (const idl_forward_t *)type_a;
-      type_a = fw->type_spec;
+      type_a = ((const idl_forward_t *)type_a)->type_spec;
     } else if (idl_is_alias(type_a)) {
-      const idl_typedef_t *td = (const idl_typedef_t *)((const idl_node_t*)type_a)->parent;
+      const idl_typedef_t *td = idl_parent(type_a);
       type_a = td->type_spec;
       decl_a = td->declarators;
       IDL_FOREACH(ce, decl_a->const_expr) {
@@ -725,61 +775,110 @@ static idl_retcode_t is_same_type(
 
   size_t j = 0;
   *outval = false;
-  IDL_FOREACH(ce, decl_b->const_expr) {
-    if (j >= i ||
-        a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
+  /* check that the array sizes in the declarators match up */
+  if (decl_b) {
+    IDL_FOREACH(ce, decl_b->const_expr) {
+      if (j >= i || a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
+        return IDL_RETCODE_OK;
+    }
+  } else {
+    if (i)
       return IDL_RETCODE_OK;
   }
 
   while (idl_is_alias(type_b) || idl_is_forward(type_b)) {
     if (idl_is_forward(type_b)) {
-      const idl_forward_t *fw = (const idl_forward_t *)type_b;
-      type_b = fw->type_spec;
+      type_b = ((const idl_forward_t *)type_b)->type_spec;
     } else if (idl_is_alias(type_b)) {
-      const idl_typedef_t *td = (const idl_typedef_t *)((const idl_node_t*)type_b)->parent;
+      const idl_typedef_t *td = idl_parent(type_b);
       type_b = td->type_spec;
       decl_b = td->declarators;
       IDL_FOREACH(ce, decl_b->const_expr) {
-        if (j >= i ||
-            a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
+        if (j >= i || a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
           return IDL_RETCODE_OK;
       }
     }
   }
 
-  if (type_a == type_b) {
-    *outval = true;
-    return IDL_RETCODE_OK;
-  }
+  /* unalias bitmasks to underlying integer types */
+  idl_type_t t_a = idl_is_bitmask(type_a) ? unalias_bitmask(type_a) : idl_type(type_a),
+             t_b = idl_is_bitmask(type_b) ? unalias_bitmask(type_b) : idl_type(type_b);
 
-  if (idl_type(type_a) != idl_type(type_b))
-    return IDL_RETCODE_OK;
-
-  switch (idl_type(type_a)) {
+  switch (t_a) {
     case IDL_SEQUENCE:
-      return is_same_type(pstate,
-                          ((const idl_sequence_t *)type_a)->type_spec, decl_a,
-                          ((const idl_sequence_t *)type_b)->type_spec, decl_b,
-                          outval);
+      if (t_b == IDL_SEQUENCE) {
+        const idl_sequence_t *seq_a = type_a,
+                             *seq_b = type_b;
+        type_a = seq_a->type_spec;
+        type_b = seq_b->type_spec;
+        decl_a = NULL;
+        decl_b = NULL;
+        if (idl_is_alias(type_a)) {
+          const idl_typedef_t *td_a = idl_parent(type_a);
+          decl_a = td_a->declarators;
+          type_a = td_a->type_spec;
+        } else if (idl_is_forward(type_a)) {
+          type_a = ((const idl_forward_t *)type_a)->type_spec;
+        }
+        if (idl_is_alias(type_b)) {
+          const idl_typedef_t *td_b = idl_parent(type_b);
+          decl_b = td_b->declarators;
+          type_b = td_b->type_spec;
+        } else if (idl_is_forward(type_b)) {
+          type_b = ((const idl_forward_t *)type_b)->type_spec;
+        }
+        return is_same_type(pstate, type_a, decl_a, type_b, decl_b, outval);
+      }
       break;
     case IDL_STRING:
-      *outval = ((const idl_string_t *)type_a)->maximum == ((const idl_string_t *)type_b)->maximum;
+      if (t_b == IDL_STRING)
+        *outval = ((const idl_string_t *)type_a)->maximum == ((const idl_string_t *)type_b)->maximum;
       break;
-    case IDL_WSTRING:
-    case IDL_FIXED_PT:
-      /*these still need to be implemented*/
-      return IDL_RETCODE_UNSUPPORTED;
-      break;
-    case IDL_NULL:
-    case IDL_TYPEDEF:
     case IDL_STRUCT:
     case IDL_UNION:
     case IDL_ENUM:
-    case IDL_BITMASK:
-      /*different pointers to the same meta type, therefore different types*/
+      *outval = (type_a == type_b);
       break;
+    /* in the IDL - C++ binding integer types (long, short, etc.) are aliases of fixed width integers
+       and their comparison should treat them interchangeably */
+    case IDL_OCTET:
+    case IDL_UINT8:
+      *outval = (t_b == IDL_OCTET || t_b == IDL_UINT8);
+      break;
+    case IDL_INT16:
+    case IDL_SHORT:
+        *outval = (t_b == IDL_SHORT || t_b == IDL_INT16);
+        break;
+    case IDL_UINT16:
+    case IDL_USHORT:
+        *outval = (t_b == IDL_USHORT || t_b == IDL_UINT16);
+        break;
+    case IDL_INT32:
+    case IDL_LONG:
+        *outval = (t_b == IDL_LONG || t_b == IDL_INT32);
+        break;
+    case IDL_UINT32:
+    case IDL_ULONG:
+        *outval = (t_b == IDL_ULONG || t_b == IDL_UINT32);
+        break;
+    case IDL_INT64:
+    case IDL_LLONG:
+        *outval = (t_b == IDL_LLONG || t_b == IDL_INT64);
+        break;
+    case IDL_UINT64:
+    case IDL_ULLONG:
+        *outval = (t_b == IDL_ULLONG || t_b == IDL_UINT64);
+        break;
+    case IDL_WSTRING:
+    case IDL_FIXED_PT:
+      return IDL_RETCODE_UNSUPPORTED;
+    case IDL_NULL:
+    case IDL_TYPEDEF:
+    case IDL_BITMASK:
+      /*should be unaliased in previous steps*/
+      assert(0);
     default:
-      *outval = true;
+      *outval = (t_a == t_b);
   }
 
   return IDL_RETCODE_OK;
@@ -981,13 +1080,14 @@ generate_types(const idl_pstate_t *pstate, struct generator *generator)
   const char *sources[] = { NULL, NULL };
 
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_CONST | IDL_TYPEDEF | IDL_STRUCT | IDL_MODULE | IDL_ENUM | IDL_UNION;
+  visitor.visit = IDL_CONST | IDL_TYPEDEF | IDL_STRUCT | IDL_MODULE | IDL_ENUM | IDL_UNION | IDL_BITMASK;
   visitor.accept[IDL_ACCEPT_CONST] = &emit_const;
   visitor.accept[IDL_ACCEPT_TYPEDEF] = &emit_typedef;
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_struct;
   visitor.accept[IDL_ACCEPT_UNION] = &emit_union;
   visitor.accept[IDL_ACCEPT_ENUM] = &emit_enum;
   visitor.accept[IDL_ACCEPT_MODULE] = &emit_module;
+  visitor.accept[IDL_ACCEPT_BITMASK] = &emit_bitmask;
   assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
   visitor.sources = sources;

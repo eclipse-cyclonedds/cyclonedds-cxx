@@ -826,3 +826,35 @@ TEST_F(CDRStreamer, d_header_insertion)
   readwrite_test(DS, DS_v1, DS_key, xcdr_v1_stream(endianness::big_endian));
   readwrite_test(DS, DS_v2, DS_key, xcdr_v2_stream(endianness::big_endian));
 }
+
+/*verifying reads/writes of structs containing bitmasks*/
+
+TEST_F(CDRStreamer, cdr_bitmask)
+{
+  bitmask_struct BMS(bm1Bits::bm_2 | bm1Bits::bm_5, bm1Bits::bm_3 | bm1Bits::bm_6);
+
+  bytes struct_normal {
+    0x00, 0x24, /*bitmask_struct::c*/
+    0x00, 0x48  /*bitmask_struct::d*/
+    };
+
+  bytes struct_key {
+    0x00, 0x24 /*bitmask_struct::c*/
+    };
+
+  bitmask_union BMU;
+  BMU.c(bm1Bits::bm_3 | bm1Bits::bm_6);
+
+  bytes union_normal {
+    0x00, 0x00, 0x00, 0x01, /*bitmask_union::discriminator*/
+    0x00, 0x48              /*bitmask_union::c*/
+    };
+
+  bytes union_key {
+    0x00, 0x00, 0x00, 0x01 /*bitmask_union::discriminator*/
+    };
+
+  stream_test(BMS, struct_normal, struct_key);
+  stream_test(BMU, union_normal, union_key);
+
+}

@@ -284,7 +284,7 @@ static int get_cpp11_fully_scoped_name_seps(
   size_t cnt, off, len = 0;
   static const idl_mask_t mask =
     IDL_MODULE | IDL_STRUCT | IDL_UNION | IDL_ENUM |
-    IDL_ENUMERATOR | IDL_DECLARATOR;
+    IDL_ENUMERATOR | IDL_DECLARATOR | IDL_BITMASK;
 
   assert(str && size);
 
@@ -370,6 +370,7 @@ int get_cpp11_default_value(
     case IDL_CHAR:
     case IDL_WCHAR:
     case IDL_OCTET:
+    case IDL_BITMASK:
       value = "0";
       break;
     case IDL_FLOAT:
@@ -586,6 +587,22 @@ get_extensibility(const void *node)
   return IDL_FINAL;
 }
 
+idl_type_t unalias_bitmask(const idl_node_t *node)
+{
+  assert(idl_is_bitmask(node));
+
+  uint16_t width = ((const idl_bitmask_t*)node)->bit_bound.value;
+
+  if (width > 32)
+    return IDL_UINT64;
+  else if (width > 16)
+    return IDL_UINT32;
+  else if (width > 8)
+    return IDL_UINT16;
+  else
+    return IDL_UINT8;
+}
+
 static char *
 figure_guard(const char *file)
 {
@@ -758,6 +775,29 @@ register_types(
 }
 
 static idl_retcode_t
+register_bitmask(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
+{
+  (void)pstate;
+  (void)revisit;
+  (void)path;
+  (void)node;
+
+  struct generator *gen = user_data;
+
+  assert(idl_is_bitmask(node));
+  assert(gen);
+
+  gen->uses_integers = true;
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
 generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 {
   idl_retcode_t ret;
@@ -767,7 +807,7 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 
   /* determine which "system" headers to include */
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_MEMBER | IDL_CONST | IDL_TYPEDEF | IDL_CASE;
+  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_MEMBER | IDL_CONST | IDL_TYPEDEF | IDL_CASE | IDL_BITMASK;
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &register_types;
   visitor.accept[IDL_ACCEPT_TYPEDEF] = &register_types;
   visitor.accept[IDL_ACCEPT_MEMBER] = &register_optional_or_external;
@@ -775,6 +815,7 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   visitor.accept[IDL_ACCEPT_SEQUENCE] = &register_types;
   visitor.accept[IDL_ACCEPT_CONST] = &register_types;
   visitor.accept[IDL_ACCEPT_UNION] = &register_union;
+  visitor.accept[IDL_ACCEPT_BITMASK] = &register_bitmask;
   assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
