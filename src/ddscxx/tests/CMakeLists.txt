@@ -31,7 +31,7 @@ configure_file(
 if(ENABLE_SHM)
   # Packages required packages for SHM tests
   find_package(iceoryx_posh REQUIRED)
-  find_package(iceoryx_posh_roudi_environment REQUIRED)
+  find_package(iceoryx_posh_testing REQUIRED)
 endif()
 
 set(sources
