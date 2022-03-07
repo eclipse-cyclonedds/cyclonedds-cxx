@@ -550,31 +550,24 @@ unroll_sequence(const idl_pstate_t* pstate,
   return IDL_RETCODE_OK;
 }
 
-/* TODO!!! add writing of blocks of primitives/enums back in
 static idl_retcode_t
 insert_array_primitives_copy(
   struct streams *streams,
-  const idl_declarator_t* declarator,
-  const idl_literal_t *lit,
-  const idl_type_spec_t* type_spec,
-  size_t n_arr,
-  char *accessor)
+  const idl_type_spec_t *type_spec,
+  const char *accessor,
+  const char *read_accessor)
 {
-  uint32_t a_size = lit->value.uint32;
-
-  if (n_arr && IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
   const char *e_prop = idl_is_enum(type_spec) ? ", prop" : "";
   static const char *fmt =
-    "      if (!{T}(streamer, %1$s[0]%2$s, %3$u))\n"
+    "      if (!{T}(streamer, %1$s[0]%2$s, %1$s.size()))\n"
     "        return false;\n";
 
-  if (multi_putf(streams, ALL, fmt, accessor, e_prop, a_size))
+  if (multi_putf(streams, CONST, fmt, accessor, e_prop) ||
+      multi_putf(streams, READ, fmt, read_accessor, e_prop))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
-}*/
+}
 
 static idl_retcode_t
 process_entity(
@@ -607,9 +600,11 @@ process_entity(
        "      }  //array depth %1$u\n";
 
   const idl_type_spec_t *root_type_spec = idl_strip(type_spec, 0);
+  const idl_type_spec_t *aliases_stripped = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
 
   //unroll arrays
   uint32_t n_arr = 0;
+  bool batch_copy = false;
   if (idl_is_array(declarator)) {
     const idl_literal_t* lit = (const idl_literal_t*)declarator->const_expr;
     if (multi_putf(streams, ALL, consec_start_fmt, idl_is_base_type(root_type_spec) ? "true" : "false"))
@@ -617,6 +612,12 @@ process_entity(
 
     while (lit) {
       const idl_literal_t* next = idl_next(lit);
+
+      if (!next && (idl_is_base_type(aliases_stripped) || idl_is_enum(aliases_stripped))) {
+        batch_copy = true;
+        break;
+      }
+
       if (n_arr == 0) {
         if (multi_putf(streams, ALL, array_iterate1, n_arr+1, accessor))  //write iteration over initial array
           return IDL_RETCODE_NO_MEMORY;
@@ -628,7 +629,7 @@ process_entity(
       lit = next;
     }
 
-    if (IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)  //update accessor to become "a_$n_arr$"
+    if (n_arr && IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)  //update accessor to become "a_$n_arr$"
       return IDL_RETCODE_NO_MEMORY;
   }
 
@@ -638,8 +639,11 @@ process_entity(
   else
     read_accessor = accessor;
 
-  //unroll sequences (if any)
-  if (idl_is_sequence(type_spec)) {
+  if (batch_copy) {
+    if (insert_array_primitives_copy(streams, aliases_stripped, accessor, read_accessor))
+      return IDL_RETCODE_NO_MEMORY;
+  } else if (idl_is_sequence(type_spec)) {
+    //unroll sequences (if any)
     if (unroll_sequence(pstate, streams, (idl_sequence_t*)type_spec, 1, accessor, read_accessor, loc))
       return IDL_RETCODE_NO_MEMORY;
   } else {
