@@ -51,4 +51,17 @@ typedef sequence<td_1> td_2;
   td_2 c;
 };
 
+typedef double td_d;
+
+union duplicate_types_union switch(long) {
+  case 1:
+    long l_1;
+  case 2:
+    td_l l_2;
+  case 3:
+    double d_1;
+  case 4:
+    td_d d_2;
+};
+
 };

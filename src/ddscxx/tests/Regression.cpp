@@ -201,3 +201,8 @@ TEST_F(Regression, propagate_xtypes_version_reqs)
   ASSERT_EQ(TopicTraits<td_3>::getExtensibility(), extensibility::ext_final);
   ASSERT_EQ(TopicTraits<td_3>::minXCDRVersion(), encoding_version::xcdr_v2);
 }
+
+TEST_F(Regression, union_duplicate_types)
+{
+  duplicate_types_union d_t;
+}
