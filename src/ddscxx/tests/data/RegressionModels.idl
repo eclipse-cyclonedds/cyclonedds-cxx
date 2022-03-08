@@ -70,6 +70,33 @@ union duplicate_types_union switch(long) {
     td_d d_2;  //should be the same as d_1;
 };
 
+union W switch(char) {
+  case 'a':
+    char c[2];
+  case 'b':
+    char d[2][3];
+};
+
+typedef long long_array_5[5];
+typedef long long_array_7[7];
+typedef long long_array_2[2];
+typedef long_array_2 long_array_6[3];
+
+union duplicate_types_union_2 switch(long) {
+  case 1:
+    long b_1[5];
+  case 2:
+    long_array_5 b_2;  //should be the same type as branch b_1
+  case 3:
+    long_array_7 b_3;  //should be different type than b_2
+  case 4:
+    long b_4[2][3];
+  case 5:
+    long_array_2 b_5[3];  //should be the same type as branch b_4
+  case 6:
+    long_array_6 b_6;  //should be the same type as branch b_5
+};
+
 /*this model is to check whether is_same_type sees "through" sequences correctly*/
 typedef unsigned long ulong_arr[4];
 typedef sequence<ulong_arr> seq_ulong_arr;
