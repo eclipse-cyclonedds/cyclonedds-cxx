@@ -336,7 +336,7 @@ int get_cpp11_type(
   if (idl_is_case(node)) {
     const idl_case_t *_case = node;
     if (idl_is_array(_case->declarator))
-      return get_cpp11_array_type(str, size, _case->declarator, user_data);
+      return get_cpp11_type(str, size, _case->declarator, user_data);
     else
       return get_cpp11_type(str, size, _case->type_spec, user_data);
   } else if (idl_is_base_type(node))
