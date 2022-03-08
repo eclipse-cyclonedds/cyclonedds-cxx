@@ -658,22 +658,6 @@ process_entity(
     return IDL_RETCODE_OK;
 }
 
-static idl_extensibility_t
-get_extensibility(const void *node)
-{
-  if (idl_is_enum(node)) {
-    const idl_enum_t *ptr = node;
-    return ptr->extensibility.value;
-  } else if (idl_is_union(node)) {
-    const idl_union_t *ptr = node;
-    return ptr->extensibility.value;
-  } else if (idl_is_struct(node)) {
-    const idl_struct_t *ptr = node;
-    return ptr->extensibility.value;
-  }
-  return IDL_FINAL;
-}
-
 static idl_retcode_t
 generate_entity_properties(
   const idl_node_t *parent,
@@ -1262,7 +1246,6 @@ process_struct(
 {
   (void)path;
   struct streams *streams = user_data;
-  const idl_struct_t *_struct = node;
 
   char *fullname = NULL;
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, node, streams->generator) < 0)
@@ -1271,7 +1254,7 @@ process_struct(
   if (revisit) {
     if (print_switchbox_close(user_data)
      || print_constructed_type_close(user_data)
-     || (!_struct->nested.value && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
+     || (!is_nested(node) && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);
@@ -1280,7 +1263,7 @@ process_struct(
     idl_retcode_t ret = IDL_RETCODE_OK;
     if ((ret = print_constructed_type_open(user_data, node))
      || (ret = print_switchbox_open(user_data))
-     || (ret = process_struct_contents(pstate, revisit, path, _struct, streams)))
+     || (ret = process_struct_contents(pstate, revisit, path, node, streams)))
       return ret;
 
     return IDL_VISIT_REVISIT;
@@ -1326,7 +1309,6 @@ process_union(
   void* user_data)
 {
   struct streams *streams = user_data;
-  const idl_union_t *_union = node;
 
   (void)pstate;
   (void)path;
@@ -1345,7 +1327,7 @@ process_union(
     if (multi_putf(streams, MAX, pfmt)
      || multi_putf(streams, MOVE | MAX, mfmt)
      || print_constructed_type_close(user_data)
-     || (!_union->nested.value && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
+     || (!is_nested(node) && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);

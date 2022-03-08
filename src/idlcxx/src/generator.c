@@ -510,6 +510,76 @@ bool must_understand(
   return false;
 }
 
+bool is_nested(const void *node)
+{
+  if (idl_is_struct(node)) {
+    return ((const idl_struct_t *)node)->nested.value;
+  } else {
+    assert(idl_is_union(node));
+    return ((const idl_union_t *)node)->nested.value;
+  }
+}
+
+static bool sc_union(const idl_union_t *_union)
+{
+  if (!is_selfcontained(_union->switch_type_spec->type_spec))
+    return false;
+
+  const idl_case_t *_case = NULL;
+  IDL_FOREACH(_case, _union->cases) {
+    if (!is_selfcontained(_case->type_spec))
+      return false;
+  }
+
+  return true;
+}
+
+static bool sc_struct(const idl_struct_t *str)
+{
+  const idl_member_t *mem = NULL;
+  IDL_FOREACH(mem, str->members) {
+    if (!is_selfcontained(mem->type_spec))
+      return false;
+  }
+
+  if (str->inherit_spec)
+    return is_selfcontained(str->inherit_spec->base);
+
+  return true;
+}
+
+bool is_selfcontained(const void *node)
+{
+  if (idl_is_sequence(node)
+   || idl_is_string(node)) {
+    return false;
+  } else if (idl_is_typedef(node)) {
+    return is_selfcontained(((const idl_typedef_t*)node)->type_spec);
+  } else if (idl_is_struct(node)) {
+    return sc_struct((const idl_struct_t*)node);
+  } else if (idl_is_union(node)) {
+    return sc_union((const idl_union_t*)node);
+  } else {
+    return !is_external(node);
+  }
+}
+
+idl_extensibility_t
+get_extensibility(const void *node)
+{
+  if (idl_is_enum(node)) {
+    const idl_enum_t *ptr = node;
+    return ptr->extensibility.value;
+  } else if (idl_is_union(node)) {
+    const idl_union_t *ptr = node;
+    return ptr->extensibility.value;
+  } else if (idl_is_struct(node)) {
+    const idl_struct_t *ptr = node;
+    return ptr->extensibility.value;
+  }
+  return IDL_FINAL;
+}
+
 static char *
 figure_guard(const char *file)
 {

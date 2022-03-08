@@ -17,22 +17,6 @@
 
 #include "generator.h"
 
-static bool sc_type_spec(const idl_type_spec_t *type_spec);
-
-static bool sc_union(const idl_union_t *_union)
-{
-  if (!sc_type_spec(_union->switch_type_spec->type_spec))
-    return false;
-
-  const idl_case_t *_case = NULL;
-  IDL_FOREACH(_case, _union->cases) {
-    if (!sc_type_spec(_case->type_spec))
-      return false;
-  }
-
-  return true;
-}
-
 static bool req_xtypes(const void *node)
 {
   if (idl_is_struct(node)) {
@@ -79,35 +63,6 @@ static bool req_xtypes(const void *node)
   return false;
 }
 
-static bool sc_struct(const idl_struct_t *str)
-{
-  const idl_member_t *mem = NULL;
-  IDL_FOREACH(mem, str->members) {
-    if (!sc_type_spec(mem->type_spec))
-      return false;
-  }
-
-  if (str->inherit_spec)
-    return sc_type_spec(str->inherit_spec->base);
-
-  return true;
-}
-
-static bool sc_type_spec(const idl_type_spec_t *type_spec)
-{
-  if (idl_is_sequence(type_spec)
-   || idl_is_string(type_spec)) {
-    return false;
-  } else if (idl_is_typedef(type_spec)) {
-    return sc_type_spec(((const idl_typedef_t*)type_spec)->type_spec);
-  } else if (idl_is_union(type_spec)) {
-    return sc_union(type_spec);
-  } else if (idl_is_struct(type_spec)) {
-    return sc_struct(type_spec);
-  }
-  return true;
-}
-
 static idl_retcode_t
 emit_topic_type_name(
   const idl_pstate_t* pstate,
@@ -120,9 +75,7 @@ emit_topic_type_name(
   (void)revisit;
   (void)path;
 
-  if (idl_is_struct(node) && ((const idl_struct_t *)node)->nested.value)
-    return IDL_RETCODE_OK;
-  else if (idl_is_union(node) && ((const idl_union_t *)node)->nested.value)
+  if (is_nested(node))
     return IDL_RETCODE_OK;
 
   struct generator *gen = user_data;
@@ -176,6 +129,9 @@ emit_traits(
   (void)revisit;
   (void)path;
 
+  if (is_nested(node))
+    return IDL_RETCODE_OK;
+
   struct generator *gen = user_data;
   char *name = NULL;
   static const char *fmt =
@@ -211,15 +167,6 @@ emit_traits(
   static const char *type_info_hdr2 =
     " };\n"
     "template<> constexpr const unsigned char TopicTraits<%1$s>::type_info_blob[] = {\n";
-  const idl_struct_t *_struct = node;
-  const idl_union_t *_union = node;
-  if (idl_is_struct(node) && _struct->nested.value)
-    return IDL_RETCODE_OK;
-  else if (idl_is_union(node) && _union->nested.value)
-    return IDL_RETCODE_OK;
-
-  bool selfcontained = idl_is_struct(node) ? sc_struct(_struct) : sc_union(_union);
-  idl_extensibility_t ext = idl_is_struct(node) ? _struct->extensibility.value : _union->extensibility.value;
 
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0 ||
       idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)
@@ -229,7 +176,7 @@ emit_traits(
       idl_fprintf(gen->header.handle, mincdrversionfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (!selfcontained &&
+  if (!is_selfcontained(node) &&
       idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -237,6 +184,7 @@ emit_traits(
       idl_fprintf(gen->header.handle, keylessfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  idl_extensibility_t ext = get_extensibility(node);
   if (ext != IDL_FINAL &&
       idl_fprintf(gen->header.handle, extensibilityfmt, name, ext == IDL_APPENDABLE ? "appendable" : "mutable") < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -278,9 +226,7 @@ emit_register_topic_type(
   (void)revisit;
   (void)path;
 
-  if (idl_is_struct(node) && ((const idl_struct_t *)node)->nested.value)
-    return IDL_RETCODE_OK;
-  else if (idl_is_union(node) && ((const idl_union_t *)node)->nested.value)
+  if (is_nested(node))
     return IDL_RETCODE_OK;
 
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0)
