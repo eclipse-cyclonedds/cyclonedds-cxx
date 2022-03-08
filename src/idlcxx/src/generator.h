@@ -80,6 +80,15 @@ bool is_external(
 bool must_understand(
   const void *node);
 
+bool is_nested(
+  const void *node);
+
+bool is_selfcontained(
+  const void *node);
+
+idl_extensibility_t get_extensibility(
+  const void *node);
+
 idl_retcode_t
 generate_streamers(const idl_pstate_t *pstate, struct generator *generator);
 
