@@ -770,6 +770,14 @@ static idl_retcode_t is_same_type(
       /*these still need to be implemented*/
       return IDL_RETCODE_UNSUPPORTED;
       break;
+    case IDL_NULL:
+    case IDL_TYPEDEF:
+    case IDL_STRUCT:
+    case IDL_UNION:
+    case IDL_ENUM:
+    case IDL_BITMASK:
+      /*different pointers to the same meta type, therefore different types*/
+      break;
     default:
       *outval = true;
   }
