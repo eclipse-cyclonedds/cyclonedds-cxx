@@ -353,7 +353,8 @@ public:
  */
 
 using TestTypes = ::testing::Types<Space::Type1, Space::Type2, HelloWorldData::Msg,
-    Bounded::Msg, UnBounded::Msg>;
+     Bounded::Msg, UnBounded::Msg>;
+
 TYPED_TEST_SUITE(SharedMemoryTest, TestTypes, );
 
 TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
@@ -426,10 +427,10 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::TransientLocal();
   w_qos << dds::core::policy::History::KeepLast(10U);
-  constexpr bool valid_w_shm_qos = false;
+  constexpr bool valid_w_shm_qos = true;
 
   // tests
-  EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
 
@@ -438,14 +439,14 @@ TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
   // invalid reader shm QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
-  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::Durability::Transient();
   r_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_r_shm_qos = false;
 
   // invalid writer SHM QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
-  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::Durability::Transient();
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = false;
 
