@@ -13,14 +13,15 @@
 <CycloneDDS>
   <!-- Simple config-file for testing whether a config-file can be picked up
        correctly. -->
-  <Domain>
-    <Id>3</Id>
+  <Domain id="3">
+	  <General>
+		  <Interfaces>
+			  <NetworkInterface address="127.0.0.1"></NetworkInterface>
+		  </Interfaces>
+		  <AllowMulticast>true</AllowMulticast>
+		  <EnableMulticastLoopback>true</EnableMulticastLoopback>
+	  </General>
   </Domain>
-  <General>
-    <NetworkInterfaceAddress>127.0.0.1</NetworkInterfaceAddress>
-    <AllowMulticast>true</AllowMulticast>
-    <EnableMulticastLoopback>true</EnableMulticastLoopback>
-  </General>
   <Compatibility>
     <StandardsConformance>lax</StandardsConformance>
   </Compatibility>
