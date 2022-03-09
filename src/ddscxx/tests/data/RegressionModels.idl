@@ -57,11 +57,17 @@ union duplicate_types_union switch(long) {
   case 1:
     long l_1;
   case 2:
-    td_l l_2;
+    td_l l_2; //should be the same as l_1
   case 3:
     double d_1;
+  //to check whether is_same_type sees s_1 and s_2 as different types
   case 4:
-    td_d d_2;
+    s_1 s_s_1;
+  case 5:
+    s_2 s_s_2;
+  //to check whether the default case is deduplicated correctly as well
+  default:
+    td_d d_2;  //should be the same as d_1;
 };
 
 };
