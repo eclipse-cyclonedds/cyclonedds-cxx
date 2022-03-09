@@ -261,13 +261,13 @@ public:
   void
   CheckData(
     const bool must_use_iceoryx,
-    const dds::sub::LoanedSamples<T> & sample,
+    const dds::sub::LoanedSamples<T> & samples,
     const T & test_data)
   {
     // we only have one sample
-    ASSERT_EQ(sample.length(), 1);
-    const T & data = sample.begin()->data();
-    const dds::sub::SampleInfo & info = sample.begin()->info();
+    ASSERT_EQ(samples.length(), 1);
+    const T & data = samples.begin()->data();
+    const dds::sub::SampleInfo & info = samples.begin()->info();
     const dds::sub::status::DataState & state = info.state();
     ASSERT_EQ(data, test_data);
     // the sample view state can either be new or not new (which has not been taken)
@@ -329,6 +329,19 @@ public:
     }
   }
 
+  void expect_no_communication (
+    const dds::sub::qos::DataReaderQos & r_qos,
+    const dds::pub::qos::DataWriterQos & w_qos)
+  {
+    // setup communication
+    this->SetupCommunication(r_qos, w_qos);
+
+    // we need to trust this check, otherwise we would have to wait
+    // for data until some arbitrary timeout (which may still be to small)
+    auto status = this->reader.subscription_matched_status();
+    EXPECT_EQ(status.current_count(), 0);
+  }
+
   void run_loan_support_api_test(const bool valid_r_shm_qos, const bool valid_w_shm_qos)
   {
     EXPECT_EQ(this->reader.delegate()->is_loan_supported(),
@@ -373,7 +386,6 @@ TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  // tests
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
@@ -385,7 +397,6 @@ TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
   dds::pub::qos::DataWriterQos w_qos{};
   constexpr bool valid_shm_qos = true;
 
-  // test communication
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 1));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos));
 }
@@ -408,7 +419,6 @@ TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  // tests
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
@@ -429,7 +439,6 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   w_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_w_shm_qos = true;
 
-  // tests
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
 }
@@ -452,6 +461,146 @@ TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
 
   EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+}
+
+TYPED_TEST(SharedMemoryTest, writer_invalid_shm_qos)
+{
+  // valid reader shm QoS
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::Reliable();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+  constexpr bool valid_r_shm_qos = true;
+
+  // invalid writer SHM QoS
+  dds::pub::qos::DataWriterQos w_qos;
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::Transient();
+  w_qos << dds::core::policy::History::KeepLast(10U);
+  constexpr bool valid_w_shm_qos = false;  
+
+  EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+}
+
+TYPED_TEST(SharedMemoryTest, reader_invalid_shm_qos)
+{
+  // invalid reader shm QoS
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::BestEffort();
+  r_qos << dds::core::policy::Durability::Transient();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+
+  // valid writer SHM QoS
+  dds::pub::qos::DataWriterQos w_qos;
+  w_qos << dds::core::policy::Reliability::BestEffort();
+  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::History::KeepLast(10U);
+
+  EXPECT_NO_THROW(this->expect_no_communication(r_qos, w_qos));
+}
+
+TYPED_TEST(SharedMemoryTest, reliable_reader_does_not_match_best_effort_writer)
+{
+  // valid reader shm QoS
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::Reliable();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+
+  // valid writer SHM QoS
+  dds::pub::qos::DataWriterQos w_qos;
+  w_qos << dds::core::policy::Reliability::BestEffort();
+  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::History::KeepLast(10U);
+
+  this->expect_no_communication(r_qos, w_qos);
+}
+
+TYPED_TEST(SharedMemoryTest, best_effort_reader_receives_data_from_reliable_writer_via_shm)
+{
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::BestEffort();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+  constexpr bool valid_r_shm_qos = true;
+
+  // to set the durability service values of history depth
+  // TODO: except that this does not work, as the writer has no
+  // such qos settings values
+  dds::topic::qos::TopicQos t_qos;
+  t_qos << dds::core::policy::Durability::TransientLocal();
+  t_qos << dds::core::policy::History::KeepLast(10U);
+
+  dds::pub::qos::DataWriterQos w_qos(t_qos);
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::History::KeepLast(10U);
+  constexpr bool valid_w_shm_qos = true;
+
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+}
+
+TYPED_TEST(SharedMemoryTest, tl_reader_with_lower_history_depth_receives_data_via_shm)
+{
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::Reliable();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+  constexpr bool valid_r_shm_qos = true;
+
+  dds::topic::qos::TopicQos t_qos;
+  t_qos << dds::core::policy::Durability::TransientLocal();
+  t_qos << dds::core::policy::History::KeepLast(11U);
+
+  dds::pub::qos::DataWriterQos w_qos(t_qos);
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::History::KeepLast(11U);
+  constexpr bool valid_w_shm_qos = true;
+
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+}
+
+TYPED_TEST(SharedMemoryTest, tl_reader_with_larger_history_depth_receives_data_via_shm)
+{
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::Reliable();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+  constexpr bool valid_r_shm_qos = true;
+
+  dds::topic::qos::TopicQos t_qos;
+  t_qos << dds::core::policy::Durability::TransientLocal();
+  t_qos << dds::core::policy::History::KeepLast(9U);
+
+  dds::pub::qos::DataWriterQos w_qos(t_qos);
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::TransientLocal();
+  w_qos << dds::core::policy::History::KeepLast(9U);
+  constexpr bool valid_w_shm_qos = true;
+
+  EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+}
+
+TYPED_TEST(SharedMemoryTest, tl_reader_does_not_match_volatile_writer)
+{
+  // valid reader shm QoS
+  dds::sub::qos::DataReaderQos r_qos;
+  r_qos << dds::core::policy::Reliability::Reliable();
+  r_qos << dds::core::policy::Durability::TransientLocal();
+  r_qos << dds::core::policy::History::KeepLast(10U);
+
+  // valid writer SHM QoS
+  dds::pub::qos::DataWriterQos w_qos;
+  w_qos << dds::core::policy::Reliability::Reliable();
+  w_qos << dds::core::policy::Durability::Volatile();
+  w_qos << dds::core::policy::History::KeepLast(9U);
+
+  this->expect_no_communication(r_qos, w_qos);
 }
 
 TYPED_TEST(SharedMemoryTest, loan_sample)
