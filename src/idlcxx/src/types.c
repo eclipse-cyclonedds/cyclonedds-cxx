@@ -40,6 +40,11 @@ emit_member(
   (void)revisit;
   (void)path;
 
+  if (((const idl_member_t *)idl_parent(node))->try_construct.annotation != NULL) {
+    idl_warning(pstate, IDL_WARN_UNSUPPORTED_ANNOTATIONS, idl_location(node),
+      "The @try_construct annotation is not supported yet in the C++ generator, the default try-construct behavior will be used");
+  }
+
   if (idl_is_array(node))
     type_spec = node;
   else
@@ -351,6 +356,9 @@ emit_enum(
   (void)revisit;
   (void)path;
 
+  if (_enum->default_enumerator && idl_mask(_enum->default_enumerator) == IDL_DEFAULT_ENUMERATOR)
+    idl_warning(pstate, IDL_WARN_UNSUPPORTED_ANNOTATIONS, idl_location(node), "The @default_literal annotation is not fully supported yet in the C++ generator and will not modify default construction behaviour");
+
   name = get_cpp11_name(node);
   if (idl_fprintf(gen->header.handle, "enum class %s\n{\n", name) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -537,6 +545,11 @@ emit_case(
   (void)pstate;
   (void)revisit;
   (void)path;
+
+  if (((const idl_case_t *)node)->try_construct.annotation != NULL) {
+    idl_warning(pstate, IDL_WARN_UNSUPPORTED_ANNOTATIONS, idl_location(node),
+      "The @try_construct annotation is not supported yet in the C++ generator, the default try-construct behavior will be used");
+  }
 
   /* short-circuit on default case */
   if (!branch->labels->const_expr)
