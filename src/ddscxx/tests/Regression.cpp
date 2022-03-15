@@ -203,4 +203,21 @@ TEST_F(Regression, propagate_xtypes_version_reqs)
 TEST_F(Regression, union_duplicate_types)
 {
   duplicate_types_union d_t;
+  d_t.l_1(456789);
+  duplicate_sequences_union d_s;
+  d_s.c_1({1,2,3,4,5,6});
+}
+
+TEST_F(Regression, delimiters_bitmask)
+{
+  bytes s_bm1_bytes =
+  {
+    0x06, 0x00, 0x00, 0x00,  //s_bm1.dheader(6)
+    0x03, 0x00, 0x06, 0x00, 0x05, 0x00 //s_bm1.c
+  };
+
+  s_bm1 s;
+  s.c({b_0 | b_1, b_1 | b_2, b_2 | b_0});
+
+  readwrite_test(s, s_bm1_bytes, xcdr_v2_stream(endianness::little_endian));
 }
