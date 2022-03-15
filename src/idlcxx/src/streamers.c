@@ -768,6 +768,20 @@ generate_entity_properties(
         bb = "bb_8_bits";
       }
     }
+  } else if (idl_is_bitmask(type_spec)) {
+    const idl_bitmask_t *bm = type_spec;
+    bb = "bb_32_bits";
+    if (bm->bit_bound.annotation) {
+      if (bm->bit_bound.value > 32) {
+        bb = "bb_64_bits";
+      } else if (bm->bit_bound.value > 16) {
+        bb = "bb_32_bits";
+      } else if (bm->bit_bound.value > 8) {
+        bb = "bb_16_bits";
+      } else {
+        bb = "bb_8_bits";
+      }
+    }
   }
 
   if (bb && putf(&streams->props, "  props.m_members_by_seq.back().e_bb = %1$s;\n", bb))
@@ -907,8 +921,8 @@ process_case(
   const idl_switch_type_spec_t* _switch = ((const idl_union_t*)_case->node.parent)->switch_type_spec;
   const idl_union_t* _union = (const idl_union_t*)_case->node.parent;
   bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
-       simple = idl_is_base_type(_case->type_spec),
-       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec);
+       simple = idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec),
+       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_bitmask(_case->type_spec);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
 
   static const char *max_start =

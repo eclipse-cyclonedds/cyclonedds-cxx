@@ -176,4 +176,35 @@ module CDR_testing {
   struct union_struct_k {
     @key un_k c;
   };
+
+  @bit_bound(15) bitmask bm1 {
+    @position(2) bm_2,
+    bm_3,
+    @position(5) bm_5,
+    bm_6
+  };
+
+  @bit_bound(15) bitmask bm2 {
+    @position(0) bm_0,
+    bm_1,
+    @position(7) bm_7,
+    bm_8
+  };
+
+  struct bitmask_struct {
+    @key bm1 c;
+    bm2 d;
+  };
+
+  /* this should also check the deduplication for the variant container
+     as both bitmasks map to the same type as unsigned short */
+  union bitmask_union switch(@key long) {
+    case 1:
+        bm1 c;
+    case 2:
+        bm2 d;
+    case 3:
+        unsigned short s;
+  };
+
 };

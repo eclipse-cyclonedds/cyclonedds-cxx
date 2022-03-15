@@ -70,4 +70,24 @@ union duplicate_types_union switch(long) {
     td_d d_2;  //should be the same as d_1;
 };
 
+/*this model is to check whether is_same_type sees "through" sequences correctly*/
+typedef unsigned long ulong_arr[4];
+typedef sequence<ulong_arr> seq_ulong_arr;
+typedef sequence<unsigned long> seq_ulong;
+
+union duplicate_sequences_union switch (unsigned long) {
+  case 0:
+    seq_ulong_arr c_0;
+  case 1:
+    seq_ulong c_1;
+};
+
+@bit_bound(16) bitmask bm1 {
+b_0, b_1, b_2
+};
+
+struct s_bm1 {
+bm1 c[3];
+};
+
 };
