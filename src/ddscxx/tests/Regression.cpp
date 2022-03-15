@@ -224,6 +224,35 @@ TEST_F(Regression, delimiters_bitmask)
   readwrite_test(s, s_bm1_bytes, xcdr_v2_stream(endianness::little_endian));
 }
 
+TEST_F(Regression, emumerators_properties)
+{
+  auto props = org::eclipse::cyclonedds::core::cdr::get_type_props<e1>();
+
+  EXPECT_EQ(props.e_ext, extensibility::ext_appendable);
+  EXPECT_EQ(props.e_bb, bb_8_bits);
+  EXPECT_TRUE(props.xtypes_necessary);
+  ASSERT_EQ(props.m_members_by_seq.size(), 1);
+  EXPECT_FALSE(bool(props.m_members_by_seq.front()));
+  ASSERT_EQ(props.m_members_by_id.size(), 1);
+  EXPECT_FALSE(bool(props.m_members_by_id.front()));
+  ASSERT_EQ(props.m_keys.size(), 1);
+  EXPECT_FALSE(bool(props.m_keys.front()));
+}
+
+TEST_F(Regression, delimiters_emumerators)
+{
+  bytes s_e1_bytes =
+  {
+    0x03, 0x00, 0x00, 0x00,  //s_e1.dheader(3)
+    0x03, 0x01, 0x02,  //s_e1.c
+  };
+
+  s_e1 s;
+  s.c({e1::e_3, e1::e_1, e1::e_2});
+
+  readwrite_test(s, s_e1_bytes, xcdr_v2_stream(endianness::little_endian));
+}
+
 TEST_F(Regression, arrays_in_union_case)
 {
   W w_a, w_b;

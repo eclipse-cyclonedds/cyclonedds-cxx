@@ -682,7 +682,8 @@ generate_entity_properties(
 
   const char *opt = is_optional(decl) ? "true" : "false";
   if (idl_is_struct(type_spec)
-   || idl_is_union(type_spec)) {
+   || idl_is_union(type_spec)
+   || idl_is_enum(type_spec)) {
     char *type = NULL;
     if (IDL_PRINTA(&type, get_cpp11_fully_scoped_name, type_spec, streams->generator) < 0)
       return IDL_RETCODE_NO_MEMORY;
@@ -761,20 +762,6 @@ generate_entity_properties(
   /*IDL_WCHAR:
   IDL_ANY:
   IDL_LDOUBLE:*/
-    }
-  } else if (idl_is_enum(type_spec)) {
-    const idl_enum_t *en = type_spec;
-    bb = "bb_32_bits";
-    if (en->bit_bound.annotation) {
-      if (en->bit_bound.value > 32) {
-        bb = "bb_64_bits";
-      } else if (en->bit_bound.value > 16) {
-        bb = "bb_32_bits";
-      } else if (en->bit_bound.value > 8) {
-        bb = "bb_16_bits";
-      } else {
-        bb = "bb_8_bits";
-      }
     }
   } else if (idl_is_bitmask(type_spec)) {
     const idl_bitmask_t *bm = type_spec;
@@ -1102,10 +1089,10 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
     " {\n"
     "  static std::mutex mtx;\n"
     "  static entity_properties_t props;\n"
-    "  static bool initialized = false;\n\n"
+    "  static bool initialized = false;\n"
+    "  std::lock_guard<std::mutex> lock(mtx);\n\n"
     "  if (initialized)\n"
     "    return props;\n\n"
-    "  std::lock_guard<std::mutex> lock(mtx);\n"
     "  props.clear();\n"
     "  key_endpoint keylist;\n\n";
   static const char *sfmt =
@@ -1489,11 +1476,21 @@ process_enum(
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, _enum, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  static const char *fmt = "template<>\n"\
-                    "%s enum_conversion<%s>(uint32_t in)%s";
+  static const char *conv_func = "template<>\n"\
+                    "%s enum_conversion<%s>(uint32_t in)%s",
+                    *prop_func = "template<>\n"\
+                    "entity_properties_t get_type_props<%s>()%s",
+                    *prop_func_contents = " {\n"
+                    "entity_properties_t props;\n",
+                    *prop_func_close =
+                    "  props.m_members_by_seq.push_back(final_entry());\n"
+                    "  props.m_members_by_id.push_back(final_entry());\n"
+                    "  props.m_keys.push_back(final_entry());\n"
+                    "  return props;\n"
+                    "}\n\n";
 
-  if (putf(&str->props, fmt, fullname, fullname, " {\n  switch (in) {\n")
-   || idl_fprintf(gen->header.handle, fmt, fullname, fullname, ";\n\n") < 0)
+  if (putf(&str->props, conv_func, fullname, fullname, " {\n  switch (in) {\n")
+   || idl_fprintf(gen->header.handle, conv_func, fullname, fullname, ";\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /*count the number of enumerators*/
@@ -1533,16 +1530,34 @@ process_enum(
     }
   }
 
+  //generate entity properties function for enums
+  uint16_t bb = 32;
+  if (_enum->bit_bound.annotation) {
+    if (_enum->bit_bound.value > 32)
+      bb = 64;
+    else if (_enum->bit_bound.value > 16)
+      bb = 32;
+    else if (_enum->bit_bound.value > 8)
+      bb = 16;
+    else
+      bb = 8;
+  }
+
+  if (putf(&str->props,"  }\n}\n\n") ||
+      putf(&str->props, prop_func, fullname, prop_func_contents) ||
+      idl_fprintf(gen->header.handle, prop_func, fullname, ";\n\n") < 0 ||
+      (_enum->extensibility.value != IDL_FINAL &&
+       putf(&str->props, "  props.e_ext = extensibility::%s;\n  props.xtypes_necessary = true;\n", _enum->extensibility.value == IDL_APPENDABLE ? "ext_appendable" : "ext_mutable")) ||
+      putf(&str->props, "  props.e_bb = bb_%"PRIu16"_bits;\n", bb) ||
+      putf(&str->props, prop_func_close)) {
+    ret = IDL_RETCODE_NO_MEMORY;
+  }
+
   /*cleanup*/
   if (already_encountered)
     free(already_encountered);
-  if (ret)
-    return ret;
 
-  if (putf(&str->props,"  }\n}\n\n"))
-    return IDL_RETCODE_NO_MEMORY;
-
-  return IDL_RETCODE_OK;
+  return ret;
 }
 
 idl_retcode_t
