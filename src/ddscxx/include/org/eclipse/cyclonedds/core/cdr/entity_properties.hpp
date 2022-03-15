@@ -255,11 +255,11 @@ entity_properties_t get_type_props() {
   static std::mutex mtx;
   static entity_properties_t props;
   static bool initialized = false;
+  std::lock_guard<std::mutex> lock(mtx);
 
   if (initialized)
     return props;
 
-  std::lock_guard<std::mutex> lock(mtx);
   props.clear();
   key_endpoint keylist;
   switch (sizeof(T)) {
