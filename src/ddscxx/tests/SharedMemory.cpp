@@ -123,6 +123,7 @@ public:
   dds::domain::DomainParticipant participant;
   dds::sub::Subscriber subscriber;
   dds::pub::Publisher publisher;
+  dds::topic::qos::TopicQos t_qos;
   dds::topic::Topic<T> topic;
   dds::sub::DataReader<T> reader;
   dds::pub::DataWriter<T> writer;
@@ -164,11 +165,18 @@ public:
     }
   }
 
+  void SetDurabilityServiceHistory(int32_t depth) {
+    dds::core::policy::DurabilityService durabilityService;
+    durabilityService.history_depth(depth);
+    this->t_qos << durabilityService;
+  }
+
   void CreateTopic()
   {
     if (this->topic == dds::core::null) {
       this->CreateParticipant();
-      this->topic = dds::topic::Topic<T>(this->participant, TOPIC_NAME);
+      this->topic =
+          dds::topic::Topic<T>(this->participant, TOPIC_NAME, this->t_qos);
       ASSERT_NE(this->topic, dds::core::null);
     }
   }
@@ -429,14 +437,14 @@ TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Volatile();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_r_shm_qos = true;
 
   // invalid writer shm qos
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::TransientLocal();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_w_shm_qos = true;
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
@@ -449,14 +457,14 @@ TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Transient();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_r_shm_qos = false;
 
   // invalid writer SHM QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Transient();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_w_shm_qos = false;
 
   EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
@@ -469,14 +477,14 @@ TYPED_TEST(SharedMemoryTest, writer_invalid_shm_qos)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_r_shm_qos = true;
 
   // invalid writer SHM QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Transient();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_w_shm_qos = false;  
 
   EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
@@ -489,13 +497,13 @@ TYPED_TEST(SharedMemoryTest, reader_invalid_shm_qos)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::BestEffort();
   r_qos << dds::core::policy::Durability::Transient();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
 
   // valid writer SHM QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::BestEffort();
   w_qos << dds::core::policy::Durability::TransientLocal();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
 
   EXPECT_NO_THROW(this->expect_no_communication(r_qos, w_qos));
 }
@@ -506,13 +514,13 @@ TYPED_TEST(SharedMemoryTest, reliable_reader_does_not_match_best_effort_writer)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
 
   // valid writer SHM QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::BestEffort();
   w_qos << dds::core::policy::Durability::TransientLocal();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
 
   this->expect_no_communication(r_qos, w_qos);
 }
@@ -522,21 +530,16 @@ TYPED_TEST(SharedMemoryTest, best_effort_reader_receives_data_from_reliable_writ
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::BestEffort();
   r_qos << dds::core::policy::Durability::TransientLocal();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_r_shm_qos = true;
 
-  // to set the durability service values of history depth
-  // TODO: except that this does not work, as the writer has no
-  // such qos settings values
-  dds::topic::qos::TopicQos t_qos;
-  t_qos << dds::core::policy::Durability::TransientLocal();
-  t_qos << dds::core::policy::History::KeepLast(10U);
-
-  dds::pub::qos::DataWriterQos w_qos(t_qos);
+  dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::TransientLocal();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_w_shm_qos = true;
+
+  this->SetDurabilityServiceHistory(10);
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
@@ -550,15 +553,13 @@ TYPED_TEST(SharedMemoryTest, tl_reader_with_lower_history_depth_receives_data_vi
   r_qos << dds::core::policy::History::KeepLast(10U);
   constexpr bool valid_r_shm_qos = true;
 
-  dds::topic::qos::TopicQos t_qos;
-  t_qos << dds::core::policy::Durability::TransientLocal();
-  t_qos << dds::core::policy::History::KeepLast(11U);
-
-  dds::pub::qos::DataWriterQos w_qos(t_qos);
+  dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::TransientLocal();
-  w_qos << dds::core::policy::History::KeepLast(11U);
+  w_qos << dds::core::policy::History::KeepLast(11);
   constexpr bool valid_w_shm_qos = true;
+
+  this->SetDurabilityServiceHistory(11);
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
@@ -569,18 +570,16 @@ TYPED_TEST(SharedMemoryTest, tl_reader_with_larger_history_depth_receives_data_v
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
   constexpr bool valid_r_shm_qos = true;
 
-  dds::topic::qos::TopicQos t_qos;
-  t_qos << dds::core::policy::Durability::TransientLocal();
-  t_qos << dds::core::policy::History::KeepLast(9U);
-
-  dds::pub::qos::DataWriterQos w_qos(t_qos);
+  dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::TransientLocal();
-  w_qos << dds::core::policy::History::KeepLast(9U);
+  w_qos << dds::core::policy::History::KeepLast(9);
   constexpr bool valid_w_shm_qos = true;
+
+  this->SetDurabilityServiceHistory(9);
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
   EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
@@ -592,13 +591,13 @@ TYPED_TEST(SharedMemoryTest, tl_reader_does_not_match_volatile_writer)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
 
   // valid writer SHM QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
-  w_qos << dds::core::policy::History::KeepLast(9U);
+  w_qos << dds::core::policy::History::KeepLast(10);
 
   this->expect_no_communication(r_qos, w_qos);
 }
@@ -608,12 +607,12 @@ TYPED_TEST(SharedMemoryTest, loan_sample)
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Volatile();
-  r_qos << dds::core::policy::History::KeepLast(10U);
+  r_qos << dds::core::policy::History::KeepLast(10);
 
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
-  w_qos << dds::core::policy::History::KeepLast(10U);
+  w_qos << dds::core::policy::History::KeepLast(10);
 
   this->SetupCommunication(r_qos, w_qos);
   using DDSType = typename TestFixture::TopicType;
