@@ -119,4 +119,14 @@ struct s_bm1 {
 bm1 c[3];
 };
 
+@bit_bound(8) @appendable enum e1 {
+  e_0, e_1, e_2, e_3
+};
+
+typedef e1 e1_arr[3];
+
+struct s_e1 {
+e1_arr c;
+};
+
 };
