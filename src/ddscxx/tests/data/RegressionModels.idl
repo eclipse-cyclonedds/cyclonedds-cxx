@@ -95,6 +95,8 @@ union duplicate_types_union_2 switch(long) {
     long_array_2 b_5[3];  //should be the same type as branch b_4
   case 6:
     long_array_6 b_6;  //should be the same type as branch b_5
+  case 7:
+    long b_7;  //should be different from all above types
 };
 
 /*this model is to check whether is_same_type sees "through" sequences correctly*/
