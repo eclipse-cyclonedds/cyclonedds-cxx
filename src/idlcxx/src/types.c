@@ -781,9 +781,6 @@ static idl_retcode_t is_same_type(
       if (j >= i || a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
         return IDL_RETCODE_OK;
     }
-  } else {
-    if (i)
-      return IDL_RETCODE_OK;
   }
 
   while (idl_is_alias(type_b) || idl_is_forward(type_b)) {
@@ -799,6 +796,10 @@ static idl_retcode_t is_same_type(
       }
     }
   }
+
+  /* check that we compared the same number of array sizes */
+  if (i != j)
+    return IDL_RETCODE_OK;
 
   /* unalias bitmasks to underlying integer types */
   idl_type_t t_a = idl_is_bitmask(type_a) ? unalias_bitmask(type_a) : idl_type(type_a),

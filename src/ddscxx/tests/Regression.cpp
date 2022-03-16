@@ -204,6 +204,8 @@ TEST_F(Regression, union_duplicate_types)
 {
   duplicate_types_union d_t;
   d_t.l_1(456789);
+  duplicate_types_union_2 d_t_2;
+  d_t_2.b_1({1,2,3,4,5});
   duplicate_sequences_union d_s;
   d_s.c_1({1,2,3,4,5,6});
 }
@@ -220,4 +222,25 @@ TEST_F(Regression, delimiters_bitmask)
   s.c({b_0 | b_1, b_1 | b_2, b_2 | b_0});
 
   readwrite_test(s, s_bm1_bytes, xcdr_v2_stream(endianness::little_endian));
+}
+
+TEST_F(Regression, arrays_in_union_case)
+{
+  W w_a, w_b;
+
+  w_a.c({'c', 'd'});
+  std::array<std::array<char,3>,2> arr = {std::array<char,3>({'j', 'i', 'h'}),std::array<char,3>({'g', 'f', 'e'})};
+  w_b.d(arr);
+
+  bytes w_a_bytes =
+    {'a',           /*W::discriminator*/
+     'c','d'},      /*W::c*/
+        w_b_bytes =
+    {'b',           /*W::discriminator*/
+     'j', 'i', 'h', /*W::d[0]*/
+     'g', 'f', 'e'  /*W::d[1]*/
+    };
+
+  readwrite_test(w_a, w_a_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(w_b, w_b_bytes, xcdr_v2_stream(endianness::little_endian));
 }

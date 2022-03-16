@@ -550,31 +550,24 @@ unroll_sequence(const idl_pstate_t* pstate,
   return IDL_RETCODE_OK;
 }
 
-/* TODO!!! add writing of blocks of primitives/enums back in
 static idl_retcode_t
 insert_array_primitives_copy(
   struct streams *streams,
-  const idl_declarator_t* declarator,
-  const idl_literal_t *lit,
-  const idl_type_spec_t* type_spec,
-  size_t n_arr,
-  char *accessor)
+  const idl_type_spec_t *type_spec,
+  const char *accessor,
+  const char *read_accessor)
 {
-  uint32_t a_size = lit->value.uint32;
-
-  if (n_arr && IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
   const char *e_prop = idl_is_enum(type_spec) ? ", prop" : "";
   static const char *fmt =
-    "      if (!{T}(streamer, %1$s[0]%2$s, %3$u))\n"
+    "      if (!{T}(streamer, %1$s[0]%2$s, %1$s.size()))\n"
     "        return false;\n";
 
-  if (multi_putf(streams, ALL, fmt, accessor, e_prop, a_size))
+  if (multi_putf(streams, CONST, fmt, accessor, e_prop) ||
+      multi_putf(streams, READ, fmt, read_accessor, e_prop))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
-}*/
+}
 
 static idl_retcode_t
 process_entity(
@@ -607,9 +600,17 @@ process_entity(
        "      }  //array depth %1$u\n";
 
   const idl_type_spec_t *root_type_spec = idl_strip(type_spec, 0);
+  const idl_type_spec_t *aliases_stripped = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
+
+  const char* read_accessor;
+  if (loc.type & UNION_BRANCH)
+    read_accessor = "obj";
+  else
+    read_accessor = accessor;
 
   //unroll arrays
   uint32_t n_arr = 0;
+  bool batch_copy = false;
   if (idl_is_array(declarator)) {
     const idl_literal_t* lit = (const idl_literal_t*)declarator->const_expr;
     if (multi_putf(streams, ALL, consec_start_fmt, idl_is_base_type(root_type_spec) ? "true" : "false"))
@@ -617,8 +618,15 @@ process_entity(
 
     while (lit) {
       const idl_literal_t* next = idl_next(lit);
+
+      if (!next && (idl_is_base_type(aliases_stripped) || idl_is_enum(aliases_stripped))) {
+        batch_copy = true;
+        break;
+      }
+
       if (n_arr == 0) {
-        if (multi_putf(streams, ALL, array_iterate1, n_arr+1, accessor))  //write iteration over initial array
+        if (multi_putf(streams, CONST, array_iterate1, n_arr+1, accessor) ||
+            multi_putf(streams, READ, array_iterate1, n_arr+1, read_accessor))  //write iteration over initial array
           return IDL_RETCODE_NO_MEMORY;
       } else {
         if (multi_putf(streams, ALL, array_iterate2, n_arr+1, n_arr))  //write iteration over deeper array
@@ -628,18 +636,18 @@ process_entity(
       lit = next;
     }
 
-    if (IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)  //update accessor to become "a_$n_arr$"
-      return IDL_RETCODE_NO_MEMORY;
+    if (n_arr) {
+      if (IDL_PRINTA(&accessor, get_array_accessor, declarator, &n_arr) < 0)  //update accessor to become "a_$n_arr$"
+        return IDL_RETCODE_NO_MEMORY;
+      read_accessor = accessor;
+    }
   }
 
-  const char* read_accessor;
-  if (loc.type & UNION_BRANCH)
-    read_accessor = "obj";
-  else
-    read_accessor = accessor;
-
-  //unroll sequences (if any)
-  if (idl_is_sequence(type_spec)) {
+  if (batch_copy) {
+    if (insert_array_primitives_copy(streams, aliases_stripped, accessor, read_accessor))
+      return IDL_RETCODE_NO_MEMORY;
+  } else if (idl_is_sequence(type_spec)) {
+    //unroll sequences (if any)
     if (unroll_sequence(pstate, streams, (idl_sequence_t*)type_spec, 1, accessor, read_accessor, loc))
       return IDL_RETCODE_NO_MEMORY;
   } else {
@@ -921,8 +929,8 @@ process_case(
   const idl_switch_type_spec_t* _switch = ((const idl_union_t*)_case->node.parent)->switch_type_spec;
   const idl_union_t* _union = (const idl_union_t*)_case->node.parent;
   bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
-       simple = idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec),
-       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_bitmask(_case->type_spec);
+       simple = (idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec)) && !idl_is_array(_case->declarator),
+       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_array(_case->declarator) && !idl_is_bitmask(_case->type_spec);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
 
   static const char *max_start =
@@ -939,9 +947,9 @@ process_case(
     "  }\n";
 
   const char* read_start = simple ? "    {\n"
-                                    "      %1$s obj = %2$s;\n"
+                                    "      std::remove_cv_t<std::remove_reference_t<decltype(%1$s)>> obj = %2$s;\n"
                                   : "    {\n"
-                                    "      %1$s obj;\n";
+                                    "      std::remove_cv_t<std::remove_reference_t<decltype(%1$s)>> obj;\n";
 
   const char* read_end = single   ? "      instance.%1$s(obj);\n"
                                     "    }\n"
@@ -949,7 +957,7 @@ process_case(
                                   : "      instance.%1$s(obj, d);\n"
                                     "    }\n"
                                     "    break;\n";
-  const char* get_props = constructed_type    ? "      auto prop = get_type_props<%1$s>();\n"
+  const char* get_props = constructed_type    ? "      auto prop = get_type_props<std::remove_cv_t<std::remove_reference_t<decltype(%1$s)>>>();\n"
                                               : "",
             * check_props = constructed_type  ? "      props.is_present = prop.is_present;\n"
                                               : "";
@@ -957,16 +965,15 @@ process_case(
   if (revisit) {
     const char *name = get_cpp11_name(_case->declarator);
 
-    char *accessor = NULL, *type = NULL, *value = NULL;
+    char *accessor = NULL, *value = NULL;
     if (IDL_PRINTA(&accessor, get_instance_accessor, _case->declarator, &loc) < 0 ||
-        IDL_PRINTA(&type, get_cpp11_type, _case, streams->generator) < 0 ||
         (simple && IDL_PRINTA(&value, get_cpp11_default_value, _case->type_spec, streams->generator) < 0))
       return IDL_RETCODE_NO_MEMORY;
 
     if (multi_putf(streams, (WRITE | MOVE), "      {\n")
-     || putf(&streams->read, read_start, type, value)
+     || putf(&streams->read, read_start, accessor, value)
      || putf(&streams->max, max_start)
-     || multi_putf(streams, ALL, get_props, type+2))
+     || multi_putf(streams, ALL, get_props, accessor))
       return IDL_RETCODE_NO_MEMORY;
 
     //only read the field if the union is not read as a key stream
