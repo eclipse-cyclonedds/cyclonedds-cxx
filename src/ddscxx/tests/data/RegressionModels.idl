@@ -70,11 +70,27 @@ union duplicate_types_union switch(long) {
     td_d d_2;  //should be the same as d_1;
 };
 
+@bit_bound(8) @appendable enum e1 {
+  e_0, e_1, e_2, e_3
+};
+
+typedef e1 e1_arr[3];
+
+struct s_e1 {
+e1_arr c;
+};
+
 union W switch(char) {
   case 'a':
     char c[2];
   case 'b':
     char d[2][3];
+  case 'x':
+    e1 x[3];
+  case 'y':
+    e1_arr y;
+  case 'z':
+    e1 z;
 };
 
 typedef long long_array_5[5];
@@ -117,16 +133,6 @@ b_0, b_1, b_2
 
 struct s_bm1 {
 bm1 c[3];
-};
-
-@bit_bound(8) @appendable enum e1 {
-  e_0, e_1, e_2, e_3
-};
-
-typedef e1 e1_arr[3];
-
-struct s_e1 {
-e1_arr c;
 };
 
 };
