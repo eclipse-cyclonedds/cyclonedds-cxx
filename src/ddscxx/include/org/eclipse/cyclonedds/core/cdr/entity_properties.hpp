@@ -17,6 +17,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <type_traits>
 #include "cdr_enums.hpp"
 
 namespace org {
@@ -24,6 +25,8 @@ namespace eclipse {
 namespace cyclonedds {
 namespace core {
 namespace cdr {
+
+#define decl_ref_type(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
 
 /**
  * @brief
@@ -244,45 +247,39 @@ struct OMG_DDS_API final_entry: public entity_properties_t {
  * @brief
  * Type properties getter function for basic types.
  *
+ * @return entity_properties_t "Tree" representing the type.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+entity_properties_t get_type_props() {
+  entity_properties_t props;
+  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
+  props.e_bb = bit_bound(sizeof(T));
+  return props;
+}
+
+/**
+ * @brief
+ * Forward declaration for type properties getter function.
+ *
  * This template function is replaced/implemented by the types implemented through IDL generation.
  * It generates a static container which is initialized the first time the function is called,
  * this is then returned.
  *
  * @return entity_properties_t "Tree" representing the type.
  */
-template<typename T>
-entity_properties_t get_type_props() {
-  static std::mutex mtx;
-  static entity_properties_t props;
-  static bool initialized = false;
-  std::lock_guard<std::mutex> lock(mtx);
+template<typename T, std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+entity_properties_t get_type_props();
 
-  if (initialized)
-    return props;
-
-  props.clear();
-  key_endpoint keylist;
-  switch (sizeof(T)) {
-    case 1:
-      props.e_bb = bb_8_bits;
-      break;
-    case 2:
-      props.e_bb = bb_16_bits;
-      break;
-    case 4:
-      props.e_bb = bb_32_bits;
-      break;
-    case 8:
-      props.e_bb = bb_64_bits;
-      break;
-  }
-  props.m_members_by_seq.push_back(final_entry());
-  props.m_members_by_id.push_back(final_entry());
-  props.m_keys.push_back(final_entry());
-  props.finish(keylist);
-  initialized = true;
-  return props;
-}
+/**
+ * @brief
+ * Forward declaration for bit bound property of enum classes.
+ *
+ * This function is implementated by each enum class that is encountered.
+ *
+ * @return bit_bound The bit bound for the indicated enum.
+ */
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
+constexpr bit_bound get_enum_bit_bound();
 
 }
 }
