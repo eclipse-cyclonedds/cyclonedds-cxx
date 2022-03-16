@@ -295,14 +295,13 @@ private:
  *
  * @param[in, out] str The stream which is read from.
  * @param[out] toread The variable to read into.
- * @param[in] props The properties of the variable.
  * @param[in] N The number of entities to read.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool read(xcdr_v2_stream& str, T& toread, const entity_properties_t &props, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : props.e_bb)
+bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
+  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
   {
     case bb_8_bits:
       return read_enum_impl<xcdr_v2_stream,T,uint8_t>(str, toread, N);
@@ -325,14 +324,13 @@ bool read(xcdr_v2_stream& str, T& toread, const entity_properties_t &props, size
  *
  * @param [in, out] str The stream which is written to.
  * @param [in] towrite The variable to write.
- * @param[in] props The properties of the variable.
  * @param[in] N The number of entities to write.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool write(xcdr_v2_stream& str, const T& towrite, const entity_properties_t &props, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : props.e_bb)
+bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
+  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
   {
     case bb_8_bits:
       return write_enum_impl<xcdr_v2_stream,T,uint8_t>(str, towrite, N);
@@ -354,14 +352,13 @@ bool write(xcdr_v2_stream& str, const T& towrite, const entity_properties_t &pro
  * Moves the cursor of the stream by the size the enum would take up.
  *
  * @param[in, out] str The stream whose cursor is moved.
- * @param[in] props The properties of the variable.
  * @param[in] N The number of entities to move.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool move(xcdr_v2_stream& str, const T&, const entity_properties_t &props, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : props.e_bb)
+bool move(xcdr_v2_stream& str, const T&, size_t N = 1) {
+  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
   {
     case bb_8_bits:
       return move(str, int8_t(0), N);
@@ -384,14 +381,13 @@ bool move(xcdr_v2_stream& str, const T&, const entity_properties_t &props, size_
  *
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] max_sz The variable to move the cursor by, no contents of this variable are used, it is just used to determine the template.
- * @param[in] props The properties of the variable.
  * @param[in] N The number of entities at most to move.
  *
  * @return Whether the operation was completed succesfully.
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-bool max(xcdr_v2_stream& str, const T& max_sz, const entity_properties_t &props, size_t N = 1) {
-  return move(str, max_sz, props, N);
+bool max(xcdr_v2_stream& str, const T& max_sz, size_t N = 1) {
+  return move(str, max_sz, N);
 }
 
 }
