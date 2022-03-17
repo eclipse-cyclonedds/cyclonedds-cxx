@@ -1022,10 +1022,12 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
     " {\n"
     "  static std::mutex mtx;\n"
     "  static entity_properties_t props;\n"
-    "  static bool initialized = false;\n"
-    "  std::lock_guard<std::mutex> lock(mtx);\n\n"
-    "  if (initialized)\n"
+    "  static std::atomic_bool initialized {false};\n\n"
+    "  if (initialized.load(std::memory_order_relaxed))\n"
     "    return props;\n\n"
+    "  std::lock_guard<std::mutex> lock(mtx);\n"
+    "  if (initialized.load(std::memory_order_relaxed))\n"
+    "    return props;\n"
     "  props.clear();\n"
     "  key_endpoint keylist;\n\n";
   static const char *sfmt =
@@ -1085,7 +1087,7 @@ print_constructed_type_close(
   static const char *pfmt =
     "\n  props.m_members_by_seq.push_back(final_entry());\n\n"
     "  props.finish(keylist);\n"
-    "  initialized = true;\n"
+    "  initialized.store(true, std::memory_order::memory_order_release);\n"
     "  return props;\n"
     "}\n\n";
 
