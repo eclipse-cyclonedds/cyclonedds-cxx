@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <list>
 #include <map>
+#include <atomic>
 #include <mutex>
 #include <type_traits>
 #include "cdr_enums.hpp"
