@@ -217,6 +217,12 @@ module DataModels_testing {
     e_2
   };
 
+  bitmask test_bitmask {
+    f_0,
+    f_1,
+    f_2
+  };
+
   struct explicit_defaults_struct {
     @default(123) long l;
     @default(.456) double d;
@@ -226,6 +232,7 @@ module DataModels_testing {
     the idl parser does not yet support enumerator values as annotation parameters
     @default(e_0) test_enum e;
     */
+    @default(5) test_bitmask b; /*currently you need to set the bitmask defaults as integers*/
   };
 
   struct implicit_defaults_struct {
@@ -234,6 +241,7 @@ module DataModels_testing {
     char c;
     string s;
     test_enum e;
+    test_bitmask b;
   };
 
 };

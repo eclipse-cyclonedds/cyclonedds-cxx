@@ -62,10 +62,10 @@ emit_member(
     value = "{ }";
   } else if (idl_is_enum(type_spec) || idl_is_base_type(type_spec) || idl_is_string(type_spec) || idl_is_bitmask(type_spec)) {
     if (mem->value.annotation) {
-      if ((idl_is_base_type(type_spec) || idl_is_string(type_spec)) && IDL_PRINTA(&value, get_cpp11_value, mem->value.value, gen) < 0)
+      if ((idl_is_base_type(type_spec) || idl_is_string(type_spec) || idl_is_bitmask(type_spec)) && IDL_PRINTA(&value, get_cpp11_value, mem->value.value, gen) < 0)
         return IDL_RETCODE_NO_MEMORY;
-      else if (idl_is_enum(type_spec) || idl_is_bitmask(type_spec))
-        return IDL_RETCODE_UNSUPPORTED;  //implement writing enum/bitmask value
+      else if (idl_is_enum(type_spec))
+        return IDL_RETCODE_UNSUPPORTED;  //implement writing enum value
     } else if (!idl_is_string(type_spec) && IDL_PRINTA(&value, get_cpp11_default_value, type_spec, gen) < 0) {
       return IDL_RETCODE_NO_MEMORY;
     }

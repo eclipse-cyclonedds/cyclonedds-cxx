@@ -434,6 +434,7 @@ int get_cpp11_base_type_const_value(
       return idl_snprintf(str, size, "%" PRId64, literal->value.int64);
     case IDL_UINT64:
     case IDL_ULLONG:
+    case IDL_BITMASK:
       return idl_snprintf(str, size, "%" PRIu64, literal->value.uint64);
     case IDL_FLOAT:
       return idl_snprintf(str, size, "%.6f", literal->value.flt);
@@ -469,7 +470,7 @@ static int get_cpp11_templ_type_const_value(
 int get_cpp11_value(
   char *str, size_t size, const void *node, void *user_data)
 {
-  if (idl_type(node) & IDL_BASE_TYPE)
+  if (idl_type(node) & (IDL_BASE_TYPE | IDL_BITMASK))
     return get_cpp11_base_type_const_value(str, size, node, user_data);
   if (idl_type(node) & IDL_TEMPL_TYPE)
     return get_cpp11_templ_type_const_value(str, size, node, user_data);
