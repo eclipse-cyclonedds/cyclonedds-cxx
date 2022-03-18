@@ -404,14 +404,20 @@ write_streaming_functions(
   const char* read_accessor,
   instance_location_t loc)
 {
-  if (idl_is_alias(type_spec))
-    return write_typedef_streaming_functions(streams, type_spec, accessor, read_accessor);
-  else if (idl_is_string(type_spec))
+  if (idl_is_alias(type_spec)) {
+    const idl_typedef_t *td = idl_parent(type_spec);
+    //if this is an alias for a bare type, just use the bare type
+    if (!idl_is_array(td->declarators) && !idl_is_sequence(td->type_spec))
+      return write_streaming_functions(streams, idl_type_spec(td), accessor, read_accessor, loc);
+    else
+      return write_typedef_streaming_functions(streams, type_spec, accessor, read_accessor);
+  } else if (idl_is_string(type_spec)) {
     return write_string_streaming_functions(streams, type_spec, accessor, read_accessor);
-  else if (idl_is_union(type_spec) || idl_is_struct(type_spec))
+  } else if (idl_is_union(type_spec) || idl_is_struct(type_spec)) {
     return write_constructed_type_streaming_functions(streams, accessor, read_accessor);
-  else
+  } else {
     return write_base_type_streaming_functions(streams, type_spec, accessor, read_accessor, loc);
+  }
 }
 
 static idl_retcode_t

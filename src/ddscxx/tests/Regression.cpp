@@ -273,3 +273,16 @@ TEST_F(Regression, arrays_in_union_case)
   readwrite_test(w_a, w_a_bytes, xcdr_v2_stream(endianness::little_endian));
   readwrite_test(w_b, w_b_bytes, xcdr_v2_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, direct_typedef_of_primitive)
+{
+  s_td_bool_seq_arr s;
+
+  s.c({true,false,true,false,true});
+
+  bytes s_td_bool_seq_arr_bytes =
+    {0x05, 0x00, 0x00, 0x00, /*c.length(5)*/
+     0x01, 0x00, 0x01, 0x00, 0x01, /*c.data*/
+    };
+  readwrite_test(s, s_td_bool_seq_arr_bytes, basic_cdr_stream(endianness::little_endian));
+}
