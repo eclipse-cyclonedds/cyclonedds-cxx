@@ -142,4 +142,16 @@ struct s_td_bool_seq_arr {
 td_bool_seq_arr c;
 };
 
+struct s_inner {
+  char ch;
+};
+typedef s_inner td_s_inner;
+typedef td_s_inner td_td_s_inner;
+typedef sequence<td_s_inner> seq_td_s_inner;
+
+union u_s_inner switch (char) {
+  case 'a':     seq_td_s_inner c;
+  case 'b':     td_td_s_inner d;
+};
+
 };
