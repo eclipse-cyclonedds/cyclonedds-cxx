@@ -135,4 +135,11 @@ struct s_bm1 {
 bm1 c[3];
 };
 
+typedef boolean td_bool;
+typedef sequence<td_bool> td_bool_seq_arr;
+
+struct s_td_bool_seq_arr {
+td_bool_seq_arr c;
+};
+
 };
