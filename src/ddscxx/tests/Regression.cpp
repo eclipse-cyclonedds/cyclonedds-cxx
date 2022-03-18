@@ -286,3 +286,19 @@ TEST_F(Regression, direct_typedef_of_primitive)
     };
   readwrite_test(s, s_td_bool_seq_arr_bytes, basic_cdr_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, direct_typedef_of_struct)
+{
+  u_s_inner u;
+
+  seq_td_s_inner seq({s_inner('b'),s_inner('c')});
+  u.c(seq);
+
+  bytes u_s_inner_bytes =
+    {'a', /*u.discriminator*/ 0x00, 0x00, 0x00, /*padding(3)*/
+      0x02, 0x00, 0x00, 0x00, /*u.c.length(1)*/
+     'b',  /*u.c[0]*/
+     'c',  /*u.c[1]*/
+    };
+  readwrite_test(u, u_s_inner_bytes, basic_cdr_stream(endianness::little_endian));
+}

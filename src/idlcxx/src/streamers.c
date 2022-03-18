@@ -406,11 +406,14 @@ write_streaming_functions(
 {
   if (idl_is_alias(type_spec)) {
     const idl_typedef_t *td = idl_parent(type_spec);
+    const idl_type_spec_t *ts = idl_type_spec(td);
     //if this is an alias for a bare type, just use the bare type
-    if (!idl_is_array(td->declarators) && !idl_is_sequence(td->type_spec))
-      return write_streaming_functions(streams, idl_type_spec(td), accessor, read_accessor, loc);
+    if (!idl_is_array(td->declarators) && !idl_is_sequence(ts) && (idl_is_base_type(ts) || idl_is_string(ts)))
+      return write_streaming_functions(streams, ts, accessor, read_accessor, loc);
     else
       return write_typedef_streaming_functions(streams, type_spec, accessor, read_accessor);
+  } else if (idl_is_forward(type_spec)) {
+    return write_streaming_functions(streams, idl_type_spec(type_spec), accessor, read_accessor, loc);
   } else if (idl_is_string(type_spec)) {
     return write_string_streaming_functions(streams, type_spec, accessor, read_accessor);
   } else if (idl_is_union(type_spec) || idl_is_struct(type_spec)) {
@@ -854,9 +857,18 @@ process_case(
   const idl_case_t* _case = (const idl_case_t*)node;
   const idl_switch_type_spec_t* _switch = ((const idl_union_t*)_case->node.parent)->switch_type_spec;
   const idl_union_t* _union = (const idl_union_t*)_case->node.parent;
+  const idl_type_spec_t *naked_type = _case->type_spec;
+  while (idl_is_alias(naked_type)) {
+    const idl_typedef_t *td = idl_parent(naked_type);
+    naked_type = idl_type_spec(td);
+    if (!idl_is_array(td->declarators) && !idl_is_sequence(naked_type) && !idl_is_alias(naked_type))
+      //if this is an alias for a bare type, just use the bare type
+      break;
+  }
+
   bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
        simple = (idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec)) && !idl_is_array(_case->declarator),
-       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_array(_case->declarator) && !idl_is_bitmask(_case->type_spec);
+       constructed_type = idl_is_constr_type(naked_type) && !idl_is_enum(naked_type) && !idl_is_array(_case->declarator) && !idl_is_bitmask(naked_type);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
 
   static const char *max_start =
