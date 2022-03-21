@@ -857,18 +857,10 @@ process_case(
   const idl_case_t* _case = (const idl_case_t*)node;
   const idl_switch_type_spec_t* _switch = ((const idl_union_t*)_case->node.parent)->switch_type_spec;
   const idl_union_t* _union = (const idl_union_t*)_case->node.parent;
-  const idl_type_spec_t *naked_type = _case->type_spec;
-  while (idl_is_alias(naked_type)) {
-    const idl_typedef_t *td = idl_parent(naked_type);
-    naked_type = idl_type_spec(td);
-    if (!idl_is_array(td->declarators) && !idl_is_sequence(naked_type) && !idl_is_alias(naked_type))
-      //if this is an alias for a bare type, just use the bare type
-      break;
-  }
 
   bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
        simple = (idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec)) && !idl_is_array(_case->declarator),
-       constructed_type = idl_is_constr_type(naked_type) && !idl_is_enum(naked_type) && !idl_is_array(_case->declarator) && !idl_is_bitmask(naked_type);
+       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_array(_case->declarator) && !idl_is_bitmask(_case->type_spec);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
 
   static const char *max_start =
@@ -898,7 +890,7 @@ process_case(
   const char* get_props = constructed_type    ? "      auto prop = get_type_props<decl_ref_type(%1$s)>();\n"
                                               : "",
             * check_props = constructed_type  ? "      props.is_present = prop.is_present;\n"
-                                              : "";
+                                              : "      props.is_present = true;\n";
 
   if (revisit) {
     const char *name = get_cpp11_name(_case->declarator);
