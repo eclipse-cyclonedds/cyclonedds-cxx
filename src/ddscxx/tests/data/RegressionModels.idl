@@ -154,4 +154,9 @@ union u_s_inner switch (char) {
   case 'b':     td_td_s_inner d;
 };
 
+typedef sequence<e1, 3> seq_e1;
+@appendable struct struct_seq_e1 {
+  @optional seq_e1 c;
+};
+
 };
