@@ -302,3 +302,17 @@ TEST_F(Regression, direct_typedef_of_struct)
     };
   readwrite_test(u, u_s_inner_bytes, basic_cdr_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, typedef_of_sequence_of_enums)
+{
+  struct_seq_e1 s(seq_e1({e1::e_3, e1::e_2}));
+
+  bytes struct_seq_e1_bytes =
+    { 0x0E, 0x00, 0x00, 0x00, /*u.dheader(6)*/
+      0x01, /*s.c.is_present(true)*/ 0x00, 0x00, 0x00, /*s.c.is_present.padding(3)*/
+      0x06, 0x00, 0x00, 0x00, /*u.c.dheader(6)*/
+      0x02, 0x00, 0x00, 0x00, /*u.c.length(2)*/
+      0x03, 0x02              /*u.c.data()*/
+    };
+  readwrite_test(s, struct_seq_e1_bytes, xcdr_v2_stream(endianness::little_endian));
+}
