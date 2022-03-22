@@ -860,7 +860,7 @@ process_case(
 
   bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
        simple = (idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec)) && !idl_is_array(_case->declarator),
-       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_array(_case->declarator) && !idl_is_bitmask(_case->type_spec);
+       constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_bitmask(_case->type_spec);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
 
   static const char *max_start =
@@ -915,7 +915,7 @@ process_case(
     if (multi_putf(streams, READ, check_props))
       return IDL_RETCODE_NO_MEMORY;
 
-    if (multi_putf(streams, (WRITE | MOVE), "      break; }\n")
+    if (multi_putf(streams, (WRITE | MOVE), "      }\n      break;\n")
      || putf(&streams->read, read_end, name)
      || putf(&streams->max, max_end))
       return IDL_RETCODE_NO_MEMORY;

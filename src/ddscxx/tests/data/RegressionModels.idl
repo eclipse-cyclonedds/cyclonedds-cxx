@@ -159,4 +159,11 @@ typedef sequence<e1, 3> seq_e1;
   @optional seq_e1 c;
 };
 
+union u_struct_arr switch (unsigned long) {
+  case 0: s_inner c_1[1];
+};
+@appendable @topic struct s_u_struct_arr {
+  u_struct_arr c;
+};
+
 };

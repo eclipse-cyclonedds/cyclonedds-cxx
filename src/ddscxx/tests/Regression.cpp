@@ -287,6 +287,11 @@ TEST_F(Regression, direct_typedef_of_primitive)
   readwrite_test(s, s_td_bool_seq_arr_bytes, basic_cdr_stream(endianness::little_endian));
 }
 
+TEST_F(Regression, union_array_case)
+{
+  s_u_struct_arr z;
+}
+
 TEST_F(Regression, direct_typedef_of_struct)
 {
   u_s_inner u;
