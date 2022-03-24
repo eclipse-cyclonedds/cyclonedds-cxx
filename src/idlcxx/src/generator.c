@@ -734,6 +734,9 @@ register_types(
   (void)revisit;
   (void)path;
 
+  if (idl_is_array(node))
+    gen->uses_array = true;
+
   type_spec = idl_strip(idl_type_spec(node), IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   loc = idl_location(type_spec);
   assert(type_spec && loc);
@@ -743,7 +746,7 @@ register_types(
   if (src && strcmp(loc->first.source->path->name, src) != 0)
     return IDL_VISIT_DONT_RECURSE;
 
-  if (idl_is_array(node) || idl_is_array(type_spec))
+  if (idl_is_array(type_spec))
     gen->uses_array = true;
 
   type_spec = idl_strip(idl_type_spec(node), IDL_STRIP_ALIASES | IDL_STRIP_ALIASES_ARRAY | IDL_STRIP_FORWARD);
