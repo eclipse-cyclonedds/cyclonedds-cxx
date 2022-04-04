@@ -41,5 +41,5 @@ Running the example
 It is recommended that you run the subscriber and publisher in separate terminals to avoid mixing the output.
 
 - Open 2 terminals.
-- In the first terminal start the subscriber by running ddscxxHelloWorldSubscriber
-- In the second terminal start the publisher by running ddscxxHelloWorldPublisher
+- In the first terminal start the subscriber by running ddscxxHelloworldSubscriber
+- In the second terminal start the publisher by running ddscxxHelloworldPublisher
