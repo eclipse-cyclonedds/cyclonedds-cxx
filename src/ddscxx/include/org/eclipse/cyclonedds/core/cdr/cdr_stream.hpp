@@ -1099,8 +1099,32 @@ bool max_array(S &str, const A<T, N>& tomax, entity_properties_t &props, const s
   return str.finish_consecutive();
 }
 
-//optionals
+ /**
+ * @brief
+ * Optional type stream manipulation functions
+ *
+ * These are "endpoints" for streaming functions, since compound
+ * (sequence/array/constructed type) functions will decay to these
+ * calls.
+ */
 
+/**
+ * @brief
+ * Optional type read function.
+ *
+ * It will initialize the optional container with a default entity
+ * if it does not yet contain anything.
+ * Then call a read on that entity. As this operation will be
+ * skipped if the stream indicates it is not populated, this will not
+ * cause extraneous reads.
+ *
+ * @param[in, out] str The stream being read from.
+ * @param[out] toread The variable being read to.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class O,
           typename T >
@@ -1112,6 +1136,20 @@ bool read_optional(S &str, O<T> &toread, entity_properties_t &props, const size_
   return read(str, toread.value(), props, max_sz);
 }
 
+/**
+ * @brief
+ * Optional type write function.
+ *
+ * It will check the container for the presence of a value, and not write if there
+ * are no contents.
+ *
+ * @param[in, out] str The stream being written to.
+ * @param[in] towrite The variable being written from.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class O,
           typename T >
@@ -1123,6 +1161,20 @@ bool write_optional(S &str, const O<T> &towrite, entity_properties_t &props, con
   return write(str, towrite.value(), props, max_sz);
 }
 
+/**
+ * @brief
+ * Optional type move function.
+ *
+ * It will check the container for the presence of a value, and not move if there
+ * are no contents in it.
+ *
+ * @param[in, out] str The stream being moved.
+ * @param[in] tomove The variable being moved by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class O,
           typename T >
@@ -1134,6 +1186,18 @@ bool move_optional(S &str, const O<T> &tomove, entity_properties_t &props, const
   return move(str, tomove.value(), props, max_sz);
 }
 
+/**
+ * @brief
+ * Optional type max function.
+ *
+ * It will move the stream by the entity in the container.
+ *
+ * @param[in, out] str The stream being moved.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class O,
           typename T >
