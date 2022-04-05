@@ -544,7 +544,9 @@ process_case(
       /*if last entry, and no default case was present for this union*/
       const idl_case_label_t *def = _union->default_case;
       if (idl_is_union(def->node.parent) &&
-          multi_putf(streams, READ, "    default:\n      instance._d(d);\n"))
+          multi_putf(streams, READ, "    default:\n"
+                                    "      instance._default(d);\n"
+                                    "      props.is_present = true;\n"))
         return IDL_RETCODE_NO_MEMORY;
     }
 
@@ -886,8 +888,6 @@ process_union(
   static const char *pfmt =
     "  streamer.position(union_max);\n"
     "  streamer.alignment(alignment_max);\n";
-  static const char *mfmt =
-    "  props.is_present = true;\n";
 
   char *fullname = NULL;
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, node, streams->generator) < 0)
@@ -895,7 +895,6 @@ process_union(
 
   if (revisit) {
     if (multi_putf(streams, MAX, pfmt)
-     || multi_putf(streams, MOVE | MAX, mfmt)
      || print_constructed_type_close(user_data)
      || (!is_nested(node) && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
       return IDL_RETCODE_NO_MEMORY;
