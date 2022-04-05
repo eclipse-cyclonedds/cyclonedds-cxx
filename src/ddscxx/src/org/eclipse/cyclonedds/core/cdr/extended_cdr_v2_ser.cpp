@@ -254,9 +254,7 @@ bool xcdr_v2_stream::start_struct(entity_properties_t &props)
     }
   }
 
-  cdr_stream::start_struct(props);
-
-  return true;
+  return cdr_stream::start_struct(props);
 }
 
 bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
