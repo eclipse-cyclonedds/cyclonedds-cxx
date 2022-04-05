@@ -1206,8 +1206,29 @@ bool max_optional(S &str, const O<T> &, entity_properties_t &props, const size_t
   return max(str, T(), props, max_sz);
 }
 
-//externals
+ /**
+ * @brief
+ * External type stream manipulation functions
+ *
+ * These are "endpoints" for streaming functions, since compound
+ * (sequence/array/constructed type) functions will decay to these
+ * calls.
+ */
 
+/**
+ * @brief
+ * External type read function.
+ *
+ * It will initialize the external container with a default entity if
+ * it does not yet contain anything.
+ *
+ * @param[in, out] str The stream being read from.
+ * @param[out] toread The variable being read to.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class E,
           typename T >
@@ -1219,6 +1240,21 @@ bool read_external(S &str, E<T> &toread, entity_properties_t &props, const size_
   return read(str, *toread, props, max_sz);
 }
 
+/**
+ * @brief
+ * External type write function.
+ *
+ * If the entity does not contain anything this call will fail, as this is an
+ * illegal state to be in. Otherwise this will return the result of the call
+ * to write on the contents of the external entity.
+ *
+ * @param[in, out] str The stream being written to.
+ * @param[out] towrite The variable being written from.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class E,
           typename T >
@@ -1230,6 +1266,21 @@ bool write_external(S &str, const E<T> &towrite, entity_properties_t &props, con
   return write(str, *towrite, props, max_sz);
 }
 
+/**
+ * @brief
+ * External type move function.
+ *
+ * If the entity does not contain anything this call will fail, as this is an
+ * illegal state to be in. Otherwise this will return the result of the call
+ * to move on the contents of the external entity.
+ *
+ * @param[in, out] str The stream being moved.
+ * @param[out] tomove The variable being moved.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class E,
           typename T >
@@ -1241,6 +1292,18 @@ bool move_external(S &str, const E<T> &tomove, entity_properties_t &props, const
   return move(str, *tomove, props, max_sz);
 }
 
+/**
+ * @brief
+ * External type max function.
+ *
+ * This will return the result of the call to max on the contents of the external entity.
+ *
+ * @param[in, out] str The stream being moved.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename> class E,
           typename T >
