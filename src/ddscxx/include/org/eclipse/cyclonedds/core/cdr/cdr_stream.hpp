@@ -871,8 +871,30 @@ bool max_sequence(S &str, const V<T, A>&, entity_properties_t &props, const size
   return true;
 }
 
-//arrays
+ /**
+ * @brief
+ * Array type stream manipulation functions
+ *
+ * These will "unwrap" the array type and call the corresponding streaming
+ * function on the contained entities.
+ */
 
+/**
+ * @brief
+ * Array type read function.
+ *
+ * It will call reads for all entities in the array.
+ * This function is only enabled for non-arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[out] toread The variable to read into.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename, size_t> class A,
           typename T,
@@ -892,6 +914,22 @@ bool read_array(S &str, A<T, N>& toread, entity_properties_t &props, const size_
   return str.finish_consecutive();
 }
 
+/**
+ * @brief
+ * Array type read function.
+ *
+ * It will call the primitive type read function as there a bulk copy is done.
+ * This function is only enabled for arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is read from.
+ * @param[out] toread The variable to read into.
+ * @param[in, out] props The properties of the variable being read.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename, size_t> class A,
           typename T,
@@ -904,6 +942,22 @@ bool read_array(S &str, A<T,N>& toread, entity_properties_t &props, const size_t
          str.finish_consecutive();
 }
 
+/**
+ * @brief
+ * Array type write function.
+ *
+ * It will call writes for all entities in the array.
+ * This function is only enabled for non-arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is written to.
+ * @param[out] towrite The variable to write.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename, size_t> class A,
           typename T,
@@ -923,6 +977,22 @@ bool write_array(S &str, const A<T, N>& towrite, entity_properties_t &props, con
   return str.finish_consecutive();
 }
 
+/**
+ * @brief
+ * Array type write function.
+ *
+ * It will call the primitive type write function as there a bulk copy is done.
+ * This function is only enabled for arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream which is written to.
+ * @param[out] towrite The variable to write.
+ * @param[in, out] props The properties of the variable being written.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename, size_t> class A,
           typename T,
@@ -935,6 +1005,22 @@ bool write_array(S &str, const A<T,N>& towrite, entity_properties_t &props, cons
          str.finish_consecutive();
 }
 
+/**
+ * @brief
+ * Array type move function.
+ *
+ * It will call the move for all entities in the sequence.
+ * This function is only enabled for non-arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] tomove The variable the cursor is moved by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename, size_t> class A,
           typename T,
@@ -954,6 +1040,22 @@ bool move_array(S &str, const A<T, N>& tomove, entity_properties_t &props, const
   return str.finish_consecutive();
 }
 
+/**
+ * @brief
+ * Array type move function.
+ *
+ * It will call the primitive type move function as there the simple move is done.
+ * This function is only enabled for arithmetic types.
+ * This function's container template will be specialized in the
+ * generated code, as there its type is known.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] tomove The variable the cursor is moved by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename, size_t> class A,
           typename T,
@@ -966,6 +1068,19 @@ bool move_array(S &str, const A<T,N>& tomove, entity_properties_t &props, const 
          str.finish_consecutive();
 }
 
+/**
+ * @brief
+ * Array type max function.
+ *
+ * It will call the max function for each entity in the array.
+ *
+ * @param[in, out] str The stream whose cursor is moved.
+ * @param[in] tomax The variable the cursor is moved by.
+ * @param[in, out] props The properties of the variable being moved.
+ * @param[in] max_sz The array of max sizes used for bounded sequences/strings.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
 template< typename S,
           template<typename,size_t> class A,
           typename T,
