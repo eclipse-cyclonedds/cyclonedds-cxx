@@ -194,7 +194,7 @@ void cdr_stream::check_struct_completeness(entity_properties_t &props, member_li
 
   while (*it) {
     if (it->must_understand_local && !it->is_present) {
-      status(must_understand_fail);
+      (void)status(must_understand_fail);
       props.is_present = false;
       break;
     }
