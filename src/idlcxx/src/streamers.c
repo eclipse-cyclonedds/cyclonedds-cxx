@@ -859,7 +859,6 @@ process_case(
   const idl_union_t* _union = (const idl_union_t*)_case->node.parent;
 
   bool single = (idl_degree(_case->labels) == 1) && !(idl_mask(_case->labels) == IDL_DEFAULT_CASE_LABEL),
-       simple = (idl_is_base_type(_case->type_spec) || idl_is_bitmask(_case->type_spec)) && !idl_is_array(_case->declarator),
        constructed_type = idl_is_constr_type(_case->type_spec) && !idl_is_enum(_case->type_spec) && !idl_is_bitmask(_case->type_spec);
   instance_location_t loc = { .parent = "instance", .type = UNION_BRANCH };
 
@@ -874,12 +873,10 @@ process_case(
     "    }\n"
     "    streamer.position(pos);\n"
     "    streamer.alignment(alignment);\n"
-    "  }\n";
-
-  const char* read_start = simple ? "    {\n"
-                                    "      decl_ref_type(%1$s) obj = %2$s;\n"
-                                  : "    {\n"
-                                    "      decl_ref_type(%1$s) obj;\n";
+    "  }\n",
+                    *read_start =
+    "    {\n"
+    "      auto obj = decl_ref_type(%1$s)();\n";
 
   const char* read_end = single   ? "      instance.%1$s(obj);\n"
                                     "    }\n"
@@ -896,8 +893,7 @@ process_case(
     const char *name = get_cpp11_name(_case->declarator);
 
     char *accessor = NULL, *value = NULL;
-    if (IDL_PRINTA(&accessor, get_instance_accessor, _case->declarator, &loc) < 0 ||
-        (simple && IDL_PRINTA(&value, get_cpp11_default_value, _case->type_spec, streams->generator) < 0))
+    if (IDL_PRINTA(&accessor, get_instance_accessor, _case->declarator, &loc) < 0)
       return IDL_RETCODE_NO_MEMORY;
 
     if (multi_putf(streams, (WRITE | MOVE), "      {\n")
