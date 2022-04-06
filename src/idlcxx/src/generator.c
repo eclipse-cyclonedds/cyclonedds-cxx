@@ -354,6 +354,7 @@ int get_cpp11_default_value(
 {
   struct generator *gen = user_data;
   const idl_enumerator_t *enumerator;
+  const idl_enum_t *e;
   const idl_type_spec_t *unaliased = idl_strip(node, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   const char *value = NULL;
 
@@ -362,7 +363,8 @@ int get_cpp11_default_value(
 
   switch (idl_type(unaliased)) {
     case IDL_ENUM:
-      enumerator = ((const idl_enum_t *)unaliased)->enumerators;
+      e = ((const idl_enum_t *)unaliased);
+      enumerator = e->default_enumerator ? e->default_enumerator : e->enumerators;
       return get_cpp11_fully_scoped_name(str, size, enumerator, gen);
     case IDL_BOOL:
       value = "false";

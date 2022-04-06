@@ -214,7 +214,7 @@ module DataModels_testing {
   enum test_enum {
     e_0,
     e_1,
-    e_2
+    @default_literal e_2
   };
 
   bitmask test_bitmask {
@@ -230,7 +230,7 @@ module DataModels_testing {
     @default("def") string s;
     /*
     the idl parser does not yet support enumerator values as annotation parameters
-    @default(e_0) test_enum e;
+    @default(e_1) test_enum e;
     */
     @default(5) test_bitmask b; /*currently you need to set the bitmask defaults as integers*/
   };

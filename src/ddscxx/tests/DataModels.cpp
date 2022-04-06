@@ -37,7 +37,7 @@ TEST_F(DataModels, implicit_defaults)
   EXPECT_EQ(ds.d(), 0);
   EXPECT_EQ(ds.c(), '\0');
   EXPECT_EQ(ds.s(), "");
-  EXPECT_EQ(ds.e(), test_enum::e_0);
+  EXPECT_EQ(ds.e(), test_enum::e_2);
   EXPECT_EQ(ds.b(), 0);
 }
 

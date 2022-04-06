@@ -366,9 +366,6 @@ emit_enum(
   (void)revisit;
   (void)path;
 
-  if (_enum->default_enumerator && idl_mask(_enum->default_enumerator) == IDL_DEFAULT_ENUMERATOR)
-    idl_warning(pstate, IDL_WARN_UNSUPPORTED_ANNOTATIONS, idl_location(node), "The @default_literal annotation is not fully supported yet in the C++ generator and will not modify default construction behaviour");
-
   name = get_cpp11_name(node);
   if (idl_fprintf(gen->header.handle, "enum class %s\n{\n", name) < 0)
     return IDL_RETCODE_NO_MEMORY;
