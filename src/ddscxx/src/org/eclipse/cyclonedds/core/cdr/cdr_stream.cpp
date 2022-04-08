@@ -11,6 +11,7 @@
  */
 #include <cstring>
 #include <assert.h>
+#include <algorithm>
 
 #include <org/eclipse/cyclonedds/core/cdr/cdr_stream.hpp>
 
