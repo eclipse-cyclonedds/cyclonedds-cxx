@@ -20,7 +20,7 @@
 
 //since these helpers are only introduced from c++14 onwards
 
-#if __cplusplus == 201103L
+#if __cplusplus < 201402L
 namespace std {
   template< bool B, class T, class F >
   using conditional_t = typename std::conditional<B, T, F>::type;
