@@ -49,45 +49,45 @@ using org::eclipse::cyclonedds::core::cdr::extensibility;
 using org::eclipse::cyclonedds::core::cdr::encoding_version;
 using org::eclipse::cyclonedds::topic::TopicTraits;
 
-template<typename T, std::enable_if_t<TopicTraits<T>::isKeyless(), bool> = true >
-bool to_key(const T&, ddsi_keyhash_t& hash)
-{
-  memset(&(hash.value), 0x0, sizeof(hash.value));
-  return true;  //return true here, as all instances have the same hash value, and hashing is pointless
-}
-
-template<typename T, std::enable_if_t<!TopicTraits<T>::isKeyless(), bool> = true >
+template<typename T>
 bool to_key(const T& tokey, ddsi_keyhash_t& hash)
 {
-  basic_cdr_stream str(endianness::big_endian);
-  if (!move(str, tokey, true))
-    return false;
-  size_t sz = str.position();
-  size_t padding = 0;
-  if (sz < 16)
-    padding = (16 - sz % 16)%16;
-  std::vector<unsigned char> buffer(sz + padding);
-  if (padding)
-    memset(buffer.data() + sz, 0x0, padding);
-  str.set_buffer(buffer.data(), sz);
-  if (!write(str, tokey, true))
-    return false;
-  static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
-  if (fptr == NULL)
+  if (TopicTraits<T>::isKeyless())
   {
-    max(str, tokey, true);
-    if (str.position() <= 16)
+    memset(&(hash.value), 0x0, sizeof(hash.value));  //just set all key bytes to 0 as all instances have the same hash value, and hashing is pointless
+    return true;
+  } else
+  {
+    basic_cdr_stream str(endianness::big_endian);
+    if (!move(str, tokey, true))
+      return false;
+    size_t sz = str.position();
+    size_t padding = 0;
+    if (sz < 16)
+      padding = (16 - sz % 16)%16;
+    std::vector<unsigned char> buffer(sz + padding);
+    if (padding)
+      memset(buffer.data() + sz, 0x0, padding);
+    str.set_buffer(buffer.data(), sz);
+    if (!write(str, tokey, true))
+      return false;
+    static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
+    if (fptr == NULL)
     {
-      //bind to unmodified function which just copies buffer into the keyhash
-      fptr = &org::eclipse::cyclonedds::topic::simple_key;
+      max(str, tokey, true);
+      if (str.position() <= 16)
+      {
+        //bind to unmodified function which just copies buffer into the keyhash
+        fptr = &org::eclipse::cyclonedds::topic::simple_key;
+      }
+      else
+      {
+        //bind to MD5 hash function
+        fptr = &org::eclipse::cyclonedds::topic::complex_key;
+      }
     }
-    else
-    {
-      //bind to MD5 hash function
-      fptr = &org::eclipse::cyclonedds::topic::complex_key;
-    }
+    return (*fptr)(buffer, hash);
   }
-  return (*fptr)(buffer, hash);
 }
 
 static inline void* calc_offset(void* ptr, ptrdiff_t n)
