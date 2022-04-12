@@ -1006,9 +1006,11 @@ process_keylist(
 {
   const idl_key_t *key = NULL;
 
-  IDL_FOREACH(key, _struct->keylist->keys) {
-    if (process_key(streams, _struct, key))
-      return IDL_RETCODE_NO_MEMORY;
+  if (_struct->keylist) {
+    IDL_FOREACH(key, _struct->keylist->keys) {
+      if (process_key(streams, _struct, key))
+        return IDL_RETCODE_NO_MEMORY;
+    }
   }
 
   return IDL_RETCODE_OK;
@@ -1158,7 +1160,7 @@ process_struct_contents(
   struct streams *streams)
 {
   idl_retcode_t ret = IDL_RETCODE_OK;
-  bool keylist = (pstate->config.flags & IDL_FLAG_KEYLIST) && _struct->keylist;
+  bool keylist_flag = (pstate->config.flags & IDL_FLAG_KEYLIST);
 
   size_t to_unroll = 1;
   const idl_struct_t *base = _struct;
@@ -1173,7 +1175,7 @@ process_struct_contents(
     while (depth_to_go--)
       base =  (const idl_struct_t *)(base->inherit_spec->base);
 
-    if (keylist
+    if (keylist_flag
      && (ret = process_keylist(streams, base)))
       return ret;
 
