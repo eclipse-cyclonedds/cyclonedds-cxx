@@ -12,6 +12,7 @@
 #include "dds/dds.hpp"
 #include <gtest/gtest.h>
 #include "RegressionModels.hpp"
+#include "RegressionModels_pragma.hpp"
 
 typedef std::vector<unsigned char> bytes;
 

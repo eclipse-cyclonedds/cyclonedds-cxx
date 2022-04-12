@@ -1,0 +1,16 @@
+module regression_models {
+
+struct Nested {
+short Member_Nested;
+};
+
+struct Base {
+Nested Member_Base;
+};
+
+struct Derived : Base {
+short Member_Derived;
+};
+#pragma keylist Derived Member_Derived
+
+};
