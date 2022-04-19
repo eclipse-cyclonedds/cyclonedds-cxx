@@ -29,7 +29,7 @@ entity_properties_t& basic_cdr_stream::next_entity(entity_properties_t &props, b
 
 bool basic_cdr_stream::start_struct(entity_properties_t &props)
 {
-  if (props.requires_xtypes() && status(unsupported_xtypes))
+  if (!is_key() && props.requires_xtypes() && status(unsupported_xtypes))
     return false;
 
   return cdr_stream::start_struct(props);
