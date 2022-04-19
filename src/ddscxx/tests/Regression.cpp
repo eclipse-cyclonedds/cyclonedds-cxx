@@ -322,3 +322,21 @@ TEST_F(Regression, typedef_of_sequence_of_enums)
     };
   readwrite_test(s, struct_seq_e1_bytes, xcdr_v2_stream(endianness::little_endian));
 }
+
+TEST_F(Regression, key_value_of_appendables)
+{
+  s_final s_f;
+  s_appendable s_a;
+
+  s_f.s() = "abcdef";
+  s_a.s() = "abcdef";
+
+  ddsi_keyhash_t kh_f, kh_a;
+
+  unsigned char k[] = {0xcd, 0x34, 0x4d, 0x59, 0xec, 0x90, 0xb9, 0x62, 0xca, 0xb1, 0x41, 0xcf, 0x2a, 0x5d, 0xa6, 0xcf};
+
+  ASSERT_TRUE(to_key<s_final>(s_f, kh_f));
+  EXPECT_EQ(0, memcmp(k, kh_f.value, 16));
+  ASSERT_TRUE(to_key<s_appendable>(s_a, kh_a));
+  EXPECT_EQ(0, memcmp(k, kh_a.value, 16));
+}

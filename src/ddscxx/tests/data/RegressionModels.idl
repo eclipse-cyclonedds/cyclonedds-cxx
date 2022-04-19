@@ -166,4 +166,14 @@ union u_struct_arr switch (unsigned long) {
   u_struct_arr c;
 };
 
+@final
+struct s_final {
+  @key string s;
+};
+
+@appendable
+struct s_appendable {
+  @key string s;
+};
+
 };
