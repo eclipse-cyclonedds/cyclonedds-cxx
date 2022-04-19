@@ -122,9 +122,9 @@ void VerifyReadOneDeeper(const bytes &in, const T& out, S stream, bool as_key)
 VerifyRead(normal_bytes, test_struct, streamer, false);\
 VerifyRead(key_bytes, key_struct, streamer, true);
 
-#define read_test_fail(test_struct, key_struct, streamer)\
+#define read_test_fail(test_struct, key_struct, key_bytes, streamer)\
 VerifyRead(bytes(256, 0x0), test_struct, streamer, false, false);\
-VerifyRead(bytes(256, 0x0), key_struct, streamer, true, false);
+VerifyRead(key_bytes, key_struct, streamer, true);
 
 #define read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 VerifyRead(normal_bytes, test_struct, streamer, false);\
@@ -134,17 +134,17 @@ VerifyReadOneDeeper(key_bytes, key_struct, streamer, true);
 VerifyWrite(test_struct, normal_bytes, streamer, false);\
 VerifyWrite(key_struct, key_bytes, streamer, true);
 
-#define write_test_fail(test_struct, key_struct, streamer)\
+#define write_test_fail(test_struct, key_struct, key_bytes, streamer)\
 VerifyWrite(test_struct, bytes(256, 0x0), streamer, false, false);\
-VerifyWrite(test_struct, bytes(256, 0x0), streamer, true, false);
+VerifyWrite(test_struct, key_bytes, streamer, true);
 
 #define readwrite_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)
 
-#define readwrite_test_fail(test_struct, key_struct, streamer)\
-read_test_fail(test_struct, key_struct, streamer)\
-write_test_fail(test_struct, key_struct, streamer)
+#define readwrite_test_fail(test_struct, key_struct, key_bytes, streamer)\
+read_test_fail(test_struct, key_struct, key_bytes, streamer)\
+write_test_fail(test_struct, key_struct, key_bytes, streamer)
 
 #define readwrite_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
@@ -161,7 +161,7 @@ readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v1_str
 readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
 
 #define stream_test_fail_basic(test_struct, xcdr_v1_normal_bytes, xcdr_v2_normal_bytes, key_bytes)\
-readwrite_test_fail(test_struct, test_struct, basic_cdr_stream(endianness::big_endian))\
+readwrite_test_fail(test_struct, test_struct, key_bytes, basic_cdr_stream(endianness::big_endian))\
 readwrite_test(test_struct, test_struct, xcdr_v1_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
 readwrite_test(test_struct, test_struct, xcdr_v2_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
 
@@ -650,7 +650,7 @@ TEST_F(CDRStreamer, cdr_optional)
   /* basic cdr does not support optional fields,
      therefore the streamer should enter error status
      when the streamer is asked to write them */
-  readwrite_test_fail(OFS, OFS, basic_cdr_stream(endianness::big_endian));
+  readwrite_test_fail(OFS, OFS, OFS_key, basic_cdr_stream(endianness::big_endian));
 
   readwrite_test(OFS, OFS, OFS_xcdr_v1_normal, OFS_key, xcdr_v1_stream(endianness::big_endian))
   readwrite_test(OAS, OAS, OFS_xcdr_v1_normal, OFS_key, xcdr_v1_stream(endianness::big_endian))
