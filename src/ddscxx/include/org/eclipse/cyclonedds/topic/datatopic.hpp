@@ -59,8 +59,10 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
   } else
   {
     basic_cdr_stream str(endianness::big_endian);
-    if (!move(str, tokey, true))
+    if (!move(str, tokey, true)) {
+      assert(false);
       return false;
+    }
     size_t sz = str.position();
     size_t padding = 0;
     if (sz < 16)
@@ -69,8 +71,10 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
     if (padding)
       memset(buffer.data() + sz, 0x0, padding);
     str.set_buffer(buffer.data(), sz);
-    if (!write(str, tokey, true))
+    if (!write(str, tokey, true)) {
+      assert(false);
       return false;
+    }
     static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
     if (fptr == NULL)
     {
