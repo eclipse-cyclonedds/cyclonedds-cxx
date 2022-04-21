@@ -89,6 +89,7 @@ constexpr bit_bound get_bit_bound() {
       return bb_64_bits;
       break;
   }
+  return bb_unset;
 }
 
 /**
@@ -114,6 +115,7 @@ template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 constexpr bit_bound get_bit_bound();
 
 typedef struct entity_properties entity_properties_t;
+typedef std::vector<entity_properties_t> propvec;
 
 /**
  * @brief
@@ -205,24 +207,42 @@ struct OMG_DDS_API entity_properties
    * Used in the finish function to finish the entire entity_properties_t tree.
    */
   void erase_key_values();
+
+  /**
+   * @brief
+   * Finishes a tree representing an entire datamodel.
+   *
+   * This function will set the next_on_level and prev_on_level pointers to create a sub linked list
+   * of the members of the entity at that level. Also it will set the parent pointer of member entities
+   * and the first_member pointer of entities which have sub entities (members).
+   * When all this is done, it will take the key information in the key_endpoint map to (un)set the is_key
+   * flags on all members.
+   *
+   * @param[in, out] props The list of entities representing the datamodel.
+   * @param[in] keys The map of key indices.
+   */
+  static void finish(propvec &props, const key_endpoint &keys);
+
+  /**
+   * @brief
+   * Appends a sub tree to the current tree as a member.
+   *
+   * This function will take the contents of toappend, insert them at the end of appendto and increase the
+   * depth of all entities added. It is used to add a constructed type as a member of another constructed type.
+   *
+   * @param[in, out] appendto The tree to append to.
+   * @param[in] toappend The sub tree to append.
+   */
+  static void append_struct_contents(propvec &appendto, const propvec &toappend);
+
+  /**
+   * @brief
+   * Prints the contents of a tree representing a datatype to the screen.
+   *
+   * @param[in] in The tree to print.
+   */
+  static void print(const propvec &in);
 };
-
-typedef std::vector<entity_properties_t> propvec;
-
-/**
- * @brief
- * Finishes a tree representing an entire datamodel.
- *
- * This function will set the next_on_level and prev_on_level pointers to create a sub linked list
- * of the members of the entity at that level. Also it will set the parent pointer of member entities
- * and the first_member pointer of entities which have sub entities (members).
- * When all this is done, it will take the key information in the key_endpoint map to (un)set the is_key
- * flags on all members.
- *
- * @param[in, out] props The list of entities representing the datamodel.
- * @param[in] keys The map of key indices.
- */
-void finish(propvec &props, const key_endpoint &keys);
 
 /**
  * @brief
@@ -236,26 +256,6 @@ void finish(propvec &props, const key_endpoint &keys);
  */
 template<typename T>
 propvec& get_type_props();
-
-/**
- * @brief
- * Appends a sub tree to the current tree as a member.
- *
- * This function will take the contents of toappend, insert them at the end of appendto and increase the
- * depth of all entities added. It is used to add a constructed type as a member of another constructed type.
- *
- * @param[in, out] appendto The tree to append to.
- * @param[in] toappend The sub tree to append.
- */
-void append_struct_contents(propvec &appendto, const propvec &toappend);
-
-/**
- * @brief
- * Prints the contents of a tree representing a datatype to the screen.
- *
- * @param[in] in The tree to print.
- */
-void print(const propvec &in);
 
 }
 }

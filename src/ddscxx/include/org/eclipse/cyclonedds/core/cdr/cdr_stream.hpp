@@ -411,7 +411,7 @@ public:
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool finish_member(entity_properties_t &, bool is_set = true);
+    virtual bool finish_member(entity_properties_t &prop, bool is_set = true);
 
     /**
      * @brief
@@ -420,8 +420,7 @@ public:
      * This function is called by the instance implementation switchbox and will return the next entity to operate on by calling next_prop.
      * This will also call the implementation specific push/pop entity functions to write/finish headers where necessary.
      *
-     * @param[in, out] props The property tree to get the next entity from.
-     * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
+     * @param[in, out] prop The property tree to get the next entity from.
      *
      * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
      */

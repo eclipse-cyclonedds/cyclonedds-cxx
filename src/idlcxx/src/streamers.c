@@ -724,7 +724,7 @@ generate_member_properties(
   }
 
   if (idl_is_struct(type_spec) &&
-      putf(&streams->props, "  append_struct_contents(props, get_type_props<%1$s>());  //internal contents of ::%2$s\n", type, idl_identifier(decl)))
+      putf(&streams->props, "  entity_properties_t::append_struct_contents(props, get_type_props<%1$s>());  //internal contents of ::%2$s\n", type, idl_identifier(decl)))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1130,7 +1130,7 @@ print_constructed_type_close(
     "  return streamer.finish_struct(*props);\n"
     "}\n\n";
   static const char *pfmt =
-    "\n  finish(props, keylist);\n"
+    "\n  entity_properties_t::finish(props, keylist);\n"
     "  initialized.store(true, std::memory_order::memory_order_release);\n"
     "  return props;\n"
     "}\n\n";

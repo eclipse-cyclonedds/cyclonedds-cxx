@@ -60,7 +60,7 @@ static void add_key(const key_endpoint &key, entity_properties_t &props)
   }
 }
 
-void finish(propvec &props, const key_endpoint &keys)
+void entity_properties_t::finish(propvec &props, const key_endpoint &keys)
 {
   assert(props.size());
 
@@ -149,7 +149,7 @@ void entity_properties_t::erase_key_values()
   }
 }
 
-void append_struct_contents(propvec &appendto, const propvec &toappend)
+void entity_properties_t::append_struct_contents(propvec &appendto, const propvec &toappend)
 {
   auto oldsize = appendto.size();
 
@@ -157,14 +157,14 @@ void append_struct_contents(propvec &appendto, const propvec &toappend)
 
   for (size_t i = oldsize; i < appendto.size(); i++) {
     appendto[i].depth++;
-    appendto[i].next_on_level = nullptr,
-    appendto[i].prev_on_level = nullptr,
-    appendto[i].parent        = nullptr,
+    appendto[i].next_on_level = nullptr;
+    appendto[i].prev_on_level = nullptr;
+    appendto[i].parent        = nullptr;
     appendto[i].first_member  = nullptr;
   }
 }
 
-void print(const propvec &in)
+void entity_properties_t::print(const propvec &in)
 {
   for (const auto & e:in)
     e.print();

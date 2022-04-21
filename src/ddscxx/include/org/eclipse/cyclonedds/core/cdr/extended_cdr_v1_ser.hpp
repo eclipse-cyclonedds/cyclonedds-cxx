@@ -89,7 +89,7 @@ public:
    *
    * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
    */
-  entity_properties_t *first_entity(entity_properties_t *props);
+  entity_properties_t *first_entity(entity_properties_t *prop);
 
   /**
    * @brief
