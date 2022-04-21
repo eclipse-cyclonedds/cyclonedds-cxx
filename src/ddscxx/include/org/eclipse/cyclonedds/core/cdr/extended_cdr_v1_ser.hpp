@@ -45,7 +45,7 @@ public:
    *
    * Determines whether a header is necessary for this entity through header_necessary, and if it is, handles the header.
    *
-   * @param[in] prop Properties of the member to start.
+   * @param[in, out] prop Properties of the member to start.
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
@@ -58,7 +58,7 @@ public:
    *
    * Determines whether a header is necessary for this entity through header_necessary, and if it is, completes the previous header.
    *
-   * @param[in] prop Properties of the member to finish.
+   * @param[in, out] prop Properties of the member to finish.
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
@@ -67,17 +67,29 @@ public:
 
   /**
    * @brief
-   * Returns the next entity to be processed.
+   * Returns the next entity to be processed at this level.
    *
    * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
    * properties entry is pulled from the tree.
    *
-   * @param[in, out] props The property tree to get the next entity from.
-   * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
+   * @param[in, out] prop The property tree to get the next entity from.
    *
-   * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
+   * @return The next entity to be processed, or a nullptr if the current tree level does not hold more entities that match this tree.
    */
-  entity_properties_t& next_entity(entity_properties_t &props, bool &firstcall);
+  entity_properties_t* next_entity(entity_properties_t *prop);
+
+  /**
+   * @brief
+   * Returns the first entity to be processed at this level.
+   *
+   * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
+   * properties entry is pulled from the tree.
+   *
+   * @param[in, out] prop The property tree to get the next entity from.
+   *
+   * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
+   */
+  entity_properties_t *first_entity(entity_properties_t *props);
 
   /**
    * @brief
@@ -134,10 +146,11 @@ private:
    * header from stream and to allow the streamer to determine what to do with the field.
    *
    * @param[out] out The header to read into.
+   * @param[out] is_final Whether the final field has been read.
    *
    * @return Whether the header was read succesfully.
    */
-  bool read_header(entity_properties_t &out);
+  bool read_header(entity_properties_t &out, bool &is_final);
 
   /**
    * @brief
@@ -231,7 +244,7 @@ private:
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool read(xcdr_v1_stream& str, T& toread, size_t N = 1)
 {
-  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
+  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
   {
     case bb_8_bits:
       return read_enum_impl<xcdr_v1_stream,T,uint8_t>(str, toread, N);
@@ -261,7 +274,7 @@ bool read(xcdr_v1_stream& str, T& toread, size_t N = 1)
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool write(xcdr_v1_stream& str, const T& towrite, size_t N = 1)
 {
-  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
+  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
   {
     case bb_8_bits:
       return write_enum_impl<xcdr_v1_stream,T,uint8_t>(str, towrite, N);
@@ -290,7 +303,7 @@ bool write(xcdr_v1_stream& str, const T& towrite, size_t N = 1)
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool move(xcdr_v1_stream& str, const T&, size_t N = 1)
 {
-  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
+  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
   {
     case bb_8_bits:
       return move(str, int8_t(0), N);

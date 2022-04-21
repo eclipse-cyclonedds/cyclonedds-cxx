@@ -411,19 +411,7 @@ public:
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool finish_member(entity_properties_t &prop, bool is_set = true);
-
-    /**
-     * @brief
-     * Function declaration for skipping entities without involving them on the stack.
-     *
-     * This function is called by the instance implementation switchbox, when it encounters an id which
-     * does not resolve to an id pointing to a member it knows. It will move to the next entity in the
-     * stream.
-     *
-     * @param[in] prop The entity to skip/ignore.
-     */
-    virtual void skip_entity(const entity_properties_t &prop);
+    virtual bool finish_member(entity_properties_t &, bool is_set = true) {(void) is_set; return !abort_status();}
 
     /**
      * @brief
@@ -437,7 +425,20 @@ public:
      *
      * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
      */
-    virtual entity_properties_t& next_entity(entity_properties_t &props, bool &firstcall) = 0;
+    virtual entity_properties_t* next_entity(entity_properties_t *prop);
+
+    /**
+     * @brief
+     * Returns the first entity to be processed at this level.
+     *
+     * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
+     * properties entry is pulled from the tree.
+     *
+     * @param[in, out] prop The property tree to get the next entity from.
+     *
+     * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
+     */
+    virtual entity_properties_t* first_entity(entity_properties_t *prop);
 
     /**
      * @brief
@@ -493,23 +494,6 @@ protected:
 
     /**
      * @brief
-     * Member list types
-     *
-     * @enum member_list_type Which type of list of entries is to be iterated over,
-     * used in calls to cdr_stream::next_prop.
-     *
-     * @var member_list_type::member_by_seq Member entries in order of declaration.
-     * @var member_list_type::member_by_id Member entries sorted by member id.
-     * @var member_list_type::key Key entries sorted by member id.
-     */
-    enum class member_list_type {
-      member_by_seq,
-      member_by_id,
-      key
-    };
-
-    /**
-     * @brief
      * Records the start of a member entry.
      *
      * Will record the member start and set the member present flag to true.
@@ -520,40 +504,23 @@ protected:
 
     /**
      * @brief
-     * Skips a member entry.
-     *
-     * In the case a read has failed, this will go to the next member.
-     *
-     * @param[in,out] prop The member who will be skipped.
-     */
-    void go_to_next_member(entity_properties_t &prop);
-
-    /**
-     * @brief
      * Checks the struct for completeness.
      *
      * Checks whether all fields which must be understood are present.
      *
      * @param[in,out] props The struct whose start is recorded.
-     * @param[in] list_type Which list must be checked for entries.
      */
-    void check_struct_completeness(entity_properties_t &props, member_list_type list_type);
+    void check_struct_completeness(entity_properties_t &props);
 
     /**
      * @brief
-     * Function for retrieving the next entity to be operated on by the streamer.
+     * Returns the previous entity at the current level (if any).
      *
-     * When it is called the first time, the iterator of the (member/key)entities to be iterated over is stored on the stack.
-     * This iterator is then used in successive calls, until the end of the valid entities is reached, at which point the iterator is popped off the stack.
-     * This function is to be implemented in cdr streaming implementations.
+     * @param[in] prop Entity to the current entity.
      *
-     * @param[in, out] props The property tree to get the next entity from.
-     * @param[in] list_type Which list to take the next property from
-     * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
-     *
-     * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
+     * @return Pointer to the previous entity, or nullptr if there is any.
      */
-    entity_properties_t& next_prop(entity_properties_t &props, member_list_type list_type, bool &firstcall);
+    entity_properties_t* previous_entity(entity_properties_t *prop);
 
     endianness m_stream_endianness,               /**< the endianness of the stream*/
         m_local_endianness = native_endianness(); /**< the local endianness*/
@@ -568,13 +535,8 @@ protected:
     stream_mode m_mode = stream_mode::unset;      /**< the current streaming mode*/
     bool m_key = false;                           /**< the current key mode*/
 
-    entity_properties_t m_final = final_entry();  /**< A placeholder for the final entry to be returned
-                                                       from next_prop if we are reading from a stream*/
-    entity_properties_t m_current_header;         /**< Container for header information being read from a stream*/
-
     DDSCXX_WARNING_MSVC_OFF(4251)
     std::stack<size_t> m_buffer_end;              /**< the end of reading at the current level*/
-    std::stack<proplist::iterator> m_stack;       /**< Stack of iterators currently being handled*/
     DDSCXX_WARNING_MSVC_ON(4251)
 };
 

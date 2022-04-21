@@ -50,60 +50,49 @@ bool cdr_stream::align(size_t newalignment, bool add_zeroes)
   return true;
 }
 
-bool cdr_stream::finish_member(entity_properties_t &prop, bool)
-{
-  if (abort_status())
-    return false;
-
-  if (!prop.is_present) {
-    if (m_mode == stream_mode::read)
-      go_to_next_member(prop);
-    else
-      return false;
-  }
-
-  return true;
-}
-
 bool cdr_stream::finish_struct(entity_properties_t &props)
 {
-  check_struct_completeness(props, m_key ? member_list_type::key : member_list_type::member_by_seq);
+  check_struct_completeness(props);
 
   return !abort_status() && props.is_present;
 }
 
-entity_properties_t& cdr_stream::next_prop(entity_properties_t &props, member_list_type list_type, bool &firstcall)
+entity_properties_t *cdr_stream::first_entity(entity_properties_t *props)
 {
-  if (firstcall) {
-    std::list<entity_properties_t>::iterator it;
-    switch (list_type) {
-      case member_list_type::member_by_seq:
-        it = props.m_members_by_seq.begin();
-        break;
-      case member_list_type::member_by_id:
-        it = props.m_members_by_id.begin();
-        break;
-      case member_list_type::key:
-        it = props.m_keys.begin();
-        break;
-      default:
-        assert(0);
-    }
-    m_stack.push(it);
-    firstcall = false;
-    return *it;
+  if (abort_status())
+    return nullptr;
+
+  auto ptr = props->first_member;
+  while (m_key && ptr && !ptr->is_key)
+    ptr = next_entity(ptr);
+
+  return ptr;
+}
+
+entity_properties_t* cdr_stream::next_entity(entity_properties_t *prop)
+{
+  if (abort_status())
+    return nullptr;
+
+  prop = prop->next_on_level;
+  if (m_key) {
+    while (prop && !prop->is_key)
+      prop = prop->next_on_level;
   }
+  return prop;
+}
 
-  assert(m_stack.size());
+entity_properties_t* cdr_stream::previous_entity(entity_properties_t *prop)
+{
+  if (abort_status())
+    return nullptr;
 
-  if (*m_stack.top())  //we have not yet reached the end of the entities in the list, so we can go to the next
-    m_stack.top()++;
-
-  entity_properties_t &entity = *m_stack.top();
-  if (!entity) //we have reached the end of the list
-    m_stack.pop();
-
-  return entity;
+  prop = prop->prev_on_level;
+  if (m_key) {
+    while (prop && !prop->is_key)
+      prop = prop->prev_on_level;
+  }
+  return prop;
 }
 
 bool cdr_stream::bytes_available(size_t N, bool peek)
@@ -130,13 +119,6 @@ void cdr_stream::reset()
   alignment(0);
   m_status = 0;
   m_buffer_end = std::stack<size_t>({m_buffer_size});
-  m_stack = std::stack<proplist::iterator>();
-}
-
-void cdr_stream::skip_entity(const entity_properties_t &prop)
-{
-  incr_position(prop.e_sz);
-  alignment(0);
 }
 
 bool cdr_stream::start_member(entity_properties_t &prop, bool)
@@ -159,15 +141,7 @@ void cdr_stream::record_member_start(entity_properties_t &prop)
   prop.is_present = true;
 }
 
-void cdr_stream::go_to_next_member(entity_properties_t &prop)
-{
-  if (prop.e_sz > 0 && m_mode == stream_mode::read) {
-    position(prop.e_off + prop.e_sz);
-    alignment(0);  //we made a jump, so we do not know the current alignment
-  }
-}
-
-void cdr_stream::check_struct_completeness(entity_properties_t &props, member_list_type list_type)
+void cdr_stream::check_struct_completeness(entity_properties_t &props)
 {
   if (m_mode != stream_mode::read)
     return;
@@ -177,28 +151,14 @@ void cdr_stream::check_struct_completeness(entity_properties_t &props, member_li
     return;
   }
 
-  proplist::iterator it;
-  switch (list_type) {
-    case member_list_type::member_by_seq:
-      it = props.m_members_by_seq.begin();
-      break;
-    case member_list_type::member_by_id:
-      it = props.m_members_by_id.begin();
-      break;
-    case member_list_type::key:
-      it = props.m_keys.begin();
-      break;
-    default:
-      assert(0);
-  }
-
-  while (*it) {
-    if (it->must_understand_local && !it->is_present) {
-      (void)status(must_understand_fail);
+  auto ptr = props.first_member;
+  while (ptr) {
+    if ((ptr->must_understand || ptr->is_key) && !ptr->is_present) {
+      status(must_understand_fail);
       props.is_present = false;
       break;
     }
-    it++;
+    ptr = cdr_stream::next_entity(ptr);
   }
 }
 
