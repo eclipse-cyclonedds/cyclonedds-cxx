@@ -41,15 +41,6 @@ public:
 
   /**
    * @brief
-   * Skips an entity, bypassing the stack.
-   *
-   * As the basic cdr stream does not have anything that requires delimiting between entities,
-   * this function is not supported.
-   */
-  void skip_entity(const entity_properties_t &) { status(serialization_status::unsupported_xtypes); }
-
-  /**
-   * @brief
    * Start a new struct.
    *
    * This function is called by the generated streaming functions, and will start a parameter list, if that is relevant for it.
@@ -59,19 +50,6 @@ public:
    * @return Whether the operation was completed succesfully.
    */
   bool start_struct(entity_properties_t &props);
-
-  /**
-   * @brief
-   * Returns the next entity to be processed.
-   *
-   * This implementation directly passes through to next_prop, since pops and pushes do nothing.
-   *
-   * @param[in, out] props The property tree to get the next entity from.
-   * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
-   *
-   * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
-   */
-  entity_properties_t& next_entity(entity_properties_t &props, bool &firstcall);
 
 };
 

@@ -21,60 +21,6 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
-bool entity_properties::member_id_comp(const entity_properties_t &lhs, const entity_properties_t &rhs)
-{
-  if (!rhs && lhs)
-    return true;
-  if (rhs && !lhs)
-    return false;
-
-  return lhs.m_id < rhs.m_id;
-}
-
-void entity_properties::print(bool recurse, size_t depth, const char *prefix) const
-{
-  std::cout << "d: " << depth;
-  for (size_t i = 0; i < depth; i++) std::cout << "  ";
-  std::cout << prefix << ": m_id: " << m_id << " final: " << (is_last ? "yes" : "no") << " m_u: " << (must_understand_local ? "yes" : "no") << " key: " << (is_key ? "yes" : "no");
-
-  std::cout << " p_ext: ";
-  switch(p_ext) {
-    case extensibility::ext_final:
-    std::cout << "FINAL";
-    break;
-    case extensibility::ext_appendable:
-    std::cout << "APPENDABLE";
-    break;
-    case extensibility::ext_mutable:
-    std::cout << "MUTABLE";
-    break;
-  }
-  std::cout << " e_ext: ";
-  switch(e_ext) {
-    case extensibility::ext_final:
-    std::cout << "FINAL";
-    break;
-    case extensibility::ext_appendable:
-    std::cout << "APPENDABLE";
-    break;
-    case extensibility::ext_mutable:
-    std::cout << "MUTABLE";
-    break;
-  }
-  std::cout << std::endl;
-  if (recurse) {
-    for (const auto & e:m_members_by_seq) e.print(true, depth+1, "member_s");
-    for (const auto & e:m_members_by_id) e.print(true, depth+1, "member_i");
-    for (const auto & e:m_keys) e.print(true, depth+1, "key     ");
-  }
-}
-
-void entity_properties::set_member_props(uint32_t member_id, bool optional)
-{
-  m_id = member_id;
-  is_optional = optional;
-}
-
 void key_endpoint::add_key_endpoint(const std::list<uint32_t> &key_indices)
 {
   auto *ptr = this;
@@ -90,115 +36,140 @@ void key_endpoint::add_key_endpoint(const std::list<uint32_t> &key_indices)
   }
 }
 
-void entity_properties::set_key_values(const key_endpoint &endpoints)
+static void add_key(const key_endpoint &key, entity_properties_t &props)
 {
-  if (!endpoints)
-    return;
-
-  //there are key members for this entity, therefore erase all existing key member information
-  for (auto &member:m_members_by_seq) {
-    if (member.is_key) {
-      member.is_key = false;
-      member.must_understand_local = false;
-    }
+  if (key.size()) {  //something is setting key values at this level, set all keys to false
+    props.erase_key_values();
+  } else if (props.parent) {
+    props.set_key_values();
   }
 
-  //look for all indicated key members, and set their key values
-  for (const auto &p:endpoints) {
-    auto it = std::find(m_members_by_seq.begin(), m_members_by_seq.end(), entity_properties(p.first));
-    assert(it != m_members_by_seq.end());
+  for (const auto & k:key) {
+    auto ptr = props.first_member;  //look for the entry with the key id
+    while (ptr) {
+      if (ptr->m_id == k.first) {
+        break;
+      } else {
+        ptr = ptr->next_on_level;
+      }
+    }
 
-    it->is_key = true;
-    it->must_understand_local = true;
-    it->set_key_values(p.second);
+    assert(ptr);
+    ptr->is_key = true;  //set this to be a key
+    add_key(k.second, *ptr);
   }
 }
 
-bool entity_properties::requires_xtypes() const
+void finish(propvec &props, const key_endpoint &keys)
 {
-  if (xtypes_necessary || is_optional || e_ext != extensibility::ext_final)
-    return true;
+  assert(props.size());
 
-  for (const auto &member:m_members_by_seq)
-    if (member.requires_xtypes())
+  for (size_t i = 0; i < props.size(); i++) {
+    auto ptr = props.data()+i;
+    for (size_t j = i+1; j < props.size(); j++) {
+      auto ptr2 = props.data()+j;
+      if (ptr->depth == ptr2->depth) {
+        ptr->next_on_level = ptr2;
+        ptr2->prev_on_level = ptr;
+        break;
+      } else if (ptr2->depth < ptr->depth) {
+        break;
+      }
+    }
+
+    entity_properties_t *parent = nullptr;
+    if (ptr->prev_on_level)
+      parent = ptr->prev_on_level->parent;
+    else if (ptr->depth)
+      parent = ptr-1;
+
+    ptr->parent = parent;
+    if (ptr->prev_on_level == nullptr && parent)
+      parent->first_member = ptr;
+
+    if (ptr->parent)
+      ptr->p_ext = ptr->parent->e_ext;
+  }
+
+  auto &root = props[0];
+  auto ptr = root.first_member;
+  while (ptr && !root.xtypes_necessary) {
+    root.xtypes_necessary |= ptr->xtypes_necessary;
+    ptr = ptr->next_on_level;
+  }
+
+  //use key endpoints
+  add_key(keys, props[0]);
+}
+
+void entity_properties_t::reset()
+{
+  e_off = 0;
+  e_sz = 0;
+  is_present = false;
+}
+
+void entity_properties_t::print() const
+{
+  std::cout <<  std::string( 2*depth, ' ' ) << "id: " << m_id << std::endl;
+  std::cout <<  std::string( 2*depth+2, ' ' ) << "key: " << (is_key ? "true" : "false") << ", optional: " << (is_optional ? "true" : "false") << ", has parent: " << (parent ? "true" : "false") << std::endl;
+  std::cout <<  std::string( 2*depth+2, ' ' ) << "must_understand: " << (must_understand ? "true" : "false") << ", xtypes necessary: " << (xtypes_necessary ? "true" : "false") << std::endl;
+}
+
+bool entity_properties_t::has_keys() const
+{
+  auto ptr = first_member;
+  while (ptr) {
+    if (ptr->is_key)
       return true;
+    ptr = ptr->next_on_level;
+  }
 
   return false;
 }
 
-void entity_properties::clear()
+void entity_properties_t::set_key_values()
 {
-  m_members_by_seq.clear();
-  m_members_by_id.clear();
-  m_keys.clear();
-}
+  auto h_k = has_keys();
 
-void entity_properties::finish(const key_endpoint &keys)
-{
-  set_key_values(keys);
-
-  xtypes_necessary = requires_xtypes();
-  for (auto &member:m_members_by_seq) {
-    member.propagate_flags();
-  }
-
-  populate_from_seq();
-
-  trim_non_key_members();
-}
-
-void entity_properties::trim_non_key_members()
-{
-  if (m_keys.empty())
-    return;
-
-  auto it = m_keys.begin();
-  while (*it) {
-    if (it->is_key) {
-      it->trim_non_key_members();
-      it++;
-    } else {
-      it = m_keys.erase(it);
-    }
+  auto ptr = first_member;
+  while (ptr) {
+    if (!h_k)
+      ptr->is_key = true;
+    if (ptr->is_key)
+      ptr->set_key_values();
+    ptr = ptr->next_on_level;
   }
 }
 
-void entity_properties::propagate_flags()
+void entity_properties_t::erase_key_values()
 {
-  if (!is_key)
-    return;
-
-  bool any_member_is_key = false;
-  for (const auto &member:m_members_by_seq) {
-    if (member.is_key)
-      any_member_is_key = true;
-  }
-
-  for (auto &member:m_members_by_seq) {
-    if (!any_member_is_key) {
-      member.is_key = true;
-      member.must_understand_local = true;
-    }
-
-    member.propagate_flags();
+  auto ptr = first_member;
+  while (ptr) {
+    ptr->is_key = false;
+    ptr = ptr->next_on_level;
   }
 }
 
-void entity_properties::populate_from_seq()
+void append_struct_contents(propvec &appendto, const propvec &toappend)
 {
-  m_members_by_id = m_members_by_seq;
-  m_members_by_id.sort(member_id_comp);
-  m_keys = m_members_by_id;
+  auto oldsize = appendto.size();
 
-  for (auto &member:m_members_by_seq)
-    member.populate_from_seq();
+  appendto.insert(appendto.end(), toappend.begin()+1, toappend.end());
 
-  for (auto &member:m_members_by_id)
-    member.populate_from_seq();
+  for (size_t i = oldsize; i < appendto.size(); i++) {
+    appendto[i].depth++;
+    appendto[i].next_on_level = nullptr,
+    appendto[i].prev_on_level = nullptr,
+    appendto[i].parent        = nullptr,
+    appendto[i].first_member  = nullptr;
+  }
+}
 
-  for (auto &member:m_keys)
-    member.populate_from_seq();
-
+void print(const propvec &in)
+{
+  for (const auto & e:in)
+    e.print();
 }
 
 }

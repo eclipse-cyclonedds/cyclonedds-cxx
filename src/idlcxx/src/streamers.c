@@ -671,8 +671,7 @@ process_entity(
 }
 
 static idl_retcode_t
-generate_entity_properties(
-  const idl_node_t *parent,
+generate_member_properties(
   const idl_type_spec_t *type_spec,
   const idl_declarator_t *decl,
   struct streams *streams)
@@ -687,42 +686,82 @@ generate_entity_properties(
     }
   }
 
-  const char *opt = is_optional(decl) ? "true" : "false";
+  if (idl_is_string(type_spec))
+    reset_bit_bound = true;
+
+  const char *opt = is_optional(decl) ? "true" : "false",
+             *m_u = must_understand(type_spec) ? "true" : "false",
+             *ext = NULL;
+  switch (get_extensibility(type_spec)) {
+    case IDL_FINAL:
+      ext = "ext_final";
+      break;
+    case IDL_APPENDABLE:
+      ext = "ext_appendable";
+      break;
+    case IDL_MUTABLE:
+      ext = "ext_mutable";
+      break;
+    default:
+      assert(0);
+  }
+
   char *type = NULL;
   if (idl_is_base_type(type_spec)) {
     if (IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0)
       return IDL_RETCODE_NO_MEMORY;
-  } else if (idl_is_string(type_spec)) {
-    type = "char";
-    reset_bit_bound = true;
   } else {
     if (IDL_PRINTA(&type, get_cpp11_fully_scoped_name, type_spec, streams->generator) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
 
-  /* structs and unions need to set their properties as members through the set_member_props
-    * function as they are copied from the static references of the class*/
-  if (putf(&streams->props, "  props.m_members_by_seq.push_back(get_type_props<%1$s>());  //::%2$s\n"
-                            "  props.m_members_by_seq.back().set_member_props(%3$"PRIu32",%4$s);\n", type, idl_identifier(decl), decl->id.value, opt) ||
-      (reset_bit_bound && putf(&streams->props, "  props.m_members_by_seq.back().e_bb = bb_unset;\n")))  //sequences and strings need to have bit_bound = bb_unset
-    return IDL_RETCODE_NO_MEMORY;
-
-  switch (get_extensibility(parent)) {
-    case IDL_APPENDABLE:
-      if (putf(&streams->props, "  props.m_members_by_seq.back().p_ext = extensibility::ext_appendable;\n"))
-        return IDL_RETCODE_NO_MEMORY;
-      break;
-    case IDL_MUTABLE:
-      if (putf(&streams->props, "  props.m_members_by_seq.back().p_ext = extensibility::ext_mutable;\n"))
-        return IDL_RETCODE_NO_MEMORY;
-      break;
-    default:
-      break;
+  if (reset_bit_bound) {
+    if (putf(&streams->props, "  props.push_back(entity_properties_t(1, %1$"PRIu32", %2$s, bb_unset, extensibility::%3$s, %4$s));  //::%5$s\n", decl->id.value, opt, ext, m_u, idl_identifier(decl)))
+      return IDL_RETCODE_NO_MEMORY;
+  } else {
+    if (putf(&streams->props, "  props.push_back(entity_properties_t(1, %1$"PRIu32", %2$s, get_bit_bound<%3$s>(), extensibility::%4$s, %5$s));  //::%6$s\n", decl->id.value, opt, type, ext, m_u, idl_identifier(decl)))
+      return IDL_RETCODE_NO_MEMORY;
   }
 
-  if (must_understand(type_spec) &&
-      putf(&streams->props, "  props.m_members_by_seq.back().must_understand_local = true;\n"))
+  if (idl_is_struct(type_spec) &&
+      putf(&streams->props, "  append_struct_contents(props, get_type_props<%1$s>());  //internal contents of ::%2$s\n", type, idl_identifier(decl)))
     return IDL_RETCODE_NO_MEMORY;
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+generate_struct_properties(
+  const idl_struct_t *_struct,
+  struct streams *streams)
+{
+  uint32_t n_inheritances = 0;
+  const idl_struct_t *base = _struct;
+
+  while (base->inherit_spec) {
+    base = base->inherit_spec->base;
+    n_inheritances++;
+  }
+
+  //go in reverse through inheritances
+  while (1) {
+    base = _struct;
+    for (uint32_t inherit_depth = 0; inherit_depth < n_inheritances; inherit_depth++)
+      base = base->inherit_spec->base;
+
+    const idl_member_t *_member = NULL;
+    IDL_FOREACH(_member, base->members) {
+      const idl_declarator_t *decl = NULL;
+      IDL_FOREACH(decl, _member->declarators) {
+        if (generate_member_properties(_member->type_spec, decl, streams))
+          return IDL_RETCODE_NO_MEMORY;
+      }
+    }
+
+    if (0 == n_inheritances)
+      break;
+    n_inheritances--;
+  }
 
   return IDL_RETCODE_OK;
 }
@@ -746,7 +785,7 @@ add_member_start(
    || IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (multi_putf(streams, ALL, "      if (!streamer.start_member(prop"))
+  if (multi_putf(streams, ALL, "      if (!streamer.start_member(*prop"))
     return IDL_RETCODE_NO_MEMORY;
 
   if (is_external(decl)) {
@@ -780,11 +819,11 @@ add_member_finish(
     if (IDL_PRINTA(&accessor, get_instance_accessor, decl, &loc) < 0
      || multi_putf(streams, (WRITE|MOVE), "      }\n")
      || multi_putf(streams, ALL,
-          "      if (!streamer.finish_member(prop, %1$s.has_value()))\n"
+          "      if (!streamer.finish_member(*prop, %1$s.has_value()))\n"
           "        return false;\n", accessor))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (multi_putf(streams, ALL, "      if (!streamer.finish_member(prop))\n"
+    if (multi_putf(streams, ALL, "      if (!streamer.finish_member(*prop))\n"
                                  "        return false;\n"))
       return IDL_RETCODE_NO_MEMORY;
   }
@@ -825,9 +864,6 @@ process_member(
       loc.type |= EXTERNAL;
     if (is_optional(mem))
       loc.type |= OPTIONAL;
-
-    if (generate_entity_properties(mem->node.parent, type_spec, declarator, streams))
-      return IDL_RETCODE_NO_MEMORY;
 
     // only use the @key annotations when you do not use the keylist
     if (!(pstate->config.flags & IDL_FLAG_KEYLIST) &&
@@ -884,10 +920,10 @@ process_case(
                                   : "      instance.%1$s(obj, d);\n"
                                     "    }\n"
                                     "    break;\n";
-  const char* get_props = constructed_type    ? "      auto prop = get_type_props<decl_ref_type(%1$s)>();\n"
+  const char* get_props = constructed_type    ? "      auto prop = &(get_type_props<decl_ref_type(%1$s)>()[0]);\n"
                                               : "",
-            * check_props = constructed_type  ? "      props.is_present = prop.is_present;\n"
-                                              : "      props.is_present = true;\n";
+            * check_props = constructed_type  ? "      props->is_present = prop->is_present;\n"
+                                              : "      props->is_present = true;\n";
 
   if (revisit) {
     const char *name = get_cpp11_name(_case->declarator);
@@ -1021,44 +1057,52 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
 
   static const char *fmt =
     "template<typename T, std::enable_if_t<std::is_base_of<cdr_stream, T>::value, bool> = true >\n"
-    "bool {T}(T& streamer, {C}%1$s& instance, entity_properties_t &props) {\n"
+    "bool {T}(T& streamer, {C}%1$s& instance, entity_properties_t *props) {\n"
     "  (void)instance;\n";
   static const char *pfmt1 =
     "template<>\n"
-    "entity_properties_t get_type_props<%s>()%s";
+    "propvec &get_type_props<%s>()%s";
   static const char *pfmt2 =
     " {\n"
-    "  static std::mutex mtx;\n"
-    "  static entity_properties_t props;\n"
-    "  static std::atomic_bool initialized {false};\n\n"
-    "  if (initialized.load(std::memory_order_relaxed))\n"
-    "    return props;\n\n"
-    "  std::lock_guard<std::mutex> lock(mtx);\n"
-    "  if (initialized.load(std::memory_order_relaxed))\n"
+    "  static thread_local std::mutex mtx;\n"
+    "  static thread_local propvec props;\n"
+    "  static thread_local std::atomic_bool initialized {false};\n"
+    "  key_endpoint keylist;\n"
+    "  if (initialized.load(std::memory_order_relaxed)) {\n"
+    "    for (auto &e:props) e.reset();\n"
     "    return props;\n"
-    "  props.clear();\n"
-    "  key_endpoint keylist;\n\n";
+    "  }\n"
+    "  std::lock_guard<std::mutex> lock(mtx);\n"
+    "  if (initialized.load(std::memory_order_relaxed)) {\n"
+    "    for (auto &e:props) e.reset();\n"
+    "    return props;\n"
+    "  }\n"
+    "  props.clear();\n\n";
   static const char *sfmt =
-    "  if (!streamer.start_struct(props))\n"
+    "  if (!streamer.start_struct(*props))\n"
     "    return false;\n";
 
-  const char *estr = NULL;
+
+  const char *ext = NULL;
   switch (get_extensibility(node)) {
+    case IDL_FINAL:
+      ext = "ext_final";
+      break;
     case IDL_APPENDABLE:
-      estr = "ext_appendable";
+      ext = "ext_appendable";
       break;
     case IDL_MUTABLE:
-      estr = "ext_mutable";
+      ext = "ext_mutable";
       break;
     default:
-      break;
+      assert(0);
   }
 
   if (multi_putf(streams, ALL, fmt, name)
    || putf(&streams->props, pfmt1, name, pfmt2)
    || idl_fprintf(streams->generator->header.handle, pfmt1, name, ";\n\n") < 0
-   || (estr && putf(&streams->props, "  props.e_ext = extensibility::%1$s;\n\n", estr))
-   || multi_putf(streams, ALL, sfmt))
+   || multi_putf(streams, ALL, sfmt)
+   || putf(&streams->props, "  props.push_back(entity_properties_t(0, 0, false, bb_unset, extensibility::%1$s));  //root\n", ext))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1068,18 +1112,11 @@ static idl_retcode_t
 print_switchbox_open(struct streams *streams)
 {
   static const char *fmt =
-    "  bool firstcall = true;\n"
-    "  while (auto &prop = streamer.next_entity(props, firstcall)) {\n"
-    "%1$s"
-    "    switch (prop.m_id) {\n";
-  static const char *skipfmt =
-    "    if (prop.ignore) {\n"
-    "      streamer.skip_entity(prop);\n"
-    "      continue;\n"
-    "    }\n";
+    "  auto prop = streamer.first_entity(props);\n"
+    "  while (prop) {\n"
+    "    switch (prop->m_id) {\n";
 
-  if (multi_putf(streams, CONST, fmt, "")
-   || multi_putf(streams, READ, fmt, skipfmt))
+  if (multi_putf(streams, ALL, fmt))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1090,11 +1127,10 @@ print_constructed_type_close(
   struct streams *streams)
 {
   const char *fmt =
-    "  return streamer.finish_struct(props);\n"
+    "  return streamer.finish_struct(*props);\n"
     "}\n\n";
   static const char *pfmt =
-    "\n  props.m_members_by_seq.push_back(final_entry());\n\n"
-    "  props.finish(keylist);\n"
+    "\n  finish(props, keylist);\n"
     "  initialized.store(true, std::memory_order::memory_order_release);\n"
     "  return props;\n"
     "}\n\n";
@@ -1111,18 +1147,10 @@ print_switchbox_close(struct streams *streams)
 {
   static const char *fmt =
     "    }\n"
+    "    prop = streamer.next_entity(prop);\n"
     "  }\n";
-  static const char *rfmt =
-    "      default:\n"
-    "      if (prop.must_understand_remote\n"
-    "       && streamer.status(must_understand_fail))\n"
-    "        return false;\n"
-    "      else\n"
-    "        streamer.skip_entity(prop);\n"
-    "      break;\n";
 
-  if (putf(&streams->read, rfmt)
-   || multi_putf(streams, ALL, fmt))
+  if (multi_putf(streams, ALL, fmt))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1136,9 +1164,9 @@ print_entry_point_functions(
   static const char *fmt =
     "template<typename S, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >\n"
     "bool {T}(S& str, {C}%1$s& instance, bool as_key) {\n"
-    "  auto props = get_type_props<%1$s>();\n"
+    "  auto &props = get_type_props<%1$s>();\n"
     "  str.set_mode(cdr_stream::stream_mode::{T}, as_key);\n"
-    "  return {T}(str, instance, props); \n"
+    "  return {T}(str, instance, props.data()); \n"
     "}\n\n";
 
   if (multi_putf(streams, ALL, fmt, fullname))
@@ -1157,6 +1185,9 @@ process_struct_contents(
 {
   idl_retcode_t ret = IDL_RETCODE_OK;
   bool keylist_flag = (pstate->config.flags & IDL_FLAG_KEYLIST);
+
+  if (generate_struct_properties(_struct, streams))
+    return IDL_RETCODE_NO_MEMORY;
 
   size_t to_unroll = 1;
   const idl_struct_t *base = _struct;
@@ -1204,7 +1235,7 @@ process_struct(
   if (revisit) {
     if (print_switchbox_close(user_data)
      || print_constructed_type_close(user_data)
-     || (!is_nested(node) && print_entry_point_functions(streams, fullname))) /*only add entry point functions for non-nested (topic) types*/
+     || (!is_nested(node) && print_entry_point_functions(streams, fullname)))
       return IDL_RETCODE_NO_MEMORY;
 
     return flush(streams->generator, streams);
@@ -1267,7 +1298,7 @@ process_union(
     "  streamer.position(union_max);\n"
     "  streamer.alignment(alignment_max);\n";
   static const char *mfmt =
-    "  props.is_present = true;\n";
+    "  props->is_present = true;\n";
 
   char *fullname = NULL;
   if (IDL_PRINTA(&fullname, get_cpp11_fully_scoped_name, node, streams->generator) < 0)
@@ -1351,7 +1382,7 @@ process_typedef_decl(
   if (!idl_is_base_type(ts) && !idl_is_enum(ts) && !idl_is_string(ts) && !idl_is_alias(ts)) {
     char* unrolled_name = NULL;
     if (IDL_PRINTA(&unrolled_name, get_cpp11_fully_scoped_name, ts, streams->generator) < 0 ||
-        multi_putf(streams, ALL, "  auto prop = get_type_props<%1$s>();\n  prop.is_present = true;\n", unrolled_name))
+        multi_putf(streams, ALL, "  auto prop = &(get_type_props<%1$s>()[0]);\n  prop->is_present = true;\n", unrolled_name))
       return IDL_RETCODE_NO_MEMORY;
   }
 
@@ -1362,7 +1393,7 @@ process_typedef_decl(
     if (multi_putf(streams, ALL, "  return true;\n}\n\n"))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (multi_putf(streams, ALL, "  return prop.is_present && !streamer.abort_status();\n}\n\n"))
+    if (multi_putf(streams, ALL, "  return prop->is_present && !streamer.abort_status();\n}\n\n"))
       return IDL_RETCODE_NO_MEMORY;
   }
 
@@ -1421,18 +1452,7 @@ process_enum(
   static const char *conv_func = "template<>\n"\
                     "%s enum_conversion<%s>(uint32_t in)%s",
                     *bb_func = "template<>\n"\
-                    "constexpr bit_bound get_enum_bit_bound<%s>() { return bb_%"PRIu16"_bits; }\n\n",
-                    *prop_func_open = "template<>\n"\
-                    "entity_properties_t get_type_props<%s>()%s",
-                    *prop_func_contents = "  entity_properties_t e;\n"
-                    "  e.e_ext = extensibility::ext_%1$s;\n"
-                    "  e.xtypes_necessary = %2$s;\n"
-                    "  e.e_bb = get_enum_bit_bound<%3$s>();\n"
-                    "  e.m_members_by_seq.push_back(final_entry());\n"
-                    "  e.m_members_by_id.push_back(final_entry());\n"
-                    "  e.m_keys.push_back(final_entry());\n"
-                    "  return e;\n"
-                    "}\n\n";
+                    "constexpr bit_bound get_bit_bound<%s>() { return bb_%"PRIu16"_bits; }\n\n";
 
   if (putf(&str->props, conv_func, fullname, fullname, " {\n  switch (in) {\n")
    || idl_fprintf(gen->header.handle, conv_func, fullname, fullname, ";\n\n") < 0)
@@ -1488,24 +1508,8 @@ process_enum(
       bb = 8;
   }
 
-  char *ext = NULL;
-  switch (_enum->extensibility.value) {
-    case IDL_FINAL:
-      ext = "final";
-      break;
-    case IDL_APPENDABLE:
-      ext = "appendable";
-      break;
-    case IDL_MUTABLE:
-      ext = "mutable";
-      break;
-  }
-
   if (putf(&str->props,"  }\n}\n\n") ||
-      idl_fprintf(gen->header.handle, bb_func, fullname, bb) < 0 ||
-      idl_fprintf(gen->header.handle, prop_func_open, fullname, ";\n\n") < 0 ||
-      putf(&str->props, prop_func_open, fullname, "{\n" ) ||
-      putf(&str->props, prop_func_contents, ext, _enum->extensibility.value == IDL_FINAL ? "false" : "true", fullname)) {
+      idl_fprintf(gen->header.handle, bb_func, fullname, bb) < 0) {
     ret = IDL_RETCODE_NO_MEMORY;
   }
 

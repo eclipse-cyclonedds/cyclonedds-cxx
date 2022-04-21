@@ -227,17 +227,7 @@ TEST_F(Regression, delimiters_bitmask)
 
 TEST_F(Regression, emumerators_properties)
 {
-  auto props = org::eclipse::cyclonedds::core::cdr::get_type_props<e1>();
-
-  EXPECT_EQ(props.e_ext, extensibility::ext_appendable);
-  EXPECT_EQ(props.e_bb, bb_8_bits);
-  EXPECT_TRUE(props.xtypes_necessary);
-  ASSERT_EQ(props.m_members_by_seq.size(), 1);
-  EXPECT_FALSE(bool(props.m_members_by_seq.front()));
-  ASSERT_EQ(props.m_members_by_id.size(), 1);
-  EXPECT_FALSE(bool(props.m_members_by_id.front()));
-  ASSERT_EQ(props.m_keys.size(), 1);
-  EXPECT_FALSE(bool(props.m_keys.front()));
+  EXPECT_EQ(org::eclipse::cyclonedds::core::cdr::get_bit_bound<e1>(), bb_8_bits);
 }
 
 TEST_F(Regression, delimiters_emumerators)
