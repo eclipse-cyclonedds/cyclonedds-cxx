@@ -119,13 +119,25 @@ void cdr_stream::reset()
   alignment(0);
   m_status = 0;
   m_buffer_end = std::stack<size_t>({m_buffer_size});
+  m_e_off = std::stack<uint32_t>();
+  m_e_sz = std::stack<uint32_t>({0});
 }
 
 bool cdr_stream::start_member(entity_properties_t &prop, bool)
 {
-  record_member_start(prop);
+  prop.is_present = true;
+  m_e_sz.push(0);
+  m_e_off.push(static_cast<uint32_t>(position()));
 
   return true;
+}
+
+bool cdr_stream::finish_member(entity_properties_t &, bool)
+{
+  m_e_sz.pop();
+  m_e_off.pop();
+
+  return !abort_status();
 }
 
 bool cdr_stream::start_struct(entity_properties_t &props)
@@ -133,12 +145,6 @@ bool cdr_stream::start_struct(entity_properties_t &props)
   props.is_present = true;
 
   return true;
-}
-
-void cdr_stream::record_member_start(entity_properties_t &prop)
-{
-  prop.e_off = position();
-  prop.is_present = true;
 }
 
 void cdr_stream::check_struct_completeness(entity_properties_t &props)

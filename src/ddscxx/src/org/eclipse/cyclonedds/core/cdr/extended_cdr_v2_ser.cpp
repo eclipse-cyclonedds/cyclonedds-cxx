@@ -53,7 +53,7 @@ bool xcdr_v2_stream::start_member(entity_properties_t &prop, bool is_set)
       break;
     case stream_mode::read:
       if (em_header_necessary(prop))
-        m_buffer_end.push(position() + prop.e_sz);
+        m_buffer_end.push(position() + m_e_sz.top());
       break;
     default:
       break;
@@ -68,9 +68,8 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
 {
   switch (m_mode) {
     case stream_mode::write:
-      prop.e_sz = static_cast<uint32_t>(position()-prop.e_off);
       if (em_header_necessary(prop)) {
-        if (is_set && !finish_em_header(prop))
+        if (is_set && !finish_em_header())
           return false;
       }
       break;
@@ -84,7 +83,7 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
 
   m_consecutives.pop();
 
-  return true;
+  return cdr_stream::finish_member(prop, is_set);
 }
 
 bool xcdr_v2_stream::write_d_header()
@@ -125,11 +124,11 @@ entity_properties_t* xcdr_v2_stream::next_entity(entity_properties_t *prop)
       if (!bytes_available(4, true) ||
           !read_em_header(temp)) {
         return nullptr;  //no more fields to read
-      } else if (0 == temp.e_sz) {
+      } else if (0 == m_e_sz.top()) {
         continue; //this field is empty
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
         continue;
       }
@@ -150,11 +149,10 @@ entity_properties_t* xcdr_v2_stream::next_entity(entity_properties_t *prop)
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
       } else {
         prop = p;
-        prop->e_sz = temp.e_sz;
         break;
       }
     }
@@ -186,11 +184,11 @@ entity_properties_t* xcdr_v2_stream::first_entity(entity_properties_t *props)
       if (!bytes_available(4, true) ||
           !read_em_header(temp)) {
         return nullptr;  //no more fields to read
-      } else if (0 == temp.e_sz) {
+      } else if (0 == m_e_sz.top()) {
         continue; //this field is empty
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
         continue;
       }
@@ -204,11 +202,10 @@ entity_properties_t* xcdr_v2_stream::first_entity(entity_properties_t *props)
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
       } else {
         prop = p;
-        prop->e_sz = temp.e_sz;
         break;
       }
     }
@@ -228,19 +225,19 @@ bool xcdr_v2_stream::read_em_header(entity_properties_t &props)
   props.m_id = emheader & id_mask;
   switch (emheader & lc_mask) {
     case bytes_1:
-      props.e_sz = 1;
+      m_e_sz.top() = 1;
       break;
     case bytes_2:
-      props.e_sz = 2;
+      m_e_sz.top() = 2;
       break;
     case bytes_4:
-      props.e_sz = 4;
+      m_e_sz.top() = 4;
       break;
     case bytes_8:
-      props.e_sz = 8;
+      m_e_sz.top() = 8;
       break;
     case nextint:
-      if (!read(*this, props.e_sz))
+      if (!read(*this, m_e_sz.top()))
         return false;
       break;
     case nextint_times_1:
@@ -255,10 +252,10 @@ bool xcdr_v2_stream::read_em_header(entity_properties_t &props)
   }
 
   if (factor) {
-    if (!read(*this, props.e_sz))
+    if (!read(*this, m_e_sz.top()))
       return false;
-    props.e_sz *= factor;
-    props.e_sz += 4;
+    m_e_sz.top() *= factor;
+    m_e_sz.top() += 4;
     //move cursor back 4 bytes, due to overlap of nextint and entity
     if ((emheader & lc_mask) > nextint)
       position(position()-4);
@@ -440,17 +437,18 @@ void xcdr_v2_stream::reset()
   m_delimiters = std::stack<size_t>();
 }
 
-bool xcdr_v2_stream::finish_em_header(entity_properties_t &props)
+bool xcdr_v2_stream::finish_em_header()
 {
-  if (props.e_sz == 0)
+  uint32_t e_sz = static_cast<uint32_t>(position()-m_e_off.top());
+  if (e_sz == 0)
     return true;
 
   auto current_position = position();
   auto current_alignment = alignment();
 
-  position(props.e_off - 4);
+  position(m_e_off.top() - 4);
   alignment(4);
-  if (!write(*this, props.e_sz))
+  if (!write(*this, e_sz))
     return false;
 
   position(current_position);
