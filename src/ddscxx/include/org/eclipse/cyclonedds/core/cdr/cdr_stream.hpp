@@ -411,7 +411,7 @@ public:
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool finish_member(entity_properties_t &, bool is_set = true) {(void) is_set; return !abort_status();}
+    virtual bool finish_member(entity_properties_t &, bool is_set = true);
 
     /**
      * @brief
@@ -494,16 +494,6 @@ protected:
 
     /**
      * @brief
-     * Records the start of a member entry.
-     *
-     * Will record the member start and set the member present flag to true.
-     *
-     * @param[in,out] prop The member whose start is recorded.
-     */
-    void record_member_start(entity_properties_t &prop);
-
-    /**
-     * @brief
      * Checks the struct for completeness.
      *
      * Checks whether all fields which must be understood are present.
@@ -537,6 +527,8 @@ protected:
 
     DDSCXX_WARNING_MSVC_OFF(4251)
     std::stack<size_t> m_buffer_end;              /**< the end of reading at the current level*/
+    std::stack<uint32_t> m_e_off,                 /**< the offset of the entity at the current level*/
+                         m_e_sz;                  /**< the size of the entity at the current level*/
     DDSCXX_WARNING_MSVC_ON(4251)
 };
 

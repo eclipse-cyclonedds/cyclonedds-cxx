@@ -44,7 +44,7 @@ bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
           return false;
         break;
       case stream_mode::read:
-        m_buffer_end.push(position() + prop.e_sz);
+        m_buffer_end.push(position() + m_e_sz.top());
         break;
       default:
         break;
@@ -56,9 +56,6 @@ bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
 
 bool xcdr_v1_stream::finish_member(entity_properties_t &prop, bool is_set)
 {
-  if (abort_status())
-    return false;
-
   if (header_necessary(prop)) {
     switch (m_mode) {
       case stream_mode::write:
@@ -73,7 +70,7 @@ bool xcdr_v1_stream::finish_member(entity_properties_t &prop, bool is_set)
     }
   }
 
-  return true;
+  return cdr_stream::finish_member(prop, is_set);
 }
 
 entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
@@ -90,10 +87,7 @@ entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
           return nullptr;  //read failure
         } else if (is_final) {
           return nullptr;  //final field
-        }
-
-        if (temp.e_sz) {
-          prop->e_sz = temp.e_sz;
+        } else if (m_e_sz.top() != 0) {
           break;
         }
       } else {
@@ -108,11 +102,11 @@ entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
         return nullptr;  //read failure
       } else if (is_final) {
         return nullptr;  //final field
-      } else if (0 == temp.e_sz) {
+      } else if (0 == m_e_sz.top()) {
         continue;  //empty field
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
         continue;
       }
@@ -133,11 +127,10 @@ entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
       } else {
         prop = p;
-        prop->e_sz = temp.e_sz;
         break;
       }
     }
@@ -160,10 +153,7 @@ entity_properties_t* xcdr_v1_stream::first_entity(entity_properties_t *props)
           return nullptr;  //read failure
         } else if (is_final) {
           return nullptr;  //final field
-        }
-
-        if (temp.e_sz) {
-          prop->e_sz = temp.e_sz;
+        } else if (m_e_sz.top() != 0) {
           break;
         }
       } else {
@@ -178,11 +168,11 @@ entity_properties_t* xcdr_v1_stream::first_entity(entity_properties_t *props)
         return nullptr;  //read failure
       } else if (is_final) {
         return nullptr;  //final field
-      } else if (0 == temp.e_sz) {
+      } else if (0 == m_e_sz.top()) {
         continue;  //empty field
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
         continue;
       }
@@ -196,11 +186,10 @@ entity_properties_t* xcdr_v1_stream::first_entity(entity_properties_t *props)
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(temp.e_sz);
+        incr_position(m_e_sz.top());
         alignment(0);
       } else {
         prop = p;
-        prop->e_sz = temp.e_sz;
         break;
       }
     }
@@ -224,7 +213,7 @@ bool xcdr_v1_stream::read_header(entity_properties_t &out, bool &is_final)
     return false;
 
   out.m_id = smallid & pid_mask;
-  out.e_sz = smalllength;
+  m_e_sz.top() = smalllength;
   out.must_understand = pid_flag_must_understand & smallid;
   out.implementation_extension = pid_flag_impl_extension & smallid;
   switch (out.m_id) {
@@ -236,13 +225,12 @@ bool xcdr_v1_stream::read_header(entity_properties_t &out, bool &is_final)
       break;
     case pid_extended:
     {
-      uint32_t memberheader = 0, largelength = 0;
+      uint32_t memberheader = 0;
       if (!bytes_available(8)
        || !read(*this, memberheader)
-       || !read(*this, largelength))
+       || !read(*this, m_e_sz.top()))
         return false;
 
-      out.e_sz = largelength;
       out.must_understand = pl_extended_flag_must_understand & memberheader;
       out.implementation_extension = pl_extended_flag_impl_extension & memberheader;
       out.m_id = pl_extended_mask & memberheader;
@@ -276,16 +264,15 @@ bool xcdr_v1_stream::finish_write_header(entity_properties_t &props)
   auto current_position = position();
   auto current_alignment = alignment();
 
-  props.e_sz = static_cast<uint32_t>(current_position - props.e_off);
-
+  uint32_t e_sz = static_cast<uint32_t>(current_position - m_e_off.top());
   if (extended_header(props)) {
-    position(props.e_off-4);
-    if (!write(*this, props.e_sz))
+    position(m_e_off.top()-4);
+    if (!write(*this, e_sz))
       return false;
   } else {
-    position(props.e_off-2);
+    position(m_e_off.top()-2);
     alignment(2);
-    if (!write(*this, uint16_t(props.e_sz)))
+    if (!write(*this, uint16_t(e_sz)))
       return false;
   }
 

@@ -261,11 +261,9 @@ private:
    * @brief
    * Finishes the write operation of the EM-header.
    *
-   * @param[in, out] props The entity whose EM-header to finish.
-   *
    * @return Whether the header was read succesfully.
    */
-  bool finish_em_header(entity_properties_t &props);
+  bool finish_em_header();
 
   /**
    * @brief

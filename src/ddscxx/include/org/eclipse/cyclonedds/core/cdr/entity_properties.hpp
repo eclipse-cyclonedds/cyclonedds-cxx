@@ -143,8 +143,6 @@ struct OMG_DDS_API entity_properties
 
   extensibility e_ext = extensibility::ext_final; /**< The extensibility of the entity itself. */
   extensibility p_ext = extensibility::ext_final; /**< The extensibility of the entity's parent. */
-  size_t e_off = 0;                               /**< The current offset in the stream at which the member field starts, does not include header. */
-  uint32_t e_sz = 0;                              /**< The size of the current entity as member field (only used in reading from streams).*/
   uint32_t m_id = 0;                              /**< The member id of the entity, it is the global field by which the entity is identified. */
   uint32_t depth = 0;                             /**< The depth of this entity.*/
   bool must_understand = false;                   /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
@@ -165,7 +163,7 @@ struct OMG_DDS_API entity_properties
    * @brief
    * Reset function.
    *
-   * This function will reset the fields that may have been set through streaming (e_off, e_sz, is_present).
+   * This function will reset the fields that may have been set through streaming (is_present).
    */
   void reset();
 

@@ -104,8 +104,6 @@ void finish(propvec &props, const key_endpoint &keys)
 
 void entity_properties_t::reset()
 {
-  e_off = 0;
-  e_sz = 0;
   is_present = false;
 }
 
