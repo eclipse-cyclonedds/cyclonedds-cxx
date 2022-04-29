@@ -30,22 +30,25 @@ void cdr_stream::set_buffer(void* toset, size_t buffer_size)
 
 bool cdr_stream::align(size_t newalignment, bool add_zeroes)
 {
+  if (newalignment == m_current_alignment)
+    return true;
+
   auto al = alignment(std::min(newalignment, m_max_alignment));
 
   size_t tomove = (al - position() % al) % al;
 
-  if (tomove &&
-      (m_mode == stream_mode::read || m_mode == stream_mode::write)) {
-    if (!bytes_available(tomove))
-      return false;
-    if (add_zeroes) {
-      auto cursor = get_cursor();
-      assert(cursor);
-      memset(cursor, 0, tomove);
+  if (tomove) {
+    if (m_mode ==  stream_mode::read || m_mode == stream_mode::write) {
+      if (!bytes_available(tomove)) {
+        return false;
+      } else if (add_zeroes) {
+        auto cursor = get_cursor();
+        assert(cursor);
+        memset(cursor, 0, tomove);
+      }
     }
+    incr_position(tomove);
   }
-
-  incr_position(tomove);
 
   return true;
 }
@@ -118,26 +121,9 @@ void cdr_stream::reset()
   position(0);
   alignment(0);
   m_status = 0;
-  m_buffer_end = std::stack<size_t>({m_buffer_size});
-  m_e_off = std::stack<uint32_t>();
-  m_e_sz = std::stack<uint32_t>({0});
-}
-
-bool cdr_stream::start_member(entity_properties_t &prop, bool)
-{
-  prop.is_present = true;
-  m_e_sz.push(0);
-  m_e_off.push(static_cast<uint32_t>(position()));
-
-  return true;
-}
-
-bool cdr_stream::finish_member(entity_properties_t &, bool)
-{
-  m_e_sz.pop();
-  m_e_off.pop();
-
-  return !abort_status();
+  m_buffer_end = m_buffer_size;
+  m_e_off.reset();
+  m_e_sz = 0;
 }
 
 bool cdr_stream::start_struct(entity_properties_t &props)

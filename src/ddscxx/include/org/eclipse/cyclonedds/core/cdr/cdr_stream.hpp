@@ -30,6 +30,26 @@ namespace cdr {
 
 /**
  * @brief
+ * Custom stack implementation.
+ */
+template<typename T, size_t N>
+class custom_stack {
+  static_assert(N > 0, "Stack capacity must be larger than 0");
+  T data[N];
+  size_t sz = 0;
+  public:
+  custom_stack() = default;
+  custom_stack(const T &in) {data[0] = in; sz = 1;}
+  T &top() {return data[sz-1];}
+  const T& top() const {return data[sz-1];}
+  void pop() {sz--;}
+  void push(const T &in) {data[sz++] = in;}
+  void reset() {sz = 0;}
+  size_t size() const {return sz;}
+};
+
+/**
+ * @brief
  * Enum conversion and validation function template forward declaration.
  *
  * This function is generated for each enumerated class encountered in the parsed .idl files.
@@ -195,7 +215,7 @@ public:
      * @retval SIZE_MAX In this case, a maximum size calculation was being done, and the maximum size was determined to be unbounded.
      * @return The current cursor offset.
      */
-    size_t position() const { return m_position; }
+    inline size_t position() const { return m_position; }
 
     /**
      * @brief
@@ -252,7 +272,7 @@ public:
      * @retval nullptr If the current buffer is not set, or if the cursor offset is not valid.
      * @return The current cursor pointer.
      */
-    char* get_cursor() const { return ((m_position != SIZE_MAX && m_buffer != nullptr) ? (m_buffer + m_position) : nullptr); }
+    inline char* get_cursor() const { return m_buffer + m_position; }
 
     /**
      * @brief
@@ -343,7 +363,7 @@ public:
      * @retval false If the serialization status of the stream HAS NOT YET reached one of the serialization errors which it is not set to ignore.
      * @retval true If the serialization status of the stream HAS reached one of the serialization errors which it is not set to ignore.
      */
-    bool abort_status() const { return m_status & m_fault_mask; }
+    inline bool abort_status() const { return m_status & m_fault_mask; }
 
     /**
      * @brief
@@ -369,7 +389,7 @@ public:
      *
      * @return Whether the streaming is done only over the key values.
      */
-    bool is_key() const {return m_key;}
+    inline bool is_key() const {return m_key;}
 
     /**
      * @brief
@@ -396,7 +416,7 @@ public:
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool start_member(entity_properties_t &prop, bool is_set = true);
+    virtual bool start_member(entity_properties_t &prop, bool is_set = true) { prop.is_present = is_set; return true;}
 
     /**
      * @brief
@@ -406,12 +426,11 @@ public:
      * Depending on the implementation and mode header length fields may be completed.
      * This function can be overridden in cdr streaming implementations.
      *
-     * @param[in] prop Properties of the entity to finish.
      * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool finish_member(entity_properties_t &prop, bool is_set = true);
+    virtual bool finish_member(entity_properties_t &, bool is_set = true) { (void) is_set; return true;}
 
     /**
      * @brief
@@ -492,6 +511,16 @@ public:
 protected:
 
     /**
+     * @brief Implementation for starting the recording the size and starting offset of a member.
+     */
+    inline void push_member_start() { m_e_sz.push(0); m_e_off.push(static_cast<uint32_t>(position())); }
+
+    /**
+     * @brief Implementation for finishing the recording the size and starting offset of a member.
+     */
+    inline void pop_member_start() { m_e_sz.pop(); m_e_off.pop(); }
+
+    /**
      * @brief
      * Checks the struct for completeness.
      *
@@ -511,6 +540,8 @@ protected:
      */
     entity_properties_t* previous_entity(entity_properties_t *prop);
 
+    static const size_t m_maximum_depth = 32;     /**< the maximum depth of structures in the streamer*/
+
     endianness m_stream_endianness,               /**< the endianness of the stream*/
         m_local_endianness = native_endianness(); /**< the local endianness*/
     size_t m_position = 0,                        /**< the current offset position in the stream*/
@@ -525,9 +556,9 @@ protected:
     bool m_key = false;                           /**< the current key mode*/
 
     DDSCXX_WARNING_MSVC_OFF(4251)
-    std::stack<size_t> m_buffer_end;              /**< the end of reading at the current level*/
-    std::stack<uint32_t> m_e_off,                 /**< the offset of the entity at the current level*/
-                         m_e_sz;                  /**< the size of the entity at the current level*/
+    custom_stack<size_t, m_maximum_depth> m_buffer_end; /**< the end of reading at the current level*/
+    custom_stack<uint32_t, m_maximum_depth> m_e_off, /**< the offset of the entity at the current level*/
+                                            m_e_sz; /**< the size of the entity at the current level*/
     DDSCXX_WARNING_MSVC_ON(4251)
 };
 

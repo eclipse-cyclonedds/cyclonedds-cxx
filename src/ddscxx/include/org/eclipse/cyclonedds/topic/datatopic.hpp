@@ -245,10 +245,14 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
 template<typename T, class S>
 bool get_serialized_size(const T& sample, bool as_key, size_t &sz)
 {
-  S str;
-  if (!move(str, sample, as_key))
-    return false;
-  sz = str.position();
+  if (TopicTraits<T>::isSelfContained()) {
+    sz = TopicTraits<T>::getSampleSize();
+  } else {
+    S str;
+    if (!move(str, sample, as_key))
+      return false;
+    sz = str.position();
+  }
 
   return true;
 }
