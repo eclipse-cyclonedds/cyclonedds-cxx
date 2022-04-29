@@ -51,6 +51,7 @@ bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
     }
   }
 
+  push_member_start();
   return cdr_stream::start_member(prop, is_set);
 }
 
@@ -70,6 +71,7 @@ bool xcdr_v1_stream::finish_member(entity_properties_t &prop, bool is_set)
     }
   }
 
+  pop_member_start();
   return cdr_stream::finish_member(prop, is_set);
 }
 

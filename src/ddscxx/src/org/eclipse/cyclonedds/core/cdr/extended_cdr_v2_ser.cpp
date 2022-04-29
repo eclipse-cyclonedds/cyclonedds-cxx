@@ -60,7 +60,7 @@ bool xcdr_v2_stream::start_member(entity_properties_t &prop, bool is_set)
   }
 
   m_consecutives.push({false, false});
-
+  push_member_start();
   return cdr_stream::start_member(prop, is_set);
 }
 
@@ -82,7 +82,7 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
   }
 
   m_consecutives.pop();
-
+  pop_member_start();
   return cdr_stream::finish_member(prop, is_set);
 }
 
@@ -434,7 +434,8 @@ bool xcdr_v2_stream::finish_d_header()
 void xcdr_v2_stream::reset()
 {
   cdr_stream::reset();
-  m_delimiters = std::stack<size_t>();
+  m_delimiters.reset();
+  m_consecutives.reset();
 }
 
 bool xcdr_v2_stream::finish_em_header()

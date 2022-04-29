@@ -163,8 +163,8 @@ private:
   static const uint32_t must_understand;  /**< must understand member field flag*/
 
   DDSCXX_WARNING_MSVC_OFF(4251)
-  std::stack<consecutives_t> m_consecutives; /**< stack of consecutive entries, uses to determine whether or not to finish a d_header*/
-  std::stack<size_t> m_delimiters;        /**< locations of sequence delimiters */
+  custom_stack<consecutives_t, m_maximum_depth> m_consecutives; /**< stack of consecutive entries, uses to determine whether or not to finish a d_header*/
+  custom_stack<size_t, m_maximum_depth> m_delimiters; /**< locations of sequence delimiters */
   DDSCXX_WARNING_MSVC_ON(4251)
 
   /**
