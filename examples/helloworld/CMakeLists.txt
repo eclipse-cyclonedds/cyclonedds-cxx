@@ -21,6 +21,15 @@ idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl WARNINGS no-impli
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
 
+if (MSVC)
+  target_compile_options(ddscxxHelloworldPublisher PRIVATE /W4 /Wx)
+  target_compile_options(ddscxxHelloworldSubscriber PRIVATE /W4 /Wx)
+else()
+  target_compile_options(ddscxxHelloworldPublisher PRIVATE -Werror -Wnull-dereference)
+  target_compile_options(ddscxxHelloworldSubscriber PRIVATE -Werror -Wnull-dereference)
+endif()
+
+
 # Link both executables to idl data type library and ddscxx.
 target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata)
 target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata)
