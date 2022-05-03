@@ -173,7 +173,7 @@ public:
      * @param[in] max_align The maximum size that the stream will align CDR primitives to.
      * @param[in] ignore_faults Bitmask for ignoring faults, can be composed of bit fields from the serialization_status enumerator.
      */
-    cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults) { ; }
+    cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults), m_swap(native_endianness() != m_stream_endianness) { ; }
 
     /**
      * @brief
@@ -276,16 +276,6 @@ public:
 
     /**
      * @brief
-     * Local system endianness getter.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @return The local endianness.
-     */
-    endianness local_endianness() const { return m_local_endianness; }
-
-    /**
-     * @brief
      * Const stream endianness getter (const).
      *
      * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
@@ -296,16 +286,6 @@ public:
 
     /**
      * @brief
-     * Stream endianness getter.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @return The stream endianness.
-     */
-    endianness& stream_endianness() { return m_stream_endianness; }
-
-    /**
-     * @brief
      * Determines whether the local and stream endianness are the same.
      *
      * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
@@ -313,7 +293,7 @@ public:
      * @retval false If the stream endianness DOES match the local endianness.
      * @retval true If the stream endianness DOES NOT match the local endianness.
      */
-    bool swap_endianness() const { return m_stream_endianness != m_local_endianness; }
+    bool swap_endianness() const { return m_swap; }
 
     /**
      * @brief
@@ -542,8 +522,7 @@ protected:
 
     static const size_t m_maximum_depth = 32;     /**< the maximum depth of structures in the streamer*/
 
-    endianness m_stream_endianness,               /**< the endianness of the stream*/
-        m_local_endianness = native_endianness(); /**< the local endianness*/
+    endianness m_stream_endianness;               /**< the endianness of the stream*/
     size_t m_position = 0,                        /**< the current offset position in the stream*/
         m_max_alignment,                          /**< the maximum bytes that can be aligned to*/
         m_current_alignment = 1,                  /**< the current alignment*/
@@ -554,6 +533,7 @@ protected:
                                                        to be aborted*/
     stream_mode m_mode = stream_mode::unset;      /**< the current streaming mode*/
     bool m_key = false;                           /**< the current key mode*/
+    bool m_swap = false;                          /**< whether to swap endianness*/
 
     DDSCXX_WARNING_MSVC_OFF(4251)
     custom_stack<size_t, m_maximum_depth> m_buffer_end; /**< the end of reading at the current level*/
@@ -597,16 +577,21 @@ bool read(S &str, T& toread, size_t N = 1)
    || !str.bytes_available(sizeof(T)*N))
     return false;
 
-  auto from = str.get_cursor();
+  auto from = reinterpret_cast<const T*>(str.get_cursor());
   T *to = &toread;
 
   assert(from);
 
-  memcpy(to,from,sizeof(T)*N);
-
-  if (str.swap_endianness()) {
-    for (size_t i = 0; i < N; i++, to++)
-      byte_swap(*to);
+  if (N == 1) {
+    toread = *from;
+    if (str.swap_endianness())
+        byte_swap(toread);
+  } else {
+    memcpy(to,from,sizeof(T)*N);
+    if (str.swap_endianness()) {
+      for (size_t i = 0; i < N; i++, to++)
+        byte_swap(*to);
+    }
   }
 
   str.incr_position(sizeof(T)*N);
@@ -673,15 +658,20 @@ bool write(S& str, const T& towrite, size_t N = 1)
     return false;
 
   auto to = reinterpret_cast<T*>(str.get_cursor());
-  const T *from = &towrite;
 
   assert(to);
 
-  memcpy(to,from,sizeof(T)*N);
-
-  if (str.swap_endianness()) {
-    for (size_t i = 0; i < N; i++, to++)
+  if (N == 1) {
+    *to = towrite;
+    if (str.swap_endianness())
       byte_swap(*to);
+  } else {
+    const T *from = &towrite;
+    memcpy(to,from,sizeof(T)*N);
+    if (str.swap_endianness()) {
+      for (size_t i = 0; i < N; i++, to++)
+        byte_swap(*to);
+    }
   }
 
   str.incr_position(sizeof(T)*N);

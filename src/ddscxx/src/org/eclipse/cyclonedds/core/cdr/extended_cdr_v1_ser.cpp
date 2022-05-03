@@ -303,7 +303,7 @@ bool xcdr_v1_stream::finish_struct(entity_properties_t &props)
       break;
   }
 
-  return !abort_status() && props.is_present;
+  return props.is_present;
 }
 
 bool xcdr_v1_stream::list_necessary(const entity_properties_t &props)
