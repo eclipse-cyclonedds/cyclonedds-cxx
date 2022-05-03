@@ -49,6 +49,9 @@ using org::eclipse::cyclonedds::core::cdr::extensibility;
 using org::eclipse::cyclonedds::core::cdr::encoding_version;
 using org::eclipse::cyclonedds::topic::TopicTraits;
 
+template<typename T, class S>
+bool get_serialized_size(const T& sample, bool as_key, size_t &sz);
+
 template<typename T>
 bool to_key(const T& tokey, ddsi_keyhash_t& hash)
 {
@@ -59,11 +62,11 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
   } else
   {
     basic_cdr_stream str(endianness::big_endian);
-    if (!move(str, tokey, true)) {
+    size_t sz = 0;
+    if (!get_serialized_size<T, basic_cdr_stream>(tokey, true, sz)) {
       assert(false);
       return false;
     }
-    size_t sz = str.position();
     size_t padding = 0;
     if (sz < 16)
       padding = (16 - sz % 16)%16;
@@ -75,7 +78,7 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
       assert(false);
       return false;
     }
-    static bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
+    static thread_local bool (*fptr)(const std::vector<unsigned char>&, ddsi_keyhash_t&) = NULL;
     if (fptr == NULL)
     {
       max(str, tokey, true);
@@ -243,11 +246,37 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
   return true;
 }
 
+template<typename T, class S, bool K>
+bool get_serialized_fixed_size(const T& sample, size_t &sz)
+{
+  static thread_local size_t serialized_size = 0;
+  static thread_local std::mutex mtx;
+  static thread_local std::atomic_bool initialized {false};
+  if (initialized.load(std::memory_order_relaxed)) {
+    sz = serialized_size;
+    return true;
+  }
+  std::lock_guard<std::mutex> lock(mtx);
+  if (initialized.load(std::memory_order_relaxed)) {
+    sz = serialized_size;
+    return true;
+  }
+  S str;
+  if (!move(str, sample, K))
+    return false;
+  serialized_size = str.position();
+  initialized.store(true, std::memory_order::memory_order_release);
+  sz = serialized_size;
+  return true;
+}
+
 template<typename T, class S>
 bool get_serialized_size(const T& sample, bool as_key, size_t &sz)
 {
   if (TopicTraits<T>::isSelfContained()) {
-    sz = TopicTraits<T>::getSampleSize();
+    if ((as_key && !get_serialized_fixed_size<T,S,true>(sample, sz)) ||
+        (!as_key && !get_serialized_fixed_size<T,S,false>(sample, sz)))
+      return false;
   } else {
     S str;
     if (!move(str, sample, as_key))
