@@ -325,7 +325,7 @@ bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
       break;
   }
 
-  return !abort_status() && props.is_present;
+  return props.is_present;
 }
 
 bool xcdr_v2_stream::start_consecutive(bool is_array, bool primitive)

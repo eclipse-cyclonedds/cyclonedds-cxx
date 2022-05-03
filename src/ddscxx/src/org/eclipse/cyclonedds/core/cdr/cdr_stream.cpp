@@ -57,14 +57,11 @@ bool cdr_stream::finish_struct(entity_properties_t &props)
 {
   check_struct_completeness(props);
 
-  return !abort_status() && props.is_present;
+  return props.is_present;
 }
 
 entity_properties_t *cdr_stream::first_entity(entity_properties_t *props)
 {
-  if (abort_status())
-    return nullptr;
-
   auto ptr = props->first_member;
   while (m_key && ptr && !ptr->is_key)
     ptr = next_entity(ptr);
@@ -74,9 +71,6 @@ entity_properties_t *cdr_stream::first_entity(entity_properties_t *props)
 
 entity_properties_t* cdr_stream::next_entity(entity_properties_t *prop)
 {
-  if (abort_status())
-    return nullptr;
-
   prop = prop->next_on_level;
   if (m_key) {
     while (prop && !prop->is_key)
@@ -87,9 +81,6 @@ entity_properties_t* cdr_stream::next_entity(entity_properties_t *prop)
 
 entity_properties_t* cdr_stream::previous_entity(entity_properties_t *prop)
 {
-  if (abort_status())
-    return nullptr;
-
   prop = prop->prev_on_level;
   if (m_key) {
     while (prop && !prop->is_key)
@@ -113,7 +104,7 @@ bool cdr_stream::bytes_available(size_t N, bool peek)
         break;
     }
   }
-  return !abort_status();
+  return true;
 }
 
 void cdr_stream::reset()

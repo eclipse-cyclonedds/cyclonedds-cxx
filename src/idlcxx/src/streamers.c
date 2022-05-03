@@ -1066,15 +1066,20 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
     " {\n"
     "  static thread_local std::mutex mtx;\n"
     "  static thread_local propvec props;\n"
+    "  static thread_local entity_properties_t *props_end = nullptr;\n"
     "  static thread_local std::atomic_bool initialized {false};\n"
     "  key_endpoint keylist;\n"
     "  if (initialized.load(std::memory_order_relaxed)) {\n"
-    "    for (auto &e:props) e.reset();\n"
+    "    auto ptr = props.data();\n"
+    "    while (ptr < props_end)\n"
+    "      (ptr++)->is_present = false;\n"
     "    return props;\n"
     "  }\n"
     "  std::lock_guard<std::mutex> lock(mtx);\n"
     "  if (initialized.load(std::memory_order_relaxed)) {\n"
-    "    for (auto &e:props) e.reset();\n"
+    "    auto ptr = props.data();\n"
+    "    while (ptr < props_end)\n"
+    "      (ptr++)->is_present = false;\n"
     "    return props;\n"
     "  }\n"
     "  props.clear();\n\n";
@@ -1131,6 +1136,7 @@ print_constructed_type_close(
     "}\n\n";
   static const char *pfmt =
     "\n  entity_properties_t::finish(props, keylist);\n"
+    "  props_end = props.data() + props.size();\n"
     "  initialized.store(true, std::memory_order::memory_order_release);\n"
     "  return props;\n"
     "}\n\n";
@@ -1393,7 +1399,7 @@ process_typedef_decl(
     if (multi_putf(streams, ALL, "  return true;\n}\n\n"))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (multi_putf(streams, ALL, "  return prop->is_present && !streamer.abort_status();\n}\n\n"))
+    if (multi_putf(streams, ALL, "  return prop->is_present;\n}\n\n"))
       return IDL_RETCODE_NO_MEMORY;
   }
 
