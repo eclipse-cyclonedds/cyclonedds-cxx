@@ -1095,7 +1095,7 @@ print_constructed_type_close(
   static const char *pfmt =
     "\n  props.m_members_by_seq.push_back(final_entry());\n\n"
     "  props.finish(keylist);\n"
-    "  initialized.store(true, std::memory_order::memory_order_release);\n"
+    "  initialized.store(true, std::memory_order_release);\n"
     "  return props;\n"
     "}\n\n";
 
