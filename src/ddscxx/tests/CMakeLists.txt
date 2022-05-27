@@ -68,6 +68,11 @@ set(sources
   External.cpp
   DataModels.cpp)
 
+if (ENABLE_TYPE_DISCOVERY AND ENABLE_TOPIC_DISCOVERY)
+  # Add topic/type discovery tests
+  list(APPEND sources TopicTypeDiscovery.cpp)
+endif()
+
 if(ENABLE_SHM)
   # Add shared memory tests
   list(APPEND sources SharedMemory.cpp)
