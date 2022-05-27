@@ -1137,7 +1137,7 @@ print_constructed_type_close(
   static const char *pfmt =
     "\n  entity_properties_t::finish(props, keylist);\n"
     "  props_end = props.data() + props.size();\n"
-    "  initialized.store(true, std::memory_order::memory_order_release);\n"
+    "  initialized.store(true, std::memory_order_release);\n"
     "  return props;\n"
     "}\n\n";
 

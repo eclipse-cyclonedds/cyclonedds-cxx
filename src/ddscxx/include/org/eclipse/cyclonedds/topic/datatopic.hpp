@@ -264,7 +264,7 @@ bool get_serialized_fixed_size(const T& sample, size_t &sz)
   if (!move(str, sample, K))
     return false;
   serialized_size = str.position();
-  initialized.store(true, std::memory_order::memory_order_release);
+  initialized.store(true, std::memory_order_release);
   sz = serialized_size;
   return true;
 }
