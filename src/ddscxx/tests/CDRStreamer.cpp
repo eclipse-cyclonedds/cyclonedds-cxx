@@ -603,9 +603,27 @@ TEST_F(CDRStreamer, cdr_enum)
 
 TEST_F(CDRStreamer, cdr_optional)
 {
-  optional_final_struct OFS(std::nullopt, 'b', 'c');
-  optional_appendable_struct OAS(std::nullopt, 'b', 'c');
-  optional_mutable_struct OMS(std::nullopt, 'b', 'c');
+  optional_final_struct OFS(
+    #if __cplusplus >= 201703L // c++17
+    std::nullopt
+    #else
+    boost::none
+    #endif
+    , 'b', 'c');
+  optional_appendable_struct OAS(
+    #if __cplusplus >= 201703L // c++17
+    std::nullopt
+    #else
+    boost::none
+    #endif
+    , 'b', 'c');
+  optional_mutable_struct OMS(
+    #if __cplusplus >= 201703L // c++17
+    std::nullopt
+    #else
+    boost::none
+    #endif
+    , 'b', 'c');
 
   /*no basic cdr, since it does not support optional fields*/
   bytes OFS_xcdr_v1_normal {
@@ -660,7 +678,14 @@ TEST_F(CDRStreamer, cdr_optional)
   readwrite_test(OAS, OAS, OAS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
   readwrite_test(OMS, OMS, OMS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
 
-  optional_array_struct ORS('a',std::optional<std::array<char,5> >({'b','c','d', 'e', 'f'}));
+  optional_array_struct ORS('a',
+  #if __cplusplus >= 201703L // c++17
+    std::optional<
+  #else
+    boost::optional<
+  #endif
+    std::array<char,5> >({'b','c','d', 'e', 'f'}));
+
   bytes ORS_v2{
           'a', 1, 'b', 'c', 'd', 'e', 'f'
           },

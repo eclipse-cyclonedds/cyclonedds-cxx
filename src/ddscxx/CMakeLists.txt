@@ -85,7 +85,7 @@ add_library(${CMAKE_PROJECT_NAME}::ddscxx ALIAS ddscxx)
 
 add_coverage(ddscxx)
 
-set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxx PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 target_include_directories(
   ddscxx

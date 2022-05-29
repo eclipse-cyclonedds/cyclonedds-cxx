@@ -927,13 +927,24 @@ const char *str_tmpl = "std::string";
 const char *str_inc = "<string>";
 const char *bnd_str_tmpl = "std::string";
 const char *bnd_str_inc = "<string>";
+#if ENABLE_LEGACY
+const char *opt_tmpl = "boost::optional";
+const char *opt_inc = "\"boost/optional.hpp\"";
+#else
 const char *opt_tmpl = "std::optional";
 const char *opt_inc = "<optional>";
+#endif
 const char *ext_tmpl = "dds::core::external";
 const char *ext_inc = "<dds/core/External.hpp>";
+#if ENABLE_LEGACY
+const char *uni_tmpl = "boost::variant";
+const char *uni_get_tmpl = "boost::get";
+const char *uni_inc = "\"boost/variant\"";
+#else
 const char *uni_tmpl = "std::variant";
 const char *uni_get_tmpl = "std::get";
 const char *uni_inc = "<variant>";
+#endif
 
 static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
 static const char *arr_flags[] = { "s", PRIu32, NULL };

@@ -11,6 +11,15 @@
 #
 find_package(GTest REQUIRED)
 
+set(features_list "")
+if(ENABLE_LEGACY)
+  list(APPEND features_list "union-template=boost::variant")
+  list(APPEND features_list "union-include=\\\"boost/variant.hpp\\\"")
+
+  find_package(Boost COMPONENTS variant optional)
+  include_directories(${Boost_INCLUDE_DIR})
+endif()
+
 idlcxx_generate(TARGET ddscxx_test_types FILES
   data/Space.idl
   data/HelloWorldData.idl
@@ -24,7 +33,9 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
   data/RegressionModels_pragma.idl
   data/ExternalModels.idl
   data/TraitsModels.idl
-  WARNINGS no-implicit-extensibility)
+  WARNINGS no-implicit-extensibility
+  FEATURES ${features_list}
+  )
 
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
@@ -83,12 +94,13 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
   endif()
 endif()
 
-set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(
   ddscxx_tests PRIVATE
     CycloneDDS-CXX::ddscxx
     GTest::GTest
     GTest::Main
+    ${Boost_LIBRARIES}
     ddscxx_test_types)
 
 if(ENABLE_SHM)
@@ -99,10 +111,11 @@ if(ENABLE_SHM)
       # iceoryx_posh_testing depends on GoogleMock but does not propagate the
       # the dependency. Workaround it by requiring the package here.
       GTest::GMock
-      GTest::GMockMain)
+      GTest::GMockMain
+      ${Boost_LIBRARIES})
 endif()
 
-target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS})
+target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS} ${Boost_LIBRARIES})
 
 gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources} TEST_LIST tests)
 

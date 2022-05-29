@@ -24,6 +24,10 @@ set_target_properties(idlcxx PROPERTIES
    SOVERSION ${PROJECT_VERSION_MAJOR}
    C_STANDARD 99)
 
+if(ENABLE_LEGACY)
+  target_compile_definitions(idlcxx PUBLIC "ENABLE_LEGACY")
+endif()
+
 target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
 
 add_library(${PROJECT_NAME}::idlcxx ALIAS idlcxx)

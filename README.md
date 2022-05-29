@@ -47,6 +47,19 @@ To obtain the C++ binding for Cyclone DDS, do
 Depending on whether you want to develop applications using the C++ binding
 for Cyclone DDS or contribute to it you can follow different procedures.
 
+### Build configuration
+
+There are some configuration options specified using CMake defines in addition to the standard options like `CMAKE_BUILD_TYPE`:
+* `-DBUILD_IDLLIB=OFF`: to disable IDL preprocessor lib build
+* `-DBUILD_DOCS=ON`: to build the documentation
+* `-DBUILD_TESTING=ON`: to build the testing tree
+* `-DBUILD_EXAMPLES=ON`: to build examples
+* `-DENABLE_LEGACY=YES`: to enable legacy c++11 mode, adds boost (variant, optional) as dependency (otherwise it uses c++17)
+* `-DENABLE_SHM=YES`: to enable shared memory support
+* `-DENABLE_TYPE_DISCOVERY=YES`: to enable type discovery support
+* `-DENABLE_TOPIC_DISCOVERY=YES`: to enable topic discovery support 
+* `-DENABLE_COVERAGE=YES`: to enable coverage build
+
 ### For application developers
 
 To build and install the required libraries needed to develop your own

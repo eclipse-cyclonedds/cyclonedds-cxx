@@ -16,14 +16,23 @@ if(NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl WARNINGS no-implicit-extensibility)
+set(features_list "")
+if(ENABLE_LEGACY)
+  list(APPEND features_list "union-template=boost::variant")
+  list(APPEND features_list "union-include=\\\"boost/variant.hpp\\\"")
+
+  find_package(Boost COMPONENTS variant optional)
+  include_directories(${Boost_INCLUDE_DIR})
+endif()
+
+idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl WARNINGS no-implicit-extensibility FEATURES ${features_list})
 
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
 
 # Link both executables to idl data type library and ddscxx.
-target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata)
-target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata)
+target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata ${Boost_LIBRARIES})
+target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata ${Boost_LIBRARIES})
 
 # Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
 # on Azure Pipelines
@@ -34,5 +43,5 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
   endif()
 endif()
 
-set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD 17)
-set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
+set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})

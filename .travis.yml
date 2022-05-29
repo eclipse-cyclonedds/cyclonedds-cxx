@@ -182,6 +182,8 @@ jobs:
       env: [ ARCH=x86_64, BUILD_TYPE=Debug, SANITIZER=address ]
     - <<: *macos1015_xcode11_5
       env: [ ARCH=x86_64, BUILD_TYPE=Release ]
+    - <<: *macos1015_xcode11_5
+      env: [ ARCH=x86_64, BUILD_TYPE=Release, ENABLE_LEGACY=ON]
     - <<: *freebsd12_clang8
       env: [ ARCH=x86_64, BUILD_TYPE=Debug ]
     - <<: *windows1809_vs2017
@@ -221,6 +223,7 @@ script:
           -DUSE_SANITIZER=${SANITIZER}
           -DBUILD_TESTING=on
           -DWERROR=on
+          -DENABLE_LEGACY=${ENABLE_LEGACY}
           -G "${GENERATOR}" ..
   - cmake --build . --config ${BUILD_TYPE} --target install -- ${BUILD_TOOL_OPTIONS}
   - ctest -j 4 --output-on-failure -T test -C ${BUILD_TYPE}

@@ -18,7 +18,12 @@
 #include <map>
 #include <atomic>
 #include <mutex>
+#if __cplusplus >= 201703L // c++17
 #include <type_traits>
+#else
+#include <boost/type_traits.hpp>
+#endif
+
 #include "cdr_enums.hpp"
 
 namespace org {
@@ -27,7 +32,11 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
+#if __cplusplus >= 201703L // c++17
 #define decl_ref_type(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
+#else
+#define decl_ref_type(x) boost::remove_cv_t<boost::remove_reference_t<decltype(x)>>
+#endif
 
 /**
  * @brief
@@ -250,10 +259,20 @@ struct OMG_DDS_API final_entry: public entity_properties_t {
  *
  * @return entity_properties_t "Tree" representing the type.
  */
-template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+template<typename T
+#if __cplusplus >= 201703L // c++17
+, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true
+#else
+, boost::enable_if_t<boost::is_arithmetic<T>::value, bool> = true
+#endif
+>
 entity_properties_t get_type_props() {
   entity_properties_t props;
-  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
+  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8
+  #if __cplusplus < 201703L // pre c++17
+  , ""
+  #endif
+  );
   props.e_bb = bit_bound(sizeof(T));
   return props;
 }
@@ -268,7 +287,13 @@ entity_properties_t get_type_props() {
  *
  * @return entity_properties_t "Tree" representing the type.
  */
-template<typename T, std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
+template<typename T
+#if __cplusplus >= 201703L // c++17
+, std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true
+#else
+, boost::enable_if_t<!boost::is_arithmetic<T>::value, bool> = true
+#endif
+>
 entity_properties_t get_type_props();
 
 /**
@@ -279,7 +304,13 @@ entity_properties_t get_type_props();
  *
  * @return bit_bound The bit bound for the indicated enum.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
+template<typename T
+#if __cplusplus >= 201703L // c++17
+, std::enable_if_t<std::is_enum<T>::value, bool> = true
+#else
+, boost::enable_if_t<boost::is_enum<T>::value, bool> = true
+#endif
+>
 constexpr bit_bound get_enum_bit_bound();
 
 }
