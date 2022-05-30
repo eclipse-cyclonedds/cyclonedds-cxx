@@ -127,6 +127,15 @@ org::eclipse::cyclonedds::sub::create_builtin_reader(
     return reader;
 }
 
+namespace org
+{
+namespace eclipse
+{
+namespace cyclonedds
+{
+namespace topic
+{
+
 template<>
 ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::ParticipantBuiltinTopicData>::getSerType(allowable_encodings_t)
 {
@@ -151,6 +160,11 @@ ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::Subscript
     return nullptr;
 }
 
+}
+}
+}
+}
+    
 org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type
 org::eclipse::cyclonedds::sub::BuiltinSubscriberDelegate::get_builtin_reader(
     SubscriberDelegate& subscriber,
