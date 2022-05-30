@@ -94,6 +94,12 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
   endif()
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  # Microsoft does not specify the __cplusplus macro by default
+  # https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus
+  target_compile_options(ddscxx_tests PUBLIC "/Zc:__cplusplus")
+endif()
+
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(
   ddscxx_tests PRIVATE

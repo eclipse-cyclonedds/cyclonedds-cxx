@@ -86,6 +86,13 @@ add_library(${CMAKE_PROJECT_NAME}::ddscxx ALIAS ddscxx)
 add_coverage(ddscxx)
 
 set_property(TARGET ddscxx PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  # Microsoft does not specify the __cplusplus macro by default
+  # https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus
+  target_compile_options(ddscxx PUBLIC "/Zc:__cplusplus")
+endif()
+
 target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 target_include_directories(
   ddscxx

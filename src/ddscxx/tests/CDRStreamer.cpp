@@ -14,6 +14,11 @@
 #include "CdrDataModels.hpp"
 #include "CdrDataModels_pragma.hpp"
 
+#if __cplusplus < 201703L // pre c++17
+#include <boost/optional.hpp>
+#include <boost/none.hpp>
+#endif
+
 using namespace org::eclipse::cyclonedds::core::cdr;
 using namespace CDR_testing;
 
