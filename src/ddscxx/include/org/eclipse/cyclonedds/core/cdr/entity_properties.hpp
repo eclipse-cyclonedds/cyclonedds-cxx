@@ -19,8 +19,10 @@
 #include <atomic>
 #include <mutex>
 #if __cplusplus >= 201703L // c++17
+#define STD_IMPL std
 #include <type_traits>
 #else
+#define STD_IMPL boost
 #include <boost/type_traits.hpp>
 #endif
 
@@ -32,11 +34,7 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
-#if __cplusplus >= 201703L // c++17
-#define decl_ref_type(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
-#else
-#define decl_ref_type(x) boost::remove_cv_t<boost::remove_reference_t<decltype(x)>>
-#endif
+#define decl_ref_type(x) STD_IMPL::remove_cv_t<STD_IMPL::remove_reference_t<decltype(x)>>
 
 /**
  * @brief
@@ -259,13 +257,7 @@ struct OMG_DDS_API final_entry: public entity_properties_t {
  *
  * @return entity_properties_t "Tree" representing the type.
  */
-template<typename T
-#if __cplusplus >= 201703L // c++17
-, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true
-#else
-, boost::enable_if_t<boost::is_arithmetic<T>::value, bool> = true
-#endif
->
+template<typename T, STD_IMPL::enable_if_t<STD_IMPL::is_arithmetic<T>::value, bool> = true>
 entity_properties_t get_type_props() {
   entity_properties_t props;
   static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8
@@ -287,13 +279,7 @@ entity_properties_t get_type_props() {
  *
  * @return entity_properties_t "Tree" representing the type.
  */
-template<typename T
-#if __cplusplus >= 201703L // c++17
-, std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true
-#else
-, boost::enable_if_t<!boost::is_arithmetic<T>::value, bool> = true
-#endif
->
+template<typename T, STD_IMPL::enable_if_t<!STD_IMPL::is_arithmetic<T>::value, bool> = true>
 entity_properties_t get_type_props();
 
 /**
@@ -304,13 +290,7 @@ entity_properties_t get_type_props();
  *
  * @return bit_bound The bit bound for the indicated enum.
  */
-template<typename T
-#if __cplusplus >= 201703L // c++17
-, std::enable_if_t<std::is_enum<T>::value, bool> = true
-#else
-, boost::enable_if_t<boost::is_enum<T>::value, bool> = true
-#endif
->
+template<typename T, STD_IMPL::enable_if_t<STD_IMPL::is_enum<T>::value, bool> = true>
 constexpr bit_bound get_enum_bit_bound();
 
 }

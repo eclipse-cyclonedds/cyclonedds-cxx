@@ -21,7 +21,7 @@ if(ENABLE_LEGACY)
   list(APPEND features_list "union-template=boost::variant")
   list(APPEND features_list "union-include=\\\"boost/variant.hpp\\\"")
 
-  find_package(Boost COMPONENTS variant optional)
+  find_package(Boost)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
@@ -31,8 +31,8 @@ add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)
 
 # Link both executables to idl data type library and ddscxx.
-target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata ${Boost_LIBRARIES})
-target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata ${Boost_LIBRARIES})
+target_link_libraries(ddscxxHelloworldPublisher CycloneDDS-CXX::ddscxx helloworlddata)
+target_link_libraries(ddscxxHelloworldSubscriber CycloneDDS-CXX::ddscxx helloworlddata)
 
 # Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
 # on Azure Pipelines

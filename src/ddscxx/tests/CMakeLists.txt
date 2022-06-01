@@ -16,7 +16,7 @@ if(ENABLE_LEGACY)
   list(APPEND features_list "union-template=boost::variant")
   list(APPEND features_list "union-include=\\\"boost/variant.hpp\\\"")
 
-  find_package(Boost COMPONENTS variant optional)
+  find_package(Boost)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
@@ -106,7 +106,6 @@ target_link_libraries(
     CycloneDDS-CXX::ddscxx
     GTest::GTest
     GTest::Main
-    ${Boost_LIBRARIES}
     ddscxx_test_types)
 
 if(ENABLE_SHM)
@@ -117,11 +116,10 @@ if(ENABLE_SHM)
       # iceoryx_posh_testing depends on GoogleMock but does not propagate the
       # the dependency. Workaround it by requiring the package here.
       GTest::GMock
-      GTest::GMockMain
-      ${Boost_LIBRARIES})
+      GTest::GMockMain)
 endif()
 
-target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS})
 
 gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources} TEST_LIST tests)
 
