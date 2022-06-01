@@ -160,10 +160,10 @@ ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::Subscript
     return nullptr;
 }
 
-}
-}
-}
-}
+} // topic
+} // cyclonedds
+} // eclipse
+} // org
     
 org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::ref_type
 org::eclipse::cyclonedds::sub::BuiltinSubscriberDelegate::get_builtin_reader(
