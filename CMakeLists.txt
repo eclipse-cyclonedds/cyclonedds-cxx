@@ -204,7 +204,7 @@ option(ENABLE_LEGACY "Legacy c++11 compatibility." OFF)
 set(cyclonedds_cpp_std_to_use 17)
 if(ENABLE_LEGACY)
   set(cyclonedds_cpp_std_to_use 11)
-  find_package(Boost COMPONENTS variant optional)
+  find_package(Boost)
   include_directories(${Boost_INCLUDE_DIR})
 endif()
 
