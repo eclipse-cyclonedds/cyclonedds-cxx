@@ -14,6 +14,16 @@
 #include "CdrDataModels.hpp"
 #include "CdrDataModels_pragma.hpp"
 
+#if DDSCXX_USE_BOOST
+#include <boost/optional.hpp>
+#include <boost/none.hpp>
+#define DDSCXX_STD_IMPL boost
+#define DDSCXX_STD_IMPL_NULLOPT boost::none
+#else
+#define DDSCXX_STD_IMPL std
+#define DDSCXX_STD_IMPL_NULLOPT std::nullopt
+#endif
+
 using namespace org::eclipse::cyclonedds::core::cdr;
 using namespace CDR_testing;
 
@@ -603,9 +613,9 @@ TEST_F(CDRStreamer, cdr_enum)
 
 TEST_F(CDRStreamer, cdr_optional)
 {
-  optional_final_struct OFS(std::nullopt, 'b', 'c');
-  optional_appendable_struct OAS(std::nullopt, 'b', 'c');
-  optional_mutable_struct OMS(std::nullopt, 'b', 'c');
+  optional_final_struct OFS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
+  optional_appendable_struct OAS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
+  optional_mutable_struct OMS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
 
   /*no basic cdr, since it does not support optional fields*/
   bytes OFS_xcdr_v1_normal {
@@ -660,7 +670,7 @@ TEST_F(CDRStreamer, cdr_optional)
   readwrite_test(OAS, OAS, OAS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
   readwrite_test(OMS, OMS, OMS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
 
-  optional_array_struct ORS('a',std::optional<std::array<char,5> >({'b','c','d', 'e', 'f'}));
+  optional_array_struct ORS('a', DDSCXX_STD_IMPL::optional<std::array<char,5> >({'b','c','d', 'e', 'f'}));
   bytes ORS_v2{
           'a', 1, 'b', 'c', 'd', 'e', 'f'
           },
