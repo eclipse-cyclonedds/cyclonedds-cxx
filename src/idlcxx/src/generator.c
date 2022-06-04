@@ -561,7 +561,8 @@ static bool sc_struct(const idl_struct_t *str)
 bool is_selfcontained(const void *node)
 {
   if (idl_is_sequence(node)
-   || idl_is_string(node)) {
+   || idl_is_string(node)
+   || idl_is_optional(node)) {
     return false;
   } else if (idl_is_typedef(node)) {
     return is_selfcontained(((const idl_typedef_t*)node)->type_spec);

@@ -30,6 +30,26 @@ namespace cdr {
 
 /**
  * @brief
+ * Custom stack implementation.
+ */
+template<typename T, size_t N>
+class custom_stack {
+  static_assert(N > 0, "Stack capacity must be larger than 0");
+  T data[N];
+  size_t sz = 0;
+  public:
+  custom_stack() = default;
+  custom_stack(const T &in) {data[0] = in; sz = 1;}
+  T &top() {return data[sz-1];}
+  const T& top() const {return data[sz-1];}
+  void pop() {sz--;}
+  void push(const T &in) {data[sz++] = in;}
+  void reset() {sz = 0;}
+  size_t size() const {return sz;}
+};
+
+/**
+ * @brief
  * Enum conversion and validation function template forward declaration.
  *
  * This function is generated for each enumerated class encountered in the parsed .idl files.
@@ -153,7 +173,7 @@ public:
      * @param[in] max_align The maximum size that the stream will align CDR primitives to.
      * @param[in] ignore_faults Bitmask for ignoring faults, can be composed of bit fields from the serialization_status enumerator.
      */
-    cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults) { ; }
+    cdr_stream(endianness end, size_t max_align, uint64_t ignore_faults = 0x0) : m_stream_endianness(end), m_max_alignment(max_align), m_fault_mask(~ignore_faults), m_swap(native_endianness() != m_stream_endianness) { ; }
 
     /**
      * @brief
@@ -195,7 +215,7 @@ public:
      * @retval SIZE_MAX In this case, a maximum size calculation was being done, and the maximum size was determined to be unbounded.
      * @return The current cursor offset.
      */
-    size_t position() const { return m_position; }
+    inline size_t position() const { return m_position; }
 
     /**
      * @brief
@@ -252,17 +272,7 @@ public:
      * @retval nullptr If the current buffer is not set, or if the cursor offset is not valid.
      * @return The current cursor pointer.
      */
-    char* get_cursor() const { return ((m_position != SIZE_MAX && m_buffer != nullptr) ? (m_buffer + m_position) : nullptr); }
-
-    /**
-     * @brief
-     * Local system endianness getter.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @return The local endianness.
-     */
-    endianness local_endianness() const { return m_local_endianness; }
+    inline char* get_cursor() const { return m_buffer + m_position; }
 
     /**
      * @brief
@@ -276,16 +286,6 @@ public:
 
     /**
      * @brief
-     * Stream endianness getter.
-     *
-     * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
-     *
-     * @return The stream endianness.
-     */
-    endianness& stream_endianness() { return m_stream_endianness; }
-
-    /**
-     * @brief
      * Determines whether the local and stream endianness are the same.
      *
      * This is used to determine whether the data read or written from the stream needs to have their bytes swapped.
@@ -293,7 +293,7 @@ public:
      * @retval false If the stream endianness DOES match the local endianness.
      * @retval true If the stream endianness DOES NOT match the local endianness.
      */
-    bool swap_endianness() const { return m_stream_endianness != m_local_endianness; }
+    bool swap_endianness() const { return m_swap; }
 
     /**
      * @brief
@@ -343,7 +343,7 @@ public:
      * @retval false If the serialization status of the stream HAS NOT YET reached one of the serialization errors which it is not set to ignore.
      * @retval true If the serialization status of the stream HAS reached one of the serialization errors which it is not set to ignore.
      */
-    bool abort_status() const { return m_status & m_fault_mask; }
+    inline bool abort_status() const { return m_status & m_fault_mask; }
 
     /**
      * @brief
@@ -369,7 +369,7 @@ public:
      *
      * @return Whether the streaming is done only over the key values.
      */
-    bool is_key() const {return m_key;}
+    inline bool is_key() const {return m_key;}
 
     /**
      * @brief
@@ -396,7 +396,7 @@ public:
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool start_member(entity_properties_t &prop, bool is_set = true);
+    virtual bool start_member(entity_properties_t &prop, bool is_set = true) { prop.is_present = is_set; return true;}
 
     /**
      * @brief
@@ -406,24 +406,11 @@ public:
      * Depending on the implementation and mode header length fields may be completed.
      * This function can be overridden in cdr streaming implementations.
      *
-     * @param[in] prop Properties of the entity to finish.
      * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool finish_member(entity_properties_t &prop, bool is_set = true);
-
-    /**
-     * @brief
-     * Function declaration for skipping entities without involving them on the stack.
-     *
-     * This function is called by the instance implementation switchbox, when it encounters an id which
-     * does not resolve to an id pointing to a member it knows. It will move to the next entity in the
-     * stream.
-     *
-     * @param[in] prop The entity to skip/ignore.
-     */
-    virtual void skip_entity(const entity_properties_t &prop);
+    virtual bool finish_member(entity_properties_t &, bool is_set = true) { (void) is_set; return true;}
 
     /**
      * @brief
@@ -432,12 +419,24 @@ public:
      * This function is called by the instance implementation switchbox and will return the next entity to operate on by calling next_prop.
      * This will also call the implementation specific push/pop entity functions to write/finish headers where necessary.
      *
-     * @param[in, out] props The property tree to get the next entity from.
-     * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
+     * @param[in, out] prop The property tree to get the next entity from.
      *
      * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
      */
-    virtual entity_properties_t& next_entity(entity_properties_t &props, bool &firstcall) = 0;
+    virtual entity_properties_t* next_entity(entity_properties_t *prop);
+
+    /**
+     * @brief
+     * Returns the first entity to be processed at this level.
+     *
+     * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
+     * properties entry is pulled from the tree.
+     *
+     * @param[in, out] prop The property tree to get the next entity from.
+     *
+     * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
+     */
+    virtual entity_properties_t* first_entity(entity_properties_t *prop);
 
     /**
      * @brief
@@ -492,41 +491,14 @@ public:
 protected:
 
     /**
-     * @brief
-     * Member list types
-     *
-     * @enum member_list_type Which type of list of entries is to be iterated over,
-     * used in calls to cdr_stream::next_prop.
-     *
-     * @var member_list_type::member_by_seq Member entries in order of declaration.
-     * @var member_list_type::member_by_id Member entries sorted by member id.
-     * @var member_list_type::key Key entries sorted by member id.
+     * @brief Implementation for starting the recording the size and starting offset of a member.
      */
-    enum class member_list_type {
-      member_by_seq,
-      member_by_id,
-      key
-    };
+    inline void push_member_start() { m_e_sz.push(0); m_e_off.push(static_cast<uint32_t>(position())); }
 
     /**
-     * @brief
-     * Records the start of a member entry.
-     *
-     * Will record the member start and set the member present flag to true.
-     *
-     * @param[in,out] prop The member whose start is recorded.
+     * @brief Implementation for finishing the recording the size and starting offset of a member.
      */
-    void record_member_start(entity_properties_t &prop);
-
-    /**
-     * @brief
-     * Skips a member entry.
-     *
-     * In the case a read has failed, this will go to the next member.
-     *
-     * @param[in,out] prop The member who will be skipped.
-     */
-    void go_to_next_member(entity_properties_t &prop);
+    inline void pop_member_start() { m_e_sz.pop(); m_e_off.pop(); }
 
     /**
      * @brief
@@ -535,28 +507,22 @@ protected:
      * Checks whether all fields which must be understood are present.
      *
      * @param[in,out] props The struct whose start is recorded.
-     * @param[in] list_type Which list must be checked for entries.
      */
-    void check_struct_completeness(entity_properties_t &props, member_list_type list_type);
+    void check_struct_completeness(entity_properties_t &props);
 
     /**
      * @brief
-     * Function for retrieving the next entity to be operated on by the streamer.
+     * Returns the previous entity at the current level (if any).
      *
-     * When it is called the first time, the iterator of the (member/key)entities to be iterated over is stored on the stack.
-     * This iterator is then used in successive calls, until the end of the valid entities is reached, at which point the iterator is popped off the stack.
-     * This function is to be implemented in cdr streaming implementations.
+     * @param[in] prop Entity to the current entity.
      *
-     * @param[in, out] props The property tree to get the next entity from.
-     * @param[in] list_type Which list to take the next property from
-     * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
-     *
-     * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
+     * @return Pointer to the previous entity, or nullptr if there is any.
      */
-    entity_properties_t& next_prop(entity_properties_t &props, member_list_type list_type, bool &firstcall);
+    entity_properties_t* previous_entity(entity_properties_t *prop);
 
-    endianness m_stream_endianness,               /**< the endianness of the stream*/
-        m_local_endianness = native_endianness(); /**< the local endianness*/
+    static const size_t m_maximum_depth = 32;     /**< the maximum depth of structures in the streamer*/
+
+    endianness m_stream_endianness;               /**< the endianness of the stream*/
     size_t m_position = 0,                        /**< the current offset position in the stream*/
         m_max_alignment,                          /**< the maximum bytes that can be aligned to*/
         m_current_alignment = 1,                  /**< the current alignment*/
@@ -567,14 +533,12 @@ protected:
                                                        to be aborted*/
     stream_mode m_mode = stream_mode::unset;      /**< the current streaming mode*/
     bool m_key = false;                           /**< the current key mode*/
-
-    entity_properties_t m_final = final_entry();  /**< A placeholder for the final entry to be returned
-                                                       from next_prop if we are reading from a stream*/
-    entity_properties_t m_current_header;         /**< Container for header information being read from a stream*/
+    bool m_swap = false;                          /**< whether to swap endianness*/
 
     DDSCXX_WARNING_MSVC_OFF(4251)
-    std::stack<size_t> m_buffer_end;              /**< the end of reading at the current level*/
-    std::stack<proplist::iterator> m_stack;       /**< Stack of iterators currently being handled*/
+    custom_stack<size_t, m_maximum_depth> m_buffer_end; /**< the end of reading at the current level*/
+    custom_stack<uint32_t, m_maximum_depth> m_e_off, /**< the offset of the entity at the current level*/
+                                            m_e_sz; /**< the size of the entity at the current level*/
     DDSCXX_WARNING_MSVC_ON(4251)
 };
 
@@ -613,16 +577,21 @@ bool read(S &str, T& toread, size_t N = 1)
    || !str.bytes_available(sizeof(T)*N))
     return false;
 
-  auto from = str.get_cursor();
+  auto from = reinterpret_cast<const T*>(str.get_cursor());
   T *to = &toread;
 
   assert(from);
 
-  memcpy(to,from,sizeof(T)*N);
-
-  if (str.swap_endianness()) {
-    for (size_t i = 0; i < N; i++, to++)
-      byte_swap(*to);
+  if (N == 1) {
+    toread = *from;
+    if (str.swap_endianness())
+        byte_swap(toread);
+  } else {
+    memcpy(to,from,sizeof(T)*N);
+    if (str.swap_endianness()) {
+      for (size_t i = 0; i < N; i++, to++)
+        byte_swap(*to);
+    }
   }
 
   str.incr_position(sizeof(T)*N);
@@ -689,15 +658,20 @@ bool write(S& str, const T& towrite, size_t N = 1)
     return false;
 
   auto to = reinterpret_cast<T*>(str.get_cursor());
-  const T *from = &towrite;
 
   assert(to);
 
-  memcpy(to,from,sizeof(T)*N);
-
-  if (str.swap_endianness()) {
-    for (size_t i = 0; i < N; i++, to++)
+  if (N == 1) {
+    *to = towrite;
+    if (str.swap_endianness())
       byte_swap(*to);
+  } else {
+    const T *from = &towrite;
+    memcpy(to,from,sizeof(T)*N);
+    if (str.swap_endianness()) {
+      for (size_t i = 0; i < N; i++, to++)
+        byte_swap(*to);
+    }
   }
 
   str.incr_position(sizeof(T)*N);
