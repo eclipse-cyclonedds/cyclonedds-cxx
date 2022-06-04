@@ -21,11 +21,11 @@
 #include <mutex>
 
 #if DDSCXX_USE_BOOST
-#define DDSCXX_STD_IMPL boost
 #include <boost/type_traits.hpp>
+#define DDSCXX_STD_IMPL boost
 #else
-#define DDSCXX_STD_IMPL std
 #include <type_traits>
+#define DDSCXX_STD_IMPL std
 #endif
 
 #include "cdr_enums.hpp"

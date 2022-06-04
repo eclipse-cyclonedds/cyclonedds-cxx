@@ -16,16 +16,7 @@ if(NOT TARGET CycloneDDS-CXX::ddscxx)
   find_package(CycloneDDS-CXX REQUIRED)
 endif()
 
-set(features_list "")
-if(ENABLE_LEGACY)
-  list(APPEND features_list "union-template=boost::variant")
-  list(APPEND features_list "union-include=\\\"boost/variant.hpp\\\"")
-
-  find_package(Boost)
-  include_directories(${Boost_INCLUDE_DIR})
-endif()
-
-idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl WARNINGS no-implicit-extensibility FEATURES ${features_list})
+idlcxx_generate(TARGET helloworlddata FILES HelloWorldData.idl WARNINGS no-implicit-extensibility)
 
 add_executable(ddscxxHelloworldPublisher publisher.cpp)
 add_executable(ddscxxHelloworldSubscriber subscriber.cpp)

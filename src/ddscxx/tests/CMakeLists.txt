@@ -11,15 +11,6 @@
 #
 find_package(GTest REQUIRED)
 
-set(features_list "")
-if(ENABLE_LEGACY)
-  list(APPEND features_list "union-template=boost::variant")
-  list(APPEND features_list "union-include=\\\"boost/variant.hpp\\\"")
-
-  find_package(Boost)
-  include_directories(${Boost_INCLUDE_DIR})
-endif()
-
 idlcxx_generate(TARGET ddscxx_test_types FILES
   data/Space.idl
   data/HelloWorldData.idl
@@ -33,9 +24,7 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
   data/RegressionModels_pragma.idl
   data/ExternalModels.idl
   data/TraitsModels.idl
-  WARNINGS no-implicit-extensibility
-  FEATURES ${features_list}
-  )
+  WARNINGS no-implicit-extensibility)
 
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
