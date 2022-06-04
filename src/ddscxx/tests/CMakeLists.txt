@@ -79,6 +79,11 @@ set(sources
   External.cpp
   DataModels.cpp)
 
+if (ENABLE_TYPE_DISCOVERY AND ENABLE_TOPIC_DISCOVERY)
+  # Add topic/type discovery tests
+  list(APPEND sources TopicTypeDiscovery.cpp)
+endif()
+
 if(ENABLE_SHM)
   # Add shared memory tests
   list(APPEND sources SharedMemory.cpp)
@@ -92,12 +97,6 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND ANALYZER STREQUAL "on")
     target_compile_options(ddscxx_tests PRIVATE -fno-analyzer)
   endif()
-endif()
-
-if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  # Microsoft does not specify the __cplusplus macro by default
-  # https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus
-  target_compile_options(ddscxx_tests PUBLIC "/Zc:__cplusplus")
 endif()
 
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})

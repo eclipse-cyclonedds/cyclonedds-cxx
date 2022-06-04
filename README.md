@@ -54,7 +54,7 @@ There are some configuration options specified using CMake defines in addition t
 * `-DBUILD_DOCS=ON`: to build the documentation
 * `-DBUILD_TESTING=ON`: to build the testing tree
 * `-DBUILD_EXAMPLES=ON`: to build examples
-* `-DENABLE_LEGACY=YES`: to enable legacy c++11 mode, adds boost (variant, optional) as dependency (otherwise it uses c++17)
+* `-DENABLE_LEGACY=YES`: to enable legacy c++11 mode, adds boost as dependency (otherwise it uses c++17)
 * `-DENABLE_SHM=YES`: to enable shared memory support
 * `-DENABLE_TYPE_DISCOVERY=YES`: to enable type discovery support
 * `-DENABLE_TOPIC_DISCOVERY=YES`: to enable topic discovery support 

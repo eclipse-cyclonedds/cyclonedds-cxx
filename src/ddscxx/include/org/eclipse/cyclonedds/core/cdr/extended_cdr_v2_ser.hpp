@@ -53,7 +53,7 @@ public:
    *
    * Determines whether a header is necessary for this entity through em_header_necessary, and if it is, handles the header.
    *
-   * @param[in] prop Properties of the member to start.
+   * @param[in, out] prop Properties of the member to start.
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    */
   bool start_member(entity_properties_t &prop, bool is_set = true);
@@ -64,7 +64,7 @@ public:
    *
    * Determines whether a header is necessary for this entity through em_header_necessary, and if it is, completes the previous header.
    *
-   * @param[in] prop Properties of the member to finish.
+   * @param[in, out] prop Properties of the member to finish.
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
@@ -73,17 +73,29 @@ public:
 
   /**
    * @brief
-   * Returns the next entity to be processed.
+   * Returns the next entity to be processed at this level.
    *
    * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
    * properties entry is pulled from the tree.
    *
-   * @param[in, out] props The property tree to get the next entity from.
-   * @param[in, out] firstcall Whether it is the first time calling the function for props, will store first iterator if true, and then set to false.
+   * @param[in, out] prop The property tree to get the next entity from.
    *
-   * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
+   * @return The next entity to be processed, or a nullptr if the current tree level does not hold more entities that match this tree.
    */
-  entity_properties_t& next_entity(entity_properties_t &props, bool &firstcall);
+  entity_properties_t* next_entity(entity_properties_t *prop);
+
+  /**
+   * @brief
+   * Returns the first entity to be processed at this level.
+   *
+   * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
+   * properties entry is pulled from the tree.
+   *
+   * @param[in, out] prop The property tree to get the next entity from.
+   *
+   * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
+   */
+  entity_properties_t *first_entity(entity_properties_t *prop);
 
   /**
    * @brief
@@ -151,8 +163,8 @@ private:
   static const uint32_t must_understand;  /**< must understand member field flag*/
 
   DDSCXX_WARNING_MSVC_OFF(4251)
-  std::stack<consecutives_t> m_consecutives; /**< stack of consecutive entries, uses to determine whether or not to finish a d_header*/
-  std::stack<size_t> m_delimiters;        /**< locations of sequence delimiters */
+  custom_stack<consecutives_t, m_maximum_depth> m_consecutives; /**< stack of consecutive entries, uses to determine whether or not to finish a d_header*/
+  custom_stack<size_t, m_maximum_depth> m_delimiters; /**< locations of sequence delimiters */
   DDSCXX_WARNING_MSVC_ON(4251)
 
   /**
@@ -213,11 +225,11 @@ private:
    * @brief
    * Writes an EM-header to the stream.
    *
-   * @param[in, out] props The entity to write the EM-header for.
+   * @param[in, out] prop The entity to write the EM-header for.
    *
    * @return Whether the header was read succesfully.
    */
-  bool write_em_header(entity_properties_t &props);
+  bool write_em_header(entity_properties_t &prop);
 
   /**
    * @brief
@@ -249,11 +261,9 @@ private:
    * @brief
    * Finishes the write operation of the EM-header.
    *
-   * @param[in, out] props The entity whose EM-header to finish.
-   *
    * @return Whether the header was read succesfully.
    */
-  bool finish_em_header(entity_properties_t &props);
+  bool finish_em_header();
 
   /**
    * @brief
@@ -301,7 +311,7 @@ private:
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
+  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
   {
     case bb_8_bits:
       return read_enum_impl<xcdr_v2_stream,T,uint8_t>(str, toread, N);
@@ -330,7 +340,7 @@ bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
+  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
   {
     case bb_8_bits:
       return write_enum_impl<xcdr_v2_stream,T,uint8_t>(str, towrite, N);
@@ -358,7 +368,7 @@ bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool move(xcdr_v2_stream& str, const T&, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : get_enum_bit_bound<T>())
+  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
   {
     case bb_8_bits:
       return move(str, int8_t(0), N);

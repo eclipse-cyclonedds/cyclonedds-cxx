@@ -25,7 +25,7 @@ set_target_properties(idlcxx PROPERTIES
    C_STANDARD 99)
 
 if(ENABLE_LEGACY)
-  target_compile_definitions(idlcxx PUBLIC "ENABLE_LEGACY")
+  target_compile_definitions(idlcxx PUBLIC "IDLCXX_USE_BOOST")
 endif()
 
 target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)

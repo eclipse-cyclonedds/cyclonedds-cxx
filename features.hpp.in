@@ -10,4 +10,7 @@
 /* Whether or not support for topic discovery is included */
 #cmakedefine DDSCXX_HAS_TOPIC_DISCOVERY @DDSCXX_HAS_TOPIC_DISCOVERY@
 
+/* Whether to use boost for c++11 compatibility or not */
+#cmakedefine DDSCXX_USE_BOOST @DDSCXX_USE_BOOST@
+
 #endif /* __OMG_DDS_DDSCXX_FEATURES_HPP__ */

@@ -166,11 +166,15 @@ public:
      */
     static ddsi_typeid_t* getTypeId(const struct ddsi_sertype *, ddsi_typeid_kind_t kind)
     {
-        auto ptr = TopicTraits<TOPIC>::getTypeInfo(NULL);
-        auto id = ddsi_typeinfo_typeid(ptr, kind);
-        ddsi_typeinfo_fini(ptr);
-        ddsrt_free(ptr);
-        return id;
+        auto ti = getTypeInfo(NULL);
+        if (ti) {
+            auto id = ddsi_typeinfo_typeid(ti, kind);
+            ddsi_typeinfo_fini(ti);
+            ddsrt_free(ti);
+            return id;
+        } else {
+            return nullptr;
+        }
     }
 
     /**
@@ -183,32 +187,73 @@ public:
      */
     static ddsi_typemap_t* getTypeMap(const struct ddsi_sertype *)
     {
-        ddsi_sertype_cdr_data cdr{TopicTraits<TOPIC>::type_map_blob_sz, const_cast<uint8_t*>(TopicTraits<TOPIC>::type_map_blob)};
+        ddsi_sertype_cdr_data_t cdr{type_map_blob_sz(), const_cast<uint8_t*>(type_map_blob())};
         return ddsi_typemap_deser(&cdr);
     }
 
     /**
      * @brief Returns the type info for TOPIC.
      *
-     * Takes the type info blob for this topic which is part of thegenerated type traits, and deserializes
+     * Takes the type info blob for this topic which is part of the generated type traits, and deserializes
      * the type info from this blob.
      *
      * @return A pointer to the typeinfo for this topic.
      */
     static ddsi_typeinfo_t* getTypeInfo(const struct ddsi_sertype *)
     {
-        ddsi_sertype_cdr_data cdr{TopicTraits<TOPIC>::type_info_blob_sz, const_cast<uint8_t*>(TopicTraits<TOPIC>::type_info_blob)};
+        ddsi_sertype_cdr_data_t cdr{type_info_blob_sz(), const_cast<uint8_t*>(type_info_blob())};
         return ddsi_typeinfo_deser(&cdr);
     }
 
-private:
-    static const unsigned int type_map_blob_sz; /**< Size of blob of the cdr serialized type map, needs to be instantiated for all declared types.*/
-    static const unsigned int type_info_blob_sz; /**< Size of blob of the cdr serialized type info, needs to be instantiated for all declared types.*/
-    static const unsigned char type_map_blob[]; /**< Blob of the cdr serialized type map, needs to be instantiated for all declared types.*/
-    static const unsigned char type_info_blob[]; /**< Blob of the cdr serialized type info, needs to be instantiated for all declared types.*/
+    /**
+     * @brief Returns size of the blob of the cdr serialized type map.
+     *
+     * This function is a placeholder, it will be instantiated for all valid topics.
+     *
+     * @return The size of the serialized type map blob.
+     */
+    static constexpr unsigned int type_map_blob_sz()
+    {
+        return static_cast<unsigned int>(-1);
+    }
+
+    /**
+     * @brief Returns size of the blob of the cdr serialized type info.
+     *
+     * This function is a placeholder, it will be instantiated for all valid topics.
+     *
+     * @return The size of the serialized type info blob.
+     */
+    static constexpr unsigned int type_info_blob_sz()
+    {
+        return static_cast<unsigned int>(-1);
+    }
+
+    /**
+     * @brief Returns pointer to the blob of the cdr serialized type map.
+     *
+     * This function is a placeholder, it will be instantiated for all valid topics.
+     *
+     * @return Pointer to the serialized type map blob.
+     */
+    static inline const uint8_t * type_map_blob()
+    {
+        return nullptr;
+    }
+
+    /**
+     * @brief Returns pointer to the blob of the cdr serialized type info.
+     *
+     * This function is a placeholder, it will be instantiated for all valid topics.
+     *
+     * @return Pointer to the serialized type info blob.
+     */
+    static inline const uint8_t * type_info_blob()
+    {
+        return nullptr;
+    }
 #endif  //DDSCXX_HAS_TYPE_DISCOVERY
 
-public:
     /**
      * @brief Returns a pointer to the derived sertype.
      *

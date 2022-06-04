@@ -28,17 +28,22 @@ class EntityTesting : public ::testing::Test
     void TearDown() { }
 };
 
-void compare_endpoints_with_entity(const key_endpoint &ke, const entity_properties &props)
+void compare_endpoints_with_entity(const key_endpoint &ke, const entity_properties_t &props)
 {
-  for (const auto &member:props.m_members_by_seq) {
-    //do not look at list terminating members
-    if (!member)
-      continue;
+  auto ptr = props.first_member;
+  while (ptr) {
+    auto it = ke.find(ptr->m_id);
 
-    auto it = ke.find(member.m_id);
-    ASSERT_EQ(member.is_key, it != ke.end());
-    if (ke.end() != it)
-      compare_endpoints_with_entity(it->second, member);
+    if (ptr->is_key) {
+      ASSERT_TRUE(it != ke.end());
+    } else {
+      ASSERT_TRUE(it == ke.end());
+    }
+
+    if (ptr->is_key)
+      compare_endpoints_with_entity(it->second, *ptr);
+
+    ptr = ptr->next_on_level;
   }
 }
 
@@ -51,7 +56,7 @@ void test_props(const std::list<std::list<uint32_t> > &endpoints)
   for (const auto &endpoint:endpoints)
     ke.add_key_endpoint(endpoint);
 
-  compare_endpoints_with_entity(ke, props);
+  compare_endpoints_with_entity(ke, props[0]);
 }
 
 TEST_F(EntityTesting, entity_properties_annotation)
