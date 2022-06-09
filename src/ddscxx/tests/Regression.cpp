@@ -330,3 +330,19 @@ TEST_F(Regression, key_value_of_appendables)
   ASSERT_TRUE(to_key<s_appendable>(s_a, kh_a));
   EXPECT_EQ(0, memcmp(k, kh_a.value, 16));
 }
+
+TEST_F(Regression, memberless_struct)
+{
+  auto &props = get_type_props<s_memberless>();
+
+  xcdr_v1_stream v1(endianness::big_endian);
+  v1.set_mode(cdr_stream::stream_mode::read, false);
+  auto ptr1 = v1.first_entity(props.data());
+  EXPECT_EQ(ptr1, nullptr);
+
+
+  xcdr_v2_stream v2(endianness::big_endian);
+  v2.set_mode(cdr_stream::stream_mode::read, false);
+  auto ptr2 = v2.first_entity(props.data());
+  EXPECT_EQ(ptr2, nullptr);
+}

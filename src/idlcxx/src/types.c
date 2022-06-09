@@ -311,6 +311,7 @@ emit_struct(
   fmt = "\n"
         "  bool operator==(const %s& _other) const\n"
         "  {\n"
+        "    (void) _other;\n"
         "    return ";
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
