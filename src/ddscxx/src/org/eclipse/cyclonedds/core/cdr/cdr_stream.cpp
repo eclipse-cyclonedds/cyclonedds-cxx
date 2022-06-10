@@ -137,7 +137,7 @@ void cdr_stream::check_struct_completeness(entity_properties_t &props)
   auto ptr = props.first_member;
   while (ptr) {
     if ((ptr->must_understand || ptr->is_key) && !ptr->is_present) {
-      status(must_understand_fail);
+      (void) status(must_understand_fail);
       props.is_present = false;
       break;
     }
