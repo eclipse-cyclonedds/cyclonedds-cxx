@@ -63,7 +63,7 @@ public:
 };
 
 template<typename T, typename S>
-void VerifyWrite(const T& in, const bytes &out, S stream, bool as_key, bool write_success = true, bool compare_success = true)
+void VerifyWrite_Impl(const T& in, const bytes &out, S &stream, bool as_key, bool write_success = true, bool compare_success = true)
 {
   bytes buffer;
   bool result = move(stream, in, as_key);
@@ -81,7 +81,7 @@ void VerifyWrite(const T& in, const bytes &out, S stream, bool as_key, bool writ
 }
 
 template<typename T, typename S>
-void VerifyRead(const bytes &in, const T& out, S stream, bool as_key, bool read_success = true, bool compare_success = true)
+void VerifyRead_Impl(const bytes &in, const T& out, S &stream, bool as_key, bool read_success = true, bool compare_success = true)
 {
   bytes incopy(in);
   T buffer;
@@ -101,7 +101,7 @@ void VerifyRead(const bytes &in, const T& out, S stream, bool as_key, bool read_
 }
 
 template<typename T, typename S>
-void VerifyReadOneDeeper(const bytes &in, const T& out, S stream, bool as_key)
+void VerifyReadOneDeeper_Impl(const bytes &in, const T& out, S &stream, bool as_key)
 {
   bytes incopy(in);
   T buffer;
@@ -118,25 +118,53 @@ void VerifyReadOneDeeper(const bytes &in, const T& out, S stream, bool as_key)
   }
 }
 
+#define VerifyRead(_bytes, _struct, _streamer, _as_key, _read_success, _compare_success)\
+{\
+_streamer streamer_1(endianness::big_endian);\
+VerifyRead_Impl(_bytes, _struct, streamer_1, _as_key, _read_success, _compare_success);\
+}
+
+#define VerifyReadOneDeeper(_bytes, _struct, _streamer, _as_key)\
+{\
+_streamer streamer_1(endianness::big_endian);\
+VerifyReadOneDeeper_Impl(_bytes, _struct, streamer_1, _as_key);\
+}
+
 #define read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-VerifyRead(normal_bytes, test_struct, streamer, false);\
-VerifyRead(key_bytes, key_struct, streamer, true);
+{\
+VerifyRead(normal_bytes, test_struct, streamer, false, true, true);\
+VerifyRead(key_bytes, key_struct, streamer, true, true, true);\
+}
 
 #define read_test_fail(test_struct, key_struct, key_bytes, streamer)\
-VerifyRead(bytes(256, 0x0), test_struct, streamer, false, false);\
-VerifyRead(key_bytes, key_struct, streamer, true);
+{\
+VerifyRead(bytes(256, 0x0), test_struct, streamer, false, false, true);\
+VerifyRead(key_bytes, key_struct, streamer, true, true, true);\
+}
 
 #define read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-VerifyRead(normal_bytes, test_struct, streamer, false);\
-VerifyReadOneDeeper(key_bytes, key_struct, streamer, true);
+{\
+VerifyRead(normal_bytes, test_struct, streamer, false, true, true);\
+VerifyReadOneDeeper(key_bytes, key_struct, streamer, true);\
+}
+
+#define VerifyWrite(_bytes, _struct, _streamer, _as_key, _write_success, _compare_success)\
+{\
+_streamer streamer_1(endianness::big_endian);\
+VerifyWrite_Impl(_bytes, _struct, streamer_1, _as_key, _write_success, _compare_success);\
+}
 
 #define write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-VerifyWrite(test_struct, normal_bytes, streamer, false);\
-VerifyWrite(key_struct, key_bytes, streamer, true);
+{\
+VerifyWrite(test_struct, normal_bytes, streamer, false, true, true);\
+VerifyWrite(key_struct, key_bytes, streamer, true, true, true);\
+}
 
 #define write_test_fail(test_struct, key_struct, key_bytes, streamer)\
-VerifyWrite(test_struct, bytes(256, 0x0), streamer, false, false);\
-VerifyWrite(test_struct, key_bytes, streamer, true);
+{\
+VerifyWrite(test_struct, bytes(256, 0x0), streamer, false, false, false);\
+VerifyWrite(test_struct, key_bytes, streamer, true, true, true);\
+}
 
 #define readwrite_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
@@ -151,24 +179,24 @@ read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)
 
 #define stream_test(test_struct, cdr_normal_bytes, key_bytes)\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream(endianness::big_endian))\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
+readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
+readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
+readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)
 
 #define stream_test_union(test_struct, key_struct, cdr_normal_bytes, key_bytes)\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream(endianness::big_endian))\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
+readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
+readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
+readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)
 
 #define stream_test_fail_basic(test_struct, xcdr_v1_normal_bytes, xcdr_v2_normal_bytes, key_bytes)\
-readwrite_test_fail(test_struct, test_struct, key_bytes, basic_cdr_stream(endianness::big_endian))\
-readwrite_test(test_struct, test_struct, xcdr_v1_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
-readwrite_test(test_struct, test_struct, xcdr_v2_normal_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
+readwrite_test_fail(test_struct, test_struct, key_bytes, basic_cdr_stream)\
+readwrite_test(test_struct, test_struct, xcdr_v1_normal_bytes, key_bytes, xcdr_v1_stream)\
+readwrite_test(test_struct, test_struct, xcdr_v2_normal_bytes, key_bytes, xcdr_v2_stream)
 
 #define stream_deeper_test(test_struct, cdr_normal_bytes, cdr_delimited_bytes, key_bytes)\
-readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream(endianness::big_endian))\
-readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream(endianness::big_endian))\
-readwrite_deeper_test(test_struct, test_struct, cdr_delimited_bytes, key_bytes, xcdr_v2_stream(endianness::big_endian))
+readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
+readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
+readwrite_deeper_test(test_struct, test_struct, cdr_delimited_bytes, key_bytes, xcdr_v2_stream)
 
 /*verifying streamer will not read/write beyond the end of the indicated buffer*/
 
@@ -207,9 +235,9 @@ TEST_F(CDRStreamer, cdr_basic)
 {
   basicstruct BS(123456, 'g', "abcdef", 654.321);
 
-  readwrite_test(BS, BS, BS_basic_normal, BS_basic_key, basic_cdr_stream(endianness::big_endian));
-  readwrite_test(BS, BS, BS_basic_normal, BS_basic_key, xcdr_v1_stream(endianness::big_endian));
-  readwrite_test(BS, BS, BS_xcdrv2_normal, BS_basic_key, xcdr_v2_stream(endianness::big_endian));
+  readwrite_test(BS, BS, BS_basic_normal, BS_basic_key, basic_cdr_stream);
+  readwrite_test(BS, BS, BS_basic_normal, BS_basic_key, xcdr_v1_stream);
+  readwrite_test(BS, BS, BS_xcdrv2_normal, BS_basic_key, xcdr_v2_stream);
 }
 
 /*verifying reads/writes of an appendable struct*/
@@ -287,8 +315,8 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x00, 0x01, 0xE2, 0x40 /*mutablestruct.l*/};
 
   stream_test_fail_basic(MS, MS_xcdr_v1_normal, MS_xcdr_v2_normal, BS_basic_key)
-  VerifyRead(MS_xcdr_v1_normal_reordered, MS, xcdr_v1_stream(endianness::big_endian), false);
-  VerifyRead(MS_xcdr_v2_normal_reordered, MS, xcdr_v2_stream(endianness::big_endian), false);
+  VerifyRead(MS_xcdr_v1_normal_reordered, MS, xcdr_v1_stream, false, true, true);
+  VerifyRead(MS_xcdr_v2_normal_reordered, MS, xcdr_v2_stream, false, true, true);
 }
 
 /*verifying reads/writes of a nested struct*/
@@ -386,9 +414,9 @@ TEST_F(CDRStreamer, cdr_sequence)
 
   stream_test(SS, SS_basic_normal, SS_basic_key)
 
-  readwrite_test(SSM, SSM, SSM_xcdr_v1_normal, SS_basic_key,  xcdr_v1_stream(endianness::big_endian))
-  readwrite_test(SSM, SSM, SSM_xcdr_v2_normal, SS_basic_key,  xcdr_v2_stream(endianness::big_endian))
-  read_test(SSM, SSM, SSM_xcdr_v2_normal_lc_not_4, SS_basic_key, xcdr_v2_stream(endianness::big_endian))
+  readwrite_test(SSM, SSM, SSM_xcdr_v1_normal, SS_basic_key,  xcdr_v1_stream)
+  readwrite_test(SSM, SSM, SSM_xcdr_v2_normal, SS_basic_key,  xcdr_v2_stream)
+  read_test(SSM, SSM, SSM_xcdr_v2_normal_lc_not_4, SS_basic_key, xcdr_v2_stream)
 }
 
 /*verifying reads/writes of a struct containing arrays*/
@@ -521,17 +549,17 @@ TEST_F(CDRStreamer, cdr_union)
 
   stream_test(US, US_normal, US_normal)
 
-  VerifyRead(US_normal, US_k, basic_cdr_stream(endianness::big_endian), false);
-  VerifyRead(US_normal, US_k, xcdr_v1_stream(endianness::big_endian), false);
-  VerifyRead(US_normal, US_k, xcdr_v2_stream(endianness::big_endian), false);
+  VerifyRead(US_normal, US_k, basic_cdr_stream, false, true, true);
+  VerifyRead(US_normal, US_k, xcdr_v1_stream, false, true, true);
+  VerifyRead(US_normal, US_k, xcdr_v2_stream, false, true, true);
 
-  VerifyRead(US_k_key, US_k_read, basic_cdr_stream(endianness::big_endian), true);
-  VerifyRead(US_k_key, US_k_read, xcdr_v1_stream(endianness::big_endian), true);
-  VerifyRead(US_k_key, US_k_read, xcdr_v2_stream(endianness::big_endian), true);
+  VerifyRead(US_k_key, US_k_read, basic_cdr_stream, true, true, true);
+  VerifyRead(US_k_key, US_k_read, xcdr_v1_stream, true, true, true);
+  VerifyRead(US_k_key, US_k_read, xcdr_v2_stream, true, true, true);
 
-  write_test(US_k, US_k, US_normal, US_k_key, basic_cdr_stream(endianness::big_endian))
-  write_test(US_k, US_k, US_normal, US_k_key, xcdr_v1_stream(endianness::big_endian))
-  write_test(US_k, US_k, US_normal, US_k_key, xcdr_v2_stream(endianness::big_endian))
+  write_test(US_k, US_k, US_normal, US_k_key, basic_cdr_stream)
+  write_test(US_k, US_k, US_normal, US_k_key, xcdr_v1_stream)
+  write_test(US_k, US_k, US_normal, US_k_key, xcdr_v2_stream)
 }
 
 /*verifying reads/writes of structs using pragma keylist*/
@@ -558,17 +586,17 @@ TEST_F(CDRStreamer, cdr_pragma)
       0x00, 0x00, 0x03, 0x7A/*pragma_keys.d.s_2.l_2*/
       };
 
-  VerifyRead(PS_basic_normal, PS, basic_cdr_stream(endianness::big_endian), false);
-  VerifyRead(PS_basic_normal, PS, xcdr_v1_stream(endianness::big_endian), false);
-  VerifyRead(PS_basic_normal, PS, xcdr_v2_stream(endianness::big_endian), false);
+  VerifyRead(PS_basic_normal, PS, basic_cdr_stream, false, true, true);
+  VerifyRead(PS_basic_normal, PS, xcdr_v1_stream, false, true, true);
+  VerifyRead(PS_basic_normal, PS, xcdr_v2_stream, false, true, true);
 
-  VerifyRead(PS_basic_key, PS_key_test, basic_cdr_stream(endianness::big_endian), true);
-  VerifyRead(PS_basic_key, PS_key_test, xcdr_v1_stream(endianness::big_endian), true);
-  VerifyRead(PS_basic_key, PS_key_test, xcdr_v2_stream(endianness::big_endian), true);
+  VerifyRead(PS_basic_key, PS_key_test, basic_cdr_stream, true, true, true);
+  VerifyRead(PS_basic_key, PS_key_test, xcdr_v1_stream, true, true, true);
+  VerifyRead(PS_basic_key, PS_key_test, xcdr_v2_stream, true, true, true);
 
-  write_test(PS, PS, PS_basic_normal, PS_basic_key, basic_cdr_stream(endianness::big_endian))
-  write_test(PS, PS, PS_basic_normal, PS_basic_key, xcdr_v1_stream(endianness::big_endian))
-  write_test(PS, PS, PS_basic_normal, PS_basic_key, xcdr_v2_stream(endianness::big_endian))
+  write_test(PS, PS, PS_basic_normal, PS_basic_key, basic_cdr_stream)
+  write_test(PS, PS, PS_basic_normal, PS_basic_key, xcdr_v1_stream)
+  write_test(PS, PS, PS_basic_normal, PS_basic_key, xcdr_v2_stream)
 }
 
 /*verifying reads/writes of a struct containing enums*/
@@ -594,9 +622,9 @@ TEST_F(CDRStreamer, cdr_enum)
       0x00, 0x00, 0x00, 0x03 /*enum_struct.a*/
       };
 
-  readwrite_test(ES, ES, ES_basic_normal, ES_basic_key, basic_cdr_stream(endianness::big_endian));
-  readwrite_test(ES, ES, ES_xcdr_v1_normal, ES_basic_key, xcdr_v1_stream(endianness::big_endian));
-  readwrite_test(ES, ES, ES_xcdr_v1_normal, ES_basic_key, xcdr_v2_stream(endianness::big_endian));
+  readwrite_test(ES, ES, ES_basic_normal, ES_basic_key, basic_cdr_stream);
+  readwrite_test(ES, ES, ES_xcdr_v1_normal, ES_basic_key, xcdr_v1_stream);
+  readwrite_test(ES, ES, ES_xcdr_v1_normal, ES_basic_key, xcdr_v2_stream);
 }
 
 /*verifying reads/writes of structs containing optional fields*/
@@ -650,15 +678,15 @@ TEST_F(CDRStreamer, cdr_optional)
   /* basic cdr does not support optional fields,
      therefore the streamer should enter error status
      when the streamer is asked to write them */
-  readwrite_test_fail(OFS, OFS, OFS_key, basic_cdr_stream(endianness::big_endian));
+  readwrite_test_fail(OFS, OFS, OFS_key, basic_cdr_stream);
 
-  readwrite_test(OFS, OFS, OFS_xcdr_v1_normal, OFS_key, xcdr_v1_stream(endianness::big_endian))
-  readwrite_test(OAS, OAS, OFS_xcdr_v1_normal, OFS_key, xcdr_v1_stream(endianness::big_endian))
-  readwrite_test(OMS, OMS, OMS_xcdr_v1_normal, OFS_key, xcdr_v1_stream(endianness::big_endian))
+  readwrite_test(OFS, OFS, OFS_xcdr_v1_normal, OFS_key, xcdr_v1_stream)
+  readwrite_test(OAS, OAS, OFS_xcdr_v1_normal, OFS_key, xcdr_v1_stream)
+  readwrite_test(OMS, OMS, OMS_xcdr_v1_normal, OFS_key, xcdr_v1_stream)
 
-  readwrite_test(OFS, OFS, OFS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
-  readwrite_test(OAS, OAS, OAS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
-  readwrite_test(OMS, OMS, OMS_xcdr_v2_normal, OFS_key, xcdr_v2_stream(endianness::big_endian))
+  readwrite_test(OFS, OFS, OFS_xcdr_v2_normal, OFS_key, xcdr_v2_stream)
+  readwrite_test(OAS, OAS, OAS_xcdr_v2_normal, OFS_key, xcdr_v2_stream)
+  readwrite_test(OMS, OMS, OMS_xcdr_v2_normal, OFS_key, xcdr_v2_stream)
 
   optional_array_struct ORS('a',std::optional<std::array<char,5> >({'b','c','d', 'e', 'f'}));
   bytes ORS_v2{
@@ -667,7 +695,7 @@ TEST_F(CDRStreamer, cdr_optional)
         ORS_key{
           'a'};
 
-  readwrite_test(ORS, ORS, ORS_v2, ORS_key, xcdr_v2_stream(endianness::big_endian));
+  readwrite_test(ORS, ORS, ORS_v2, ORS_key, xcdr_v2_stream);
 }
 
 /*verifying reads/writes of structs containing must_understand field*/
@@ -728,8 +756,8 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
-  VerifyRead(v1_missing, MU, xcdr_v1_stream(endianness::big_endian), false, false);
-  VerifyRead(v2_missing, MU, xcdr_v2_stream(endianness::big_endian), false, false);
+  VerifyRead(v1_missing, MU, xcdr_v1_stream, false, false, true);
+  VerifyRead(v2_missing, MU, xcdr_v2_stream, false, false, true);
 
   /*these cdr streams contain a field with id 0 which is not in the definition of
     must_understand_struct but is set to must_understand, and therefore must
@@ -766,8 +794,8 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
-  VerifyRead(v1_missing, MU, xcdr_v1_stream(endianness::big_endian), false, false);
-  VerifyRead(v2_missing, MU, xcdr_v2_stream(endianness::big_endian), false, false);
+  VerifyRead(v1_missing, MU, xcdr_v1_stream, false, false, true);
+  VerifyRead(v2_missing, MU, xcdr_v2_stream, false, false, true);
 }
 
 /*verifying correct insertion of d-headers after opening arrays and sequences of non-primitive types*/
@@ -829,9 +857,9 @@ TEST_F(CDRStreamer, d_header_insertion)
     0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.l[3]*/
     };
 
-  readwrite_test(DS, DS, DS_basic, DS_key, basic_cdr_stream(endianness::big_endian));
-  readwrite_test(DS, DS, DS_v1, DS_key, xcdr_v1_stream(endianness::big_endian));
-  readwrite_test(DS, DS, DS_v2, DS_key, xcdr_v2_stream(endianness::big_endian));
+  readwrite_test(DS, DS, DS_basic, DS_key, basic_cdr_stream);
+  readwrite_test(DS, DS, DS_v1, DS_key, xcdr_v1_stream);
+  readwrite_test(DS, DS, DS_v2, DS_key, xcdr_v2_stream);
 }
 
 /*verifying reads/writes of structs containing bitmasks*/
