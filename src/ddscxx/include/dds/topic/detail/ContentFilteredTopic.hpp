@@ -246,7 +246,7 @@ private:
 };
 
 template <typename T>
-class ContentFilteredTopic  :
+class ContentFilteredTopic final :
     public virtual org::eclipse::cyclonedds::topic::TopicDescriptionDelegate,
     public virtual org::eclipse::cyclonedds::core::DDScObjectDelegate
 {

@@ -107,7 +107,7 @@ class TWaitSet;
  * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
  */
 template <typename DELEGATE>
-class dds::core::cond::TWaitSet : public dds::core::Reference<DELEGATE>
+class dds::core::cond::TWaitSet final : public dds::core::Reference<DELEGATE>
 {
 public:
     typedef std::vector<dds::core::cond::Condition> ConditionSeq;

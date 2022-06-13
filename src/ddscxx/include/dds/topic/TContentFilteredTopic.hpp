@@ -74,7 +74,7 @@ class ContentFilteredTopic;
  * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename T, template <typename Q> class DELEGATE>
-class dds::topic::ContentFilteredTopic : public dds::topic::TTopicDescription< DELEGATE<T> >
+class dds::topic::ContentFilteredTopic final : public dds::topic::TTopicDescription< DELEGATE<T> >
 {
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC_T(ContentFilteredTopic, dds::topic::TTopicDescription, T, DELEGATE)

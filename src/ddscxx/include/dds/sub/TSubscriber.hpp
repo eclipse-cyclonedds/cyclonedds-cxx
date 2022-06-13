@@ -50,7 +50,7 @@ class SubscriberListener;
  * @see for more information: @ref DCPS_Modules_Subscriber "Subscriber"
  */
 template <typename DELEGATE>
-class dds::sub::TSubscriber : public dds::core::TEntity<DELEGATE>
+class dds::sub::TSubscriber final : public dds::core::TEntity<DELEGATE>
 {
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC(TSubscriber, dds::core::TEntity, DELEGATE)

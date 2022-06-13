@@ -59,7 +59,7 @@ class TQueryCondition;
  * @see for more information: @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
  */
 template <typename DELEGATE>
-class dds::sub::cond::TQueryCondition :
+class dds::sub::cond::TQueryCondition final :
     public dds::sub::cond::TReadCondition<DELEGATE>,
     public dds::sub::TQuery<DELEGATE>
 {

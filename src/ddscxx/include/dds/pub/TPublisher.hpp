@@ -52,7 +52,7 @@ class PublisherListener;
  * @see for more information: @ref DCPS_Modules_Publisher "Publisher"
  */
 template <typename DELEGATE>
-class dds::pub::TPublisher : public dds::core::TEntity<DELEGATE>
+class dds::pub::TPublisher final : public dds::core::TEntity<DELEGATE>
 {
 public:
     /**
