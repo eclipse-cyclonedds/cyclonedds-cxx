@@ -176,4 +176,7 @@ struct s_appendable {
   @key string s;
 };
 
+struct s_memberless {
+};
+
 };

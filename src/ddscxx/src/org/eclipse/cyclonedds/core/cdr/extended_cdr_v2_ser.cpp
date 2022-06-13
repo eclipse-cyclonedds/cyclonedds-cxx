@@ -168,6 +168,9 @@ entity_properties_t* xcdr_v2_stream::first_entity(entity_properties_t *props)
     return cdr_stream::first_entity(props);
 
   auto prop = cdr_stream::first_entity(props);
+  if (!prop)
+    return prop;
+
   if (!list_necessary(*props)) {
     do {
       bool fieldpresent = true;

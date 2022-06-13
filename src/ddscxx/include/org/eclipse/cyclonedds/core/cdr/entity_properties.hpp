@@ -75,13 +75,14 @@ DDSCXX_WARNING_MSVC_ON(4251)
 
 /**
  * @brief
- * Primitive type get_bit_bound function.
+ * Primitive type/enum get_bit_bound function.
  *
- * Returns a bb_unset for all primitive types.
+ * Returns a bb_unset for all primitive types and enums.
+ * This function will be implemented for all enums with a manually defined bit_bound.
  *
  * @return The bit bound for the primitive type.
  */
-template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_arithmetic<T>::value || std::is_enum<T>::value, bool> = true >
 bit_bound get_bit_bound() {
   switch (sizeof(T)) {
     case 1:
@@ -96,8 +97,9 @@ bit_bound get_bit_bound() {
     case 8:
       return bb_64_bits;
       break;
+    default:
+      return bb_unset;
   }
-  return bb_unset;
 }
 
 /**
@@ -110,17 +112,6 @@ bit_bound get_bit_bound() {
  */
 template<typename T, DDSCXX_STD_IMPL::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 constexpr bit_bound get_bit_bound() { return bb_unset;}
-
-/**
- * @brief
- * Forward declaration for get_bit_bound function for enum classes.
- *
- * This function will be implemented for all enums defined in the implementation files.
- *
- * @return The bit_bound for the custom enum.
- */
-template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_enum<T>::value, bool> = true >
-constexpr bit_bound get_bit_bound();
 
 typedef struct entity_properties entity_properties_t;
 typedef std::vector<entity_properties_t> propvec;

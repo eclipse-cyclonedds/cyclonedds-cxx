@@ -1458,7 +1458,7 @@ process_enum(
   static const char *conv_func = "template<>\n"\
                     "%s enum_conversion<%s>(uint32_t in)%s",
                     *bb_func = "template<>\n"\
-                    "constexpr bit_bound get_bit_bound<%s>() { return bb_%"PRIu16"_bits; }\n\n";
+                    "constexpr bit_bound get_bit_bound<%s>() { return bb_%d_bits; }\n\n";
 
   if (putf(&str->props, conv_func, fullname, fullname, " {\n  switch (in) {\n")
    || idl_fprintf(gen->header.handle, conv_func, fullname, fullname, ";\n\n") < 0)
@@ -1502,8 +1502,10 @@ process_enum(
   }
 
   //generate entity properties function for enums
-  uint16_t bb = 32;
-  if (_enum->bit_bound.annotation) {
+  if (putf(&str->props,"  }\n}\n\n")) {
+    ret = IDL_RETCODE_NO_MEMORY;
+  } else if (_enum->bit_bound.annotation) {
+    int bb = 32;
     if (_enum->bit_bound.value > 32)
       bb = 64;
     else if (_enum->bit_bound.value > 16)
@@ -1512,11 +1514,8 @@ process_enum(
       bb = 16;
     else
       bb = 8;
-  }
-
-  if (putf(&str->props,"  }\n}\n\n") ||
-      idl_fprintf(gen->header.handle, bb_func, fullname, bb) < 0) {
-    ret = IDL_RETCODE_NO_MEMORY;
+    if (idl_fprintf(gen->header.handle, bb_func, fullname, bb) < 0)
+      ret = IDL_RETCODE_NO_MEMORY;
   }
 
   /*cleanup*/
