@@ -86,7 +86,7 @@ template <typename T> class DataWriterListener;
  * @see for more information: @ref DCPS_Modules_Publication_DataWriter "DataWriter concept"
  */
 template <typename T, template <typename Q> class DELEGATE>
-class dds::pub::DataWriter : public ::dds::pub::TAnyDataWriter< DELEGATE<T> >
+class dds::pub::DataWriter final : public ::dds::pub::TAnyDataWriter< DELEGATE<T> >
 {
 
 public:

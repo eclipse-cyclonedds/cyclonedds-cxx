@@ -63,7 +63,7 @@ class DomainParticipantListener;
  * @see for more information: @ref DCPS_Modules_DomainParticipant "Domain Participant"
  */
 template <typename DELEGATE>
-class dds::domain::TDomainParticipant : public ::dds::core::TEntity<DELEGATE>
+class dds::domain::TDomainParticipant final : public ::dds::core::TEntity<DELEGATE>
 {
 public:
     /**

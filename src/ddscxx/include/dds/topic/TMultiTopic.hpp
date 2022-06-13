@@ -38,7 +38,7 @@ namespace topic
  * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
  */
 template <typename T, template <typename Q> class DELEGATE>
-class MultiTopic : public TTopicDescription< DELEGATE<T> >
+class MultiTopic final : public TTopicDescription< DELEGATE<T> >
 {
 public:
     OMG_DDS_REF_TYPE_PROTECTED_DC_T(MultiTopic, dds::topic::TTopicDescription, T, DELEGATE)

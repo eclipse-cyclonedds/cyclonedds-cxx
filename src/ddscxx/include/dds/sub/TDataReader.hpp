@@ -102,7 +102,7 @@ class DataReaderListener;
  * @see for more information: @ref DCPS_Modules_Subscription_DataReader "DataReader concept"
  */
 template <typename T, template <typename Q> class DELEGATE>
-class dds::sub::DataReader : public dds::sub::TAnyDataReader< DELEGATE<T> >
+class dds::sub::DataReader final : public dds::sub::TAnyDataReader< DELEGATE<T> >
 {
 
 public:
