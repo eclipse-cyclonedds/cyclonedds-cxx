@@ -38,6 +38,9 @@ constexpr size_t CDR_HEADER_SIZE = 4U;
 #define D_CDR       0x08
 #define PL_CDR2     0x0A
 
+// macro to check if a pointer is nullptr and return false
+#define CHECK_FOR_NULL(val)  if ((val) == nullptr) return false;
+
 using org::eclipse::cyclonedds::core::cdr::endianness;
 using org::eclipse::cyclonedds::core::cdr::native_endianness;
 using org::eclipse::cyclonedds::core::cdr::cdr_stream;
@@ -111,6 +114,7 @@ template<typename T,
          std::enable_if_t<std::is_same<basic_cdr_stream, S>::value, bool> = true >
 bool write_header(void *buffer)
 {
+  CHECK_FOR_NULL(buffer);
   memset(buffer, 0x0, 4);
 
   auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
@@ -129,6 +133,7 @@ template<typename T,
          std::enable_if_t<std::is_same<xcdr_v2_stream, S>::value, bool> = true >
 bool write_header(void *buffer)
 {
+  CHECK_FOR_NULL(buffer);
   memset(buffer, 0x0, 4);
 
   auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
@@ -156,6 +161,7 @@ template<typename T,
          std::enable_if_t<std::is_same<xcdr_v1_stream, S>::value, bool> = true >
 bool write_header(void *buffer)
 {
+  CHECK_FOR_NULL(buffer);
   memset(buffer, 0x0, 4);
 
   auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
@@ -179,6 +185,7 @@ bool write_header(void *buffer)
 template<typename T>
 bool finish_header(void *buffer, size_t bytes_written)
 {
+  CHECK_FOR_NULL(buffer);
   auto alignbytes = static_cast<unsigned char>(4 % (4 - bytes_written % 4));
   auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 3));
 
@@ -190,6 +197,7 @@ bool finish_header(void *buffer, size_t bytes_written)
 template<typename T>
 bool read_header(const void *buffer, encoding_version &ver, endianness &end)
 {
+  CHECK_FOR_NULL(buffer);
   auto ptr = static_cast<const unsigned char*>(calc_offset(buffer, 1));
 
   if (*ptr & BO_LITTLE)
@@ -292,6 +300,7 @@ bool serialize_into(void *buffer,
                     const T &sample,
                     bool as_key)
 {
+  CHECK_FOR_NULL(buffer);
   assert(buf_sz >= CDR_HEADER_SIZE);
 
   S str;
@@ -314,6 +323,7 @@ bool deserialize_sample_from_buffer(void *buffer,
                                     T &sample,
                                     const ddsi_serdata_kind data_kind=SDK_DATA)
 {
+  CHECK_FOR_NULL(buffer);
   assert(data_kind != SDK_EMPTY);
 
   encoding_version ver;
