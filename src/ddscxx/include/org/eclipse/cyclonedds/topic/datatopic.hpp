@@ -815,12 +815,11 @@ void ddscxx_serdata<T>::update_sample_from_iox_chunk(T *& t) {
 #ifdef DDSCXX_HAS_SHM
   // if data is available on the iox_chunk (and doesn't have a serialized representation)
   if (iox_chunk != nullptr && data() == nullptr) {
-      auto shm_data_state = shm_get_data_state(iox_chunk);
+      auto iox_header = iceoryx_header_from_chunk(iox_chunk);
       // if the iox chunk has the data in serialized form
-      if (shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-        //size of iox chunk?
-        deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), SIZE_MAX, t);
-      } else if (shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+      if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+        deserialize_and_update_sample(static_cast<uint8_t *>(iox_chunk), iox_header->data_size, t);
+      } else if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
         // get the chunk directly without any copy
         t = static_cast<T*>(this->iox_chunk);
       } else {
