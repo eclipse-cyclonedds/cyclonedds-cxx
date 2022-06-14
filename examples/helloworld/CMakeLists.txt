@@ -34,5 +34,5 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
   endif()
 endif()
 
-set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD 17)
-set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxxHelloworldPublisher PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
+set_property(TARGET ddscxxHelloworldSubscriber PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})

@@ -195,6 +195,20 @@ option(BUILD_TESTING "Build the testing tree." OFF)
 # deprecated.
 option(BUILD_EXAMPLES "Build examples." OFF)
 
+# Legacy c++11 compatibility - for projects which cant use
+# the latest compiler features because they have to
+# support some limited/legacy platforms (e.g. older QNX versions)
+# this will add boost as a dependency
+# c++11 seems like a good tradeoff between the old and the new world
+option(ENABLE_LEGACY "Legacy c++11 compatibility." OFF)
+set(cyclonedds_cpp_std_to_use 17)
+if(ENABLE_LEGACY)
+  set(cyclonedds_cpp_std_to_use 11)
+  set(DDSCXX_USE_BOOST "1")
+  find_package(Boost)
+  include_directories(${Boost_INCLUDE_DIR})
+endif()
+
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 include(CTest)

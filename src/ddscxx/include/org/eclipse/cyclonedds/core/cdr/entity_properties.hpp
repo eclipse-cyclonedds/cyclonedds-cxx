@@ -19,7 +19,15 @@
 #include <map>
 #include <atomic>
 #include <mutex>
+
+#if DDSCXX_USE_BOOST
+#include <boost/type_traits.hpp>
+#define DDSCXX_STD_IMPL boost
+#else
 #include <type_traits>
+#define DDSCXX_STD_IMPL std
+#endif
+
 #include "cdr_enums.hpp"
 
 namespace org {
@@ -28,7 +36,7 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
-#define decl_ref_type(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
+#define decl_ref_type(x) DDSCXX_STD_IMPL::remove_cv_t<DDSCXX_STD_IMPL::remove_reference_t<decltype(x)>>
 
 /**
  * @brief
@@ -74,8 +82,8 @@ DDSCXX_WARNING_MSVC_ON(4251)
  *
  * @return The bit bound for the primitive type.
  */
-template<typename T, std::enable_if_t<std::is_arithmetic<T>::value || std::is_enum<T>::value, bool> = true >
-constexpr bit_bound get_bit_bound() {
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_arithmetic<T>::value || std::is_enum<T>::value, bool> = true >
+bit_bound get_bit_bound() {
   switch (sizeof(T)) {
     case 1:
       return bb_8_bits;
@@ -102,7 +110,7 @@ constexpr bit_bound get_bit_bound() {
  *
  * @return bb_unset always.
  */
-template<typename T, std::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 constexpr bit_bound get_bit_bound() { return bb_unset;}
 
 typedef struct entity_properties entity_properties_t;

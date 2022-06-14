@@ -146,8 +146,9 @@ public:
 
 private:
   typedef struct consecutives {
-    bool is_array = false;
-    bool d_header_present = false;
+    consecutives(bool is_array = false, bool d_header_present = false) : is_array(is_array), d_header_present(d_header_present) {}
+    bool is_array;
+    bool d_header_present;
   } consecutives_t;
 
   static const uint32_t bytes_1;          /**< length field code indicating length is 1 byte*/
