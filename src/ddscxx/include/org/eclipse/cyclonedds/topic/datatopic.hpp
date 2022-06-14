@@ -510,10 +510,14 @@ bool serdata_to_sample(
 {
   (void)bufptr;
   (void)buflim;
-  auto ptr = static_cast<const ddscxx_serdata<T>*>(dcmn);
 
-  auto& msg = *static_cast<T*>(sample);
-  return deserialize_sample_from_buffer(ptr->data(), ptr->size(), msg);
+  auto typed_sample_ptr = static_cast<T*>(sample);
+  // cast away const, with the reasoning that we don't modify the underlying ddsi_serdata which
+  // is actually const, we only modify the ddscxx_serdata non const contents
+  auto d = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
+  *typed_sample_ptr = *d->getT();
+
+  return true;
 }
 
 template <typename T, class S>
