@@ -137,25 +137,25 @@ namespace topic
 {
 
 template<>
-ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::ParticipantBuiltinTopicData>::getSerType(allowable_encodings_t)
+ddsi_sertype *TopicTraits<dds::topic::ParticipantBuiltinTopicData>::getSerType(allowable_encodings_t)
 {
     return nullptr;
 }
 
 template<>
-ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::TopicBuiltinTopicData>::getSerType(allowable_encodings_t)
+ddsi_sertype *TopicTraits<dds::topic::TopicBuiltinTopicData>::getSerType(allowable_encodings_t)
 {
     return nullptr;
 }
 
 template<>
-ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::PublicationBuiltinTopicData>::getSerType(allowable_encodings_t)
+ddsi_sertype *TopicTraits<dds::topic::PublicationBuiltinTopicData>::getSerType(allowable_encodings_t)
 {
     return nullptr;
 }
 
 template<>
-ddsi_sertype *org::eclipse::cyclonedds::topic::TopicTraits<dds::topic::SubscriptionBuiltinTopicData>::getSerType(allowable_encodings_t)
+ddsi_sertype *TopicTraits<dds::topic::SubscriptionBuiltinTopicData>::getSerType(allowable_encodings_t)
 {
     return nullptr;
 }
