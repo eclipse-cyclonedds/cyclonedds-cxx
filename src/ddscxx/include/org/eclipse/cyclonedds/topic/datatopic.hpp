@@ -515,8 +515,12 @@ bool serdata_to_sample(
   // cast away const, with the reasoning that we don't modify the underlying ddsi_serdata which
   // is actually const, we only modify the ddscxx_serdata non const contents
   auto d = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
-  *typed_sample_ptr = *d->getT();
 
+  auto t_ptr = d->getT();
+  if (!t_ptr)
+    return false;
+
+  *typed_sample_ptr = *t_ptr;
   return true;
 }
 
