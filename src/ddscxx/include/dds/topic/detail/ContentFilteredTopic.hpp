@@ -275,6 +275,9 @@ public:
                 /* Empty: the exception throw should have already traced an error. */
             }
         }
+        // delete the functor
+        delete myFunctor;
+        myFunctor = nullptr;
     }
 
     virtual void close()

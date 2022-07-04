@@ -122,12 +122,18 @@ public:
 
   dds::domain::DomainParticipant participant;
   dds::sub::Subscriber subscriber;
+  dds::sub::Subscriber flt_subscriber;
   dds::pub::Publisher publisher;
   dds::topic::qos::TopicQos t_qos;
   dds::topic::Topic<T> topic;
+  dds::topic::ContentFilteredTopic<T> flt_topic;
   dds::sub::DataReader<T> reader;
+  dds::sub::DataReader<T> flt_reader;
   dds::pub::DataWriter<T> writer;
+  // read condition for the reader
   dds::sub::cond::ReadCondition rc;
+  // read condition for the reader of content filtered topic
+  dds::sub::cond::ReadCondition flt_rc;
   dds::core::cond::WaitSet waitset;
   iox::cxx::optional<iox::popo::Subscriber<T, iceoryx_header_t>> iceoryx_subscriber;
 
@@ -136,11 +142,15 @@ public:
   SharedMemoryTest()
   : participant(dds::core::null),
     subscriber(dds::core::null),
+    flt_subscriber(dds::core::null),
     publisher(dds::core::null),
     topic(dds::core::null),
+    flt_topic(dds::core::null),
     reader(dds::core::null),
+    flt_reader(dds::core::null),
     writer(dds::core::null),
-    rc(dds::core::null)
+    rc(dds::core::null),
+    flt_rc(dds::core::null)
   {
   }
 
@@ -179,6 +189,18 @@ public:
           dds::topic::Topic<T>(this->participant, TOPIC_NAME, this->t_qos);
       ASSERT_NE(this->topic, dds::core::null);
     }
+
+    if (this->flt_topic == dds::core::null) {
+      this->CreateParticipant();
+      this->flt_topic =
+          dds::topic::ContentFilteredTopic<T>(this->topic, TOPIC_NAME, dds::topic::Filter(""));
+      ASSERT_NE(this->flt_topic, dds::core::null);
+      // add a noop filter function
+      const auto sample_filter = [](const T &, const dds::sub::SampleInfo &) -> bool {
+        return true;
+      };
+      flt_topic->filter_function(std::move(sample_filter));
+    }
   }
 
   void CreateWriter(dds::pub::qos::DataWriterQos w_qos)
@@ -202,6 +224,11 @@ public:
                iox::capro::IdString_t(iox::cxx::TruncateToCapacity, org::eclipse::cyclonedds::topic::TopicTraits<TopicType>::getTypeName()), 
                TOPIC_NAME});
     }
+
+    if (this->flt_reader == dds::core::null) {
+      this->flt_reader = dds::sub::DataReader<T>(this->flt_subscriber, this->flt_topic, r_qos);
+      ASSERT_NE(this->flt_reader, dds::core::null);
+    }
   }
 
   void SetupWriter()
@@ -218,6 +245,9 @@ public:
     if (this->subscriber == dds::core::null) {
       this->subscriber = dds::sub::Subscriber(this->participant);
     }
+    if (this->flt_subscriber == dds::core::null) {
+      this->flt_subscriber = dds::sub::Subscriber(this->participant);
+    }
   }
 
   void SetupCommunication(
@@ -227,12 +257,14 @@ public:
     this->CreateWriter(w_qos);
     this->CreateReader(r_qos);
     rc = dds::sub::cond::ReadCondition(reader, dds::sub::status::DataState::any());
+    flt_rc = dds::sub::cond::ReadCondition(flt_reader, dds::sub::status::DataState::any());
     waitset.attach_condition(rc);
+    waitset.attach_condition(flt_rc);
   }
 
-  void WaitForData()
+  dds::core::cond::WaitSet::ConditionSeq WaitForData()
   {
-    EXPECT_NO_THROW(waitset.wait(dds::core::Duration(10, 0)));
+    return waitset.wait(dds::core::Duration(10, 0));
   }
 
   std::vector<T> WriteData(const int32_t instances_cnt)
@@ -268,10 +300,8 @@ public:
 
   void
   CheckData(
-    const bool must_use_iceoryx,
-    const dds::sub::LoanedSamples<T> & samples,
-    const T & test_data)
-  {
+      const dds::sub::LoanedSamples<T> & samples,
+      const T & test_data) {
     // we only have one sample
     ASSERT_EQ(samples.length(), 1);
     const T & data = samples.begin()->data();
@@ -283,6 +313,15 @@ public:
       (state.view_state() == dds::sub::status::ViewState::not_new_view()));
     ASSERT_EQ(state.sample_state(), dds::sub::status::SampleState::not_read());
     ASSERT_EQ(state.instance_state(), dds::sub::status::InstanceState::alive());
+  }
+
+  void
+  CheckData(
+    const bool must_use_iceoryx,
+    const dds::sub::LoanedSamples<T> & samples,
+    const T & test_data)
+  {
+    CheckData(samples, test_data);
 
     if (must_use_iceoryx) {
       ASSERT_TRUE(iceoryx_subscriber->hasData());
@@ -326,14 +365,35 @@ public:
     // write data
     std::vector<T> test_samples = this->WriteData(num_samples);
 
-    // take the data and verify
-    for (int32_t i = 0; i < num_samples; i++) {
+    int32_t i = 0, flt_i = 0;
+    // check until we received expected number of samples on both filtered topic and normal topic
+    while(i < num_samples || flt_i < num_samples) {
       // wait for data
-      this->WaitForData();
-      // Take one sample at a time (to not introduce undesired flakiness in the test)
-      auto sample = this->reader.select().max_samples(1).take();
-      // verify the received data
-      this->CheckData(must_use_iceoryx, sample, test_samples[static_cast<size_t>(i)]);
+      dds::core::cond::WaitSet::ConditionSeq activated_conditions;
+      try {
+        activated_conditions = this->WaitForData();
+      } catch(dds::core::TimeoutError&) {
+        // This should never be executed
+        ASSERT_TRUE(false) << "Waitset wait timedout";
+      }
+      EXPECT_LE(activated_conditions.size(), this->waitset.conditions().size());
+
+      for(const auto& cond :activated_conditions ) {
+        if (cond == this->rc) {
+          // Take one sample at a time (to not introduce undesired flakiness in the test)
+          auto sample = this->reader.select().max_samples(1).take();
+          // verify the received data, and verify it its received on iceoryx when expected
+          this->CheckData(must_use_iceoryx, sample, test_samples[static_cast<size_t>(i)]);
+          i++;
+        } else if (cond == this->flt_rc) {
+          auto flt_sample = this->flt_reader.select().max_samples(1).take();
+          // verify the received data
+          this->CheckData(flt_sample, test_samples[static_cast<size_t>(flt_i)]);
+          flt_i++;
+        } else {
+          ASSERT_TRUE(false) << "Unexpected condition in waitset";
+        }
+      }
     }
   }
 
@@ -353,6 +413,8 @@ public:
   void run_loan_support_api_test(const bool valid_r_shm_qos, const bool valid_w_shm_qos)
   {
     EXPECT_EQ(this->reader.delegate()->is_loan_supported(),
+      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_r_shm_qos));
+    EXPECT_EQ(this->flt_reader.delegate()->is_loan_supported(),
       (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_r_shm_qos));
     EXPECT_EQ(this->writer.delegate()->is_loan_supported(),
       (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_w_shm_qos));
