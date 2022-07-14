@@ -117,6 +117,7 @@ public:
 
     dds_entity_t
     lookup_topic(const std::string& topic_name,
+                 const dds_typeinfo_t *type_info,
                  const dds::core::Duration& timeout);
 
     void

@@ -307,7 +307,8 @@ dds::topic::detail::Topic<T>::discover_topic(
         const dds::core::Duration& timeout)
 {
     dds::topic::Topic<T> found = dds::core::null;
-    dds_entity_t ddsc_topic = dp.delegate()->lookup_topic(name, timeout);
+    const dds_typeinfo_t *type_info = org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeInfo(nullptr);
+    dds_entity_t ddsc_topic = dp.delegate()->lookup_topic(name, type_info, timeout);
 
     if (ddsc_topic <= 0) {
         return dds::core::null;
