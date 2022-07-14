@@ -449,26 +449,11 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::remove_cfTopic(
 dds_entity_t
 org::eclipse::cyclonedds::domain::DomainParticipantDelegate::lookup_topic(
         const std::string& topic_name,
+        const dds_typeinfo_t *type_info,
         const dds::core::Duration& timeout)
 {
-    dds_entity_t ddsc_topic;
-    dds_duration_t ddsc_timeout = 0;
-    (void)timeout;
-
     this->check();
-
-    dds_time_t starttime = dds_time();
-    while (true)
-    {
-        ddsc_topic = dds_find_topic_scoped(DDS_FIND_SCOPE_LOCAL_DOMAIN, this->ddsc_entity, topic_name.c_str(), 0);
-        if (ddsc_topic <= 0 || (ddsc_timeout != DDS_INFINITY &&
-            dds_time () >= starttime + ddsc_timeout)) {
-            break;
-        }
-        dds_sleepfor (DDS_MSECS(100));
-    }
-
-    return ddsc_topic;
+    return dds_find_topic(DDS_FIND_SCOPE_LOCAL_DOMAIN, this->ddsc_entity, topic_name.c_str(), type_info,  org::eclipse::cyclonedds::core::convertDuration (timeout));
 }
 
 void

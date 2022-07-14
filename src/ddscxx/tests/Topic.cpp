@@ -131,7 +131,7 @@ TEST_F(Topic, create_same)
     ASSERT_STREQ(ttopic1A.type_name().c_str(), ttopic1B.type_name().c_str());
 }
 
-TEST_F(Topic, create_conflict)
+TEST_F(Topic, create_same_type)
 {
     dds::topic::Topic<Space::Type1> ttopic1 = dds::core::null;
     dds::topic::Topic<Space::Type2> ttopic2 = dds::core::null;
@@ -139,9 +139,8 @@ TEST_F(Topic, create_conflict)
     ttopic1 = dds::topic::Topic<Space::Type1>(this->participant, "ttopic");
     ASSERT_NE(ttopic1, dds::core::null);
 
-    ASSERT_THROW({
-        ttopic2 = dds::topic::Topic<Space::Type2>(this->participant, "ttopic");
-    }, dds::core::PreconditionNotMetError);
+    ttopic2 = dds::topic::Topic<Space::Type2>(this->participant, "ttopic");
+    ASSERT_NE(ttopic2, dds::core::null);
 }
 
 TEST_F(Topic, name)
