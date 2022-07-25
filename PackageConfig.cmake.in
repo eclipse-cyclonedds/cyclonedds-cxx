@@ -18,6 +18,12 @@ if(@ENABLE_SHM@)
   find_dependency(iceoryx_binding_c)
 endif()
 
+if(@ENABLE_LEGACY@)
+  include(CMakeFindDependencyMacro)
+  find_dependency(Boost)
+  set(CYCLONEDDS_CXX_ENABLE_LEGACY @ENABLE_LEGACY@)
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 
 if(TARGET CycloneDDS-CXX::idlcxx)
