@@ -68,6 +68,11 @@ set(sources
   External.cpp
   DataModels.cpp)
 
+if (ENABLE_TYPE_DISCOVERY AND ENABLE_TOPIC_DISCOVERY)
+  # Add topic/type discovery tests
+  list(APPEND sources TopicTypeDiscovery.cpp)
+endif()
+
 if(ENABLE_SHM)
   # Add shared memory tests
   list(APPEND sources SharedMemory.cpp)
@@ -83,7 +88,7 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
   endif()
 endif()
 
-set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(
   ddscxx_tests PRIVATE
     CycloneDDS-CXX::ddscxx

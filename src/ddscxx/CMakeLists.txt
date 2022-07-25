@@ -78,6 +78,10 @@ endif()
 # SOVERSION should increase on incompatible ABI change
 set_target_properties(ddscxx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
+if(ENABLE_LEGACY)
+  target_compile_definitions(ddscxx PUBLIC "DDSCXX_USE_BOOST")
+endif()
+
 # Create a pseudo-target that other targets (i.e. examples, tests) can depend
 # on and can also be provided as import-target by a package-file when building
 # those targets outside the regular Cyclone build-tree (i.e. the installed tree)
@@ -85,7 +89,7 @@ add_library(${PROJECT_NAME}::ddscxx ALIAS ddscxx)
 
 add_coverage(ddscxx)
 
-set_property(TARGET ddscxx PROPERTY CXX_STANDARD 17)
+set_property(TARGET ddscxx PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 target_include_directories(
   ddscxx

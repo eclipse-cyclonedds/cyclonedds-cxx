@@ -152,7 +152,7 @@ AnyTopicDelegate::discover_topic(
 {
     char nameBuf[MAX_TOPIC_NAME_LENGTH];
 
-    dds_entity_t ddsc_topic = dp.delegate()->lookup_topic(name, timeout);
+    dds_entity_t ddsc_topic = dp.delegate()->lookup_topic(name, NULL, timeout);
 
     if (ddsc_topic <= 0) {
         return dds::core::null;

@@ -36,7 +36,7 @@ public:
 
 
 template<typename T, typename S>
-void VerifyWrite(const T& in, const bytes &out, S stream, bool as_key = false, bool write_success = true, bool compare_success = true)
+void VerifyWrite_impl(const T& in, const bytes &out, S &stream, bool as_key = false, bool write_success = true, bool compare_success = true)
 {
   bytes buffer;
   bool result = move(stream, in, as_key);
@@ -54,7 +54,7 @@ void VerifyWrite(const T& in, const bytes &out, S stream, bool as_key = false, b
 }
 
 template<typename T, typename S>
-void VerifyRead(const bytes &in, const T& out, S stream, bool as_key = false, bool read_success = true, bool compare_success = true)
+void VerifyRead_impl(const bytes &in, const T& out, S &stream, bool as_key = false, bool read_success = true, bool compare_success = true)
 {
   bytes incopy(in);
   T buffer;
@@ -74,8 +74,12 @@ void VerifyRead(const bytes &in, const T& out, S stream, bool as_key = false, bo
 }
 
 #define readwrite_test(test_struct, test_cdr, streamer)\
-VerifyRead(test_cdr, test_struct, streamer);\
-VerifyWrite(test_struct, test_cdr, streamer);
+{\
+streamer streamer_1(endianness::little_endian);\
+VerifyRead_impl(test_cdr, test_struct, streamer_1);\
+streamer streamer_2(endianness::little_endian);\
+VerifyWrite_impl(test_struct, test_cdr, streamer_2);\
+}
 
 TEST_F(Regression, d_header_insertion)
 {
@@ -96,7 +100,7 @@ TEST_F(Regression, d_header_insertion)
 
   s_2 model({s_1({"",""}),s_1({"",""})});
 
-  readwrite_test(model, d_hdr_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(model, d_hdr_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, member_completeness_unions)
@@ -114,7 +118,7 @@ TEST_F(Regression, member_completeness_unions)
   v.u(u);
   s_u model(v);
 
-  readwrite_test(model, union_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(model, union_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, optional_of_typedef)
@@ -132,14 +136,14 @@ TEST_F(Regression, optional_of_typedef)
   s_o     s_1;  //optional of primitive
   s_o_td  s_2;  //optional of typedeffed primitive
 
-  readwrite_test(s_1, s_o_absent_bytes, xcdr_v2_stream(endianness::little_endian));
-  readwrite_test(s_2, s_o_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s_1, s_o_absent_bytes, xcdr_v2_stream);
+  readwrite_test(s_2, s_o_absent_bytes, xcdr_v2_stream);
 
   s_1.c() = 0x12345678;
   s_2.c() = s_1.c();
 
-  readwrite_test(s_1, s_o_present_bytes, xcdr_v2_stream(endianness::little_endian));
-  readwrite_test(s_2, s_o_present_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s_1, s_o_present_bytes, xcdr_v2_stream);
+  readwrite_test(s_2, s_o_present_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, optionals_delimiters_unbalance)
@@ -175,20 +179,20 @@ TEST_F(Regression, optionals_delimiters_unbalance)
 
   s_o_2 s;
 
-  readwrite_test(s, s_o_2_all_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, s_o_2_all_absent_bytes, xcdr_v2_stream);
 
   s.d() = 187;
 
-  readwrite_test(s, s_o_2_c_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, s_o_2_c_absent_bytes, xcdr_v2_stream);
 
   s.d().reset();
   s.c() = 170;
 
-  readwrite_test(s, s_o_2_d_absent_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, s_o_2_d_absent_bytes, xcdr_v2_stream);
 
   s.d() = 187;
 
-  readwrite_test(s, s_o_2_all_present_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, s_o_2_all_present_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, propagate_xtypes_version_reqs)
@@ -222,22 +226,12 @@ TEST_F(Regression, delimiters_bitmask)
   s_bm1 s;
   s.c({b_0 | b_1, b_1 | b_2, b_2 | b_0});
 
-  readwrite_test(s, s_bm1_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, s_bm1_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, emumerators_properties)
 {
-  auto props = org::eclipse::cyclonedds::core::cdr::get_type_props<e1>();
-
-  EXPECT_EQ(props.e_ext, extensibility::ext_appendable);
-  EXPECT_EQ(props.e_bb, bb_8_bits);
-  EXPECT_TRUE(props.xtypes_necessary);
-  ASSERT_EQ(props.m_members_by_seq.size(), 1);
-  EXPECT_FALSE(bool(props.m_members_by_seq.front()));
-  ASSERT_EQ(props.m_members_by_id.size(), 1);
-  EXPECT_FALSE(bool(props.m_members_by_id.front()));
-  ASSERT_EQ(props.m_keys.size(), 1);
-  EXPECT_FALSE(bool(props.m_keys.front()));
+  EXPECT_EQ(org::eclipse::cyclonedds::core::cdr::get_bit_bound<e1>(), bb_8_bits);
 }
 
 TEST_F(Regression, delimiters_emumerators)
@@ -251,7 +245,7 @@ TEST_F(Regression, delimiters_emumerators)
   s_e1 s;
   s.c({e1::e_3, e1::e_1, e1::e_2});
 
-  readwrite_test(s, s_e1_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, s_e1_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, arrays_in_union_case)
@@ -271,8 +265,8 @@ TEST_F(Regression, arrays_in_union_case)
      'g', 'f', 'e'  /*W::d[1]*/
     };
 
-  readwrite_test(w_a, w_a_bytes, xcdr_v2_stream(endianness::little_endian));
-  readwrite_test(w_b, w_b_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(w_a, w_a_bytes, xcdr_v2_stream);
+  readwrite_test(w_b, w_b_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, direct_typedef_of_primitive)
@@ -285,7 +279,7 @@ TEST_F(Regression, direct_typedef_of_primitive)
     {0x05, 0x00, 0x00, 0x00, /*c.length(5)*/
      0x01, 0x00, 0x01, 0x00, 0x01, /*c.data*/
     };
-  readwrite_test(s, s_td_bool_seq_arr_bytes, basic_cdr_stream(endianness::little_endian));
+  readwrite_test(s, s_td_bool_seq_arr_bytes, basic_cdr_stream);
 }
 
 TEST_F(Regression, union_array_case)
@@ -306,7 +300,7 @@ TEST_F(Regression, direct_typedef_of_struct)
      'b',  /*u.c[0]*/
      'c',  /*u.c[1]*/
     };
-  readwrite_test(u, u_s_inner_bytes, basic_cdr_stream(endianness::little_endian));
+  readwrite_test(u, u_s_inner_bytes, basic_cdr_stream);
 }
 
 TEST_F(Regression, typedef_of_sequence_of_enums)
@@ -320,7 +314,7 @@ TEST_F(Regression, typedef_of_sequence_of_enums)
       0x02, 0x00, 0x00, 0x00, /*u.c.length(2)*/
       0x03, 0x02              /*u.c.data()*/
     };
-  readwrite_test(s, struct_seq_e1_bytes, xcdr_v2_stream(endianness::little_endian));
+  readwrite_test(s, struct_seq_e1_bytes, xcdr_v2_stream);
 }
 
 TEST_F(Regression, key_value_of_appendables)
@@ -339,4 +333,20 @@ TEST_F(Regression, key_value_of_appendables)
   EXPECT_EQ(0, memcmp(k, kh_f.value, 16));
   ASSERT_TRUE(to_key<s_appendable>(s_a, kh_a));
   EXPECT_EQ(0, memcmp(k, kh_a.value, 16));
+}
+
+TEST_F(Regression, memberless_struct)
+{
+  auto &props = get_type_props<s_memberless>();
+
+  xcdr_v1_stream v1(endianness::big_endian);
+  v1.set_mode(cdr_stream::stream_mode::read, false);
+  auto ptr1 = v1.first_entity(props.data());
+  EXPECT_EQ(ptr1, nullptr);
+
+
+  xcdr_v2_stream v2(endianness::big_endian);
+  v2.set_mode(cdr_stream::stream_mode::read, false);
+  auto ptr2 = v2.first_entity(props.data());
+  EXPECT_EQ(ptr2, nullptr);
 }

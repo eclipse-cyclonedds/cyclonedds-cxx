@@ -24,6 +24,7 @@
 #include "org/eclipse/cyclonedds/topic/TopicListener.hpp"
 
 #include <dds/dds.h>
+#include <functional>
 
 #define MAX_TOPIC_NAME_LEN 1024
 
@@ -307,7 +308,10 @@ dds::topic::detail::Topic<T>::discover_topic(
         const dds::core::Duration& timeout)
 {
     dds::topic::Topic<T> found = dds::core::null;
-    dds_entity_t ddsc_topic = dp.delegate()->lookup_topic(name, timeout);
+    std::unique_ptr<dds_typeinfo_t, std::function<void(dds_typeinfo_t *)> >
+      type_info(org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeInfo(nullptr),
+                [](dds_typeinfo_t *ti) { static_cast<void>(dds_free_typeinfo(ti)); });
+    dds_entity_t ddsc_topic = dp.delegate()->lookup_topic(name, type_info.get(), timeout);
 
     if (ddsc_topic <= 0) {
         return dds::core::null;

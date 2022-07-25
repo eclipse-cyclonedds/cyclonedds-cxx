@@ -561,7 +561,8 @@ static bool sc_struct(const idl_struct_t *str)
 bool is_selfcontained(const void *node)
 {
   if (idl_is_sequence(node)
-   || idl_is_string(node)) {
+   || idl_is_string(node)
+   || idl_is_optional(node)) {
     return false;
   } else if (idl_is_typedef(node)) {
     return is_selfcontained(((const idl_typedef_t*)node)->type_spec);
@@ -927,13 +928,21 @@ const char *str_tmpl = "std::string";
 const char *str_inc = "<string>";
 const char *bnd_str_tmpl = "std::string";
 const char *bnd_str_inc = "<string>";
+#if IDLCXX_USE_BOOST
+const char *opt_tmpl = "boost::optional";
+const char *opt_inc = "\"boost/optional.hpp\"";
+const char *uni_tmpl = "boost::variant";
+const char *uni_get_tmpl = "boost::get";
+const char *uni_inc = "\"boost/variant.hpp\"";
+#else
 const char *opt_tmpl = "std::optional";
 const char *opt_inc = "<optional>";
-const char *ext_tmpl = "dds::core::external";
-const char *ext_inc = "<dds/core/External.hpp>";
 const char *uni_tmpl = "std::variant";
 const char *uni_get_tmpl = "std::get";
 const char *uni_inc = "<variant>";
+#endif
+const char *ext_tmpl = "dds::core::external";
+const char *ext_inc = "<dds/core/External.hpp>";
 
 static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
 static const char *arr_flags[] = { "s", PRIu32, NULL };

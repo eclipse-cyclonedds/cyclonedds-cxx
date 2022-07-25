@@ -113,14 +113,23 @@ emit_traits(
     "{\n"
     "  return extensibility::ext_%2$s;\n"
     "}\n\n";
-  static const char *type_info_hdr1 =
+  static const char *type_info_decl1 =
     "#ifdef DDSCXX_HAS_TYPE_DISCOVERY\n"
-    "template<> const unsigned int TopicTraits<%1$s>::type_map_blob_sz = %2$u;\n"
-    "template<> const unsigned int TopicTraits<%1$s>::type_info_blob_sz = %3$u;\n"
-    "template<> const unsigned char TopicTraits<%1$s>::type_map_blob[] = {\n";
-  static const char *type_info_hdr2 =
-    " };\n"
-    "template<> const unsigned char TopicTraits<%1$s>::type_info_blob[] = {\n";
+    "template<> constexpr unsigned int TopicTraits<%1$s>::type_map_blob_sz() { return %2$u; }\n"
+    "template<> constexpr unsigned int TopicTraits<%1$s>::type_info_blob_sz() { return %3$u; }\n"
+    "template<> inline const uint8_t * TopicTraits<%1$s>::type_map_blob() {\n"
+    "  static const uint8_t blob[] = {\n";
+  static const char *type_info_decl2 =
+    "};\n"
+    "  return blob;\n"
+    "}\n"
+    "template<> inline const uint8_t * TopicTraits<%1$s>::type_info_blob() {\n"
+    "  static const uint8_t blob[] = {\n";
+  static const char *type_info_decl3 =
+    "};\n"
+    "  return blob;\n"
+    "}\n"
+    "#endif //DDSCXX_HAS_TYPE_DISCOVERY\n\n";
 
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0 ||
       idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)
@@ -151,11 +160,11 @@ emit_traits(
   idl_typeinfo_typemap_t blobs;
   if (gen->config && gen->config->generate_typeinfo_typemap && gen->config->generate_type_info) {
     if (gen->config->generate_typeinfo_typemap(pstate, (const idl_node_t*)node, &blobs) ||
-      idl_fprintf(gen->impl.handle, type_info_hdr1, name, blobs.typemap_size, blobs.typeinfo_size) < 0 ||
-      write_blob(gen->impl.handle, blobs.typemap, blobs.typemap_size) ||
-      idl_fprintf(gen->impl.handle, type_info_hdr2, name) < 0 ||
-      write_blob(gen->impl.handle, blobs.typeinfo, blobs.typeinfo_size) ||
-      idl_fprintf(gen->impl.handle, " };\n#endif //DDSCXX_HAS_TYPE_DISCOVERY\n\n") < 0)
+      idl_fprintf(gen->header.handle, type_info_decl1, name, blobs.typemap_size, blobs.typeinfo_size) < 0 ||
+      write_blob(gen->header.handle, blobs.typemap, blobs.typemap_size) ||
+      idl_fprintf(gen->header.handle, type_info_decl2, name) < 0 ||
+      write_blob(gen->header.handle, blobs.typeinfo, blobs.typeinfo_size) ||
+      idl_fprintf(gen->header.handle, "%s", type_info_decl3) < 0)
     ret = IDL_RETCODE_NO_MEMORY;
 
     //cleanup typeinfo_typemap blobs

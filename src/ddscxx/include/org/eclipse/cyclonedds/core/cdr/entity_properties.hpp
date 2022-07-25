@@ -15,10 +15,19 @@
 #include <dds/core/macros.hpp>
 #include <cstdint>
 #include <list>
+#include <vector>
 #include <map>
 #include <atomic>
 #include <mutex>
+
+#if DDSCXX_USE_BOOST
+#include <boost/type_traits.hpp>
+#define DDSCXX_STD_IMPL boost
+#else
 #include <type_traits>
+#define DDSCXX_STD_IMPL std
+#endif
+
 #include "cdr_enums.hpp"
 
 namespace org {
@@ -27,7 +36,7 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
-#define decl_ref_type(x) std::remove_cv_t<std::remove_reference_t<decltype(x)>>
+#define decl_ref_type(x) DDSCXX_STD_IMPL::remove_cv_t<DDSCXX_STD_IMPL::remove_reference_t<decltype(x)>>
 
 /**
  * @brief
@@ -52,9 +61,6 @@ enum bit_bound {
   bb_64_bits = 8
 };
 
-typedef struct entity_properties entity_properties_t;
-typedef std::list<entity_properties_t> proplist;
-
 /**
  * @brief
  * Helper struct to keep track of key endpoints of the a struct
@@ -69,6 +75,49 @@ DDSCXX_WARNING_MSVC_ON(4251)
 
 /**
  * @brief
+ * Primitive type/enum get_bit_bound function.
+ *
+ * Returns a bb_unset for all primitive types and enums.
+ * This function will be implemented for all enums with a manually defined bit_bound.
+ *
+ * @return The bit bound for the primitive type.
+ */
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_arithmetic<T>::value || std::is_enum<T>::value, bool> = true >
+bit_bound get_bit_bound() {
+  switch (sizeof(T)) {
+    case 1:
+      return bb_8_bits;
+      break;
+    case 2:
+      return bb_16_bits;
+      break;
+    case 4:
+      return bb_32_bits;
+      break;
+    case 8:
+      return bb_64_bits;
+      break;
+    default:
+      return bb_unset;
+  }
+}
+
+/**
+ * @brief
+ * Generic get_bit_bound fallback function.
+ *
+ * Returns a bb_unset for all non-primitive, non-enum types.
+ *
+ * @return bb_unset always.
+ */
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+constexpr bit_bound get_bit_bound() { return bb_unset;}
+
+typedef struct entity_properties entity_properties_t;
+typedef std::vector<entity_properties_t> propvec;
+
+/**
+ * @brief
  * Entity properties struct.
  *
  * This is a container for data fields inside message classes, both as a representation passed for writing
@@ -79,184 +128,120 @@ DDSCXX_WARNING_MSVC_ON(4251)
 struct OMG_DDS_API entity_properties
 {
   entity_properties(
+    uint32_t _depth = 0,
     uint32_t _m_id = 0,
-    bool _is_optional = false):
+    bool _is_optional = false,
+    bit_bound _bb = bb_unset,
+    extensibility _ext = extensibility::ext_final,
+    bool _must_understand = true):
+      e_ext(_ext),
       m_id(_m_id),
-      is_optional(_is_optional) {;}
+      depth(_depth),
+      must_understand(_must_understand),
+      xtypes_necessary(_ext != extensibility::ext_final || _is_optional),
+      is_optional(_is_optional),
+      e_bb(_bb) {;}
 
   extensibility e_ext = extensibility::ext_final; /**< The extensibility of the entity itself. */
   extensibility p_ext = extensibility::ext_final; /**< The extensibility of the entity's parent. */
-  size_t e_off = 0;                               /**< The current offset in the stream at which the member field starts, does not include header. */
-  uint32_t e_sz = 0;                              /**< The size of the current entity as member field (only used in reading from streams).*/
   uint32_t m_id = 0;                              /**< The member id of the entity, it is the global field by which the entity is identified. */
-  bool must_understand_local = false;             /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
-  bool must_understand_remote = false;            /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
+  uint32_t depth = 0;                             /**< The depth of this entity.*/
+  bool must_understand = false;                   /**< If the reading end cannot parse a field with this header, it must discard the entire object.*/
   bool xtypes_necessary = false;                  /**< Is set if any of the members of this entity require xtypes support.*/
   bool implementation_extension = false;          /**< Can be set in XCDR_v1 stream parameter list headers.*/
-  bool is_last = false;                           /**< Indicates terminating entry for reading/writing entities, will cause the current subroutine to end and decrement the stack.*/
   bool ignore = false;                            /**< Indicates that this field must be ignored.*/
   bool is_optional = false;                       /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
   bool is_key = false;                            /**< Indicates that this field is a key field.*/
   bool is_present = false;                        /**< Indicates that this entity is present in the read stream.*/
   bit_bound e_bb = bb_unset;                      /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
-  DDSCXX_WARNING_MSVC_OFF(4251)
-  proplist m_members_by_seq;                      /**< Fields in normal streaming mode, ordered by their declaration.*/
-  proplist m_members_by_id;                       /**< Fields in normal streaming mode, ordered by their member id.*/
-  proplist m_keys;                                /**< Fields in key streaming mode, ordered by their member id.*/
-  DDSCXX_WARNING_MSVC_ON(4251)
+  entity_properties_t  *next_on_level = nullptr,  /**< Pointer to the next entity on the same level.*/
+                       *prev_on_level = nullptr,  /**< Pointer to the previous entity on the same level.*/
+                       *parent        = nullptr,  /**< Pointer to the parent of this entity.*/
+                       *first_member  = nullptr;  /**< Pointer to the first entity which is a member of this entity.*/
 
   /**
    * @brief
-   * Conversion to boolean operator.
+   * Reset function.
    *
-   * Checks whether the is_last flag is NOT set.
-   * Exists to make iterating over lists of entity properties easier, as the last entry of a list should be
-   * the one that converts to 'false', and the rest are all 'true'.
+   * This function will reset the fields that may have been set through streaming (is_present).
    */
-  operator bool() const {return !is_last;}
+  void reset();
 
   /**
    * @brief
-   * Comparison operator.
+   * Print function.
    *
-   * @param[in] other The other entity to compare to.
-   *
-   * @return True when member and sequence ids are the same.
+   * This function write the contents (id, is_key, is_optional, must_understand, xtypes_necessary) of this entity to std::cout.
    */
-  bool operator==(const entity_properties_t &other) const {return m_id == other.m_id;}
+  void print() const;
 
   /**
    * @brief
-   * Comparison function.
+   * Checks whether this entity is not keyless.
    *
-   * Sorts by is_final and m_id, in that precedence.
-   * Used in sorting lists of entity_properties by member id, which makes lookup of the entity
-   * when receiving member id fields much quicker.
+   * This function will check all members (if any) and if any of them has the is_key flag set, this will return true.
+   * If none have this flag set, it will return false.
+   * Used in the finish function to finish the entire entity_properties_t tree.
    *
-   * @param[in] lhs First entity to be compared.
-   * @param[in] rhs Second entity to be compared.
-   *
-   * @return Whether lhs should be sorted before rhs.
+   * @return true if any of the members have a key, false otherwise.
    */
-  static bool member_id_comp(const entity_properties_t &lhs, const entity_properties_t &rhs);
+  bool has_keys() const;
 
   /**
    * @brief
-   * Finishing function.
+   * Sets is_key flags on members.
    *
-   * Generates the m_members_by_id and m_keys from m_members_by_seq and the supplied indices.
-   *
-   * @param[in] keys The indices of members which are keys.
+   * This function will set is_key flags on all members if the entity is keyless
+   * and will recursively call this on all members with the is_key flag set.
+   * Used in the finish function to finish the entire entity_properties_t tree.
    */
-  void finish(const key_endpoint &keys);
+  void set_key_values();
 
   /**
    * @brief
-   * Member property setting function.
+   * Removes all is_key flags from members.
    *
-   * Sets the m_id and is_optional values.
-   * Created to not have to have a constructor with a prohibitively large number of parameters.
-   *
-   * @param[in] member_id Sets the m_id field.
-   * @param[in] optional Sets the is_optional field.
+   * This function will set all is_key flags of members of this entity to false.
+   * Used in the finish function to finish the entire entity_properties_t tree.
    */
-  void set_member_props(uint32_t member_id, bool optional);
+  void erase_key_values();
 
   /**
    * @brief
-   * Entity printing function.
+   * Finishes a tree representing an entire datamodel.
    *
-   * Prints the following information of the entity:
-   * - m_id, s_id, (key)member status, which ordering is followed: sequence(declaration)/id
-   * - whether it is a list terminating entry
-   * - the extensibility of the parent and the entity itself
+   * This function will set the next_on_level and prev_on_level pointers to create a sub linked list
+   * of the members of the entity at that level. Also it will set the parent pointer of member entities
+   * and the first_member pointer of entities which have sub entities (members).
+   * When all this is done, it will take the key information in the key_endpoint map to (un)set the is_key
+   * flags on all members.
    *
-   * @param[in] recurse Whether to print its own children.
-   * @param[in] depth At which depth we are printing, determining the indentation at which is printed.
-   * @param[in] prefix Which prefix preceeds the printed entity information.
+   * @param[in, out] props The list of entities representing the datamodel.
+   * @param[in] keys The map of key indices.
    */
-  void print(bool recurse = true, size_t depth = 0, const char *prefix = "") const;
+  static void finish(propvec &props, const key_endpoint &keys);
 
   /**
    * @brief
-   * Xtypes requirement function.
+   * Appends a sub tree to the current tree as a member.
    *
-   * @return Whether this contains features that cannot be sent through basic cdr serialization.
+   * This function will take the contents of toappend, insert them at the end of appendto and increase the
+   * depth of all entities added. It is used to add a constructed type as a member of another constructed type.
+   *
+   * @param[in, out] appendto The tree to append to.
+   * @param[in] toappend The sub tree to append.
    */
-  bool requires_xtypes() const;
+  static void append_struct_contents(propvec &appendto, const propvec &toappend);
 
   /**
    * @brief
-   * Empties the instance.
-   */
-  void clear();
-private:
-
-  /**
-   * @brief
-   * Non-key member trimming function.
+   * Prints the contents of a tree representing a datatype to the screen.
    *
-   * Removes entries from the list of key members which do not have the is_key flag set.
-   * This is called recursively on all members of the key list m_keys.
+   * @param[in] in The tree to print.
    */
-  void trim_non_key_members();
-
-  /**
-   * @brief
-   * must_understand and is_key flag propagation function.
-   *
-   * Will set the is_key and must_understand flag on all members of entities which are themselves
-   * keys but themselves have no key members, indicating that the key stream for a this member is
-   * all members of this entity.
-   * This is called recursively on all members.
-   */
-  void propagate_flags();
-
-  /**
-   * @brief
-   * Other representations population function.
-   *
-   * Generates the m_members_by_id and m_keys representations from m_members_by_seq.
-   * Will discard unnecessary representations as indicated by to_keep.
-   * Is called recursively on all representations which are kept.
-   */
-  void populate_from_seq();
-
-  /**
-   * @brief
-   * Overwrites the existing key values.
-   *
-   * @param[in] endpoints A tree of indices indicating the which (sub)members are keys.
-   */
-  void set_key_values(const key_endpoint &endpoints);
+  static void print(const propvec &in);
 };
-
-/**
- * @brief
- * Shortcut for creating a property list final entry.
- *
- * Sets the is_last field to true.
- */
-struct OMG_DDS_API final_entry: public entity_properties_t {
-  final_entry(): entity_properties_t() {
-    is_last = true;
-  }
-};
-
-/**
- * @brief
- * Type properties getter function for basic types.
- *
- * @return entity_properties_t "Tree" representing the type.
- */
-template<typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true >
-entity_properties_t get_type_props() {
-  entity_properties_t props;
-  static_assert(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
-  props.e_bb = bit_bound(sizeof(T));
-  return props;
-}
 
 /**
  * @brief
@@ -266,21 +251,10 @@ entity_properties_t get_type_props() {
  * It generates a static container which is initialized the first time the function is called,
  * this is then returned.
  *
- * @return entity_properties_t "Tree" representing the type.
+ * @return propvec "Tree" representing the type.
  */
-template<typename T, std::enable_if_t<!std::is_arithmetic<T>::value, bool> = true >
-entity_properties_t get_type_props();
-
-/**
- * @brief
- * Forward declaration for bit bound property of enum classes.
- *
- * This function is implementated by each enum class that is encountered.
- *
- * @return bit_bound The bit bound for the indicated enum.
- */
-template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
-constexpr bit_bound get_enum_bit_bound();
+template<typename T>
+propvec& get_type_props();
 
 }
 }

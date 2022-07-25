@@ -190,7 +190,7 @@ TEST_F(FindTopic, discover_with_null)
 TEST_F(FindTopic, discover_with_empty)
 {
     dds::topic::Topic<Space::Type1> found = dds::core::null;
-    found = dds::topic::discover<dds::topic::Topic<Space::Type1> >(this->dp, std::string(TOPIC1_NAME_1));
+    found = dds::topic::discover<dds::topic::Topic<Space::Type1> >(this->dp, std::string(TOPIC1_NAME_1), dds::core::Duration::from_millisecs(10));
     ASSERT_EQ(found, dds::core::null);
 }
 
