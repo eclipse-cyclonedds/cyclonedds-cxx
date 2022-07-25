@@ -42,4 +42,9 @@ function(IDLCXX_GENERATE)
     SUFFIXES .hpp .cpp
     DEPENDS ${_idlcxx_depends}
   )
+  if(CYCLONEDDS_CXX_ENABLE_LEGACY)
+      target_include_directories(${IDLCXX_TARGET}
+          INTERFACE ${Boost_INCLUDE_DIR}
+      )
+  endif()
 endfunction()
