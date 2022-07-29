@@ -132,70 +132,16 @@ if(BUILD_DOCS)
   find_package(Doxygen REQUIRED)
 
   # Preprocess headers to make the documentation more readable.
-  set(script "${PROJECT_SOURCE_DIR}/src/ddscxx/documentation.cmake")
-  set(input_dir "${CMAKE_CURRENT_SOURCE_DIR}/include")
-  set(output_dir "${CMAKE_CURRENT_BINARY_DIR}/include")
-  file(GLOB_RECURSE headers RELATIVE "${input_dir}" CONFIGURE_DEPENDS "include/*.hpp")
-  foreach(header ${headers})
-    get_filename_component(directory ${header} DIRECTORY)
-    get_filename_component(filename ${header} NAME)
-    # Templates are documented. e.g. dds/sub/TQuery.hpp contains the code
-    # and documentation for a the dds::sub::Query class which is a typedef of
-    # dds::sub::detail::Query, which itself is a typedef to the delegate that
-    # implements the template. This must be hidden from the user, so replace
-    # the original header by that of the template and replace the typenames in
-    # the source file.
-    if(("${filename}" MATCHES "^T") AND
-       (NOT "${filename}" MATCHES "^(Topic|Time|Type)"))
-      string(SUBSTRING "${filename}" 1 -1 non_template)
-      list(APPEND rename "${directory}/${filename}:${directory}/${non_template}")
-      if(EXISTS "${input_dir}/${directory}/${non_template}")
-        list(APPEND remove "${directory}/${non_template}")
-      endif()
-    # Use file located in detail for Qoses (filename ends with Qos.hpp).
-    # Except TEntityQos.hpp, EntityQos container is not a real Qos and must
-    # not be treated as such.
-    elseif((filename MATCHES "Qos.hpp$") AND
-           (EXISTS "${input_dir}/${directory}/detail/${filename}"))
-      list(APPEND remove "${directory}/${filename}")
-      list(APPEND rename "${directory}/detail/${filename}:${header}")
-    endif()
-  endforeach()
-
-  foreach(header ${remove})
-    list(REMOVE_ITEM headers ${header})
-  endforeach()
-
-  set(input_files)
-  foreach(input ${headers})
-    set(output "${input}")
-    foreach(fromto ${rename})
-      if(fromto MATCHES "^${input}:")
-        string(REPLACE "${input}:" "" output "${fromto}")
-        break()
-      endif()
-    endforeach()
-    add_custom_command(
-      OUTPUT "${output_dir}/${output}"
-      COMMAND "${CMAKE_COMMAND}" -DINPUT_FILE="${input_dir}/${input}"
-                                 -DOUTPUT_DIRECTORY="${output_dir}"
-                                 -DOUTPUT_FILE="${output}"
-                                 -P "${script}"
-      DEPENDS "${input_dir}/${input}" "${script}")
-    list(APPEND input_files "${output_dir}/${output}")
-  endforeach()
-
-  set(DOXYGEN_PROJECT_NAME "Eclipse CycloneDDS C++ API Reference Guide")
-  set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_CURRENT_BINARY_DIR}/include")
+  set(DOXYGEN_PROJECT_NAME "Eclipse CycloneDDS CXX API Reference Guide")
+  set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include")
   set(DOXYGEN_EXCLUDE_PATTERNS
-    "*/include/dds/*/detail/*"
     "*/include/org/eclipse/*"
     "*/dds/core/xtypes/*")
-  set(DOXYGEN_GENERATE_HTML YES)
+  set(DOXYGEN_GENERATE_HTML NO)
   set(DOXYGEN_GENERATE_XML YES)
   set(DOXYGEN_MACRO_EXPANSION YES)
   set(DOXYGEN_PREDEFINED
     "DOXYGEN_FOR_ISOCPP=1"
     "OMG_DDS_API=")
-  doxygen_add_docs(ddscxx_api_docs ${input_files})
+  doxygen_add_docs(ddscxx_api_docs "include/")
 endif()

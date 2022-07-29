@@ -17,7 +17,7 @@ install(
   DESTINATION share/doc/cyclonedds-cxx)
 
 if(BUILD_DOCS)
-  find_package(Sphinx REQUIRED breathe exhale)
+  find_package(Sphinx REQUIRED breathe)
 
   sphinx_add_docs(
     docs
