@@ -74,17 +74,6 @@ void ignore(const dds::domain::DomainParticipant& dp, FwdIterator begin, FwdIter
  * dds::sub::matched_publication_data operation or to the read with instance
  * operation on the built-in reader for the “DCPSPublication” topic.
  *
- * @note Be aware that since InstanceHandle_t is an opaque datatype, it does not
- * necessarily mean that the handles obtained from the
- * get_matched_publications operation have the same value as the ones that
- * appear in the instance_handle field of the SampleInfo when retrieving the
- * publication info through corresponding "DCPSPublications" built-in reader. You
- * can’t just compare two handles to determine whether they represent the same
- * publication. If you want to know whether two handles actually do represent the
- * same publication, use both handles to retrieve their corresponding
- * PublicationBuiltinTopicData samples and then compare the key field of
- * both samples.
- *
  * The operation may fail if the infrastructure does not locally maintain the
  * connectivity information. This is the case when OpenSplice is configured not to
  * maintain discovery information in the Networking Service. (See the description for
@@ -127,17 +116,6 @@ matched_publications(const dds::sub::DataReader<T>& dr);
  * publication by passing its publication_handle to either the
  * dds::sub::matched_publication_data operation or to the read with instance
  * operation on the built-in reader for the “DCPSPublication” topic.
- *
- * @note Be aware that since InstanceHandle_t is an opaque datatype, it does not
- * necessarily mean that the handles obtained from the
- * get_matched_publications operation have the same value as the ones that
- * appear in the instance_handle field of the SampleInfo when retrieving the
- * publication info through corresponding "DCPSPublications" built-in reader. You
- * can’t just compare two handles to determine whether they represent the same
- * publication. If you want to know whether two handles actually do represent the
- * same publication, use both handles to retrieve their corresponding
- * PublicationBuiltinTopicData samples and then compare the key field of
- * both samples.
  *
  * The operation may fail if the infrastructure does not locally maintain the
  * connectivity information. This is the case when OpenSplice is configured not to

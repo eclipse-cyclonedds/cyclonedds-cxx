@@ -72,17 +72,6 @@ void ignore(const dds::domain::DomainParticipant& dp, FwdIterator begin, FwdIter
  * dds::pub::matched_subscription_data operation or to the read with instance
  * operation on the built-in reader for the “DCPSSubscription” topic.
  *
- * @note Be aware that since InstanceHandle is an opaque datatype, it does not
- * necessarily mean that the handles obtained from the
- * matched_subscriptions operation have the same value as the ones that
- * appear in the instance_handle field of the SampleInfo when retrieving the
- * subscription info through corresponding "DCPSSubscriptions" built-in reader. You
- * can’t just compare two handles to determine whether they represent the same
- * subscription. If you want to know whether two handles actually do represent the
- * same subscription, use both handles to retrieve their corresponding
- * SubscriptionBuiltinTopicData samples and then compare the key field of
- * both samples.
- *
  * The operation may fail if the infrastructure does not locally maintain the
  * connectivity information. This is the case when OpenSplice is configured not to
  * maintain discovery information in the Networking Service. (See the description for
@@ -125,17 +114,6 @@ matched_subscriptions(const dds::pub::DataWriter<T>& dw);
  * subscription by passing its subscription_handle to either the
  * dds::pub::matched_subscription_data operation or to the read with instance
  * operation on the built-in reader for the “DCPSSubscription” topic.
- *
- * @note Be aware that since InstanceHandle is an opaque datatype, it does not
- * necessarily mean that the handles obtained from the
- * matched_subscriptions operation have the same value as the ones that
- * appear in the instance_handle field of the SampleInfo when retrieving the
- * subscription info through corresponding "DCPSSubscriptions" built-in reader. You
- * can’t just compare two handles to determine whether they represent the same
- * subscription. If you want to know whether two handles actually do represent the
- * same subscription, use both handles to retrieve their corresponding
- * SubscriptionBuiltinTopicData samples and then compare the key field of
- * both samples.
  *
  * The operation may fail if the infrastructure does not locally maintain the
  * connectivity information. This is the case when OpenSplice is configured not to
