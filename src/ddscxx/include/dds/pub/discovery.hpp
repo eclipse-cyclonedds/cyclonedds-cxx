@@ -72,13 +72,6 @@ void ignore(const dds::domain::DomainParticipant& dp, FwdIterator begin, FwdIter
  * dds::pub::matched_subscription_data operation or to the read with instance
  * operation on the built-in reader for the “DCPSSubscription” topic.
  *
- * The operation may fail if the infrastructure does not locally maintain the
- * connectivity information. This is the case when OpenSplice is configured not to
- * maintain discovery information in the Networking Service. (See the description for
- * the NetworkingService/Discovery/enabled property in the Deployment
- * Manual for more information about this subject.) In such cases the operation will
- * throw UnsupportedError.
- *
  * See @ref DCPS_Builtin_Topics "Builtin Topics" for more information.
  *
  * @param dw        the DataWriter
@@ -114,13 +107,6 @@ matched_subscriptions(const dds::pub::DataWriter<T>& dw);
  * subscription by passing its subscription_handle to either the
  * dds::pub::matched_subscription_data operation or to the read with instance
  * operation on the built-in reader for the “DCPSSubscription” topic.
- *
- * The operation may fail if the infrastructure does not locally maintain the
- * connectivity information. This is the case when OpenSplice is configured not to
- * maintain discovery information in the Networking Service. (See the description for
- * the NetworkingService/Discovery/enabled property in the Deployment
- * Manual for more information about this subject.) In such cases the operation will
- * throw UnsupportedError.
  *
  * See @ref DCPS_Builtin_Topics "Builtin Topics" for more information.
  *
