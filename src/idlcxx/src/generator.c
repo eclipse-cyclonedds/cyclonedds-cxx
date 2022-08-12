@@ -737,6 +737,13 @@ register_types(
   (void)revisit;
   (void)path;
 
+  if (idl_is_typedef(node))
+  {
+    const idl_typedef_t *td = node;
+    if (idl_is_array(td->declarators))
+      gen->uses_array = true;
+  }
+
   if (idl_is_array(node))
     gen->uses_array = true;
 
