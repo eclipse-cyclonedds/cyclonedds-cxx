@@ -55,7 +55,14 @@ org::eclipse::cyclonedds::core::cond::WaitSetDelegate::close()
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
 
-    conditions_.clear ();
+
+    ConditionSeq cond_seq;
+    for(const auto & cond : conditions_) {
+      cond_seq.push_back(cond.second);
+    }
+    for(const auto & cond : cond_seq) {
+      cond.delegate()->remove_waitset(this);
+    }
 
     org::eclipse::cyclonedds::core::DDScObjectDelegate::close();
 }
@@ -66,7 +73,9 @@ org::eclipse::cyclonedds::core::cond::WaitSetDelegate::wait(
     const dds::core::Duration& timeout)
 {
     dds_duration_t c_timeout = org::eclipse::cyclonedds::core::convertDuration(timeout);
+    org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     const size_t sz = conditions_.size();
+    scopedLock.unlock();
     dds_attach_t * attach = new dds_attach_t[sz];
     memset (attach, 0, sizeof(dds_attach_t) * sz);
 
@@ -119,51 +128,61 @@ void
 org::eclipse::cyclonedds::core::cond::WaitSetDelegate::attach_condition(
         const dds::core::cond::Condition & cond)
 {
-    dds_return_t ret;
-    org::eclipse::cyclonedds::core::cond::ConditionDelegate *cond_delegate;
-    ConstConditionIterator cond_it;
-
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-
-    cond_delegate = cond.delegate().get();
-
-    // Check if condition not already added (in accordance with specification
-    // adding a Condition that is already attached to the WaitSet has no effect)
-    cond_it = conditions_.find(cond_delegate);
-    if (cond_it == conditions_.end()) {
-        ret = dds_waitset_attach(this->ddsc_entity,
-                                cond.delegate()->get_ddsc_entity(),
-                                reinterpret_cast<dds_attach_t>(cond_delegate));
-
-        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to attach condition");
-
-        conditions_.insert(ConditionEntry(cond_delegate, cond));
-    }
+    cond.delegate()->add_waitset(cond, this);
 }
 
 bool
 org::eclipse::cyclonedds::core::cond::WaitSetDelegate::detach_condition(
         org::eclipse::cyclonedds::core::cond::ConditionDelegate * cond)
 {
-    dds_return_t ret;
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-    ConstConditionIterator cond_it;
-    bool result = false;
+    return cond->remove_waitset(this);
+}
 
-    // Check if condition was added (in accordance with specification
-    // this function returns false if condition was not attached)
-    cond_it = conditions_.find(cond);
-    if (cond_it != conditions_.end()) {
-        ret = dds_waitset_detach(
-                this->ddsc_entity, cond->get_ddsc_entity());
+// this will be called when holding the lock
+void
+org::eclipse::cyclonedds::core::cond::WaitSetDelegate::add_condition_locked(
+    const dds::core::cond::Condition& cond)
+{
+  dds_return_t ret;
+  org::eclipse::cyclonedds::core::cond::ConditionDelegate *cond_delegate;
+  ConstConditionIterator cond_it;
 
-        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to detach condition");
+  cond_delegate = cond.delegate().get();
 
-        conditions_.erase(cond);
-        result = true;
-    }
+  // Check if condition not already added (in accordance with specification
+  // adding a Condition that is already attached to the WaitSet has no effect)
+  cond_it = conditions_.find(cond_delegate);
+  if (cond_it == conditions_.end()) {
+    ret = dds_waitset_attach(this->ddsc_entity,
+                             cond.delegate()->get_ddsc_entity(),
+                             reinterpret_cast<dds_attach_t>(cond_delegate));
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to attach condition");
 
-    return result;
+    conditions_.insert(ConditionEntry(cond_delegate, cond));
+  }
+}
+
+// this will be called when holding the lock
+void
+org::eclipse::cyclonedds::core::cond::WaitSetDelegate::remove_condition_locked(
+    org::eclipse::cyclonedds::core::cond::ConditionDelegate *cond,
+    const dds_entity_t entity_handle)
+{
+  dds_return_t ret;
+  ConstConditionIterator cond_it;
+  // Check if condition was added (in accordance with specification
+  // this function returns false if condition was not attached)
+  cond_it = conditions_.find(cond);
+  if (cond_it != conditions_.end()) {
+    ret = dds_waitset_detach(
+        this->ddsc_entity,
+        (entity_handle == DDS_HANDLE_NIL) ? cond->get_ddsc_entity() : entity_handle);
+
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to detach condition");
+    conditions_.erase(cond);
+  }
 }
 
 org::eclipse::cyclonedds::core::cond::WaitSetDelegate::ConditionSeq&
