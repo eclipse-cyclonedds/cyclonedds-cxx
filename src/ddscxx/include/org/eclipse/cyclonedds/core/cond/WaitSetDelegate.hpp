@@ -81,6 +81,10 @@ DDSCXX_WARNING_MSVC_OFF(4251)
 
         void attach_condition (const dds::core::cond::Condition & cond);
         bool detach_condition (org::eclipse::cyclonedds::core::cond::ConditionDelegate * cond);
+        void add_condition_locked(const dds::core::cond::Condition& cond);
+        void remove_condition_locked(org::eclipse::cyclonedds::core::cond::ConditionDelegate *cond,
+                                     const dds_entity_t entity_handle = DDS_HANDLE_NIL);
+
         ConditionSeq & conditions (ConditionSeq & conds) const;
 
     private:
