@@ -23,6 +23,8 @@
 #define TA_ATTACH_CLOSE_READER     "close_reader"
 #define TA_ADD_GUARD_CONDITION     "add_guard_condition"
 #define TA_WAITSET_DESTRUCTOR      "waitset_destructor"
+#define TA_CLOSE_STATUS_CONDITION  "close_status_condition"
+#define TA_CLOSE_READ_CONDITION    "close_read_condition"
 
 
 class StatusCondHandler
@@ -116,6 +118,7 @@ struct action_thread_args {
     dds::core::cond::WaitSet * waitSet;
     dds::core::cond::GuardCondition * guard;
     dds::core::cond::StatusCondition * readerStatus;
+    dds::sub::cond::ReadCondition * readCondition;
     dds::sub::DataReader<Space::Type1> * reader;
     dds::pub::DataWriter<Space::Type1> * writer;
     test_semaphore * semStart;
@@ -126,6 +129,7 @@ struct action_thread_args {
                           waitSet(nullptr),
                           guard(nullptr),
                           readerStatus(nullptr),
+                          readCondition(nullptr),
                           reader(nullptr),
                           writer(nullptr),
                           semStart(nullptr),
@@ -252,6 +256,10 @@ static uint32_t test_action_thread(void *arg)
             // ws += queryCond;
 
             test_sem_post(args->semReady);
+        } else if (args->action == TA_CLOSE_STATUS_CONDITION) {
+          args->readerStatus->delegate()->close();
+        } else if (args->action == TA_CLOSE_READ_CONDITION) {
+          args->readCondition->delegate()->close();
         }
     }
     catch (const dds::core::Exception& e) {
@@ -352,6 +360,9 @@ public:
         // Init guardcondition
         guard.handler(guardCondHandler);
 
+        // init read condition
+        readerCond = dds::sub::cond::ReadCondition(reader, dds::sub::status::DataState::any_data());
+
         // Thread init
         writerThreadArgs.writer = &writer;
 
@@ -361,6 +372,7 @@ public:
         actionThreadArgs.waitSet = &waitSet;
         actionThreadArgs.guard = &guard;
         actionThreadArgs.readerStatus = &readerStatus;
+        actionThreadArgs.readCondition = &readerCond;
         actionThreadArgs.reader = &reader;
         actionThreadArgs.writer = &writer;
         actionThreadArgs.semStart = &start_sem;
@@ -817,10 +829,8 @@ TEST_F(WaitSet, destructor)
 
 /**
  * Check that it is possible to remove and attach multiple conditions while waiting
- *
- * TODO: disabled because the conditions are currently not removed from the waitset
  */
-TEST_F(WaitSet, DISABLED_attach_detach_multiple_during_wait)
+TEST_F(WaitSet, attach_detach_multiple_during_wait)
 {
     reader.take();
     waitSet = dds::core::cond::WaitSet();
@@ -833,16 +843,25 @@ TEST_F(WaitSet, DISABLED_attach_detach_multiple_during_wait)
     waitSet += guard;
 
     // Attach read condition
-    dds::sub::status::DataState anyDataState;
-    dds::sub::cond::ReadCondition readCond(reader, anyDataState);
-    waitSet += readCond;
+    waitSet += readerCond;
 
+    // query condition is not supported
     // Attach query condition
-    std::vector<std::string> params;
-    params.push_back("0");
-    dds::sub::Query query(reader, "long_1 > %0", params);
-    dds::sub::cond::QueryCondition queryCond(query, anyDataState);
-    waitSet += queryCond;
+    //    std::vector<std::string> params;
+    //    params.push_back("0");
+    //    dds::sub::Query query(reader, "long_1 > %0", params);
+    //    dds::sub::cond::QueryCondition queryCond(query, anyDataState);
+    //    waitSet += queryCond;
+
+    // check the attached conditions
+    dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.conditions();
+    ASSERT_EQ(conditionList.size(), 3) << "Incorrect number of attached conditions";
+    ASSERT_TRUE(std::find(conditionList.begin(), conditionList.end(), guard)
+              != conditionList.end()) << "Expected guard condition";
+    ASSERT_TRUE(std::find(conditionList.begin(), conditionList.end(), readerStatus)
+              != conditionList.end()) << "Expected status condition";
+    ASSERT_TRUE(std::find(conditionList.begin(), conditionList.end(), readerCond)
+              != conditionList.end()) << "Expected read condition";
 
     // Create thread to close reader, which should remove read/query/status
     // conditions from the WaitSet. Next the thread triggers the guard condition
@@ -852,7 +871,7 @@ TEST_F(WaitSet, DISABLED_attach_detach_multiple_during_wait)
 
     // Wait
     dds::core::Duration waitTimeout(1, 0);
-    dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
+    conditionList = waitSet.wait(waitTimeout);
 
     // Check if correct condition triggered
     ASSERT_EQ(conditionList.size(), 1) << "Incorrect number of triggered conditions";
@@ -880,7 +899,7 @@ TEST_F(WaitSet, DISABLED_attach_detach_multiple_during_wait)
  *     1. Status Condition is create and initialized with StatusMask::none()
  *     2. Specific status mask is enabled on status condition (requested_incompatible_qos())
  *     3. Status condition is attached to the waitset
- *     4. The test checks for the trigger for an event which happend before enabling the status mask
+ *     4. The test checks for the trigger for an event which happened before enabling the status mask
  */
 TEST_F(WaitSet, status_condition_trigger)
 {
@@ -928,4 +947,131 @@ TEST_F(WaitSet, status_condition_trigger)
 
   EXPECT_EQ(dr.requested_incompatible_qos_status().total_count(), 1);
   EXPECT_EQ(dw.offered_incompatible_qos_status().total_count(), 1);
+}
+
+/**
+ * Check that it is possible to close the conditions while waiting and then waitset
+ * automatically detaches the conditions from the waitset
+ */
+TEST_F(WaitSet, close_during_wait)
+{
+  // close read condition
+  {
+    waitSet = dds::core::cond::WaitSet();
+    auto readCondition = dds::sub::cond::ReadCondition(reader,
+                                                       dds::sub::status::DataState::any_data());
+    EXPECT_NO_THROW(waitSet.attach_condition(readCondition));
+
+    // close the read condition while waiting
+    actionThreadArgs.action = TA_CLOSE_READ_CONDITION;
+    actionThreadArgs.readCondition = &readCondition;
+    ddsrt_thread_create(&threadId, "test_action_thread",
+                        &threadAttr, test_action_thread, &actionThreadArgs);
+
+    // since there is no data, waiting for data should result in timeout
+    EXPECT_THROW(waitSet.wait(dds::core::Duration(2,0)), dds::core::TimeoutError);
+
+    // closing the reader should detach the conditions from the waitset
+    auto conditionList = waitSet.conditions();
+    EXPECT_EQ(conditionList.size(), 0);
+    ddsrt_thread_join(threadId, nullptr);
+  }
+
+  // can't really close a status condition, enable the test after the fix
+// close status condition
+//  {
+//    waitSet = dds::core::cond::WaitSet();
+//    auto statusCondition = dds::core::cond::StatusCondition(reader);
+//    statusCondition.enabled_statuses(dds::core::status::StatusMask::none());
+//    waitSet.attach_condition(statusCondition);
+//
+//    // close the read condition while waiting
+//    actionThreadArgs.action = TA_CLOSE_STATUS_CONDITION;
+//    actionThreadArgs.readerStatus = &statusCondition;
+//    ddsrt_thread_create(&threadId, "test_action_thread",
+//                        &threadAttr, test_action_thread, &actionThreadArgs);
+//
+//    // since there is no data, waiting for data should result in timeout
+//    EXPECT_THROW(waitSet.wait(dds::core::Duration(2,0)), dds::core::TimeoutError);
+//
+//    // closing the reader should detach the conditions from the waitset
+//    auto conditionList = waitSet.conditions();
+//    EXPECT_EQ(conditionList.size(), 0);
+//    ddsrt_thread_join(threadId, nullptr);
+//  }
+
+  // close only one condition
+  {
+    waitSet = dds::core::cond::WaitSet();
+    auto statusCondition = dds::core::cond::StatusCondition(reader);
+    statusCondition.enabled_statuses(dds::core::status::StatusMask::data_available());
+    auto readCondition = dds::sub::cond::ReadCondition(reader,
+                                                       dds::sub::status::DataState::any_data());
+    EXPECT_NO_THROW(waitSet.attach_condition(statusCondition));
+    EXPECT_NO_THROW(waitSet.attach_condition(readCondition));
+
+    // close the read condition while waiting
+    actionThreadArgs.action = TA_CLOSE_READ_CONDITION;
+    actionThreadArgs.readerStatus = &statusCondition;
+    actionThreadArgs.readCondition = &readCondition;
+    ddsrt_thread_create(&threadId, "test_action_thread",
+                        &threadAttr, test_action_thread, &actionThreadArgs);
+
+    // since there is no data, waiting for data should result in timeout
+    EXPECT_THROW(waitSet.wait(dds::core::Duration(2,0)), dds::core::TimeoutError);
+
+    // closing the reader should detach the conditions from the waitset
+    auto conditionList = waitSet.conditions();
+    ASSERT_EQ(conditionList.size(), 1);
+    EXPECT_EQ(conditionList[0], statusCondition);
+    ddsrt_thread_join(threadId, nullptr);
+  }
+
+  // close the reader
+  {
+    waitSet = dds::core::cond::WaitSet();
+    EXPECT_NO_THROW(waitSet.attach_condition(readerCond));
+    EXPECT_NO_THROW(waitSet.attach_condition(readerStatus));
+
+    // write data
+    Space::Type1 sample(1, 2, 3);
+    writer.write(sample);
+
+    // wait for the data
+    EXPECT_NO_THROW(waitSet.wait(dds::core::Duration(1,0)));
+
+    // take data
+    auto samples = reader.take();
+    ASSERT_EQ(samples.length(), 1);
+    ASSERT_TRUE(samples.begin()->info().valid());
+    EXPECT_EQ(samples.begin()->data().long_1(), 1);
+
+    // close the reader while waiting
+    actionThreadArgs.action = TA_ATTACH_CLOSE_READER;
+    ddsrt_thread_create(&threadId, "test_action_thread",
+                        &threadAttr, test_action_thread, &actionThreadArgs);
+
+    // since there is no data, waiting for data should result in timeout
+    EXPECT_THROW(waitSet.wait(dds::core::Duration(2,0)), dds::core::TimeoutError);
+
+    // closing the reader should detach the conditions from the waitset
+    auto conditionList = waitSet.conditions();
+    EXPECT_EQ(conditionList.size(), 0);
+    ddsrt_thread_join(threadId, nullptr);
+  }
+}
+
+TEST_F(WaitSet, detach_after_close)
+{
+  waitSet = dds::core::cond::WaitSet();
+  auto readCondition = dds::sub::cond::ReadCondition(reader,
+                                                     dds::sub::status::DataState::any_data());
+  EXPECT_NO_THROW(waitSet.attach_condition(readCondition));
+  // close the read condition
+  EXPECT_NO_THROW(readCondition.delegate()->close());
+  EXPECT_THROW(readCondition->get_ddsc_entity(), dds::core::AlreadyClosedError);
+  // closing the condition, should automatically detach it from waitset
+  EXPECT_EQ(waitSet.conditions().size(), 0);
+  // detach the closed condition, which should fail returning false
+  EXPECT_FALSE(waitSet.detach_condition(readCondition));
 }
