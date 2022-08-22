@@ -53,7 +53,15 @@ org::eclipse::cyclonedds::core::cond::StatusConditionDelegate::close()
 {
     /* todo: cannot close this->ddsc_entity because this is the parent EntityDelegate;
         find better solution to get correct feedback when closed StatusCondition is used */
-    this->ddsc_entity = 0;
+
+    // detach the condition from any waitset
+    this->check();
+    org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
+    ConditionDelegate::detach_from_waitset(ddsc_entity);
+    // set the entity to 0
+    this->ddsc_entity = DDS_HANDLE_NIL;
+    // but don't close the entity as it is the parent entity (fix this above as per above todo)
+    // ConditionDelegate::close(ddsc_entity);
 }
 
 void
