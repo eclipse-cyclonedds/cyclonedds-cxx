@@ -54,6 +54,7 @@ class OMG_DDS_API ConditionDelegate :
                       public virtual org::eclipse::cyclonedds::core::DDScObjectDelegate
 {
 public:
+    typedef std::set<WaitSetDelegate *> waitset_list_type;
     typedef ::dds::core::smart_ptr_traits< ConditionDelegate >::ref_type
                                                                       ref_type;
     typedef ::dds::core::smart_ptr_traits< ConditionDelegate >::weak_ref_type
@@ -65,7 +66,7 @@ public:
 
     void init(ObjectDelegate::weak_ref_type weak_ref);
 
-    void close();
+    void close(const dds_entity_t entity_handle = DDS_HANDLE_NIL);
 
     virtual bool trigger_value() const = 0;
 
@@ -86,9 +87,21 @@ public:
 
     virtual void dispatch();
 
+    virtual void add_waitset(
+        const dds::core::cond::TCondition<ConditionDelegate> & cond,
+        org::eclipse::cyclonedds::core::cond::WaitSetDelegate *waitset);
+
+    virtual bool remove_waitset(
+        org::eclipse::cyclonedds::core::cond::WaitSetDelegate *waitset);
+
+    virtual void detach_from_waitset(
+        const dds_entity_t entity_handle);
+
     dds::core::cond::TCondition<ConditionDelegate> wrapper();
 
 private:
+    waitset_list_type waitSetList;
+    org::eclipse::cyclonedds::core::Mutex waitSetListUpdateMutex;
     org::eclipse::cyclonedds::core::cond::FunctorHolderBase *myFunctor;
 };
 

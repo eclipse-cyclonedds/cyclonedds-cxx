@@ -39,17 +39,38 @@ org::eclipse::cyclonedds::core::cond::ConditionDelegate::~ConditionDelegate()
     // sure that functor is delete here
     if (this->myFunctor) {
         delete this->myFunctor;
+        this->myFunctor = nullptr;
     }
 }
 
 void
-org::eclipse::cyclonedds::core::cond::ConditionDelegate::close()
+org::eclipse::cyclonedds::core::cond::ConditionDelegate::detach_from_waitset(
+    const dds_entity_t entity_handle) {
+    std::vector<WaitSetDelegate *> waitset_list_tmp;
+    org::eclipse::cyclonedds::core::ScopedMutexLock scopedLock(this->waitSetListUpdateMutex);
+    waitset_list_tmp.assign(this->waitSetList.begin(), this->waitSetList.end());
+    scopedLock.unlock();
+
+    for (auto waitset : waitset_list_tmp) {
+        org::eclipse::cyclonedds::core::ScopedObjectLock scopedWaisetLock(*waitset);
+        if (this->waitSetList.erase(waitset)) {
+            waitset->remove_condition_locked(this, entity_handle);
+       }
+    }
+}
+
+void
+org::eclipse::cyclonedds::core::cond::ConditionDelegate::close(
+    const dds_entity_t entity_handle)
 {
+    // detach the condition from any waitsets
+    detach_from_waitset(entity_handle);
+    // close the condition
     DDScObjectDelegate::close();
 
     if (this->myFunctor) {
         delete this->myFunctor;
-        this->myFunctor = NULL;
+        this->myFunctor = nullptr;
     }
 }
 
@@ -84,6 +105,36 @@ org::eclipse::cyclonedds::core::cond::ConditionDelegate::dispatch()
                                                        cond = this->wrapper();
         this->myFunctor->dispatch(cond);
     }
+}
+
+void
+org::eclipse::cyclonedds::core::cond::ConditionDelegate::add_waitset(
+    const dds::core::cond::TCondition<ConditionDelegate> & cond,
+    org::eclipse::cyclonedds::core::cond::WaitSetDelegate *waitset)
+{
+    org::eclipse::cyclonedds::core::ScopedMutexLock scopedLock(this->waitSetListUpdateMutex);
+
+    // Insert waitset to the list and attach the condition
+    if (this->waitSetList.insert(waitset).second) {
+        waitset->add_condition_locked(cond);
+    }
+}
+
+bool
+org::eclipse::cyclonedds::core::cond::ConditionDelegate::remove_waitset(
+    org::eclipse::cyclonedds::core::cond::WaitSetDelegate *waitset)
+{
+    bool ret = false;
+    org::eclipse::cyclonedds::core::ScopedMutexLock scopedLock(this->waitSetListUpdateMutex);
+
+    // remove the waitset from the list and detach the condition
+    if (this->waitSetList.erase(waitset)) {
+        waitset->remove_condition_locked(this);
+        ret = true;
+    }
+    // since the API expects to return false even in cases when condition was not attached to
+    // waitset
+  return ret;
 }
 
 dds::core::cond::TCondition<org::eclipse::cyclonedds::core::cond::ConditionDelegate>
