@@ -36,9 +36,9 @@ org::eclipse::cyclonedds::core::cond::GuardConditionDelegate::~GuardConditionDel
 void
 org::eclipse::cyclonedds::core::cond::GuardConditionDelegate::close()
 {
+    this->check();
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-
-    ConditionDelegate::close();
+    ConditionDelegate::close(ddsc_entity);
 }
 
 
