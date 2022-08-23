@@ -48,13 +48,14 @@ namespace core
 namespace cond
 {
 
+DDSCXX_WARNING_MSVC_OFF(4251)
+
 class WaitSetDelegate;
 
 class OMG_DDS_API ConditionDelegate :
                       public virtual org::eclipse::cyclonedds::core::DDScObjectDelegate
 {
 public:
-    typedef std::set<WaitSetDelegate *> waitset_list_type;
     typedef ::dds::core::smart_ptr_traits< ConditionDelegate >::ref_type
                                                                       ref_type;
     typedef ::dds::core::smart_ptr_traits< ConditionDelegate >::weak_ref_type
@@ -100,10 +101,12 @@ public:
     dds::core::cond::TCondition<ConditionDelegate> wrapper();
 
 private:
-    waitset_list_type waitSetList;
+    std::set<WaitSetDelegate *> waitSetList;
     org::eclipse::cyclonedds::core::Mutex waitSetListUpdateMutex;
     org::eclipse::cyclonedds::core::cond::FunctorHolderBase *myFunctor;
 };
+
+DDSCXX_WARNING_MSVC_ON(4251)
 
 }
 }
