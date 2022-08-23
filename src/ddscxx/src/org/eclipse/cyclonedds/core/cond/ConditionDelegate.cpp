@@ -47,24 +47,33 @@ void
 org::eclipse::cyclonedds::core::cond::ConditionDelegate::detach_from_waitset(
     const dds_entity_t entity_handle) {
     std::vector<WaitSetDelegate *> waitset_list_tmp;
-    org::eclipse::cyclonedds::core::ScopedMutexLock scopedLock(this->waitSetListUpdateMutex);
+    org::eclipse::cyclonedds::core::ScopedMutexLock scopedLockForCopy(this->waitSetListUpdateMutex);
     waitset_list_tmp.assign(this->waitSetList.begin(), this->waitSetList.end());
-    scopedLock.unlock();
+    scopedLockForCopy.unlock();
 
     for (auto waitset : waitset_list_tmp) {
         org::eclipse::cyclonedds::core::ScopedObjectLock scopedWaisetLock(*waitset);
-        if (this->waitSetList.erase(waitset)) {
-            waitset->remove_condition_locked(this, entity_handle);
-       }
+        {
+            org::eclipse::cyclonedds::core::ScopedMutexLock scopedLock(this->waitSetListUpdateMutex);
+            // remove the waitset from the list and detach the condition
+            if (this->waitSetList.erase(waitset)) {
+                waitset->remove_condition_locked(this, entity_handle);
+            }
+        }
     }
 }
 
 void
-org::eclipse::cyclonedds::core::cond::ConditionDelegate::close(
+org::eclipse::cyclonedds::core::cond::ConditionDelegate::detach_and_close(
     const dds_entity_t entity_handle)
 {
-    // detach the condition from any waitsets
     detach_from_waitset(entity_handle);
+    org::eclipse::cyclonedds::core::cond::ConditionDelegate::close();
+}
+
+void
+org::eclipse::cyclonedds::core::cond::ConditionDelegate::close()
+{
     // close the condition
     DDScObjectDelegate::close();
 

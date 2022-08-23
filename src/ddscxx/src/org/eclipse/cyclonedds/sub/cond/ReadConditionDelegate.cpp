@@ -75,7 +75,7 @@ org::eclipse::cyclonedds::sub::cond::ReadConditionDelegate::close()
     this->check();
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     QueryDelegate::deinit();
-    ConditionDelegate::close(ddsc_entity);
+    ConditionDelegate::detach_and_close(ddsc_entity);
 }
 
 bool
