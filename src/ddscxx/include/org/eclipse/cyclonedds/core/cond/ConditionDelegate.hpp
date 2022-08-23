@@ -66,7 +66,7 @@ public:
 
     void init(ObjectDelegate::weak_ref_type weak_ref);
 
-    void close(const dds_entity_t entity_handle = DDS_HANDLE_NIL);
+    void close();
 
     virtual bool trigger_value() const = 0;
 
@@ -94,8 +94,8 @@ public:
     virtual bool remove_waitset(
         org::eclipse::cyclonedds::core::cond::WaitSetDelegate *waitset);
 
-    virtual void detach_from_waitset(
-        const dds_entity_t entity_handle);
+    virtual void detach_from_waitset(const dds_entity_t entity_handle);
+    virtual void detach_and_close(const dds_entity_t entity_handle);
 
     dds::core::cond::TCondition<ConditionDelegate> wrapper();
 

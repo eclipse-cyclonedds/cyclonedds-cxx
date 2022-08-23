@@ -61,7 +61,7 @@ org::eclipse::cyclonedds::core::cond::StatusConditionDelegate::close()
     // set the entity to 0
     this->ddsc_entity = DDS_HANDLE_NIL;
     // but don't close the entity as it is the parent entity (fix this above as per above todo)
-    // ConditionDelegate::close(ddsc_entity);
+    // ConditionDelegate::detach_and_close(ddsc_entity);
 }
 
 void
