@@ -14,6 +14,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cassert>
+#include <string>
 
 namespace org {
 namespace eclipse {
