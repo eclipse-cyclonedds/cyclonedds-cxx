@@ -161,13 +161,16 @@ emit_traits(
   if (gen->config && gen->config->generate_typeinfo_typemap && gen->config->generate_type_info) {
     if (gen->config->generate_typeinfo_typemap(pstate, (const idl_node_t*)node, &blobs))
       ret = IDL_RETCODE_NO_MEMORY;
-    else if (idl_fprintf(gen->header.handle, type_info_decl1, name, blobs.typemap_size, blobs.typeinfo_size) < 0 ||
-      write_blob(gen->header.handle, blobs.typemap, blobs.typemap_size) ||
-      idl_fprintf(gen->header.handle, type_info_decl2, name) < 0 ||
-      write_blob(gen->header.handle, blobs.typeinfo, blobs.typeinfo_size) ||
-      idl_fprintf(gen->header.handle, "%s", type_info_decl3) < 0)
+    else
     {
-      ret = IDL_RETCODE_NO_MEMORY;
+      if (idl_fprintf(gen->header.handle, type_info_decl1, name, blobs.typemap_size, blobs.typeinfo_size) < 0 ||
+        write_blob(gen->header.handle, blobs.typemap, blobs.typemap_size) ||
+        idl_fprintf(gen->header.handle, type_info_decl2, name) < 0 ||
+        write_blob(gen->header.handle, blobs.typeinfo, blobs.typeinfo_size) ||
+        idl_fprintf(gen->header.handle, "%s", type_info_decl3) < 0)
+      {
+        ret = IDL_RETCODE_NO_MEMORY;
+      }
       free (blobs.typemap);
       free (blobs.typeinfo);
     }
