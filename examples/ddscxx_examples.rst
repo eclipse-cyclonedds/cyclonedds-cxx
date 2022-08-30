@@ -17,5 +17,6 @@ Examples
    :caption: Contents:
 
    helloworld/readme
+   throughput/readme
 
 

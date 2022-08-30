@@ -26,3 +26,14 @@ install(
   COMPONENT dev)
 
 add_subdirectory(helloworld)
+
+install(
+  FILES throughput/publisher.cpp
+        throughput/subscriber.cpp
+        throughput/Throughput.idl
+        throughput/CMakeLists.txt
+        throughput/readme.rst
+  DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/throughput"
+  COMPONENT dev)
+
+add_subdirectory(throughput)
