@@ -24,7 +24,6 @@
 #include <dds/dds.h>
 #include <dds/ddsc/dds_loan_api.h>
 
-#include "dds/ddsi/ddsi_sertopic.h"
 #include "dds/ddsi/q_protocol.h"
 #include "dds/features.hpp"
 
