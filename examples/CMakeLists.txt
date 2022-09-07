@@ -37,3 +37,15 @@ install(
   COMPONENT dev)
 
 add_subdirectory(throughput)
+
+install(
+  FILES roundtrip/ping.cpp
+        roundtrip/ping.cpp
+        roundtrip/roundtrip_common.hpp
+        roundtrip/RoundTrip.idl
+        roundtrip/CMakeLists.txt
+        roundtrip/readme.rst
+  DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/throughput"
+  COMPONENT dev)
+
+add_subdirectory(roundtrip)

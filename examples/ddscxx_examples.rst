@@ -18,5 +18,6 @@ Examples
 
    helloworld/readme
    throughput/readme
+   roundtrip/readme
 
 
