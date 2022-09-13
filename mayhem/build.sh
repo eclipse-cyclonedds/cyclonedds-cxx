@@ -13,10 +13,11 @@
 #
 
 
-#build and install cyclonedds first.
+# clone, build, and install cyclonedds first.
 if [ -d cyclonedds ]; then rm -Rf cyclonedds; fi
 git clone https://github.com/mayhemheroes/cyclonedds.git
 cd cyclonedds
+# remove oss-fuzz dir since we don't need it. Create blank CMakeLists.txt
 rm -rf fuzz
 mkdir fuzz
 touch fuzz/CMakeLists.txt
@@ -35,8 +36,10 @@ cmake --build .
 cmake --build . --target install
 cd ..
 
+mkdir -p "$OUT/dds"
+cp -vr ./build/bin/* "$OUT/dds/"
 
-#back up to cxx root and build bindings
+# move back up to cxx root and build bindings
 cd ..
 
 if [ -d build ]; then rm -Rf build; fi
@@ -45,10 +48,12 @@ cd build
 cmake \
     -DBUILD_IDLLIB=ON \
     -DBUILD_SHARED_LIBS=ON \
-    -DBUILD_EXAMPLES=NO \
+    -DBUILD_EXAMPLES=ON \
     -DCMAKE_PREFIX_PATH="/usr/local" \
     -DCMAKE_INSTALL_PREFIX=/usr/local ..
 cmake --build .
 cmake --build . --target install
-cd ..
 
+cd ..
+mkdir -p "$OUT/ddscxx"
+cp -vr ./build/bin/* "$OUT/ddscxx/"

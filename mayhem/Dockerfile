@@ -21,6 +21,7 @@ COPY . cyclonedds-cxx
 
 COPY mayhem/build.sh $SRC
 WORKDIR $SRC/cyclonedds-cxx
+
 ENV FUZZING_LANGUAGE=c++ SANITIZER=address
 RUN compile
 
