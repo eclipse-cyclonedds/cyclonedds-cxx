@@ -12,29 +12,43 @@
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
 
-(
+
 #build and install cyclonedds first.
 if [ -d cyclonedds ]; then rm -Rf cyclonedds; fi
 git clone https://github.com/mayhemheroes/cyclonedds.git
 cd cyclonedds
+rm -rf fuzz
+mkdir fuzz
+touch fuzz/CMakeLists.txt
 
-if [ -d build ]; then rm -Rf build; fi
-./mayhem/build.sh
-
-#back up to cxx root.
+mkdir build
+cd build
+cmake \
+    -DBUILD_IDLC=ON \
+    -DBUILD_TESTING=NO \
+    -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_EXAMPLES=ON \
+    -DENABLE_SECURITY=ON \
+    -DENABLE_SSL=NO \
+    -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake --build .
+cmake --build . --target install
 cd ..
-rm -rf cyclonedds
+
+
+#back up to cxx root and build bindings
+cd ..
 
 if [ -d build ]; then rm -Rf build; fi
 mkdir build
 cd build
 cmake \
     -DBUILD_IDLLIB=ON \
-    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_SHARED_LIBS=ON \
     -DBUILD_EXAMPLES=NO \
     -DCMAKE_PREFIX_PATH="/usr/local" \
     -DCMAKE_INSTALL_PREFIX=/usr/local ..
 cmake --build .
 cmake --build . --target install
 cd ..
-)
+
