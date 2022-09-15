@@ -50,7 +50,7 @@ for Cyclone DDS or contribute to it you can follow different procedures.
 ### Build configuration
 
 There are some configuration options specified using CMake defines in addition to the standard options like `CMAKE_BUILD_TYPE`:
-* `-DBUILD_DDSLIB=OFF`: to disable DDS lib build, useful in crosscompiling scenarios where you need the generator be executable on the machine and the DDS LIB in another architecture build.
+* `-DBUILD_DDSLIB=OFF`: to disable DDS lib build, useful in crosscompiling scenarios where you only need the generator and use the DDS lib from another build.
 * `-DBUILD_IDLLIB=OFF`: to disable IDL preprocessor lib build
 * `-DBUILD_DOCS=ON`: to build the documentation
 * `-DBUILD_TESTING=ON`: to build the testing tree
