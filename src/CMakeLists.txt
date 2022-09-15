@@ -12,4 +12,6 @@
 if (BUILD_IDLLIB)
   add_subdirectory(idlcxx)
 endif()
-add_subdirectory(ddscxx)
+if (BUILD_DDSLIB)
+  add_subdirectory(ddscxx)
+endif()
