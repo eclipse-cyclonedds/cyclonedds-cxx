@@ -118,6 +118,8 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
 
+option(BUILD_DDSLIB "Build DDS lib" ON)
+
 option(BUILD_IDLLIB "Build IDL preprocessor lib" ${not_crosscompiling})
 
 # Make it easy to enable MSVC, Clang's/gcc's analyzers
