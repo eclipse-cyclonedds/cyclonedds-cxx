@@ -122,6 +122,10 @@ option(BUILD_DDSLIB "Build DDS lib" ON)
 
 option(BUILD_IDLLIB "Build IDL preprocessor lib" ${not_crosscompiling})
 
+if(NOT BUILD_DDSLIB AND NOT BUILD_IDLLIB)
+  message(FATAL_ERROR "Nothing to build. At least one of the options BUILD_DDSLIB and/or BUILD_IDLLIB must be ON.")
+endif()
+
 # Make it easy to enable MSVC, Clang's/gcc's analyzers
 set(ANALYZER "" CACHE STRING "Analyzer to enable on the build.")
 if(ANALYZER)
