@@ -82,8 +82,7 @@ static int parse_args(int argc, char **argv)
   return EXIT_SUCCESS;
 }
 
-template<typename T>
-unsigned long long do_take(dds::sub::DataReader<T>& rd)
+unsigned long long do_take(dds::sub::DataReader<ThroughputModule::DataType>& rd)
 {
   auto samples = rd.take();
   unsigned long long valid_samples = 0;
@@ -109,8 +108,7 @@ unsigned long long do_take(dds::sub::DataReader<T>& rd)
   return valid_samples;
 }
 
-template<typename T>
-void process_samples(dds::sub::DataReader<T> &reader, size_t max_c)
+void process_samples(dds::sub::DataReader<ThroughputModule::DataType> &reader, size_t max_c)
 {
   unsigned long long prev_bytes = 0;
   unsigned long long prev_samples = 0;
@@ -208,8 +206,7 @@ static void sigint (int sig)
   done = true;
 }
 
-template<typename T>
-bool wait_for_writer(dds::sub::DataReader<T> &reader)
+bool wait_for_writer(dds::sub::DataReader<ThroughputModule::DataType> &reader)
 {
   std::cout << "\n" << subprefix << "Waiting for a writer ...\n" << std::flush;
 
@@ -233,40 +230,39 @@ bool wait_for_writer(dds::sub::DataReader<T> &reader)
   return false;
 }
 
-template<typename T>
-class ThroughputListener: public dds::sub::DataReaderListener<T>
+class ThroughputListener: public dds::sub::DataReaderListener<ThroughputModule::DataType>
 {
   public:
   /*implementation of virtual functions*/
 
   /*only on_data_available does anything*/
-  void on_data_available(dds::sub::DataReader<T>& rd) {
+  void on_data_available(dds::sub::DataReader<ThroughputModule::DataType>& rd) {
     (void)do_take(rd);
   }
 
   /*all others are just dummies*/
   void on_requested_deadline_missed(
-      dds::sub::DataReader<T>&,
+      dds::sub::DataReader<ThroughputModule::DataType>&,
       const dds::core::status::RequestedDeadlineMissedStatus&) { }
 
   void on_requested_incompatible_qos(
-      dds::sub::DataReader<T>&,
+      dds::sub::DataReader<ThroughputModule::DataType>&,
       const dds::core::status::RequestedIncompatibleQosStatus&) { }
 
   void on_sample_rejected(
-      dds::sub::DataReader<T>&,
+      dds::sub::DataReader<ThroughputModule::DataType>&,
       const dds::core::status::SampleRejectedStatus&) { }
 
   void on_liveliness_changed(
-      dds::sub::DataReader<T>&,
+      dds::sub::DataReader<ThroughputModule::DataType>&,
       const dds::core::status::LivelinessChangedStatus&) { }
 
   void on_subscription_matched(
-      dds::sub::DataReader<T>&,
+      dds::sub::DataReader<ThroughputModule::DataType>&,
       const dds::core::status::SubscriptionMatchedStatus&) { }
 
   void on_sample_lost(
-      dds::sub::DataReader<T>&,
+      dds::sub::DataReader<ThroughputModule::DataType>&,
       const dds::core::status::SampleLostStatus&) { }
 };
 
@@ -302,7 +298,7 @@ int main (int argc, char **argv)
   rqos.policy(
     dds::core::policy::ResourceLimits(MAX_SAMPLES));
 
-  ThroughputListener<ThroughputModule::DataType> list;
+  ThroughputListener list;
 
   dds::sub::DataReader<ThroughputModule::DataType>
     reader(

@@ -91,8 +91,7 @@ static void sigint (int sig)
   done = true;
 }
 
-template<typename T>
-bool wait_for_reader(dds::pub::DataWriter<T> &writer)
+bool wait_for_reader(dds::pub::DataWriter<ThroughputModule::DataType> &writer)
 {
   std::cout << "\n" << pubprefix << "Waiting for a reader...\n" << std::flush;
 
@@ -116,9 +115,12 @@ bool wait_for_reader(dds::pub::DataWriter<T> &writer)
   return false;
 }
 
-template<typename T>
-void start_writing(dds::pub::DataWriter<T> &writer, T &sample,
-    std::chrono::milliseconds &d_int, uint32_t b_size, std::chrono::seconds &t_out)
+void start_writing(
+  dds::pub::DataWriter<ThroughputModule::DataType> &writer,
+  ThroughputModule::DataType &sample,
+  std::chrono::milliseconds &d_int,
+  uint32_t b_size,
+  std::chrono::seconds &t_out)
 {
   bool timedOut = false;
 

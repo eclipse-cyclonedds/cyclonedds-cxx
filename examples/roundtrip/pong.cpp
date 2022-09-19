@@ -13,7 +13,6 @@
 #include "dds/dds.h"
 #include "dds/dds.hpp"
 #include "roundtrip_common.hpp"
-#include "RoundTrip.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -62,8 +61,7 @@ static void print_usage(void)
   exit(EXIT_FAILURE);
 }
 
-template<typename T>
-bool data_available(dds::sub::DataReader<T>& rd, dds::pub::DataWriter<T>& wr)
+static bool data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd, dds::pub::DataWriter<RoundTripModule::DataType>& wr)
 {
   /* Take sample and check that it is valid */
   try {
@@ -132,7 +130,7 @@ int main (int argc, char *argv[])
       dds::core::policy::ReliabilityKind::Type::RELIABLE,
       dds::core::Duration::from_secs(10)));
 
-  RoundTripListener<RoundTripModule::DataType> list(writer, &data_available<RoundTripModule::DataType>);
+  RoundTripListener list(writer, &data_available);
 
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(

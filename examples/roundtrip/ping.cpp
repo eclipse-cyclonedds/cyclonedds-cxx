@@ -20,7 +20,6 @@
 
 #include "dds/dds.hpp"
 #include "dds/dds.h"
-#include "RoundTrip.hpp"
 #include "roundtrip_common.hpp"
 
 #define US_IN_ONE_SEC 1000000LL
@@ -91,8 +90,7 @@ static void print_usage(void)
   exit(EXIT_FAILURE);
 }
 
-template<typename T>
-bool data_available(dds::sub::DataReader<T>& rd, dds::pub::DataWriter<T>& wr)
+static bool data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd, dds::pub::DataWriter<RoundTripModule::DataType>& wr)
 {
   if (done)
     return true;
@@ -238,7 +236,7 @@ int main (int argc, char *argv[])
       dds::core::policy::ReliabilityKind::Type::RELIABLE,
       dds::core::Duration::from_secs(10)));
 
-  RoundTripListener<RoundTripModule::DataType> list(writer, &data_available<RoundTripModule::DataType>);
+  RoundTripListener list(writer, &data_available);
 
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(
