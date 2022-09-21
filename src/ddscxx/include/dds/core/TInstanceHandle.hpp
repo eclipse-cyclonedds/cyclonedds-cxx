@@ -72,6 +72,14 @@ public:
 
     /**
      * @cond
+     * Workaround issues 252 and 162
+     * constructor for creating an instance-handle
+     * from dds_instance_handle_t type.
+     */
+    TInstanceHandle(const dds_instance_handle_t& other);
+
+    /**
+     * @cond
      * Parametric constructor for creating an instance-handle
      * from some other type. This function is intended for internal
      * usage.
