@@ -33,6 +33,10 @@ template <typename DELEGATE>
 TInstanceHandle<DELEGATE>::TInstanceHandle() { }
 
 template <typename DELEGATE>
+TInstanceHandle<DELEGATE>::TInstanceHandle(const dds_instance_handle_t& other) : dds::core::Value<DELEGATE>(other) {
+}
+
+template <typename DELEGATE>
 template <typename ARG0>
 TInstanceHandle<DELEGATE>::TInstanceHandle(const ARG0& arg0) : dds::core::Value<DELEGATE>(arg0) { }
 
@@ -103,6 +107,13 @@ inline std::ostream& operator << (std::ostream& os, const dds::core::TInstanceHa
 {
     os << h.delegate();
     return os;
+}
+
+//Overloaded operator << (workaround issues 252 and 162)
+inline std::ostream& operator << (std::ostream& os, const dds::core::TInstanceHandle<org::eclipse::cyclonedds::core::InstanceHandleDelegate> h)
+{
+     os << h.delegate();
+     return os;
 }
 
 // End of implementation
