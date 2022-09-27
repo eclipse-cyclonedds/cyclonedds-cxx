@@ -1,5 +1,5 @@
 [requires]
-gtest/1.10.0
+gtest/1.12.1
 boost/1.78.0
 
 [generators]
