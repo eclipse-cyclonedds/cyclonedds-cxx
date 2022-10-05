@@ -964,13 +964,10 @@ AnyDataReaderDelegate::copy_sample_infos(
     }
     info.state(dds::sub::status::DataState(ss, vs, is));
 
-    info.generation_count().delegate() = org::eclipse::cyclonedds::sub::GenerationCountImpl(
-                                    static_cast<int32_t>(from.disposed_generation_count),
-                                    static_cast<int32_t>(from.no_writers_generation_count));
-    info.rank().delegate() = org::eclipse::cyclonedds::sub::RankImpl(
-                                    static_cast<int32_t>(from.sample_rank),
-                                    static_cast<int32_t>(from.generation_rank),
-                                    static_cast<int32_t>(from.absolute_generation_rank));
+    dds::sub::GenerationCount gc(static_cast<int32_t>(from.disposed_generation_count), static_cast<int32_t>(from.no_writers_generation_count));
+    info.generation_count(gc);
+    dds::sub::Rank rank(static_cast<int32_t>(from.sample_rank),static_cast<int32_t>(from.generation_rank),static_cast<int32_t>(from.absolute_generation_rank));
+    info.rank(rank);
     info.valid(from.valid_data);
     dds::core::InstanceHandle ih(from.instance_handle);
     info.instance_handle(ih);
