@@ -59,7 +59,7 @@ public:
 
     }
 
-    void Setup(bool autodispose) {
+    void SetupReaderWriter(bool autodispose) {
       auto wqos = writer_qos;
       wqos << dds::core::policy::WriterDataLifecycle(autodispose);
       reader = dds::sub::DataReader<Space::Type1>(subscriber, topic, reader_qos);
@@ -122,42 +122,42 @@ const int32_t Sample_Info::number_of_keys(2);
 
 TEST_F(Sample_Info, rank_and_generation_count_autodispose_no_dispose_unregister)
 {
-  this->Setup(true);
+  this->SetupReaderWriter(true);
 
   this->Test(true, false, 1, history_depth);
 }
 
 TEST_F(Sample_Info, rank_and_generation_count_autodispose_dispose_no_unregister)
 {
-  this->Setup(true);
+  this->SetupReaderWriter(true);
 
   this->Test(false, true, 1, 0);
 }
 
 TEST_F(Sample_Info, rank_and_generation_count_autodispose_dispose_unregister)
 {
-  this->Setup(true);
+  this->SetupReaderWriter(true);
 
   this->Test(true, true, 1, history_depth);
 }
 
 TEST_F(Sample_Info, rank_and_generation_count_no_autodispose_no_dispose_unregister)
 {
-  this->Setup(false);
+  this->SetupReaderWriter(false);
 
   this->Test(true, false, 0, 1);
 }
 
 TEST_F(Sample_Info, rank_and_generation_count_no_autodispose_dispose_no_unregister)
 {
-  this->Setup(false);
+  this->SetupReaderWriter(false);
 
   this->Test(false, true, 1, 0);
 }
 
 TEST_F(Sample_Info, rank_and_generation_count_no_autodispose_dispose_unregister)
 {
-  this->Setup(true);
+  this->SetupReaderWriter(true);
 
   this->Test(true, true, 1, history_depth);
 }
