@@ -30,10 +30,8 @@ set(CPACK_PACKAGE_VENDOR "Eclipse Cyclone DDS project")
 set(CPACK_PACKAGE_CONTACT "https://github.com/eclipse-cyclonedds/cyclonedds-cxx")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Eclipse Cyclone DDS ISO IEC C++ PSM")
 
-# WiX requires a .txt file extension for CPACK_RESOURCE_FILE_LICENSE
 file(COPY "${PROJECT_SOURCE_DIR}/LICENSE" DESTINATION "${CMAKE_BINARY_DIR}")
-file(RENAME "${CMAKE_BINARY_DIR}/LICENSE" "${CMAKE_BINARY_DIR}/license.txt")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_BINARY_DIR}/license.txt")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_BINARY_DIR}/LICENSE")
 
 # Packages could be generated on alien systems. e.g. Debian packages could be
 # created on Red Hat Enterprise Linux, but since packages also need to be
@@ -56,7 +54,8 @@ set(CPACK_COMPONENT_IDLCXX_DISPLAY_NAME "${PROJECT_NAME_FULL} compiler plugin fo
 set(CPACK_COMPONENT_IDLCXX_DESCRIPTION  "Idl compiler plugin library for ${PROJECT_NAME_FULL}")
 
 if(WIN32 AND NOT UNIX)
-  
+  file(COPY "${PROJECT_SOURCE_DIR}/WiX/LICENSE.rtf" DESTINATION "${CMAKE_BINARY_DIR}")
+  set(CPACK_WIX_LICENSE_RTF "${CMAKE_BINARY_DIR}/LICENSE.rtf")
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(__arch "win64")
   else()
