@@ -57,10 +57,6 @@ SubscriberDelegate::SubscriberDelegate(
         ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "Could not convert subscriber QoS.");
     }
 
-    default_dr_qos_.delegate().ddsc_qos(&ddsi_default_qos_reader);
-    default_dr_qos_.delegate().present() &= ~QP_DATA_REPRESENTATION;
-    default_dr_qos_.delegate().check();
-
     ddsc_sub = dds_create_subscriber(ddsc_par, ddsc_qos, NULL);
 
     dds_delete_qos(ddsc_qos);

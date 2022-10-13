@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "dds/ddsi/ddsi_plist.h"
+
 namespace org
 {
 namespace eclipse
@@ -31,8 +33,15 @@ namespace sub
 namespace qos
 {
 
+DataReaderQosDelegate::DataReaderQosDelegate()
+{
+    ddsc_qos(&ddsi_default_qos_reader);
+    present() &= ~QP_DATA_REPRESENTATION;
+    check();
+}
+
 DataReaderQosDelegate::DataReaderQosDelegate(
-    const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos)
+    const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos): DataReaderQosDelegate()
 {
     *this = tqos;
 }

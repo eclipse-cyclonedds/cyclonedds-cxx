@@ -38,6 +38,7 @@ namespace qos
 class OMG_DDS_API PublisherQosDelegate
 {
 public:
+    PublisherQosDelegate();
 
     void policy(const dds::core::policy::Presentation& presentation);
     void policy(const dds::core::policy::Partition& partition);

@@ -39,6 +39,8 @@ namespace qos
 class OMG_DDS_API TopicQosDelegate
 {
 public:
+    TopicQosDelegate();
+
     void policy(const dds::core::policy::TopicData&          topic_data);
     void policy(const dds::core::policy::Durability&         durability);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT

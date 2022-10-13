@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "dds/ddsi/ddsi_plist.h"
+
 namespace org
 {
 namespace eclipse
@@ -33,14 +35,15 @@ namespace qos
 
 DataWriterQosDelegate::DataWriterQosDelegate()
 {
+    ddsc_qos(&ddsi_default_qos_writer);
+    present() &= ~QP_DATA_REPRESENTATION;
+    check();
     policy(dds::core::policy::Reliability(dds::core::policy::ReliabilityKind::RELIABLE));
 }
 
 DataWriterQosDelegate::DataWriterQosDelegate(
-    const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos)
+    const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos): DataWriterQosDelegate()
 {
-    policy(dds::core::policy::Reliability(dds::core::policy::ReliabilityKind::RELIABLE));
-
     *this = tqos;
 }
 

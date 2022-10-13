@@ -31,7 +31,6 @@ namespace domain
 namespace qos
 {
 
-
 void
 DomainParticipantQosDelegate::policy(const dds::core::policy::UserData& user_data)
 {

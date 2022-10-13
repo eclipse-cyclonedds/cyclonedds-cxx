@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "dds/ddsi/ddsi_plist.h"
+
 namespace org
 {
 namespace eclipse
@@ -30,6 +32,12 @@ namespace pub
 {
 namespace qos
 {
+
+PublisherQosDelegate::PublisherQosDelegate()
+{
+    ddsc_qos(&ddsi_default_qos_publisher_subscriber);
+    check();
+}
 
 void
 PublisherQosDelegate::policy(const dds::core::policy::Presentation& presentation)

@@ -83,14 +83,6 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     ddsc_qos = qos.delegate().ddsc_qos();
     ddsc_par = dds_create_participant(static_cast<dds_domainid_t>(domain_id_), ddsc_qos, NULL);
 
-    default_topic_qos_.delegate().ddsc_qos(&ddsi_default_qos_topic);
-    default_topic_qos_.delegate().present() &= ~QP_DATA_REPRESENTATION;
-    default_topic_qos_.delegate().check();
-    default_pub_qos_.delegate().ddsc_qos(&ddsi_default_qos_publisher_subscriber);
-    default_pub_qos_.delegate().check();
-    default_sub_qos_.delegate().ddsc_qos(&ddsi_default_qos_publisher_subscriber);
-    default_sub_qos_.delegate().check();
-
     dds_delete_qos (ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_par, "Could not create DomainParticipant.");
 
@@ -138,14 +130,6 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
     /* Validate the qos and get the corresponding ddsc qos. */
     qos.delegate().check();
     ddsc_qos = qos.delegate().ddsc_qos();
-
-    default_topic_qos_.delegate().ddsc_qos(&ddsi_default_qos_topic);
-    default_topic_qos_.delegate().present() &= ~QP_DATA_REPRESENTATION;
-    default_topic_qos_.delegate().check();
-    default_pub_qos_.delegate().ddsc_qos(&ddsi_default_qos_publisher_subscriber);
-    default_pub_qos_.delegate().check();
-    default_sub_qos_.delegate().ddsc_qos(&ddsi_default_qos_publisher_subscriber);
-    default_sub_qos_.delegate().check();
 
     dds_entity_t ddsc_par;
 

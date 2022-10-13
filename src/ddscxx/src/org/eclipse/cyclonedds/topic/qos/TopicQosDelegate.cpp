@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "dds/ddsi/ddsi_plist.h"
+
 namespace org
 {
 namespace eclipse
@@ -30,6 +32,13 @@ namespace topic
 {
 namespace qos
 {
+
+TopicQosDelegate::TopicQosDelegate()
+{
+    ddsc_qos(&ddsi_default_qos_topic);
+    present() &= ~QP_DATA_REPRESENTATION;
+    check();
+}
 
 void
 TopicQosDelegate::policy(const dds::core::policy::TopicData& topic_data)

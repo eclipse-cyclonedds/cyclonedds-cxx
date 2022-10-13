@@ -39,7 +39,7 @@ namespace qos
 class OMG_DDS_API DataReaderQosDelegate
 {
 public:
-    DataReaderQosDelegate() = default;
+    DataReaderQosDelegate();
     DataReaderQosDelegate(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
 
     void policy(const dds::core::policy::UserData&            user_data);
