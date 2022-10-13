@@ -31,27 +31,11 @@ namespace pub
 namespace qos
 {
 
-PublisherQosDelegate::PublisherQosDelegate()
-{
-}
-
-PublisherQosDelegate::PublisherQosDelegate(
-    const PublisherQosDelegate& other)
-    : presentation_(other.presentation_),
-      partition_(other.partition_),
-      gdata_(other.gdata_),
-      factory_policy_(other.factory_policy_)
-{
-}
-
-PublisherQosDelegate::~PublisherQosDelegate()
-{
-}
-
 void
 PublisherQosDelegate::policy(const dds::core::policy::Presentation& presentation)
 {
     presentation.delegate().check();
+    present_ |= QP_PRESENTATION;
     presentation_ = presentation;
 }
 
@@ -59,6 +43,7 @@ void
 PublisherQosDelegate::policy(const dds::core::policy::Partition& partition)
 {
     partition.delegate().check();
+    present_ |= QP_PARTITION;
     partition_ = partition;
 }
 
@@ -66,6 +51,7 @@ void
 PublisherQosDelegate::policy(const dds::core::policy::GroupData& gdata)
 {
     gdata.delegate().check();
+    present_ |= QP_GROUP_DATA;
     gdata_ = gdata;
 }
 
@@ -73,6 +59,7 @@ void
 PublisherQosDelegate::policy(const dds::core::policy::EntityFactory& factory_policy)
 {
     factory_policy.delegate().check();
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
     factory_policy_ = factory_policy;
 }
 
@@ -80,10 +67,17 @@ dds_qos_t*
 PublisherQosDelegate::ddsc_qos() const
 {
     dds_qos_t* qos = dds_create_qos();
-    presentation_   .delegate().set_c_policy(qos);
-    partition_      .delegate().set_c_policy(qos);
-    gdata_          .delegate().set_c_policy(qos);
-    factory_policy_ .delegate().set_c_policy(qos);
+    if (!qos) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_OUT_OF_RESOURCES_ERROR, "Could not create internal QoS.");
+    }
+    if (present_ & QP_PRESENTATION)
+        presentation_   .delegate().set_c_policy(qos);
+    if (present_ & QP_PARTITION)
+        partition_      .delegate().set_c_policy(qos);
+    if (present_ & QP_GROUP_DATA)
+        gdata_          .delegate().set_c_policy(qos);
+    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+        factory_policy_ .delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -91,10 +85,15 @@ void
 PublisherQosDelegate::ddsc_qos(const dds_qos_t* qos)
 {
     assert(qos);
-    presentation_   .delegate().set_iso_policy(qos);
-    partition_      .delegate().set_iso_policy(qos);
-    gdata_          .delegate().set_iso_policy(qos);
-    factory_policy_ .delegate().set_iso_policy(qos);
+    present_ = qos->present;
+    if (present_ & QP_PRESENTATION)
+        presentation_   .delegate().set_iso_policy(qos);
+    if (present_ & QP_PARTITION)
+        partition_      .delegate().set_iso_policy(qos);
+    if (present_ & QP_GROUP_DATA)
+        gdata_          .delegate().set_iso_policy(qos);
+    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+        factory_policy_ .delegate().set_iso_policy(qos);
 }
 
 void
@@ -123,20 +122,11 @@ PublisherQosDelegate::check() const
 bool
 PublisherQosDelegate::operator ==(const PublisherQosDelegate& other) const
 {
-    return other.presentation_   == presentation_ &&
+    return other.present_        == present_ &&
+           other.presentation_   == presentation_ &&
            other.partition_      == partition_    &&
            other.gdata_          == gdata_        &&
            other.factory_policy_ == factory_policy_;
-}
-
-PublisherQosDelegate&
-PublisherQosDelegate::operator =(const PublisherQosDelegate& other)
-{
-    presentation_   = other.presentation_;
-    partition_      = other.partition_;
-    gdata_          = other.gdata_;
-    factory_policy_ = other.factory_policy_;
-    return *this;
 }
 
 }

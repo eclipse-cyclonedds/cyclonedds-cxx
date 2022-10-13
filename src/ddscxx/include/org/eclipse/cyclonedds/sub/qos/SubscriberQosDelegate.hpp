@@ -20,6 +20,8 @@
 
 #include <dds/core/policy/CorePolicy.hpp>
 
+#include <dds/ddsi/ddsi_xqos.h>
+
 struct _DDS_NamedSubscriberQos;
 
 namespace org
@@ -36,10 +38,6 @@ namespace qos
 class OMG_DDS_API SubscriberQosDelegate
 {
 public:
-    SubscriberQosDelegate();
-    SubscriberQosDelegate(const SubscriberQosDelegate& other);
-
-    ~SubscriberQosDelegate();
 
     void policy(const dds::core::policy::Presentation& presentation);
     void policy(const dds::core::policy::Partition& partition);
@@ -58,13 +56,15 @@ public:
     void check() const;
 
     bool operator ==(const SubscriberQosDelegate& other) const;
-    SubscriberQosDelegate& operator =(const SubscriberQosDelegate& other);
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
-    dds::core::policy::Presentation presentation_;
-    dds::core::policy::Partition partition_;
-    dds::core::policy::GroupData group_data_;
-    dds::core::policy::EntityFactory entity_factory_;
+    uint64_t                          present_ = 0;
+    dds::core::policy::Presentation   presentation_;
+    dds::core::policy::Partition      partition_;
+    dds::core::policy::GroupData      group_data_;
+    dds::core::policy::EntityFactory  entity_factory_;
 };
 
 
@@ -82,6 +82,7 @@ template<>
 inline dds::core::policy::Presentation&
 SubscriberQosDelegate::policy<dds::core::policy::Presentation>()
 {
+    present_ |= QP_PRESENTATION;
     return presentation_;
 }
 
@@ -96,6 +97,7 @@ template<>
 inline dds::core::policy::Partition&
 SubscriberQosDelegate::policy<dds::core::policy::Partition>()
 {
+    present_ |= QP_PARTITION;
     return partition_;
 }
 
@@ -110,6 +112,7 @@ template<>
 inline dds::core::policy::GroupData&
 SubscriberQosDelegate::policy<dds::core::policy::GroupData>()
 {
+    present_ |= QP_GROUP_DATA;
     return group_data_;
 }
 
@@ -124,6 +127,7 @@ template<>
 inline dds::core::policy::EntityFactory&
 SubscriberQosDelegate::policy<dds::core::policy::EntityFactory>()
 {
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
     return entity_factory_;
 }
 

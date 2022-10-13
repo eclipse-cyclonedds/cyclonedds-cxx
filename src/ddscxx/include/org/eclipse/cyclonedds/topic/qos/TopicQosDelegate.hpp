@@ -21,6 +21,8 @@
 #include <dds/core/detail/conformance.hpp>
 #include <dds/core/policy/CorePolicy.hpp>
 
+#include <dds/ddsi/ddsi_xqos.h>
+
 struct _DDS_NamedTopicQos;
 
 namespace org
@@ -37,8 +39,6 @@ namespace qos
 class OMG_DDS_API TopicQosDelegate
 {
 public:
-    TopicQosDelegate();
-
     void policy(const dds::core::policy::TopicData&          topic_data);
     void policy(const dds::core::policy::Durability&         durability);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
@@ -72,7 +72,10 @@ public:
 
     bool operator ==(const TopicQosDelegate& other) const;
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
+    uint64_t                                  present_ = 0;
     dds::core::policy::TopicData              topic_data_;
     dds::core::policy::Durability             durability_;
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
@@ -107,6 +110,7 @@ TopicQosDelegate::policy<dds::core::policy::TopicData>() const
 template<> inline dds::core::policy::TopicData&
 TopicQosDelegate::policy<dds::core::policy::TopicData>()
 {
+    present_ |= QP_TOPIC_DATA;
     return topic_data_;
 }
 
@@ -119,6 +123,7 @@ TopicQosDelegate::policy<dds::core::policy::Durability>() const
 template<> inline dds::core::policy::Durability&
 TopicQosDelegate::policy<dds::core::policy::Durability>()
 {
+    present_ |= QP_DURABILITY;
     return durability_;
 }
 
@@ -132,6 +137,7 @@ TopicQosDelegate::policy<dds::core::policy::DurabilityService>() const
 template<> inline dds::core::policy::DurabilityService&
 TopicQosDelegate::policy<dds::core::policy::DurabilityService>()
 {
+    present_ |= QP_DURABILITY_SERVICE;
     return durability_service_;
 }
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
@@ -145,6 +151,7 @@ TopicQosDelegate::policy<dds::core::policy::Deadline>() const
 template<> inline dds::core::policy::Deadline&
 TopicQosDelegate::policy<dds::core::policy::Deadline>()
 {
+    present_ |= QP_DEADLINE;
     return deadline_;
 }
 
@@ -157,6 +164,7 @@ TopicQosDelegate::policy<dds::core::policy::LatencyBudget>() const
 template<> inline dds::core::policy::LatencyBudget&
 TopicQosDelegate::policy<dds::core::policy::LatencyBudget>()
 {
+    present_ |= QP_LATENCY_BUDGET;
     return budget_;
 }
 
@@ -169,6 +177,7 @@ TopicQosDelegate::policy<dds::core::policy::Liveliness>() const
 template<> inline dds::core::policy::Liveliness&
 TopicQosDelegate::policy<dds::core::policy::Liveliness>()
 {
+    present_ |= QP_LIVELINESS;
     return liveliness_;
 }
 
@@ -181,6 +190,7 @@ TopicQosDelegate::policy<dds::core::policy::Reliability>() const
 template<> inline dds::core::policy::Reliability&
 TopicQosDelegate::policy<dds::core::policy::Reliability>()
 {
+    present_ |= QP_RELIABILITY;
     return reliability_;
 }
 
@@ -193,6 +203,7 @@ TopicQosDelegate::policy<dds::core::policy::DestinationOrder>() const
 template<> inline dds::core::policy::DestinationOrder&
 TopicQosDelegate::policy<dds::core::policy::DestinationOrder>()
 {
+    present_ |= QP_DESTINATION_ORDER;
     return order_;
 }
 
@@ -205,6 +216,7 @@ TopicQosDelegate::policy<dds::core::policy::History>() const
 template<> inline dds::core::policy::History&
 TopicQosDelegate::policy<dds::core::policy::History>()
 {
+    present_ |= QP_HISTORY;
     return history_;
 }
 
@@ -217,6 +229,7 @@ TopicQosDelegate::policy<dds::core::policy::ResourceLimits>() const
 template<> inline dds::core::policy::ResourceLimits&
 TopicQosDelegate::policy<dds::core::policy::ResourceLimits>()
 {
+    present_ |= QP_RESOURCE_LIMITS;
     return resources_;
 }
 
@@ -229,6 +242,7 @@ TopicQosDelegate::policy<dds::core::policy::TransportPriority>() const
 template<> inline dds::core::policy::TransportPriority&
 TopicQosDelegate::policy<dds::core::policy::TransportPriority>()
 {
+    present_ |= QP_TRANSPORT_PRIORITY;
     return priority_;
 }
 
@@ -241,6 +255,7 @@ TopicQosDelegate::policy<dds::core::policy::Lifespan>() const
 template<> inline dds::core::policy::Lifespan&
 TopicQosDelegate::policy<dds::core::policy::Lifespan>()
 {
+    present_ |= QP_LIFESPAN;
     return lifespan_;
 }
 
@@ -253,6 +268,7 @@ TopicQosDelegate::policy<dds::core::policy::Ownership>() const
 template<> inline dds::core::policy::Ownership&
 TopicQosDelegate::policy<dds::core::policy::Ownership>()
 {
+    present_ |= QP_OWNERSHIP;
     return ownership_;
 }
 
@@ -265,6 +281,7 @@ TopicQosDelegate::policy<dds::core::policy::DataRepresentation>() const
 template<> inline dds::core::policy::DataRepresentation&
 TopicQosDelegate::policy<dds::core::policy::DataRepresentation>()
 {
+    present_ |= QP_DATA_REPRESENTATION;
     return datarepresentation_;
 }
 
@@ -276,6 +293,7 @@ TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() const
 template<> inline dds::core::policy::TypeConsistencyEnforcement&
 TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
 {
+    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
     return typeconsistencyenforcement_;
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT

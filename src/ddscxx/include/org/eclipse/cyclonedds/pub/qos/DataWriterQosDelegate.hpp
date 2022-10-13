@@ -21,6 +21,8 @@
 #include <dds/core/detail/conformance.hpp>
 #include <org/eclipse/cyclonedds/topic/qos/TopicQosDelegate.hpp>
 
+#include <dds/ddsi/ddsi_xqos.h>
+
 struct _DDS_NamedDataWriterQos;
 
 namespace org
@@ -75,7 +77,10 @@ public:
     bool operator ==(const DataWriterQosDelegate& other) const;
     DataWriterQosDelegate& operator =(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
+    uint64_t                                   present_ = 0;
     dds::core::policy::UserData                user_data_;
     dds::core::policy::Durability              durability_;
     dds::core::policy::Deadline                deadline_;
@@ -111,6 +116,7 @@ DataWriterQosDelegate::policy<dds::core::policy::UserData>() const
 template<> inline dds::core::policy::UserData&
 DataWriterQosDelegate::policy<dds::core::policy::UserData>()
 {
+    present_ |= QP_USER_DATA;
     return user_data_;
 }
 
@@ -123,6 +129,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Durability>() const
 template<> inline dds::core::policy::Durability&
 DataWriterQosDelegate::policy<dds::core::policy::Durability>()
 {
+    present_ |= QP_DURABILITY;
     return durability_;
 }
 
@@ -135,6 +142,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Deadline>() const
 template<> inline dds::core::policy::Deadline&
 DataWriterQosDelegate::policy<dds::core::policy::Deadline>()
 {
+    present_ |= QP_DEADLINE;
     return deadline_;
 }
 
@@ -147,6 +155,7 @@ DataWriterQosDelegate::policy<dds::core::policy::LatencyBudget>() const
 template<> inline dds::core::policy::LatencyBudget&
 DataWriterQosDelegate::policy<dds::core::policy::LatencyBudget>()
 {
+    present_ |= QP_LATENCY_BUDGET;
     return budget_;
 }
 
@@ -159,6 +168,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Liveliness>() const
 template<> inline dds::core::policy::Liveliness&
 DataWriterQosDelegate::policy<dds::core::policy::Liveliness>()
 {
+    present_ |= QP_LIVELINESS;
     return liveliness_;
 }
 
@@ -171,6 +181,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Reliability>() const
 template<> inline dds::core::policy::Reliability&
 DataWriterQosDelegate::policy<dds::core::policy::Reliability>()
 {
+    present_ |= QP_RELIABILITY;
     return reliability_;
 }
 
@@ -183,6 +194,7 @@ DataWriterQosDelegate::policy<dds::core::policy::DestinationOrder>() const
 template<> inline dds::core::policy::DestinationOrder&
 DataWriterQosDelegate::policy<dds::core::policy::DestinationOrder>()
 {
+    present_ |= QP_DESTINATION_ORDER;
     return order_;
 }
 
@@ -195,6 +207,7 @@ DataWriterQosDelegate::policy<dds::core::policy::History>() const
 template<> inline dds::core::policy::History&
 DataWriterQosDelegate::policy<dds::core::policy::History>()
 {
+    present_ |= QP_HISTORY;
     return history_;
 }
 
@@ -207,6 +220,7 @@ DataWriterQosDelegate::policy<dds::core::policy::ResourceLimits>() const
 template<> inline dds::core::policy::ResourceLimits&
 DataWriterQosDelegate::policy<dds::core::policy::ResourceLimits>()
 {
+    present_ |= QP_RESOURCE_LIMITS;
     return resources_;
 }
 
@@ -219,6 +233,7 @@ DataWriterQosDelegate::policy<dds::core::policy::TransportPriority>() const
 template<> inline dds::core::policy::TransportPriority&
 DataWriterQosDelegate::policy<dds::core::policy::TransportPriority>()
 {
+    present_ |= QP_TRANSPORT_PRIORITY;
     return priority_;
 }
 
@@ -231,6 +246,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Lifespan>() const
 template<> inline dds::core::policy::Lifespan&
 DataWriterQosDelegate::policy<dds::core::policy::Lifespan>()
 {
+    present_ |= QP_LIFESPAN;
     return lifespan_;
 }
 
@@ -243,6 +259,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Ownership>() const
 template<> inline dds::core::policy::Ownership&
 DataWriterQosDelegate::policy<dds::core::policy::Ownership>()
 {
+    present_ |= QP_OWNERSHIP;
     return ownership_;
 }
 
@@ -256,6 +273,7 @@ DataWriterQosDelegate::policy<dds::core::policy::OwnershipStrength>() const
 template<> inline dds::core::policy::OwnershipStrength&
 DataWriterQosDelegate::policy<dds::core::policy::OwnershipStrength>()
 {
+    present_ |= QP_OWNERSHIP_STRENGTH;
     return strength_;
 }
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
@@ -269,6 +287,7 @@ DataWriterQosDelegate::policy<dds::core::policy::WriterDataLifecycle>() const
 template<> inline dds::core::policy::WriterDataLifecycle&
 DataWriterQosDelegate::policy<dds::core::policy::WriterDataLifecycle>()
 {
+    present_ |= QP_ADLINK_WRITER_DATA_LIFECYCLE;
     return lifecycle_;
 }
 
@@ -281,6 +300,7 @@ DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>() const
 template<> inline dds::core::policy::DataRepresentation&
 DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>()
 {
+    present_ |= QP_DATA_REPRESENTATION;
     return datarepresentation_;
 }
 
@@ -292,6 +312,7 @@ DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() c
 template<> inline dds::core::policy::TypeConsistencyEnforcement&
 DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
 {
+    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
     return typeconsistencyenforcement_;
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT

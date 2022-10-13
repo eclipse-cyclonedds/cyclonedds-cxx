@@ -20,6 +20,8 @@
 
 #include <dds/core/policy/CorePolicy.hpp>
 
+#include <dds/ddsi/ddsi_xqos.h>
+
 struct _DDS_NamedPublisherQos;
 
 namespace org
@@ -36,10 +38,6 @@ namespace qos
 class OMG_DDS_API PublisherQosDelegate
 {
 public:
-    PublisherQosDelegate();
-    PublisherQosDelegate(const PublisherQosDelegate& other);
-
-    ~PublisherQosDelegate();
 
     void policy(const dds::core::policy::Presentation& presentation);
     void policy(const dds::core::policy::Partition& partition);
@@ -58,9 +56,11 @@ public:
     void check() const;
 
     bool operator ==(const PublisherQosDelegate& other) const;
-    PublisherQosDelegate& operator =(const PublisherQosDelegate& other);
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
+    uint64_t                           present_ = 0;
     dds::core::policy::Presentation    presentation_;
     dds::core::policy::Partition       partition_;
     dds::core::policy::GroupData       gdata_;
@@ -82,6 +82,7 @@ template<>
 inline dds::core::policy::Presentation&
 PublisherQosDelegate::policy<dds::core::policy::Presentation>()
 {
+    present_ |= QP_PRESENTATION;
     return presentation_;
 }
 
@@ -96,6 +97,7 @@ template<>
 inline dds::core::policy::Partition&
 PublisherQosDelegate::policy<dds::core::policy::Partition>()
 {
+    present_ |= QP_PARTITION;
     return partition_;
 }
 
@@ -110,6 +112,7 @@ template<>
 inline dds::core::policy::GroupData&
 PublisherQosDelegate::policy<dds::core::policy::GroupData>()
 {
+    present_ |= QP_GROUP_DATA;
     return gdata_;
 }
 
@@ -124,6 +127,7 @@ template<>
 inline dds::core::policy::EntityFactory&
 PublisherQosDelegate::policy<dds::core::policy::EntityFactory>()
 {
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
     return factory_policy_;
 }
 

@@ -31,25 +31,12 @@ namespace domain
 namespace qos
 {
 
-DomainParticipantQosDelegate::DomainParticipantQosDelegate()
-{
-}
-
-DomainParticipantQosDelegate::DomainParticipantQosDelegate(
-    const DomainParticipantQosDelegate& other)
-    :  user_data_(other.user_data_),
-       entity_factory_(other.entity_factory_)
-{
-}
-
-DomainParticipantQosDelegate::~DomainParticipantQosDelegate()
-{
-}
 
 void
 DomainParticipantQosDelegate::policy(const dds::core::policy::UserData& user_data)
 {
     user_data.delegate().check();
+    present_ |= QP_USER_DATA;
     user_data_ = user_data;
 }
 
@@ -57,6 +44,7 @@ void
 DomainParticipantQosDelegate::policy(const dds::core::policy::EntityFactory& entity_factory)
 {
     entity_factory.delegate().check();
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
     entity_factory_ = entity_factory;
 }
 
@@ -64,8 +52,13 @@ dds_qos_t*
 DomainParticipantQosDelegate::ddsc_qos() const
 {
     dds_qos_t* qos = dds_create_qos();
-    user_data_.delegate().set_c_policy(qos);
-    entity_factory_.delegate().set_c_policy(qos);
+    if (!qos) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_OUT_OF_RESOURCES_ERROR, "Could not create internal QoS.");
+    }
+    if (present_ & QP_USER_DATA)
+        user_data_.delegate().set_c_policy(qos);
+    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+        entity_factory_.delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -73,8 +66,11 @@ void
 DomainParticipantQosDelegate::ddsc_qos(const dds_qos_t* qos)
 {
     assert(qos);
-    user_data_.delegate().set_iso_policy(qos);
-    entity_factory_.delegate().set_iso_policy(qos);
+    present_ = qos->present;
+    if (present_ & QP_USER_DATA)
+        user_data_.delegate().set_iso_policy(qos);
+    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+        entity_factory_.delegate().set_iso_policy(qos);
 }
 
 void
@@ -103,17 +99,10 @@ DomainParticipantQosDelegate::check() const
 bool
 DomainParticipantQosDelegate::operator ==(const DomainParticipantQosDelegate& other) const
 {
-    return other.user_data_           == user_data_ &&
+    return other.present_             == present_ &&
+           other.user_data_           == user_data_ &&
            other.entity_factory_      == entity_factory_;
 
-}
-
-DomainParticipantQosDelegate&
-DomainParticipantQosDelegate::operator = (const DomainParticipantQosDelegate& other)
-{
-    user_data_           = other.user_data_;
-    entity_factory_      = other.entity_factory_;
-    return *this;
 }
 
 }
