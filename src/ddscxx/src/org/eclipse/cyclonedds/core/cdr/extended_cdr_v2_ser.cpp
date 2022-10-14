@@ -31,7 +31,7 @@ const uint32_t xcdr_v2_stream::lc_mask         = uint32_t(0x70000000);
 const uint32_t xcdr_v2_stream::id_mask         = uint32_t(0x0FFFFFFF);
 const uint32_t xcdr_v2_stream::must_understand = uint32_t(0x80000000);
 
-bool xcdr_v2_stream::start_member(entity_properties_t &prop, bool is_set)
+bool xcdr_v2_stream::start_member(const entity_properties_t &prop, bool is_set)
 {
   switch (m_mode) {
     case stream_mode::write:
@@ -64,7 +64,7 @@ bool xcdr_v2_stream::start_member(entity_properties_t &prop, bool is_set)
   return cdr_stream::start_member(prop, is_set);
 }
 
-bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
+bool xcdr_v2_stream::finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set)
 {
   switch (m_mode) {
     case stream_mode::write:
@@ -83,7 +83,7 @@ bool xcdr_v2_stream::finish_member(entity_properties_t &prop, bool is_set)
 
   m_consecutives.pop();
   pop_member_start();
-  return cdr_stream::finish_member(prop, is_set);
+  return cdr_stream::finish_member(prop, member_ids, is_set);
 }
 
 bool xcdr_v2_stream::write_d_header()
@@ -103,7 +103,7 @@ bool xcdr_v2_stream::move_optional_tag()
   return move(*this, uint8_t(0));
 }
 
-entity_properties_t* xcdr_v2_stream::next_entity(entity_properties_t *prop)
+const entity_properties_t* xcdr_v2_stream::next_entity(const entity_properties_t *prop)
 {
   if (m_mode != stream_mode::read)
     return cdr_stream::next_entity(prop);
@@ -164,14 +164,10 @@ entity_properties_t* xcdr_v2_stream::next_entity(entity_properties_t *prop)
   return prop;
 }
 
-entity_properties_t* xcdr_v2_stream::first_entity(entity_properties_t *props)
+const entity_properties_t* xcdr_v2_stream::first_entity(const entity_properties_t *props)
 {
-
-  if (m_mode != stream_mode::read)
-    return cdr_stream::first_entity(props);
-
   auto prop = cdr_stream::first_entity(props);
-  if (!prop)
+  if (m_mode != stream_mode::read || !prop)
     return prop;
 
   if (!list_necessary(*props)) {
@@ -290,7 +286,7 @@ bool xcdr_v2_stream::list_necessary(const entity_properties_t &props)
   return props.e_ext == extensibility::ext_mutable && !m_key;
 }
 
-bool xcdr_v2_stream::start_struct(entity_properties_t &props)
+bool xcdr_v2_stream::start_struct(const entity_properties_t &props)
 {
   if (d_header_necessary(props)) {
     switch (m_mode) {
@@ -315,7 +311,7 @@ bool xcdr_v2_stream::start_struct(entity_properties_t &props)
   return cdr_stream::start_struct(props);
 }
 
-bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
+bool xcdr_v2_stream::finish_struct(const entity_properties_t &props, const member_id_set &member_ids)
 {
   switch (m_mode) {
     case stream_mode::write:
@@ -323,15 +319,16 @@ bool xcdr_v2_stream::finish_struct(entity_properties_t &props)
         return false;
       break;
     case stream_mode::read:
-      check_struct_completeness(props);
-      if (d_header_necessary(props))
+      if (!check_struct_completeness(props, member_ids))
+        return false;
+      else if (d_header_necessary(props))
         m_buffer_end.pop();
       break;
     default:
       break;
   }
 
-  return props.is_present;
+  return true;
 }
 
 bool xcdr_v2_stream::start_consecutive(bool is_array, bool primitive)
@@ -401,7 +398,7 @@ bool xcdr_v2_stream::finish_consecutive()
   return true;
 }
 
-bool xcdr_v2_stream::write_em_header(entity_properties_t &props)
+bool xcdr_v2_stream::write_em_header(const entity_properties_t &props)
 {
   uint32_t mheader = (props.must_understand || props.is_key ? must_understand : 0)
                      + (id_mask & props.m_id) + nextint;

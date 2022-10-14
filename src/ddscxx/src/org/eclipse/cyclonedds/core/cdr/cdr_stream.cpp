@@ -53,23 +53,27 @@ bool cdr_stream::align(size_t newalignment, bool add_zeroes)
   return true;
 }
 
-bool cdr_stream::finish_struct(entity_properties_t &props)
+bool cdr_stream::finish_struct(const entity_properties_t &props, const member_id_set &member_ids)
 {
-  check_struct_completeness(props);
-
-  return props.is_present;
+  switch (m_mode) {
+    case stream_mode::read:
+      return check_struct_completeness(props, member_ids);
+      break;
+    default:
+      return true;
+  }
 }
 
-entity_properties_t *cdr_stream::first_entity(entity_properties_t *props)
+const entity_properties_t *cdr_stream::first_entity(const entity_properties_t *props)
 {
-  auto ptr = props->first_member;
-  while (m_key && ptr && !ptr->is_key)
-    ptr = next_entity(ptr);
+  const entity_properties_t *prop = props->first_member;
+  while (m_key && prop && !prop->is_key)
+    prop = next_entity(prop);
 
-  return ptr;
+  return prop;
 }
 
-entity_properties_t* cdr_stream::next_entity(entity_properties_t *prop)
+const entity_properties_t* cdr_stream::next_entity(const entity_properties_t *prop)
 {
   prop = prop->next_on_level;
   if (m_key) {
@@ -79,7 +83,7 @@ entity_properties_t* cdr_stream::next_entity(entity_properties_t *prop)
   return prop;
 }
 
-entity_properties_t* cdr_stream::previous_entity(entity_properties_t *prop)
+const entity_properties_t* cdr_stream::previous_entity(const entity_properties_t *prop)
 {
   prop = prop->prev_on_level;
   if (m_key) {
@@ -117,32 +121,28 @@ void cdr_stream::reset()
   m_e_sz = 0;
 }
 
-bool cdr_stream::start_struct(entity_properties_t &props)
+bool cdr_stream::check_struct_completeness(const entity_properties_t &props, const member_id_set &member_ids)
 {
-  props.is_present = true;
+  if (m_mode != stream_mode::read || abort_status())
+    return false;
+
+  const entity_properties_t *ptr = props.first_member;
+  while (ptr) {
+    if ((ptr->must_understand || ptr->is_key) &&  //if this entity is a must_understand or key member
+        member_ids.end() == member_ids.find(ptr->m_id) && //and it was not succesfully deserialized
+        status(must_understand_fail)) //and we cannot ignore missing must_understand fields
+      return false;
+    ptr = cdr_stream::next_entity(ptr);
+  }
 
   return true;
 }
 
-void cdr_stream::check_struct_completeness(entity_properties_t &props)
+bool cdr_stream::finish_member(const entity_properties_t &props, member_id_set &member_ids, bool is_set)
 {
-  if (m_mode != stream_mode::read)
-    return;
-
-  if (abort_status()) {
-    props.is_present = false;
-    return;
-  }
-
-  auto ptr = props.first_member;
-  while (ptr) {
-    if ((ptr->must_understand || ptr->is_key) && !ptr->is_present) {
-      (void) status(must_understand_fail);
-      props.is_present = false;
-      break;
-    }
-    ptr = cdr_stream::next_entity(ptr);
-  }
+  if (is_set)
+    member_ids.insert(props.m_id);
+  return true;
 }
 
 }

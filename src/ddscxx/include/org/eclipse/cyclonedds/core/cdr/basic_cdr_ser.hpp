@@ -45,11 +45,11 @@ public:
    *
    * This function is called by the generated streaming functions, and will start a parameter list, if that is relevant for it.
    *
-   * @param[in, out] props The entity whose members might be represented by a parameter list.
+   * @param[in] props The entity whose members might be represented by a parameter list.
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool start_struct(entity_properties_t &props);
+  bool start_struct(const entity_properties_t &props);
 
 };
 

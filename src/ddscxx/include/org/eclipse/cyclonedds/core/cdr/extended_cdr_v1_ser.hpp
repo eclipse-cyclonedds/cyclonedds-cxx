@@ -45,12 +45,12 @@ public:
    *
    * Determines whether a header is necessary for this entity through header_necessary, and if it is, handles the header.
    *
-   * @param[in, out] prop Properties of the member to start.
+   * @param[in] prop Properties of the member to start.
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool start_member(entity_properties_t &prop, bool is_set = true);
+  bool start_member(const entity_properties_t &prop, bool is_set = true);
 
   /**
    * @brief
@@ -58,12 +58,13 @@ public:
    *
    * Determines whether a header is necessary for this entity through header_necessary, and if it is, completes the previous header.
    *
-   * @param[in, out] prop Properties of the member to finish.
+   * @param[in] prop Properties of the member to finish.
+   * @param[in] member_ids Container for the member ids of members succesfully streamed at this level
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool finish_member(entity_properties_t &prop, bool is_set = true);
+  bool finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set = true);
 
   /**
    * @brief
@@ -72,11 +73,11 @@ public:
    * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
    * properties entry is pulled from the tree.
    *
-   * @param[in, out] prop The property tree to get the next entity from.
+   * @param[in] prop The property tree to get the next entity from.
    *
    * @return The next entity to be processed, or a nullptr if the current tree level does not hold more entities that match this tree.
    */
-  entity_properties_t* next_entity(entity_properties_t *prop);
+  const entity_properties_t* next_entity(const entity_properties_t *prop);
 
   /**
    * @brief
@@ -85,11 +86,11 @@ public:
    * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
    * properties entry is pulled from the tree.
    *
-   * @param[in, out] prop The property tree to get the next entity from.
+   * @param[in] prop The property tree to get the next entity from.
    *
    * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
    */
-  entity_properties_t *first_entity(entity_properties_t *prop);
+  const entity_properties_t *first_entity(const entity_properties_t *prop);
 
   /**
    * @brief
@@ -97,11 +98,12 @@ public:
    *
    * Adds the final parameter list entry if necessary when writing to the stream.
    *
-   * @param[in, out] props The property tree to get the next entity from.
+   * @param[in] props The property tree to get the next entity from.
+   * @param[in] member_ids Container for the member ids of members succesfully streamed at this level
    *
    * @return Whether the struct is complete and correct.
    */
-  bool finish_struct(entity_properties_t &props);
+  bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids);
 
 private:
 
@@ -159,23 +161,23 @@ private:
    * If header_necessary returns true for a field, then this function needs to be called first to write the
    * header to the stream before the contents of the field are written.
    *
-   * @param[in, out] props The properties of the entity.
+   * @param[in] props The properties of the entity.
    *
-   * @return Whether the header was read succesfully.
+   * @return Whether the placeholder for the header was written succesfully.
    */
-  bool write_header(entity_properties_t &props);
+  bool write_header(const entity_properties_t &props);
 
   /**
    * @brief
    * Finishes a header field in the stream.
    *
-   * Goes back to the offset of the length field that was unfinished in 
+   * Goes back to the offset of the length field that was unfinished in write_header
    *
-   * @param[in, out] props The properties of the entity.
+   * @param[in] props The properties of the entity.
    *
-   * @return Whether the header was read succesfully.
+   * @return Whether the header has succesfully finished writing.
    */
-  bool finish_write_header(entity_properties_t &props);
+  bool finish_write_header(const entity_properties_t &props);
 
   /**
    * @brief

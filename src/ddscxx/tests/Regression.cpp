@@ -337,7 +337,7 @@ TEST_F(Regression, key_value_of_appendables)
 
 TEST_F(Regression, memberless_struct)
 {
-  auto &props = get_type_props<s_memberless>();
+  const auto &props = get_type_props<s_memberless>();
 
   xcdr_v1_stream v1(endianness::big_endian);
   v1.set_mode(cdr_stream::stream_mode::read, false);

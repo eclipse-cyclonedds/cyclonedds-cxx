@@ -18,7 +18,7 @@ namespace cyclonedds {
 namespace core {
 namespace cdr {
 
-bool basic_cdr_stream::start_struct(entity_properties_t &props)
+bool basic_cdr_stream::start_struct(const entity_properties_t &props)
 {
   if (!is_key() && props.xtypes_necessary && status(unsupported_xtypes))
     return false;
