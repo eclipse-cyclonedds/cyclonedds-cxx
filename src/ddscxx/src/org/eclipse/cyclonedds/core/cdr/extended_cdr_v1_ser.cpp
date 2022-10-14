@@ -30,7 +30,7 @@ const uint32_t xcdr_v1_stream::pl_extended_mask                 = 0x0FFFFFFF;
 const uint32_t xcdr_v1_stream::pl_extended_flag_impl_extension  = 0x80000000;
 const uint32_t xcdr_v1_stream::pl_extended_flag_must_understand = 0x40000000;
 
-bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
+bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
 {
   if (header_necessary(prop) && (prop.p_ext != extensibility::ext_mutable || is_set)) {
     switch (m_mode) {
@@ -55,13 +55,14 @@ bool xcdr_v1_stream::start_member(entity_properties_t &prop, bool is_set)
   return cdr_stream::start_member(prop, is_set);
 }
 
-bool xcdr_v1_stream::finish_member(entity_properties_t &prop, bool is_set)
+bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set)
 {
   if (header_necessary(prop)) {
     switch (m_mode) {
       case stream_mode::write:
-        if (prop.p_ext != extensibility::ext_mutable || is_set)
-          return finish_write_header(prop);
+        if ((prop.p_ext != extensibility::ext_mutable || is_set) &&
+            !finish_write_header(prop))
+          return false;
         break;
       case stream_mode::read:
         m_buffer_end.pop();
@@ -72,10 +73,10 @@ bool xcdr_v1_stream::finish_member(entity_properties_t &prop, bool is_set)
   }
 
   pop_member_start();
-  return cdr_stream::finish_member(prop, is_set);
+  return cdr_stream::finish_member(prop, member_ids, is_set);
 }
 
-entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
+const entity_properties_t* xcdr_v1_stream::next_entity(const entity_properties_t *prop)
 {
   if (m_mode != stream_mode::read)
     return cdr_stream::next_entity(prop);
@@ -143,13 +144,10 @@ entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
   return prop;
 }
 
-entity_properties_t* xcdr_v1_stream::first_entity(entity_properties_t *props)
+const entity_properties_t* xcdr_v1_stream::first_entity(const entity_properties_t *props)
 {
-  if (m_mode != stream_mode::read)
-    return cdr_stream::first_entity(props);
-
   auto prop = cdr_stream::first_entity(props);
-  if (!prop)
+  if (m_mode != stream_mode::read || !prop)
     return prop;
 
   if (!list_necessary(*props)) {
@@ -252,7 +250,7 @@ bool xcdr_v1_stream::read_header(entity_properties_t &out, bool &is_final)
   return true;
 }
 
-bool xcdr_v1_stream::write_header(entity_properties_t &props)
+bool xcdr_v1_stream::write_header(const entity_properties_t &props)
 {
   if (!align(4, true)) {
     return false;
@@ -267,7 +265,7 @@ bool xcdr_v1_stream::write_header(entity_properties_t &props)
   }
 }
 
-bool xcdr_v1_stream::finish_write_header(entity_properties_t &props)
+bool xcdr_v1_stream::finish_write_header(const entity_properties_t &props)
 {
   auto current_position = position();
   auto current_alignment = alignment();
@@ -290,7 +288,7 @@ bool xcdr_v1_stream::finish_write_header(entity_properties_t &props)
   return true;
 }
 
-bool xcdr_v1_stream::finish_struct(entity_properties_t &props)
+bool xcdr_v1_stream::finish_struct(const entity_properties_t &props, const member_id_set &member_ids)
 {
   switch (m_mode) {
     case stream_mode::write:
@@ -303,13 +301,12 @@ bool xcdr_v1_stream::finish_struct(entity_properties_t &props)
         return move_final_list_entry();
       break;
     case stream_mode::read:
-      check_struct_completeness(props);
+      return check_struct_completeness(props, member_ids);
       break;
     default:
-      break;
+      return false;
   }
-
-  return props.is_present;
+  return true;
 }
 
 bool xcdr_v1_stream::list_necessary(const entity_properties_t &props)

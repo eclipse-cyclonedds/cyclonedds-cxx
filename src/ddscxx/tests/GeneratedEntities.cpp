@@ -50,7 +50,7 @@ void compare_endpoints_with_entity(const key_endpoint &ke, const entity_properti
 template<typename T>
 void test_props(const std::list<std::list<uint32_t> > &endpoints)
 {
-  auto props = get_type_props<T>();
+  const auto &props = get_type_props<T>();
 
   key_endpoint ke;
   for (const auto &endpoint:endpoints)
