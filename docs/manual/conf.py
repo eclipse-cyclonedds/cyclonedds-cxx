@@ -45,3 +45,10 @@ autosummary_generate=True
 breathe_domain_by_extension = { "h" : "cpp" , "c" : "cpp", "hpp": "cpp", "cpp": "cpp"}
 breathe_show_define_initializer = True
 breathe_show_include = True
+
+rst_epilog = '\n'.join(map(lambda x: f".. |var-{x[0]}| replace:: {x[1]}", {
+    "project": "Eclipse Cyclone DDS: C++ Binding",
+    "project-short": "Cyclone DDS C++",
+    "core-project": "Eclipse Cyclone DDS",
+    "core-project-short": "Cyclone DDS"
+}.items()))

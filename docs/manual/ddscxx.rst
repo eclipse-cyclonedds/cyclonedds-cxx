@@ -10,8 +10,8 @@
    SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 
-Eclipse Cyclone DDS CXX API Reference
-=====================================
+|var-project| API Reference
+===========================
 
 .. toctree::
    :maxdepth: 2
