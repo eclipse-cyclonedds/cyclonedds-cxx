@@ -113,6 +113,7 @@ org::eclipse::cyclonedds::core::DDScObjectDelegate::extract_strong_ref (dds_enti
 
     DDScObjectDelegate::entity_map_mutex.unlock ();
 
+    // coverity[return_local_addr_alias:FALSE]
     return e_ptr.lock();
 }
 
