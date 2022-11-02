@@ -1,0 +1,99 @@
+..
+   Copyright(c) 2022 ZettaScale Technology and others
+
+   This program and the accompanying materials are made available under the
+   terms of the Eclipse Public License v. 2.0 which is available at
+   http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+   v. 1.0 which is available at
+   http://www.eclipse.org/org/documents/edl-v10.php.
+
+   SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+Listeners
+=========
+
+Listeners allow the code to react to changes in state of DDS entities like readers, writers, etc.
+CycloneDDS-CXX implements different listeners for different entities.
+Some types' listeners inherit from other types' listeners, allowing the listener of one type to react to changes in state on subordinate entities.
+E.G.: the listener for a DomainParticipant also implements the functionality of the listeners for Publishers, Subscribers and Topics.
+By using this functionality, the user can avoid large amounts of boilerplate code, since the listener will have to be implemented just one time.
+The listener can then be propagated down to the Publisher and from the Publisher to a DataWriter for instance.
+
+.. table:: CycloneDDS Entities and associated listeners
+
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+	| CDDS-CXX Entity Type  | Listener Type             | Inherits From         | Associated Unique Callbacks   | Associated StatusMask      | Passed Status Entity           |
+	+=======================+===========================+=======================+===============================+============================+================================+
+	| DomainParticipant     | DomainParticipantListener | PublisherListener     |                               |                            |                                |
+	|                       |                           | SubscriberListener    |                               |                            |                                |
+	|                       |                           | AnyTopicListener      |                               |                            |                                |
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+	| Topic                 | TopicListener             |                       | on_inconsistent_topic         | inconsistent_topic         | InconsistentTopicStatus        |
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+	| Publisher             | PublisherListener         | DataWriterListener    |                               |                            |                                |
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+	| DataWriter            | DataWriterListener        |                       | on_offered_deadline_missed    | offered_deadline_missed    | OfferedDeadlineMissedStatus    |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_offered_incompatible_qos   | offered_incompatible_qos   | OfferedIncompatibleQosStatus   |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_liveliness_lost            | liveliness_lost            | LivelinessLostStatus           |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_publication_matched        | publication_matched        | PublicationMatchedStatus       |
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+	| Subscriber            | SubscriberListener        | DataReaderListener    |                               |                            |                                |
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+	| DataReader            | DataReaderListener        |                       | on_requested_deadline_missed  | requested_deadline_missed  | RequestedDeadlineMissedStatus  |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_requested_incompatible_qos | requested_incompatible_qos | RequestedIncompatibleQosStatus |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_sample_rejected            | sample_rejected            | SampleRejectedStatus           |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_liveliness_changed         | liveliness_changed         | LivelinessChangedStatus        |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_data_available             | data_available             |                                |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_subscription_matched       | subscription_matched       | SubscriptionMatchedStatus      |
+	|                       |                           |                       +-------------------------------+----------------------------+--------------------------------+
+	|                       |                           |                       | on_sample_lost                | sample_lost                | SampleLostStatus               |
+	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
+
+A Listener is implemented as a virtual base class which defines a number of functions which correspond to status transitions in the underlying entity.
+For instance, the DataReaderListener will have an unimplemented virtual on_data_available function, which will be called each time data is inserted into the associated DataReader's history.
+DDS entities can be passed a listener during creation together with a StatusMask describing which status changes to pass to the listener.
+
+To make use of the listener functionality, the user needs to create a class deriving from the type of listener necessary and implement the virtual functions.
+To simplify the use of listeners, there are also NoOp listeners, which implement all virtual functions with empty contents, allowing the user to just implement the functions they are interested in.
+
+.. code:: C++
+
+	template<typename T>
+	ExampleListener: public dds::sub::NoOpDataReaderListener<T> {
+		public:
+			void on_data_available(dds::sub::DataReader<T>& reader) {
+				/* you also get a reference to the reader the callback originated from */
+				auto samples = reader.take();
+				std::cout << "I have " << samples.length() << " new samples available." << std::endl;
+				int invsamples = 0;
+				for (const auto & sample:samples) {
+					if (!sample.info().valid())
+						invsamples++;
+				}
+				std::cout << "Of which " << invsamples << " were invalid samples." << std::endl;
+			}
+	};
+
+By passing this listener to a reader, and setting the correct status mask, the message "I have $N new samples available.", and then "Of which $I were invalid samples.", where $N is the number of new samples and $I the number of invalid samples, should appear each time the associated reader receives data:
+
+.. code:: C++
+
+	dds::sub::qos::DataReaderQos drqos;
+	ExampleListener<DataType> listener;
+	dds::sub::DataReader<DataType> reader(subscriber, topic, drqos, &listener, dds::core::status::StatusMask::data_available());
+
+Some listeners' callback functions are passed references to the entities the callback originated from and/or status objects containing information relevant to the status change.
+For example, the listener for DataWriters has the following callback function which is triggered when the Deadline QoS Policy is not adhered to:
+
+.. code:: C++
+
+	void offered_deadline_missed(dds::pub::AnyDataWriter& writer, const dds::core::status::OfferedDeadlineMissedStatus& status);
+	

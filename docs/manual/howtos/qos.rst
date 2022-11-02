@@ -1,0 +1,164 @@
+..
+   Copyright(c) 2022 ZettaScale Technology and others
+
+   This program and the accompanying materials are made available under the
+   terms of the Eclipse Public License v. 2.0 which is available at
+   http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+   v. 1.0 which is available at
+   http://www.eclipse.org/org/documents/edl-v10.php.
+
+   SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+Quality of Service
+==================
+
+Quality of Service is the collection of different restrictions and expectations called QoSPolicies on the behaviour of the different components of CycloneDDS.
+Some QoSPolicies only affect a single type of DDS entity, whereas others affect multiple, and QoSPolicies on a DDS entity cannot be modified after creating the entity as they affect matching/discovery of entities.
+The QoS used is linked to a type of DDS entity the QoS is used for, e.g.: a SubscriberQoS is not accepted when creating a DataReader.
+The entity-specific QoSes can be found in the `qos` sub-namespace of the same namespace the entity is defined in, whereas the different QoSPolicies are located in the `dds::core::policy` namespace.
+
+.. table:: DDS entity types and associated QoSes
+
+	+-----------------------+----------------------+
+	| CDDS-CXX Entity Type  | QoS Type             |
+	+=======================+======================+
+	| DomainParticipant     | DomainParticipantQos |
+	+-----------------------+----------------------+
+	| Publisher             | PublisherQos         |
+	+-----------------------+----------------------+
+	| Subscriber            | SubscriberQos        |
+	+-----------------------+----------------------+
+	| Topic                 | TopicQos             |
+	+-----------------------+----------------------+
+	| DataWriter            | DataWriterQos        |
+	+-----------------------+----------------------+
+	| DataReader            | DataReaderQos        |
+	+-----------------------+----------------------+
+
+.. table:: QoSPolicies and associated QoSes:
+
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| QoSPolicy                  | DomainParticipantQos | PublisherQos | SubscriberQos | TopicQos | DataWriterQos | DataReaderQos |
+	+============================+======================+==============+===============+==========+===============+===============+
+	| UserData                   | Y                    | N            | N             | N        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| EntityFactory              | Y                    | Y            | Y             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| TopicData                  | N                    | N            | N             | Y        | N             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Durability                 | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| DurabilityService          | N                    | N            | N             | Y        | Y             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Deadline                   | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| LatencyBudget              | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Liveliness                 | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Reliability                | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| DestinationOrder           | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| History                    | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| ResourceLimits             | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| TransportPriority          | N                    | N            | N             | Y        | Y             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Lifespan                   | N                    | N            | N             | Y        | Y             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Ownership                  | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Presentation               | N                    | Y            | Y             | N        | N             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| Partition                  | N                    | Y            | Y             | N        | N             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| GroupData                  | N                    | Y            | Y             | N        | N             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| OwnershipStrength          | N                    | N            | N             | N        | Y             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| WriterDataLifecycle        | N                    | N            | N             | N        | Y             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| TimeBasedFilter            | N                    | N            | N             | N        | N             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| ReaderDataLifecycle        | N                    | N            | N             | N        | Y             | N             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| DataRepresentation         | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+	| TypeConsistencyEnforcement | N                    | N            | N             | Y        | Y             | Y             |
+	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
+
+Setting of QoSPolicies can be done either through left-shifting the QoSPolicy "into" the QoS:
+
+.. code:: C++
+
+	dds::sub::qos::DataReaderQos rqos;
+	rqos << dds::core::policy::Durability(dds::core::policy::DurabilityKind::TRANSIENT_LOCAL);
+
+, or passing it as the parameter of the `policy` function:
+
+.. code:: C++
+
+	dds::pub::qos::DataWriterQos wqos;
+	dds::core::policy::Reliability rel(dds::core::policy::ReliabilityKind::RELIABLE, dds::core::Duration(8, 8));
+	wqos.policy(rel);
+
+Whereas getting of QoSPolicies can be done either through the right-shifting the QoSPolicy "out of" the QoS:
+
+.. code:: C++
+
+	dds::topic::qos::TopicQos tqos;
+	dds::core::policy::TopicData td;
+	tqos >> td;
+
+, or through the `policy` function, which is templated to indicate which QoSPolicy is being accessed:
+
+.. code:: C++
+
+	dds::domain::qos::DomainParticipantQos dqos;
+	auto ud = dqos.policy<dds::core::policy::UserData>();
+
+For a more detailed explanation of the different QoSPolicies and their effects on the behaviour of CycloneDDS, the user is referred to the OMG DDS Spec v1.4 section 2.2.3.
+
+Default and Inherited QoSes
+------------
+
+QoSes have a number of default settings that are falled back to when none are provided upon creation.
+These defaults are either defined in the DDS standard, or propagated from "superior" entities.
+The default inherited QoS for entities is set through the following functions:
+
+.. table:: Default QoSes and accessors
+
+	+-------------------+--------------------+------------------------+
+	| Superior Entity   | Subordinate Entity | Default QoS accessor   |
+	+===================+====================+========================+
+	| DomainParticipant | Topic              | default_topic_qos      |
+	|                   +--------------------+------------------------+
+	|                   | Publisher          | default_publisher_qos  |
+	|                   +--------------------+------------------------+
+	|                   | Subscriber         | default_subscriber_qos |
+	+-------------------+--------------------+------------------------+
+	| Topic             | DataReader         | default_datareader_qos |
+	|                   +--------------------+------------------------+
+	|                   | DataWriter         | default_datawriter_qos |
+	+-------------------+--------------------+------------------------+
+	| Publisher         | DataWriter         | default_datawriter_qos |
+	+-------------------+--------------------+------------------------+
+	| Subscriber        | DataReader         | default_datareader_qos |
+	+-------------------+--------------------+------------------------+
+
+So in the following case:
+
+.. code:: C++
+
+	dds::sub::Subscriber sub(participant);
+	dds::sub::qos::DataReaderQos qos1, qos2;
+	qos1 << dds::core::policy::Durability(dds::core::policy::DurabilityKind::TRANSIENT_LOCAL);
+	qos2 << dds::core::policy::DestinationOrder(dds::core::policy::DestinationOrderKind::BY_SOURCE_TIMESTAMP);
+	sub.default_datareader_qos(qos1);
+	dds::sub::DataReader<DataType> reader(sub,topic,qos2);
+
+, `reader` will have its `DestinationOrder` QoSPolicy set to the value set in the QoS supplied in its constructor, being `BY_SOURCE_TIMESTAMP`.
+On the other hand, the `Durability` QoSPolicy defaults to the one set as default on the Subscriber, being `TRANSIENT_LOCAL`.
+Lastly all other QosPolicies will default to the DDS Spec, for instance the `Ownership` QoSPolicy will have the value `SHARED`.
