@@ -21,8 +21,6 @@
 #include <dds/core/detail/conformance.hpp>
 #include <org/eclipse/cyclonedds/topic/qos/TopicQosDelegate.hpp>
 
-#include <dds/ddsi/ddsi_xqos.h>
-
 struct _DDS_NamedDataReaderQos;
 
 namespace org
@@ -99,21 +97,16 @@ private:
 
 //==============================================================================
 
-
 template<>
 inline const dds::core::policy::Durability&
 DataReaderQosDelegate::policy<dds::core::policy::Durability>() const
 {
     return durability_;
 }
-template<>
-inline dds::core::policy::Durability&
-DataReaderQosDelegate::policy<dds::core::policy::Durability>()
-{
-    present_ |= QP_DURABILITY;
-    return durability_;
-}
 
+template<>
+dds::core::policy::Durability&
+DataReaderQosDelegate::policy<dds::core::policy::Durability>();
 
 template<>
 inline const dds::core::policy::UserData&
@@ -122,96 +115,68 @@ DataReaderQosDelegate::policy<dds::core::policy::UserData>() const
     return user_data_;
 }
 template<>
-inline dds::core::policy::UserData&
-DataReaderQosDelegate::policy<dds::core::policy::UserData>()
-{
-    present_ |= QP_USER_DATA;
-    return user_data_;
-}
-
+dds::core::policy::UserData&
+DataReaderQosDelegate::policy<dds::core::policy::UserData>();
 
 template<> inline const dds::core::policy::Deadline&
 DataReaderQosDelegate::policy<dds::core::policy::Deadline>() const
 {
     return deadline_;
 }
-template<>
-inline dds::core::policy::Deadline&
-DataReaderQosDelegate::policy<dds::core::policy::Deadline>()
-{
-    present_ |= QP_DEADLINE;
-    return deadline_;
-}
 
+template<>
+dds::core::policy::Deadline&
+DataReaderQosDelegate::policy<dds::core::policy::Deadline>();
 
 template<> inline const dds::core::policy::LatencyBudget&
 DataReaderQosDelegate::policy<dds::core::policy::LatencyBudget>() const
 {
     return budget_;
 }
-template<>
-inline dds::core::policy::LatencyBudget&
-DataReaderQosDelegate::policy<dds::core::policy::LatencyBudget>()
-{
-    present_ |= QP_LATENCY_BUDGET;
-    return budget_;
-}
 
+template<>
+dds::core::policy::LatencyBudget&
+DataReaderQosDelegate::policy<dds::core::policy::LatencyBudget>();
 
 template<> inline const dds::core::policy::Liveliness&
 DataReaderQosDelegate::policy<dds::core::policy::Liveliness>() const
 {
     return liveliness_;
 }
-template<>
-inline dds::core::policy::Liveliness&
-DataReaderQosDelegate::policy<dds::core::policy::Liveliness>()
-{
-    present_ |= QP_LIVELINESS;
-    return liveliness_;
-}
 
+template<>
+dds::core::policy::Liveliness&
+DataReaderQosDelegate::policy<dds::core::policy::Liveliness>();
 
 template<> inline const dds::core::policy::Reliability&
 DataReaderQosDelegate::policy<dds::core::policy::Reliability>() const
 {
     return reliability_;
 }
-template<>
-inline dds::core::policy::Reliability&
-DataReaderQosDelegate::policy<dds::core::policy::Reliability>()
-{
-    present_ |= QP_RELIABILITY;
-    return reliability_;
-}
 
+template<>
+dds::core::policy::Reliability&
+DataReaderQosDelegate::policy<dds::core::policy::Reliability>();
 
 template<> inline const dds::core::policy::DestinationOrder&
 DataReaderQosDelegate::policy<dds::core::policy::DestinationOrder>() const
 {
     return order_;
 }
-template<>
-inline dds::core::policy::DestinationOrder&
-DataReaderQosDelegate::policy<dds::core::policy::DestinationOrder>()
-{
-    present_ |= QP_DESTINATION_ORDER;
-    return order_;
-}
 
+template<>
+dds::core::policy::DestinationOrder&
+DataReaderQosDelegate::policy<dds::core::policy::DestinationOrder>();
 
 template<> inline const dds::core::policy::History&
 DataReaderQosDelegate::policy<dds::core::policy::History>() const
 {
     return history_;
 }
+
 template<>
-inline dds::core::policy::History&
-DataReaderQosDelegate::policy<dds::core::policy::History>()
-{
-    present_ |= QP_HISTORY;
-    return history_;
-}
+dds::core::policy::History&
+DataReaderQosDelegate::policy<dds::core::policy::History>();
 
 
 template<> inline const dds::core::policy::ResourceLimits&
@@ -219,55 +184,40 @@ DataReaderQosDelegate::policy<dds::core::policy::ResourceLimits>() const
 {
     return resources_;
 }
-template<>
-inline dds::core::policy::ResourceLimits&
-DataReaderQosDelegate::policy<dds::core::policy::ResourceLimits>()
-{
-    present_ |= QP_RESOURCE_LIMITS;
-    return resources_;
-}
 
+template<>
+dds::core::policy::ResourceLimits&
+DataReaderQosDelegate::policy<dds::core::policy::ResourceLimits>();
 
 template<> inline const dds::core::policy::Ownership&
 DataReaderQosDelegate::policy<dds::core::policy::Ownership>() const
 {
     return ownership_;
 }
-template<>
-inline dds::core::policy::Ownership&
-DataReaderQosDelegate::policy<dds::core::policy::Ownership>()
-{
-    present_ |= QP_OWNERSHIP;
-    return ownership_;
-}
 
+template<>
+dds::core::policy::Ownership&
+DataReaderQosDelegate::policy<dds::core::policy::Ownership>();
 
 template<> inline const dds::core::policy::TimeBasedFilter&
 DataReaderQosDelegate::policy<dds::core::policy::TimeBasedFilter>() const
 {
     return tfilter_;
 }
-template<>
-inline dds::core::policy::TimeBasedFilter&
-DataReaderQosDelegate::policy<dds::core::policy::TimeBasedFilter>()
-{
-    present_ |= QP_TIME_BASED_FILTER;
-    return tfilter_;
-}
 
+template<>
+dds::core::policy::TimeBasedFilter&
+DataReaderQosDelegate::policy<dds::core::policy::TimeBasedFilter>();
 
 template<> inline const dds::core::policy::ReaderDataLifecycle&
 DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>() const
 {
     return lifecycle_;
 }
+
 template<>
-inline dds::core::policy::ReaderDataLifecycle&
-DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>()
-{
-    present_ |= QP_ADLINK_READER_DATA_LIFECYCLE;
-    return lifecycle_;
-}
+dds::core::policy::ReaderDataLifecycle&
+DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>();
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 template<> inline const  dds::core::policy::DataRepresentation&
@@ -275,24 +225,18 @@ DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>() const
 {
     return datarepresentation_;
 }
-template<> inline dds::core::policy::DataRepresentation&
-DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>()
-{
-    present_ |= QP_DATA_REPRESENTATION;
-    return datarepresentation_;
-}
+
+template<> dds::core::policy::DataRepresentation&
+DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>();
 
 template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
 DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() const
 {
     return typeconsistencyenforcement_;
 }
-template<> inline dds::core::policy::TypeConsistencyEnforcement&
-DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
-{
-    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
-    return typeconsistencyenforcement_;
-}
+
+template<> dds::core::policy::TypeConsistencyEnforcement&
+DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>();
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }

@@ -303,30 +303,142 @@ DataReaderQosDelegate::operator =(const org::eclipse::cyclonedds::topic::qos::To
 {
     if (tqos.present() & QP_DURABILITY)
       policy(tqos.policy<dds::core::policy::Durability>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_DEADLINE)
       policy(tqos.policy<dds::core::policy::Deadline>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_LATENCY_BUDGET)
       policy(tqos.policy<dds::core::policy::LatencyBudget>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_LIVELINESS)
       policy(tqos.policy<dds::core::policy::Liveliness>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_RELIABILITY)
       policy(tqos.policy<dds::core::policy::Reliability>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_DESTINATION_ORDER)
       policy(tqos.policy<dds::core::policy::DestinationOrder>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_HISTORY)
       policy(tqos.policy<dds::core::policy::History>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_RESOURCE_LIMITS)
       policy(tqos.policy<dds::core::policy::ResourceLimits>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_OWNERSHIP)
       policy(tqos.policy<dds::core::policy::Ownership>());
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_DATA_REPRESENTATION)
       policy(tqos.policy<dds::core::policy::DataRepresentation>());
-    if (tqos.present() & QP_DURABILITY)
+    if (tqos.present() & QP_TYPE_CONSISTENCY_ENFORCEMENT)
       policy(tqos.policy<dds::core::policy::TypeConsistencyEnforcement>());
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     return *this;
 }
+
+template<>
+dds::core::policy::Durability&
+DataReaderQosDelegate::policy<dds::core::policy::Durability>()
+{
+    present_ |= QP_DURABILITY;
+    return durability_;
+}
+
+template<>
+dds::core::policy::UserData&
+DataReaderQosDelegate::policy<dds::core::policy::UserData>()
+{
+    present_ |= QP_USER_DATA;
+    return user_data_;
+}
+
+template<>
+dds::core::policy::Deadline&
+DataReaderQosDelegate::policy<dds::core::policy::Deadline>()
+{
+    present_ |= QP_DEADLINE;
+    return deadline_;
+}
+
+template<>
+dds::core::policy::LatencyBudget&
+DataReaderQosDelegate::policy<dds::core::policy::LatencyBudget>()
+{
+    present_ |= QP_LATENCY_BUDGET;
+    return budget_;
+}
+
+template<>
+dds::core::policy::Liveliness&
+DataReaderQosDelegate::policy<dds::core::policy::Liveliness>()
+{
+    present_ |= QP_LIVELINESS;
+    return liveliness_;
+}
+
+template<>
+dds::core::policy::Reliability&
+DataReaderQosDelegate::policy<dds::core::policy::Reliability>()
+{
+    present_ |= QP_RELIABILITY;
+    return reliability_;
+}
+
+template<>
+dds::core::policy::DestinationOrder&
+DataReaderQosDelegate::policy<dds::core::policy::DestinationOrder>()
+{
+    present_ |= QP_DESTINATION_ORDER;
+    return order_;
+}
+
+template<>
+dds::core::policy::History&
+DataReaderQosDelegate::policy<dds::core::policy::History>()
+{
+    present_ |= QP_HISTORY;
+    return history_;
+}
+
+template<>
+dds::core::policy::ResourceLimits&
+DataReaderQosDelegate::policy<dds::core::policy::ResourceLimits>()
+{
+    present_ |= QP_RESOURCE_LIMITS;
+    return resources_;
+}
+
+template<>
+dds::core::policy::Ownership&
+DataReaderQosDelegate::policy<dds::core::policy::Ownership>()
+{
+    present_ |= QP_OWNERSHIP;
+    return ownership_;
+}
+
+template<>
+dds::core::policy::TimeBasedFilter&
+DataReaderQosDelegate::policy<dds::core::policy::TimeBasedFilter>()
+{
+    present_ |= QP_TIME_BASED_FILTER;
+    return tfilter_;
+}
+
+template<>
+dds::core::policy::ReaderDataLifecycle&
+DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>()
+{
+    present_ |= QP_ADLINK_READER_DATA_LIFECYCLE;
+    return lifecycle_;
+}
+
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+template<> dds::core::policy::DataRepresentation&
+DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>()
+{
+    present_ |= QP_DATA_REPRESENTATION;
+    return datarepresentation_;
+}
+
+template<> dds::core::policy::TypeConsistencyEnforcement&
+DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
+{
+    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
+    return typeconsistencyenforcement_;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
 }

@@ -20,6 +20,8 @@
 
 #include <cassert>
 
+#include "dds/ddsi/ddsi_plist.h"
+
 namespace org
 {
 namespace eclipse
@@ -30,6 +32,12 @@ namespace domain
 {
 namespace qos
 {
+
+DomainParticipantQosDelegate::DomainParticipantQosDelegate()
+{
+    ddsc_qos(&ddsi_default_plist_participant.qos);
+    check();
+}
 
 void
 DomainParticipantQosDelegate::policy(const dds::core::policy::UserData& user_data)
@@ -102,6 +110,22 @@ DomainParticipantQosDelegate::operator ==(const DomainParticipantQosDelegate& ot
            other.user_data_           == user_data_ &&
            other.entity_factory_      == entity_factory_;
 
+}
+
+template<>
+dds::core::policy::UserData&
+DomainParticipantQosDelegate::policy<dds::core::policy::UserData> ()
+{
+    present_ |= QP_USER_DATA;
+    return user_data_;
+}
+
+template<>
+dds::core::policy::EntityFactory&
+DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> ()
+{
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    return entity_factory_;
 }
 
 }

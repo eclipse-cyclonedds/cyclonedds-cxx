@@ -137,6 +137,38 @@ SubscriberQosDelegate::operator ==(const SubscriberQosDelegate& other) const
            other.entity_factory_ == entity_factory_;
 }
 
+template<>
+dds::core::policy::Presentation&
+SubscriberQosDelegate::policy<dds::core::policy::Presentation>()
+{
+    present_ |= QP_PRESENTATION;
+    return presentation_;
+}
+
+template<>
+dds::core::policy::Partition&
+SubscriberQosDelegate::policy<dds::core::policy::Partition>()
+{
+    present_ |= QP_PARTITION;
+    return partition_;
+}
+
+template<>
+dds::core::policy::GroupData&
+SubscriberQosDelegate::policy<dds::core::policy::GroupData>()
+{
+    present_ |= QP_GROUP_DATA;
+    return group_data_;
+}
+
+template<>
+dds::core::policy::EntityFactory&
+SubscriberQosDelegate::policy<dds::core::policy::EntityFactory>()
+{
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    return entity_factory_;
+}
+
 }
 }
 }

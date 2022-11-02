@@ -38,7 +38,6 @@ DataWriterQosDelegate::DataWriterQosDelegate()
     ddsc_qos(&ddsi_default_qos_writer);
     present() &= ~QP_DATA_REPRESENTATION;
     check();
-    policy(dds::core::policy::Reliability(dds::core::policy::ReliabilityKind::RELIABLE));
 }
 
 DataWriterQosDelegate::DataWriterQosDelegate(
@@ -368,6 +367,122 @@ DataWriterQosDelegate::operator =(const org::eclipse::cyclonedds::topic::qos::To
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     return *this;
 }
+
+template<> dds::core::policy::UserData&
+DataWriterQosDelegate::policy<dds::core::policy::UserData>()
+{
+    present_ |= QP_USER_DATA;
+    return user_data_;
+}
+
+template<> dds::core::policy::Durability&
+DataWriterQosDelegate::policy<dds::core::policy::Durability>()
+{
+    present_ |= QP_DURABILITY;
+    return durability_;
+}
+
+template<> dds::core::policy::Deadline&
+DataWriterQosDelegate::policy<dds::core::policy::Deadline>()
+{
+    present_ |= QP_DEADLINE;
+    return deadline_;
+}
+
+template<> dds::core::policy::LatencyBudget&
+DataWriterQosDelegate::policy<dds::core::policy::LatencyBudget>()
+{
+    present_ |= QP_LATENCY_BUDGET;
+    return budget_;
+}
+
+template<> dds::core::policy::Liveliness&
+DataWriterQosDelegate::policy<dds::core::policy::Liveliness>()
+{
+    present_ |= QP_LIVELINESS;
+    return liveliness_;
+}
+
+template<> dds::core::policy::Reliability&
+DataWriterQosDelegate::policy<dds::core::policy::Reliability>()
+{
+    present_ |= QP_RELIABILITY;
+    return reliability_;
+}
+
+template<> dds::core::policy::DestinationOrder&
+DataWriterQosDelegate::policy<dds::core::policy::DestinationOrder>()
+{
+    present_ |= QP_DESTINATION_ORDER;
+    return order_;
+}
+
+template<> dds::core::policy::History&
+DataWriterQosDelegate::policy<dds::core::policy::History>()
+{
+    present_ |= QP_HISTORY;
+    return history_;
+}
+
+template<> dds::core::policy::ResourceLimits&
+DataWriterQosDelegate::policy<dds::core::policy::ResourceLimits>()
+{
+    present_ |= QP_RESOURCE_LIMITS;
+    return resources_;
+}
+
+template<> dds::core::policy::TransportPriority&
+DataWriterQosDelegate::policy<dds::core::policy::TransportPriority>()
+{
+    present_ |= QP_TRANSPORT_PRIORITY;
+    return priority_;
+}
+
+template<> dds::core::policy::Lifespan&
+DataWriterQosDelegate::policy<dds::core::policy::Lifespan>()
+{
+    present_ |= QP_LIFESPAN;
+    return lifespan_;
+}
+
+template<> dds::core::policy::Ownership&
+DataWriterQosDelegate::policy<dds::core::policy::Ownership>()
+{
+    present_ |= QP_OWNERSHIP;
+    return ownership_;
+}
+
+#ifdef  OMG_DDS_OWNERSHIP_SUPPORT
+template<> dds::core::policy::OwnershipStrength&
+DataWriterQosDelegate::policy<dds::core::policy::OwnershipStrength>()
+{
+    present_ |= QP_OWNERSHIP_STRENGTH;
+    return strength_;
+}
+#endif  // OMG_DDS_OWNERSHIP_SUPPORT
+
+template<> dds::core::policy::WriterDataLifecycle&
+DataWriterQosDelegate::policy<dds::core::policy::WriterDataLifecycle>()
+{
+    present_ |= QP_ADLINK_WRITER_DATA_LIFECYCLE;
+    return lifecycle_;
+}
+
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+template<> dds::core::policy::DataRepresentation&
+DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>()
+{
+    present_ |= QP_DATA_REPRESENTATION;
+    return datarepresentation_;
+}
+
+template<> dds::core::policy::TypeConsistencyEnforcement&
+DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
+{
+    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
+    return typeconsistencyenforcement_;
+}
+#endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
 }

@@ -20,8 +20,6 @@
 
 #include <dds/core/policy/CorePolicy.hpp>
 
-#include <dds/ddsi/ddsi_xqos.h>
-
 struct _DDS_NamedPublisherQos;
 
 namespace org
@@ -72,21 +70,16 @@ private:
 
 //==============================================================================
 
-
 template<>
 inline const dds::core::policy::Presentation&
 PublisherQosDelegate::policy<dds::core::policy::Presentation>() const
 {
     return presentation_;
 }
-template<>
-inline dds::core::policy::Presentation&
-PublisherQosDelegate::policy<dds::core::policy::Presentation>()
-{
-    present_ |= QP_PRESENTATION;
-    return presentation_;
-}
 
+template<>
+dds::core::policy::Presentation&
+PublisherQosDelegate::policy<dds::core::policy::Presentation>();
 
 template<>
 inline const dds::core::policy::Partition&
@@ -94,14 +87,10 @@ PublisherQosDelegate::policy<dds::core::policy::Partition>() const
 {
     return partition_;
 }
-template<>
-inline dds::core::policy::Partition&
-PublisherQosDelegate::policy<dds::core::policy::Partition>()
-{
-    present_ |= QP_PARTITION;
-    return partition_;
-}
 
+template<>
+dds::core::policy::Partition&
+PublisherQosDelegate::policy<dds::core::policy::Partition>();
 
 template<>
 inline const dds::core::policy::GroupData&
@@ -109,14 +98,10 @@ PublisherQosDelegate::policy<dds::core::policy::GroupData>() const
 {
     return gdata_;
 }
-template<>
-inline dds::core::policy::GroupData&
-PublisherQosDelegate::policy<dds::core::policy::GroupData>()
-{
-    present_ |= QP_GROUP_DATA;
-    return gdata_;
-}
 
+template<>
+dds::core::policy::GroupData&
+PublisherQosDelegate::policy<dds::core::policy::GroupData>();
 
 template<>
 inline const dds::core::policy::EntityFactory&
@@ -124,13 +109,10 @@ PublisherQosDelegate::policy<dds::core::policy::EntityFactory>() const
 {
     return factory_policy_;
 }
+
 template<>
-inline dds::core::policy::EntityFactory&
-PublisherQosDelegate::policy<dds::core::policy::EntityFactory>()
-{
-    present_ |= QP_ADLINK_ENTITY_FACTORY;
-    return factory_policy_;
-}
+dds::core::policy::EntityFactory&
+PublisherQosDelegate::policy<dds::core::policy::EntityFactory>();
 
 }
 }

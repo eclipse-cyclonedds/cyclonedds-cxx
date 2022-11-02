@@ -137,6 +137,38 @@ PublisherQosDelegate::operator ==(const PublisherQosDelegate& other) const
            other.factory_policy_ == factory_policy_;
 }
 
+template<>
+dds::core::policy::Presentation&
+PublisherQosDelegate::policy<dds::core::policy::Presentation>()
+{
+    present_ |= QP_PRESENTATION;
+    return presentation_;
+}
+
+template<>
+dds::core::policy::Partition&
+PublisherQosDelegate::policy<dds::core::policy::Partition>()
+{
+    present_ |= QP_PARTITION;
+    return partition_;
+}
+
+template<>
+dds::core::policy::GroupData&
+PublisherQosDelegate::policy<dds::core::policy::GroupData>()
+{
+    present_ |= QP_GROUP_DATA;
+    return gdata_;
+}
+
+template<>
+dds::core::policy::EntityFactory&
+PublisherQosDelegate::policy<dds::core::policy::EntityFactory>()
+{
+    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    return factory_policy_;
+}
+
 }
 }
 }
