@@ -10,12 +10,12 @@
    SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Exchanging Data
-=========
+===============
 
 This guide will show the user some basic concepts behind DDS data exchange.
 
 DomainParticipant
----------
+-----------------
 
 A Domain is a specific subsection of the DDS shared dataspace and identified by their domain ID which is a 32 bit unsigned integer
 Data exchanges stay limited to the domain they are made on, e.g. data exchanged on domain 456 is not visible on domain 789.
@@ -30,14 +30,14 @@ You can either specify the default domain ID:
 , or, if you want to have more control over the process, select your own ID:
 
 .. code:: C++
-	
+
 	dds::domain::DomainParticipant participant(123456);
 
 The main part here is that you have the same ID on the reading side as the writing, because they won't be visible to eachother otherwise.
 ???Explain more about setting QoSes???
 
 Topic
----------
+-----
 
 A Topic is a subsection of a DDS Domain which allows exchange of data of a specific type which adheres to certain restrictions on the exchange before exchange can occur. 
 A Topic is identifiable by:
@@ -62,7 +62,7 @@ The data type of the topic is generated from the user's IDL files by using Cyclo
 Using types other than those generated from idlc+idlcxx in the template will not have the prerequisite traits and therefore not result in working code.
 
 Publishers
----------
+----------
 
 A Publisher is a producer of data on a Domain. It uses the DomainParticipant to gain access to the Domain and is created using it.
 A Publisher allows the DataWriters associated with it to share the same behaviour, such as:
@@ -90,7 +90,7 @@ Or supply your own:
 Now, any DataWriters created using pub will inherit the qos and listener functionality as set through it.
 
 Subscribers
----------
+-----------
 
 A Subscriber is a consumer of data on a Domain. It uses the DomainParticipant to gain access to the Domain and is created using it.
 A Subscriber allows the DataReaders associated with it to share the same behaviour, such as:
@@ -118,7 +118,7 @@ Or supply your own:
 Now, any DataReaders created using sub will inherit the qos and listener functionality as set through it.
 
 DataReaders
----------
+-----------
 
 DataReaders allow the user access to the data received by a Subscriber on a Topic, and take as a template parameter the data type being exchanged. The settings for the reader are either inheriting from the subscriber:
 
@@ -169,7 +169,7 @@ The `take` operation only returns samples which have not yet been returned in a 
 	}
 
 DataWriters
----------
+-----------
 
 DataWriters allow the user to write data to a Topic using a Publisher, and take as a template parameter the data type being exchanged. The settings for the writer are either inheriting from the publisher:
 
@@ -211,7 +211,7 @@ Or a range of samples:
 Or update existing instances through handles, which we will not go into here.
 
 Small Example
----------
+-------------
 
 Putting it all together we can create the following code for writing data of the type DataType:
 
