@@ -127,21 +127,3 @@ install(
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
-
-if(BUILD_DOCS)
-  find_package(Doxygen REQUIRED)
-
-  # Preprocess headers to make the documentation more readable.
-  set(DOXYGEN_PROJECT_NAME "Eclipse CycloneDDS CXX API Reference Guide")
-  set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include")
-  set(DOXYGEN_EXCLUDE_PATTERNS
-    "*/include/org/eclipse/*"
-    "*/dds/core/xtypes/*")
-  set(DOXYGEN_GENERATE_HTML NO)
-  set(DOXYGEN_GENERATE_XML YES)
-  set(DOXYGEN_MACRO_EXPANSION YES)
-  set(DOXYGEN_PREDEFINED
-    "DOXYGEN_FOR_ISOCPP=1"
-    "OMG_DDS_API=")
-  doxygen_add_docs(ddscxx_api_docs "include/")
-endif()
