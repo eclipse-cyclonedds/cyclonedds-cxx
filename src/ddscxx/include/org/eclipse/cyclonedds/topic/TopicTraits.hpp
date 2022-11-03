@@ -187,8 +187,7 @@ public:
      */
     static ddsi_typemap_t* getTypeMap(const struct ddsi_sertype *)
     {
-        ddsi_sertype_cdr_data_t cdr{type_map_blob_sz(), const_cast<uint8_t*>(type_map_blob())};
-        return ddsi_typemap_deser(&cdr);
+        return ddsi_typemap_deser(const_cast<unsigned char*>(type_map_blob()), type_map_blob_sz());
     }
 
     /**
@@ -201,8 +200,7 @@ public:
      */
     static ddsi_typeinfo_t* getTypeInfo(const struct ddsi_sertype *)
     {
-        ddsi_sertype_cdr_data_t cdr{type_info_blob_sz(), const_cast<uint8_t*>(type_info_blob())};
-        return ddsi_typeinfo_deser(&cdr);
+        return ddsi_typeinfo_deser(const_cast<unsigned char*>(type_info_blob()), type_info_blob_sz());
     }
 
     /**
