@@ -1,0 +1,10 @@
+{
+    "core-project": "Eclipse Cyclone DDS",
+    "core-project-short": "Cyclone DDS",
+    "project": "Eclipse Cyclone DDS: C++ API",
+    "project-short": "Cyclone DDS C++",
+    "copyright": ":year:, Eclipse Cyclone DDS committers",
+    "author": "Eclipse Cyclone DDS committers",
+    "version": "0.11.0",
+    "release": "0.11.0"
+}

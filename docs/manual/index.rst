@@ -18,6 +18,7 @@
 
    ddscxx
    idlcxx
+   howto
 
 Indices and tables
 ==================

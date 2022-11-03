@@ -10,14 +10,14 @@
    SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Statuses
-=========
+========
 
 Entities in DDS have statuses indicating the internal state and/or history of said entity.
 These statuses are used to signal Waitsets and Listeners, and are different between types of DDS entities.
 Below is a table explaining enumerating the fields for each status and their meaning:
 
 .. table:: CycloneDDS-CXX Status entities and fields
-	
+
 	+-----------------------+--------------------------------+--------------------------+------------------------------------------------------+
 	| CDDS-CXX Entity Type  | Status Entity                  | Associated Fields        | Meaning of field                                     |
 	+=======================+================================+==========================+======================================================+
@@ -133,7 +133,7 @@ and the interval count is the number of changes since the previous readout of th
 The statuses can be accessed by the following functions on the entity:
 
 .. table:: CycloneDDS-CXX Status accessors
-	
+
 	+-----------------------+--------------------------------+----------------------------------+
 	| CDDS-CXX Entity Type  | Status Entity                  | Accessor                         |
 	+=======================+================================+==================================+

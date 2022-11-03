@@ -122,7 +122,7 @@ Whereas getting of QoSPolicies can be done either through the right-shifting the
 For a more detailed explanation of the different QoSPolicies and their effects on the behaviour of CycloneDDS, the user is referred to the OMG DDS Spec v1.4 section 2.2.3.
 
 Default and Inherited QoSes
-------------
+---------------------------
 
 QoSes have a number of default settings that are falled back to when none are provided upon creation.
 These defaults are either defined in the DDS standard, or propagated from "superior" entities.

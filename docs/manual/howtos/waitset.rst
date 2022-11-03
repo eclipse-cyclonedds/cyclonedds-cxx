@@ -10,7 +10,7 @@
    SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
 Waitsets
-=========
+========
 
 Waitsets are a tool in CycloneDDS to hold execution of the program until a specific condition is reached, or an amount of time has expired.
 Waitsets and listeners cover two different requirement sets.

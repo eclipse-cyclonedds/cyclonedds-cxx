@@ -96,4 +96,3 @@ For example, the listener for DataWriters has the following callback function wh
 .. code:: C++
 
 	void offered_deadline_missed(dds::pub::AnyDataWriter& writer, const dds::core::status::OfferedDeadlineMissedStatus& status);
-	
