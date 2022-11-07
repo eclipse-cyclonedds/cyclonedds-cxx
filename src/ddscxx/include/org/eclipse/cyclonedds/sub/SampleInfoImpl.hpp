@@ -130,7 +130,7 @@ private:
                     const dds::sub::status::DataState& s1,
                     const dds::sub::status::DataState& s2)
     {
-        return s1.instance_state() == s1.instance_state()
+        return s1.instance_state() == s2.instance_state()
                && s1.view_state() == s2.view_state()
                && s1.sample_state() == s2.sample_state();
     }
