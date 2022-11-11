@@ -1141,7 +1141,9 @@ print_constructed_type_close(
     "  return props;\n"
     "}\n\n";
   static const char *pfmt2 =
-    "static const propvec &properties_%1$s = get_type_props<%2$s>();\n\n";
+    "namespace {\n"
+    "  static const volatile propvec &properties_%1$s = get_type_props<%2$s>();\n"
+    "}\n\n";
 
 
   char *fullname = NULL, *newname = NULL;
