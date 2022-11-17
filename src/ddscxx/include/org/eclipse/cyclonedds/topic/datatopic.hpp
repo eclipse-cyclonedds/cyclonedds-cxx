@@ -379,7 +379,7 @@ template <typename T>
 ddsi_serdata *serdata_from_ser(
   const ddsi_sertype* type,
   enum ddsi_serdata_kind kind,
-  const struct nn_rdata* fragchain,
+  const struct ddsi_rdata* fragchain,
   size_t size)
 {
   auto d = new ddscxx_serdata<T>(type, kind);

@@ -24,7 +24,7 @@
 #include <dds/dds.h>
 #include <dds/ddsc/dds_loan_api.h>
 
-#include "dds/ddsi/q_protocol.h"
+#include "dds/ddsi/ddsi_protocol.h"
 #include "dds/features.hpp"
 
 #ifdef DDSCXX_HAS_SHM
@@ -182,7 +182,7 @@ AnyDataWriterDelegate::dispose_cdr(
     const dds::core::InstanceHandle& handle,
     const dds::core::Time& timestamp)
 {
-    this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_DISPOSE);
+    this->write_cdr(writer, data, handle, timestamp, DDSI_STATUSINFO_DISPOSE);
 }
 
 void
@@ -192,7 +192,7 @@ AnyDataWriterDelegate::unregister_instance_cdr(
     const dds::core::InstanceHandle& handle,
     const dds::core::Time& timestamp)
 {
-    this->write_cdr(writer, data, handle, timestamp, NN_STATUSINFO_UNREGISTER);
+    this->write_cdr(writer, data, handle, timestamp, DDSI_STATUSINFO_UNREGISTER);
 }
 
 bool
