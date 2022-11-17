@@ -16,11 +16,11 @@
 #include <dds/core/macros.hpp>
 
 // unfortunate namespace pollution from C
-struct nn_rdata;
+struct ddsi_rdata;
 
 namespace org { namespace eclipse { namespace cyclone { namespace core { namespace cdr {
 
-OMG_DDS_API void serdata_from_ser_copyin_fragchain (unsigned char * __restrict cursor, const struct nn_rdata* fragchain, size_t size);
+OMG_DDS_API void serdata_from_ser_copyin_fragchain (unsigned char * __restrict cursor, const struct ddsi_rdata* fragchain, size_t size);
 
 } } } } }
 

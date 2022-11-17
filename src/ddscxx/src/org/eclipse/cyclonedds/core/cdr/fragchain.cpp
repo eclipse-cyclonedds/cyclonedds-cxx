@@ -15,11 +15,11 @@
 #include <memory>
 #include <cstring>
 #include <assert.h>
-#include "dds/ddsi/q_radmin.h"
+#include "dds/ddsi/ddsi_radmin.h"
 
 namespace org { namespace eclipse { namespace cyclone { namespace core { namespace cdr {
 
-void serdata_from_ser_copyin_fragchain (unsigned char * __restrict cursor, const struct nn_rdata* fragchain, size_t size)
+void serdata_from_ser_copyin_fragchain (unsigned char * __restrict cursor, const struct ddsi_rdata* fragchain, size_t size)
 {
   uint32_t off = 0;
   assert(fragchain->min == 0);
@@ -28,7 +28,7 @@ void serdata_from_ser_copyin_fragchain (unsigned char * __restrict cursor, const
     if (fragchain->maxp1 > off) {
       //only copy if this fragment adds data
       const unsigned char* payload =
-        NN_RMSG_PAYLOADOFF(fragchain->rmsg, NN_RDATA_PAYLOAD_OFF(fragchain));
+        DDSI_RMSG_PAYLOADOFF(fragchain->rmsg, DDSI_RDATA_PAYLOAD_OFF(fragchain));
       auto src = payload + off - fragchain->min;
       auto n_bytes = fragchain->maxp1 - off;
       memcpy(cursor, src, n_bytes);
