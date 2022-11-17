@@ -179,4 +179,8 @@ struct s_appendable {
 struct s_memberless {
 };
 
+union union_w_seq_of_structs switch(unsigned long) {
+  case 0: sequence<s_final> seq_of_structs;
+};
+
 };
