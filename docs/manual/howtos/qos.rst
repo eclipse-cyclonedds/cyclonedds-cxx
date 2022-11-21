@@ -12,10 +12,10 @@
 Quality of Service
 ==================
 
-Quality of Service is the collection of different restrictions and expectations called QoSPolicies on the behaviour of the different components of CycloneDDS.
-Some QoSPolicies only affect a single type of DDS entity, whereas others affect multiple, and QoSPolicies on a DDS entity cannot be modified after creating the entity as they affect matching/discovery of entities.
-The QoS used is linked to a type of DDS entity the QoS is used for, e.g.: a SubscriberQoS is not accepted when creating a DataReader.
-The entity-specific QoSes can be found in the `qos` sub-namespace of the same namespace the entity is defined in, whereas the different QoSPolicies are located in the `dds::core::policy` namespace.
+Quality of Service is the collection of restrictions and expectations (called QoSPolicies) that appy to the different components of CycloneDDS.
+Some QoSPolicies only affect a single type of DDS entity, whereas others affect multiple DDS entities. QoSPolicies on a DDS entity can not be modified after creating the entity as they affect matching/discovery of entities.
+The QoS used is linked to the type of DDS entity the QoS is used for, for example, a SubscriberQoS is not accepted when creating a DataReader.
+The entity-specific QoSes are found in the `qos` sub-namespace of the same namespace the entity is defined in, whereas the different QoSPolicies are located in the `dds::core::policy` namespace.
 
 .. table:: DDS entity types and associated QoSes
 
@@ -89,14 +89,16 @@ The entity-specific QoSes can be found in the `qos` sub-namespace of the same na
 	| TypeConsistencyEnforcement | N                    | N            | N             | Y        | Y             | Y             |
 	+----------------------------+----------------------+--------------+---------------+----------+---------------+---------------+
 
-Setting of QoSPolicies can be done either through left-shifting the QoSPolicy "into" the QoS:
+Setting of QoSPolicies can be done by:
+
+Either left-shifting the QoSPolicy "into" the QoS:
 
 .. code:: C++
 
 	dds::sub::qos::DataReaderQos rqos;
 	rqos << dds::core::policy::Durability(dds::core::policy::DurabilityKind::TRANSIENT_LOCAL);
 
-, or passing it as the parameter of the `policy` function:
+Or passing it as the parameter of the `policy` function:
 
 .. code:: C++
 
@@ -104,7 +106,9 @@ Setting of QoSPolicies can be done either through left-shifting the QoSPolicy "i
 	dds::core::policy::Reliability rel(dds::core::policy::ReliabilityKind::RELIABLE, dds::core::Duration(8, 8));
 	wqos.policy(rel);
 
-Whereas getting of QoSPolicies can be done either through the right-shifting the QoSPolicy "out of" the QoS:
+Getting of QoSPolicies can be done by:
+
+Either through the right-shifting the QoSPolicy "out of" the QoS:
 
 .. code:: C++
 
@@ -112,19 +116,19 @@ Whereas getting of QoSPolicies can be done either through the right-shifting the
 	dds::core::policy::TopicData td;
 	tqos >> td;
 
-, or through the `policy` function, which is templated to indicate which QoSPolicy is being accessed:
+Or through the `policy` function, which is templated to indicate which QoSPolicy is being accessed:
 
 .. code:: C++
 
 	dds::domain::qos::DomainParticipantQos dqos;
 	auto ud = dqos.policy<dds::core::policy::UserData>();
 
-For a more detailed explanation of the different QoSPolicies and their effects on the behaviour of CycloneDDS, the user is referred to the OMG DDS Spec v1.4 section 2.2.3.
+For a detailed explanation of the different QoSPolicies and their effects on the behaviour of CycloneDDS, refer to the OMG DDS Spec v1.4 section 2.2.3.
 
 Default and Inherited QoSes
 ---------------------------
 
-QoSes have a number of default settings that are falled back to when none are provided upon creation.
+QoSes have a number of default settings that are falled-back to when none are provided on creation.
 These defaults are either defined in the DDS standard, or propagated from "superior" entities.
 The default inherited QoS for entities is set through the following functions:
 
@@ -148,7 +152,7 @@ The default inherited QoS for entities is set through the following functions:
 	| Subscriber        | DataReader         | default_datareader_qos |
 	+-------------------+--------------------+------------------------+
 
-So in the following case:
+For example, in the following case:
 
 .. code:: C++
 
@@ -159,6 +163,6 @@ So in the following case:
 	sub.default_datareader_qos(qos1);
 	dds::sub::DataReader<DataType> reader(sub,topic,qos2);
 
-, `reader` will have its `DestinationOrder` QoSPolicy set to the value set in the QoS supplied in its constructor, being `BY_SOURCE_TIMESTAMP`.
-On the other hand, the `Durability` QoSPolicy defaults to the one set as default on the Subscriber, being `TRANSIENT_LOCAL`.
-Lastly all other QosPolicies will default to the DDS Spec, for instance the `Ownership` QoSPolicy will have the value `SHARED`.
+`reader` has its `DestinationOrder` QoSPolicy set to the value set in the QoS supplied in its constructor, which is `BY_SOURCE_TIMESTAMP`.
+`Durability` QoSPolicy defaults to the one set as default on the Subscriber, which is `TRANSIENT_LOCAL`.
+All other QosPolicies default to the DDS Spec, for example, the `Ownership` QoSPolicy has the value `SHARED`.

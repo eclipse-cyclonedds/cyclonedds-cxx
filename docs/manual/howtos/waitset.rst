@@ -12,20 +12,22 @@
 Waitsets
 ========
 
-Waitsets are a tool in CycloneDDS to hold execution of the program until a specific condition is reached, or an amount of time has expired.
-Waitsets and listeners cover two different requirement sets.
-Whereas Listeners can only react to changes in state, a Waitset also allows the code to react when nothing changes.
-On the other hand, Listeners allow instant callbacks to specific changes.
+The Waitsets tool in CycloneDDS holds execution of the program until a specific condition is reached, or an amount of time has expired.
+Waitsets and listeners have two different requirement sets:
+
+- A Waitset  allows the code to react when nothing changes.
+- Listeners can only react to changes in state. Listeners allow instant callbacks to specific changes. 
+
 A waitset uses a StatusCondition linked to an Entity to signal to the waitset that its wait is finished.
 The StatusCondition has a list of enabled statuses, which describe the changes in status which should trigger the waitset to finish its wait.
 When creating a StatusCondition, the enabled statuses should match the type of entity it is attached to.
 Different StatusConditions linked to different Entities can be attached to a Waitset through the `attach_condition` function, and detached through the `detach_condition` function.
-After having created a Waitset with StatusConditions attached, a wait can be triggered for the Duration specified, and triggering the wait will cause one of two things to happen:
+After creating a Waitset with StatusConditions attached, a wait can be triggered for the Duration specified. Triggering the wait causes one of two things to happen:
 
-- the wait will time out, causing an exception of the type dds::core::TimeoutError to be thrown
-- a status change of one of the attached conditions will occur, and the returned container will contain the conditions that have triggered the end of the wait
+- The wait will time out, causing an exception of the type dds::core::TimeoutError to be thrown.
+- A status change of one of the attached conditions occurs, and the returned container contains the conditions that have triggered the end of the wait.
 
-So the following code will work, since subscription_matched is a status associated with a DataReader:
+The following code does not work because the subscription_matched is a status associated with a DataReader:
 
 .. code:: C++
 
@@ -33,7 +35,7 @@ So the following code will work, since subscription_matched is a status associat
 	dds::core::cond::StatusCondition rsc(reader);
 	rsc.enabled_statuses(dds::core::status::StatusMask::subscription_matched());
 
-But the following code will fail, since liveliness_lost is not a status associated with a Topic:
+The following code does not work because the liveliness_lost is not a status associated with a Topic:
 
 .. code:: C++
 
@@ -41,7 +43,7 @@ But the following code will fail, since liveliness_lost is not a status associat
 	dds::core::cond::StatusCondition tsc(topic);
 	tsc.enabled_statuses(dds::core::status::StatusMask::liveliness_lost());
 
-So as an example, the following code will attempt to wait a specified amount of time for readers and writers to see their counterparts, allowing two-way communication to occur:
+The following code attempts to wait a specified amount of time for readers and writers to see their counterparts, allowing two-way communication to occur:
 
 .. code:: C++
 
@@ -84,4 +86,4 @@ So as an example, the following code will attempt to wait a specified amount of 
 		return true;
 	}
 
-The above function will return true if the reader and writer have encountered matching publications and subscriptions before the timeout's duration expired, and false otherwise.
+The above function returns true if the reader and writer have encountered matching publications and subscriptions before the timeout's duration expired, and false otherwise.
