@@ -124,7 +124,7 @@ The command line options for custom string containers are:
 
   - template to use for strings instead of std::string
 
-  - replaced tags: {BOUND}
+  - replaced tags: ``{BOUND}``
 
 - ``bounded-string-include``
 
@@ -159,7 +159,7 @@ The command line options for custom array containers are:
 
   - template to use for arrays instead of std::array
 
-  - replaced tags: {TYPE}, {DIMENSION}
+  - replaced tags: ``{TYPE}``, ``{DIMENSION}``
 
 - ``array-include``
 
