@@ -12,26 +12,26 @@
 Custom Containers
 =================
 
-IDLCXX allows users to supply their own container classes, replacing the default containers
+IDLCXX enables users to supply their own container classes, replacing the default containers
 used for IDL sequences (bounded and unbounded), strings (bounded and unbounded), arrays and
-unions. All custom containers templates are set through the -f command line option, followed
+unions. All custom containers templates are set through the ``-f`` command line option, followed
 by the option to be set, an equals sign and the value to set it to. Each template can have a
 varying number of tags, which are indicated by the following strings:
 
-- {TYPE}: will replace type names in sequences and arrays
+- ``{TYPE}``: will replace type names in sequences and arrays
 
-- {BOUND}: will replace maximum size values in bounded sequences and strings
+- ``{BOUND}``: will replace maximum size values in bounded sequences and strings
 
-- {DIMENSION}: will replace size in arrays
+- ``{DIMENSION}``: will replace size in arrays
 
-For example, to set a custom container for the bounded sequence, you need to add the following
-to the command line options of idlc:
+For example, to set a custom container for the bounded sequence, you must add the following
+to the command line options of ``idlc``:
 
 .. code:: bash
 
   -f bounded-sequence-template="company_name::special_bounded_sequence_impl<{TYPE}, {BOUND}>"
 
-Supplying this command line option would convert the following IDL code:
+Supplying this command line option converts the following IDL code from:
 
 .. code:: IDL
 
@@ -43,12 +43,12 @@ to the following C++ code:
 
   company_name::special_bounded_sequence_impl<uint32_t, 255>
 
-For each template the ordering of the tags is not important, the generator will replace based
-on tags, not positions, all other text is inserted into the generated code verbatim. This allows
-for custom allocators and the like to be added as well.
+For each template, the ordering of the tags is not important, the generator will replace based
+on tags, not positions, all other text is inserted into the generated code verbatim. This enables
+custom allocators to also be added.
 
-More information on all command line options can be retrieved by running idlc with the -h option,
-while loading the idlcxx library:
+For more information on all command line options, run ``idlc`` with the ``-h`` option, while loading 
+the idlcxx library. For example:
 
 .. code:: bash
 
@@ -57,11 +57,10 @@ while loading the idlcxx library:
 Sequences
 ---------
 
-The default container used for both bounded and unbounded IDL sequences is std::vector.
+The default container for both bounded and unbounded IDL sequences is std::vector.
 The custom containers for bounded and unbounded sequences can be defined independently.
-Any user-supplied container class intended to be used in place of std::vector is expected
-to adhere to the following interface, with the same effect as these functions have in
-std::vector:
+Any user-supplied container class that replaces std::vector must comply
+with the following interface (with the same effect as these functions in std::vector):
 
 - size
 
@@ -79,34 +78,33 @@ std::vector:
 
 The command line options for custom sequence containers are:
 
-- bounded-sequence-template
+- ``bounded-sequence-template``
 
   - template used for bounded sequences instead of std::vector
 
-  - replaced tags: {TYPE}, {BOUND}
+  - replaced tags: ``{TYPE}``, ``{BOUND}``
 
-- bounded-sequence-include
+- ``bounded-sequence-include``
 
-  - header to include if bounded-sequence-template is used
+  - header to include if ``bounded-sequence-template`` is used
 
-- sequence-template
+- ``sequence-template``
 
   - template used for sequences instead of std::vector
 
-  - replaced tags: {TYPE}
+  - replaced tags: ``{TYPE}``
 
-- sequence-include
+- ``sequence-include``
 
-  - header to include if sequence-template is used
+  - header to include if ``sequence-template`` is used
 
 Strings
 -------
 
 The default container used for both bounded and unbounded IDL strings is std::string.
 The custom containers for bounded and unbounded strings can be defined independently.
-Any user-supplied container class intended to be used in place of std::string is expected
-to adhere to the following interface, with the same effect as these functions have in
-std::string:
+Any user-supplied container class that replaces std::string must comply
+with the following interface (with the same effect as these functions in std::string):
 
 - length
 
@@ -122,33 +120,32 @@ std::string:
 
 The command line options for custom string containers are:
 
-- bounded-string-template
+- ``bounded-string-template``
 
   - template to use for strings instead of std::string
 
   - replaced tags: {BOUND}
 
-- bounded-string-include
+- ``bounded-string-include``
 
-  - header to include if bounded-string-template is used
+  - header to include if ``bounded-string-template`` is used
 
-- string-template
+- ``string-template``
 
   - template to use for strings instead of std::string
 
   - replaced tags: none
 
-- string-include
+- ``string-include``
 
-  - header to include if string-template is used
+  - header to include if ``string-template`` is used
 
 Arrays
 ------
 
 The default container used for IDL arrays is std::array.
-Any user-supplied container class intended to be used in place of std::array is expected
-to adhere to the following interface, with the same effect as these functions have in
-std::array:
+Any user-supplied container class that replaces std::array must comply
+with the following interface (with the same effect as these functions in std::array):
 
 - support auto-range for loops
 
@@ -158,15 +155,15 @@ std::array:
 
 The command line options for custom array containers are:
 
-- array-template
+- ``array-template``
 
   - template to use for arrays instead of std::array
 
   - replaced tags: {TYPE}, {DIMENSION}
 
-- array-include
+- ``array-include``
 
-  - header to include if template for array-template is used
+  - header to include if template for ``array-template`` is used
 
 Unions
 ------
@@ -180,14 +177,14 @@ The only function needed from the custom union container is the templated getter
 
 The command line options for custom variant containers are:
 
-- union-getter-template
+- ``union-getter-template``
 
   - template to use for reading the value of a variant, copied verbatim
 
-- union-template
+- ``union-template``
 
   - template to use for unions instead of std::variant, copied verbatim
 
-- union-include
+- ``union-include``
 
   - header to include if template for union-template is used
