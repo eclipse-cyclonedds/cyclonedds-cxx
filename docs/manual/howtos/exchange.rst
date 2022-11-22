@@ -64,7 +64,7 @@ Using types other than those generated from idlc+idlcxx in the template does not
 Publishers
 ----------
 
-A Publisher is a producer of data on a Domain. It uses the DomainParticipant to gain access to the Domain and is created using it. That is, the Publisher inherits the Domain from its parent class DomainParticipant. A Publisher allows the DataWriters associated with it to share the same behaviour, for example:
+A Publisher is a producer of data on a Domain. It uses the DomainParticipant to gain access to the Domain and is created using it. That is, the Publisher passes down the Domain from its parent class DomainParticipant. A Publisher allows the DataWriters associated with it to share the same behaviour, for example:
 
 - liveliness notifications
 - QoS policies
@@ -86,7 +86,7 @@ Or supply your own:
 	dds::pub::qos::PublisherQos pubqos; /*add custom QoS policies that you want for this publisher*/
 	dds::pub::Publisher pub(participant, pubqos, &listener, dds::core::status::StatusMask::publication_matched()); /*in this case, the only status we are interested in is publication_matched*/
 
-Any DataWriters created using pub inherits the qos and listener functionality as set through it.
+Any DataWriters created using pub inherit the qos and listener functionality as set through it.
 
 Subscribers
 -----------
@@ -114,12 +114,12 @@ Or supply your own:
 	dds::sub::qos::SubscriberQos subqos; /*add custom QoS policies that you want for this subscriber*/
 	dds::sub::Subscriber sub(participant, subqos, &listener, dds::core::status::StatusMask::subscription_matched());
 
-Any DataReaders created using sub inherits the qos and listener functionality as set through it.
+Any DataReaders created using sub inherit the qos and listener functionality as set through it.
 
 DataReaders
 -----------
 
-DataReaders enables the user access to the data received by a Subscriber on a Topic, and takes as a template parameter the data type being exchanged. The settings for the reader are:
+DataReaders enable the user access to the data received by a Subscriber on a Topic, and takes as a template parameter the data type being exchanged. The settings for the reader are:
 
 Either, inheriting from the subscriber:
 

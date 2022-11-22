@@ -160,7 +160,7 @@ To access the statuses, use the following functions on the entity:
 	|                       | SampleLostStatus               | sample_lost_status               |
 	+-----------------------+--------------------------------+----------------------------------+
 
-The following code example shows statuses that make a writer wait until readers are present:
+The following code fragment shows statuses that make a writer wait until readers are present:
 
 .. code:: C++
 

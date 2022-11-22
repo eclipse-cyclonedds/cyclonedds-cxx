@@ -15,9 +15,7 @@ Listeners
 Listeners enable the code to react to changes in state of DDS entities such as readers, writers, and so on.
 CycloneDDS-CXX implements different listeners for different entities.
 Some types' listeners inherit from other types' listeners, allowing the listener of one type to react to changes in state on subordinate entities.
-For example, the listener for a DomainParticipant also implements the functionality of the listeners for Publishers, Subscribers and Topics.
-By using this functionality, the user can avoid large amounts of boilerplate code, because the listener is implemented just the one time.
-For example, the listener can be propagated down to the Publisher, and from the Publisher to a DataWriter.
+For example, by implementing the required callback functions for Topics and Subscribers in a DomainParticipantListener, this listener only needs to be set once at the DomainParticipant, and the Topic and Subscriber will then propagate the events to this Listener.
 
 .. table:: CycloneDDS Entities and associated listeners
 

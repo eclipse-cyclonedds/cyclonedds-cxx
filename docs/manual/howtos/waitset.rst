@@ -15,7 +15,7 @@ Waitsets
 The Waitsets tool in CycloneDDS holds execution of the program until a specific condition is reached, or an amount of time has expired.
 Waitsets and listeners have two different requirement sets:
 
-- A Waitset  allows the code to react when nothing changes.
+- A Waitset  also allows the code to react when nothing changes.
 - Listeners can only react to changes in state. Listeners allow instant callbacks to specific changes. 
 
 A waitset uses a StatusCondition linked to an Entity to signal to the waitset that its wait is finished.
