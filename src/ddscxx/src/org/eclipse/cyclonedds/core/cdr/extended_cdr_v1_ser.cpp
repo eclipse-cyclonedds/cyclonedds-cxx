@@ -82,6 +82,9 @@ entity_properties_t* xcdr_v1_stream::next_entity(entity_properties_t *prop)
 
   if (!list_necessary(*(prop->parent))) {
     while ((prop = cdr_stream::next_entity(prop))) {
+      if (prop->p_ext == extensibility::ext_appendable &&
+          !bytes_available(1, true))
+        return nullptr;
       if (prop->is_optional) {
         entity_properties_t temp;
         bool is_final = false;
