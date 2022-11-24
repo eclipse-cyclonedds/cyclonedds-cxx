@@ -224,7 +224,7 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
       break;
     case extensibility::ext_appendable:
       switch (field) {
-        case PL_CDR:
+        case PLAIN_CDR:
           ver = encoding_version::xcdr_v1;
           break;
         case D_CDR:
