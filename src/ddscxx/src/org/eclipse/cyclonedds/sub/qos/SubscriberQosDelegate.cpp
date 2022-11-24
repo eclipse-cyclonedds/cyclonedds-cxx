@@ -43,7 +43,7 @@ void
 SubscriberQosDelegate::policy(const dds::core::policy::Presentation& presentation)
 {
     presentation.delegate().check();
-    present_ |= QP_PRESENTATION;
+    present_ |= DDSI_QP_PRESENTATION;
     presentation_ = presentation;
 }
 
@@ -51,7 +51,7 @@ void
 SubscriberQosDelegate::policy(const dds::core::policy::Partition& partition)
 {
     partition.delegate().check();
-    present_ |= QP_PARTITION;
+    present_ |= DDSI_QP_PARTITION;
     partition_ = partition;
 }
 
@@ -59,7 +59,7 @@ void
 SubscriberQosDelegate::policy(const dds::core::policy::GroupData& group_data)
 {
     group_data.delegate().check();
-    present_ |= QP_GROUP_DATA;
+    present_ |= DDSI_QP_GROUP_DATA;
     group_data_ = group_data;
 }
 
@@ -67,7 +67,7 @@ void
 SubscriberQosDelegate::policy(const dds::core::policy::EntityFactory& entity_factory)
 {
     entity_factory.delegate().check();
-    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    present_ |= DDSI_QP_ADLINK_ENTITY_FACTORY;
     entity_factory_ = entity_factory;
 }
 
@@ -78,13 +78,13 @@ SubscriberQosDelegate::ddsc_qos() const
     if (!qos) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_OUT_OF_RESOURCES_ERROR, "Could not create internal QoS.");
     }
-    if (present_ & QP_PRESENTATION)
+    if (present_ & DDSI_QP_PRESENTATION)
         presentation_   .delegate().set_c_policy(qos);
-    if (present_ & QP_PARTITION)
+    if (present_ & DDSI_QP_PARTITION)
         partition_      .delegate().set_c_policy(qos);
-    if (present_ & QP_GROUP_DATA)
+    if (present_ & DDSI_QP_GROUP_DATA)
         group_data_     .delegate().set_c_policy(qos);
-    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+    if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_ .delegate().set_c_policy(qos);
     return qos;
 }
@@ -94,13 +94,13 @@ SubscriberQosDelegate::ddsc_qos(const dds_qos_t* qos)
 {
     assert(qos);
     present_ = qos->present;
-    if (present_ & QP_PRESENTATION)
+    if (present_ & DDSI_QP_PRESENTATION)
         presentation_   .delegate().set_iso_policy(qos);
-    if (present_ & QP_PARTITION)
+    if (present_ & DDSI_QP_PARTITION)
         partition_      .delegate().set_iso_policy(qos);
-    if (present_ & QP_GROUP_DATA)
+    if (present_ & DDSI_QP_GROUP_DATA)
         group_data_     .delegate().set_iso_policy(qos);
-    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+    if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_ .delegate().set_iso_policy(qos);
 }
 
@@ -141,7 +141,7 @@ template<>
 dds::core::policy::Presentation&
 SubscriberQosDelegate::policy<dds::core::policy::Presentation>()
 {
-    present_ |= QP_PRESENTATION;
+    present_ |= DDSI_QP_PRESENTATION;
     return presentation_;
 }
 
@@ -149,7 +149,7 @@ template<>
 dds::core::policy::Partition&
 SubscriberQosDelegate::policy<dds::core::policy::Partition>()
 {
-    present_ |= QP_PARTITION;
+    present_ |= DDSI_QP_PARTITION;
     return partition_;
 }
 
@@ -157,7 +157,7 @@ template<>
 dds::core::policy::GroupData&
 SubscriberQosDelegate::policy<dds::core::policy::GroupData>()
 {
-    present_ |= QP_GROUP_DATA;
+    present_ |= DDSI_QP_GROUP_DATA;
     return group_data_;
 }
 
@@ -165,7 +165,7 @@ template<>
 dds::core::policy::EntityFactory&
 SubscriberQosDelegate::policy<dds::core::policy::EntityFactory>()
 {
-    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    present_ |= DDSI_QP_ADLINK_ENTITY_FACTORY;
     return entity_factory_;
 }
 

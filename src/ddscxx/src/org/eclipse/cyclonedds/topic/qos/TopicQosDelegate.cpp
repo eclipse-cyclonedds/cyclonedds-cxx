@@ -36,7 +36,7 @@ namespace qos
 TopicQosDelegate::TopicQosDelegate()
 {
     ddsc_qos(&ddsi_default_qos_topic);
-    present() &= ~QP_DATA_REPRESENTATION;
+    present() &= ~DDSI_QP_DATA_REPRESENTATION;
     check();
 }
 
@@ -44,7 +44,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::TopicData& topic_data)
 {
     topic_data.delegate().check();
-    present_ |= QP_TOPIC_DATA;
+    present_ |= DDSI_QP_TOPIC_DATA;
     topic_data_ = topic_data;
 }
 
@@ -52,7 +52,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::Durability& durability)
 {
     durability.delegate().check();
-    present_ |= QP_DURABILITY;
+    present_ |= DDSI_QP_DURABILITY;
     durability_ = durability;
 }
 
@@ -61,7 +61,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::DurabilityService& durability_service)
 {
     durability_service.delegate().check();
-    present_ |= QP_DURABILITY_SERVICE;
+    present_ |= DDSI_QP_DURABILITY_SERVICE;
     durability_service_ = durability_service;
 }
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
@@ -70,7 +70,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::Deadline& deadline)
 {
     deadline.delegate().check();
-    present_ |= QP_DEADLINE;
+    present_ |= DDSI_QP_DEADLINE;
     deadline_ = deadline;
 }
 
@@ -78,7 +78,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::LatencyBudget&  budget)
 {
     budget.delegate().check();
-    present_ |= QP_LATENCY_BUDGET;
+    present_ |= DDSI_QP_LATENCY_BUDGET;
     budget_ = budget;
 }
 
@@ -86,7 +86,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::Liveliness& liveliness)
 {
     liveliness.delegate().check();
-    present_ |= QP_LIVELINESS;
+    present_ |= DDSI_QP_LIVELINESS;
     liveliness_ = liveliness;
 }
 
@@ -94,7 +94,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::Reliability& reliability)
 {
     reliability.delegate().check();
-    present_ |= QP_RELIABILITY;
+    present_ |= DDSI_QP_RELIABILITY;
     reliability_ = reliability;
 }
 
@@ -102,7 +102,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::DestinationOrder& order)
 {
     order.delegate().check();
-    present_ |= QP_DESTINATION_ORDER;
+    present_ |= DDSI_QP_DESTINATION_ORDER;
     order_ = order;
 }
 
@@ -110,7 +110,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::History& history)
 {
     history.delegate().check();
-    present_ |= QP_HISTORY;
+    present_ |= DDSI_QP_HISTORY;
     history_ = history;
 }
 
@@ -118,7 +118,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::ResourceLimits& resources)
 {
     resources.delegate().check();
-    present_ |= QP_RESOURCE_LIMITS;
+    present_ |= DDSI_QP_RESOURCE_LIMITS;
     resources_ = resources;
 }
 
@@ -126,7 +126,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::TransportPriority& priority)
 {
     priority.delegate().check();
-    present_ |= QP_TRANSPORT_PRIORITY;
+    present_ |= DDSI_QP_TRANSPORT_PRIORITY;
     priority_ = priority;
 }
 
@@ -134,7 +134,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::Lifespan& lifespan)
 {
     lifespan.delegate().check();
-    present_ |= QP_LIFESPAN;
+    present_ |= DDSI_QP_LIFESPAN;
     lifespan_ = lifespan;
 }
 
@@ -142,7 +142,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::Ownership& ownership)
 {
     ownership.delegate().check();
-    present_ |= QP_OWNERSHIP;
+    present_ |= DDSI_QP_OWNERSHIP;
     ownership_ = ownership;
 }
 
@@ -151,7 +151,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::DataRepresentation& datarepresentation)
 {
     datarepresentation.delegate().check();
-    present_ |= QP_DATA_REPRESENTATION;
+    present_ |= DDSI_QP_DATA_REPRESENTATION;
     datarepresentation_ = datarepresentation;
 }
 
@@ -159,7 +159,7 @@ void
 TopicQosDelegate::policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement)
 {
     typeconsistencyenforcement.delegate().check();
-    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
+    present_ |= DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT;
     typeconsistencyenforcement_ = typeconsistencyenforcement;
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
@@ -171,38 +171,38 @@ TopicQosDelegate::ddsc_qos() const
     if (!qos) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_OUT_OF_RESOURCES_ERROR, "Could not create internal QoS.");
     }
-    if (present_ & QP_TOPIC_DATA)
+    if (present_ & DDSI_QP_TOPIC_DATA)
         topic_data_  .delegate().set_c_policy(qos);
-    if (present_ & QP_DURABILITY)
+    if (present_ & DDSI_QP_DURABILITY)
         durability_  .delegate().set_c_policy(qos);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
-    if (present_ & QP_DURABILITY_SERVICE)
+    if (present_ & DDSI_QP_DURABILITY_SERVICE)
         durability_service_.delegate().set_c_policy(qos);
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
-    if (present_ & QP_DEADLINE)
+    if (present_ & DDSI_QP_DEADLINE)
         deadline_    .delegate().set_c_policy(qos);
-    if (present_ & QP_LATENCY_BUDGET)
+    if (present_ & DDSI_QP_LATENCY_BUDGET)
         budget_      .delegate().set_c_policy(qos);
-    if (present_ & QP_LIVELINESS)
+    if (present_ & DDSI_QP_LIVELINESS)
         liveliness_  .delegate().set_c_policy(qos);
-    if (present_ & QP_RELIABILITY)
+    if (present_ & DDSI_QP_RELIABILITY)
         reliability_ .delegate().set_c_policy(qos);
-    if (present_ & QP_DESTINATION_ORDER)
+    if (present_ & DDSI_QP_DESTINATION_ORDER)
         order_       .delegate().set_c_policy(qos);
-    if (present_ & QP_HISTORY)
+    if (present_ & DDSI_QP_HISTORY)
         history_     .delegate().set_c_policy(qos);
-    if (present_ & QP_RESOURCE_LIMITS)
+    if (present_ & DDSI_QP_RESOURCE_LIMITS)
         resources_   .delegate().set_c_policy(qos);
-    if (present_ & QP_TRANSPORT_PRIORITY)
+    if (present_ & DDSI_QP_TRANSPORT_PRIORITY)
         priority_    .delegate().set_c_policy(qos);
-    if (present_ & QP_LIFESPAN)
+    if (present_ & DDSI_QP_LIFESPAN)
         lifespan_    .delegate().set_c_policy(qos);
-    if (present_ & QP_OWNERSHIP)
+    if (present_ & DDSI_QP_OWNERSHIP)
         ownership_   .delegate().set_c_policy(qos);
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (present_ & QP_DATA_REPRESENTATION)
+    if (present_ & DDSI_QP_DATA_REPRESENTATION)
         datarepresentation_.delegate().set_c_policy(qos);
-    if (present_ & QP_TYPE_CONSISTENCY_ENFORCEMENT)
+    if (present_ & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
         typeconsistencyenforcement_.delegate().set_c_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     return qos;
@@ -213,38 +213,38 @@ TopicQosDelegate::ddsc_qos(const dds_qos_t* qos)
 {
     assert(qos);
     present_ = qos->present;
-    if (present_ & QP_TOPIC_DATA)
+    if (present_ & DDSI_QP_TOPIC_DATA)
         topic_data_  .delegate().set_iso_policy(qos);
-    if (present_ & QP_DURABILITY)
+    if (present_ & DDSI_QP_DURABILITY)
         durability_  .delegate().set_iso_policy(qos);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
-    if (present_ & QP_DURABILITY_SERVICE)
+    if (present_ & DDSI_QP_DURABILITY_SERVICE)
         durability_service_.delegate().set_iso_policy(qos);
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
-    if (present_ & QP_DEADLINE)
+    if (present_ & DDSI_QP_DEADLINE)
         deadline_    .delegate().set_iso_policy(qos);
-    if (present_ & QP_LATENCY_BUDGET)
+    if (present_ & DDSI_QP_LATENCY_BUDGET)
         budget_      .delegate().set_iso_policy(qos);
-    if (present_ & QP_LIVELINESS)
+    if (present_ & DDSI_QP_LIVELINESS)
         liveliness_  .delegate().set_iso_policy(qos);
-    if (present_ & QP_RELIABILITY)
+    if (present_ & DDSI_QP_RELIABILITY)
         reliability_ .delegate().set_iso_policy(qos);
-    if (present_ & QP_DESTINATION_ORDER)
+    if (present_ & DDSI_QP_DESTINATION_ORDER)
         order_       .delegate().set_iso_policy(qos);
-    if (present_ & QP_HISTORY)
+    if (present_ & DDSI_QP_HISTORY)
         history_     .delegate().set_iso_policy(qos);
-    if (present_ & QP_RESOURCE_LIMITS)
+    if (present_ & DDSI_QP_RESOURCE_LIMITS)
         resources_   .delegate().set_iso_policy(qos);
-    if (present_ & QP_TRANSPORT_PRIORITY)
+    if (present_ & DDSI_QP_TRANSPORT_PRIORITY)
         priority_    .delegate().set_iso_policy(qos);
-    if (present_ & QP_LIFESPAN)
+    if (present_ & DDSI_QP_LIFESPAN)
         lifespan_    .delegate().set_iso_policy(qos);
-    if (present_ & QP_OWNERSHIP)
+    if (present_ & DDSI_QP_OWNERSHIP)
         ownership_   .delegate().set_iso_policy(qos);
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (present_ & QP_DATA_REPRESENTATION)
+    if (present_ & DDSI_QP_DATA_REPRESENTATION)
         datarepresentation_.delegate().set_iso_policy(qos);
-    if (present_ & QP_TYPE_CONSISTENCY_ENFORCEMENT)
+    if (present_ & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
         typeconsistencyenforcement_.delegate().set_iso_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 }
@@ -317,14 +317,14 @@ TopicQosDelegate::operator ==(const TopicQosDelegate& other) const
 template<> dds::core::policy::TopicData&
 TopicQosDelegate::policy<dds::core::policy::TopicData>()
 {
-    present_ |= QP_TOPIC_DATA;
+    present_ |= DDSI_QP_TOPIC_DATA;
     return topic_data_;
 }
 
 template<> dds::core::policy::Durability&
 TopicQosDelegate::policy<dds::core::policy::Durability>()
 {
-    present_ |= QP_DURABILITY;
+    present_ |= DDSI_QP_DURABILITY;
     return durability_;
 }
 
@@ -332,7 +332,7 @@ TopicQosDelegate::policy<dds::core::policy::Durability>()
 template<> dds::core::policy::DurabilityService&
 TopicQosDelegate::policy<dds::core::policy::DurabilityService>()
 {
-    present_ |= QP_DURABILITY_SERVICE;
+    present_ |= DDSI_QP_DURABILITY_SERVICE;
     return durability_service_;
 }
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
@@ -340,70 +340,70 @@ TopicQosDelegate::policy<dds::core::policy::DurabilityService>()
 template<> dds::core::policy::Deadline&
 TopicQosDelegate::policy<dds::core::policy::Deadline>()
 {
-    present_ |= QP_DEADLINE;
+    present_ |= DDSI_QP_DEADLINE;
     return deadline_;
 }
 
 template<> dds::core::policy::LatencyBudget&
 TopicQosDelegate::policy<dds::core::policy::LatencyBudget>()
 {
-    present_ |= QP_LATENCY_BUDGET;
+    present_ |= DDSI_QP_LATENCY_BUDGET;
     return budget_;
 }
 
 template<> dds::core::policy::Liveliness&
 TopicQosDelegate::policy<dds::core::policy::Liveliness>()
 {
-    present_ |= QP_LIVELINESS;
+    present_ |= DDSI_QP_LIVELINESS;
     return liveliness_;
 }
 
 template<> dds::core::policy::Reliability&
 TopicQosDelegate::policy<dds::core::policy::Reliability>()
 {
-    present_ |= QP_RELIABILITY;
+    present_ |= DDSI_QP_RELIABILITY;
     return reliability_;
 }
 
 template<> dds::core::policy::DestinationOrder&
 TopicQosDelegate::policy<dds::core::policy::DestinationOrder>()
 {
-    present_ |= QP_DESTINATION_ORDER;
+    present_ |= DDSI_QP_DESTINATION_ORDER;
     return order_;
 }
 
 template<> dds::core::policy::History&
 TopicQosDelegate::policy<dds::core::policy::History>()
 {
-    present_ |= QP_HISTORY;
+    present_ |= DDSI_QP_HISTORY;
     return history_;
 }
 
 template<> dds::core::policy::ResourceLimits&
 TopicQosDelegate::policy<dds::core::policy::ResourceLimits>()
 {
-    present_ |= QP_RESOURCE_LIMITS;
+    present_ |= DDSI_QP_RESOURCE_LIMITS;
     return resources_;
 }
 
 template<> dds::core::policy::TransportPriority&
 TopicQosDelegate::policy<dds::core::policy::TransportPriority>()
 {
-    present_ |= QP_TRANSPORT_PRIORITY;
+    present_ |= DDSI_QP_TRANSPORT_PRIORITY;
     return priority_;
 }
 
 template<> dds::core::policy::Lifespan&
 TopicQosDelegate::policy<dds::core::policy::Lifespan>()
 {
-    present_ |= QP_LIFESPAN;
+    present_ |= DDSI_QP_LIFESPAN;
     return lifespan_;
 }
 
 template<> dds::core::policy::Ownership&
 TopicQosDelegate::policy<dds::core::policy::Ownership>()
 {
-    present_ |= QP_OWNERSHIP;
+    present_ |= DDSI_QP_OWNERSHIP;
     return ownership_;
 }
 
@@ -411,14 +411,14 @@ TopicQosDelegate::policy<dds::core::policy::Ownership>()
 template<> dds::core::policy::DataRepresentation&
 TopicQosDelegate::policy<dds::core::policy::DataRepresentation>()
 {
-    present_ |= QP_DATA_REPRESENTATION;
+    present_ |= DDSI_QP_DATA_REPRESENTATION;
     return datarepresentation_;
 }
 
 template<> dds::core::policy::TypeConsistencyEnforcement&
 TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
 {
-    present_ |= QP_TYPE_CONSISTENCY_ENFORCEMENT;
+    present_ |= DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT;
     return typeconsistencyenforcement_;
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT

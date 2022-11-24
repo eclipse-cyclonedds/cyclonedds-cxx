@@ -35,7 +35,7 @@ namespace qos
 
 DomainParticipantQosDelegate::DomainParticipantQosDelegate()
 {
-    ddsc_qos(&ddsi_default_plist_participant.qos);
+    ddsc_qos(&ddsi_default_qos_participant);
     check();
 }
 
@@ -43,7 +43,7 @@ void
 DomainParticipantQosDelegate::policy(const dds::core::policy::UserData& user_data)
 {
     user_data.delegate().check();
-    present_ |= QP_USER_DATA;
+    present_ |= DDSI_QP_USER_DATA;
     user_data_ = user_data;
 }
 
@@ -51,7 +51,7 @@ void
 DomainParticipantQosDelegate::policy(const dds::core::policy::EntityFactory& entity_factory)
 {
     entity_factory.delegate().check();
-    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    present_ |= DDSI_QP_ADLINK_ENTITY_FACTORY;
     entity_factory_ = entity_factory;
 }
 
@@ -62,9 +62,9 @@ DomainParticipantQosDelegate::ddsc_qos() const
     if (!qos) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_OUT_OF_RESOURCES_ERROR, "Could not create internal QoS.");
     }
-    if (present_ & QP_USER_DATA)
+    if (present_ & DDSI_QP_USER_DATA)
         user_data_.delegate().set_c_policy(qos);
-    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+    if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_c_policy(qos);
     return qos;
 }
@@ -74,9 +74,9 @@ DomainParticipantQosDelegate::ddsc_qos(const dds_qos_t* qos)
 {
     assert(qos);
     present_ = qos->present;
-    if (present_ & QP_USER_DATA)
+    if (present_ & DDSI_QP_USER_DATA)
         user_data_.delegate().set_iso_policy(qos);
-    if (present_ & QP_ADLINK_ENTITY_FACTORY)
+    if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_iso_policy(qos);
 }
 
@@ -116,7 +116,7 @@ template<>
 dds::core::policy::UserData&
 DomainParticipantQosDelegate::policy<dds::core::policy::UserData> ()
 {
-    present_ |= QP_USER_DATA;
+    present_ |= DDSI_QP_USER_DATA;
     return user_data_;
 }
 
@@ -124,7 +124,7 @@ template<>
 dds::core::policy::EntityFactory&
 DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> ()
 {
-    present_ |= QP_ADLINK_ENTITY_FACTORY;
+    present_ |= DDSI_QP_ADLINK_ENTITY_FACTORY;
     return entity_factory_;
 }
 
