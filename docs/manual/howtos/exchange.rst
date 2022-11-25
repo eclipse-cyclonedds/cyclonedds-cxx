@@ -12,14 +12,14 @@
 Exchanging Data
 ===============
 
-This guide will show the user some basic concepts behind DDS data exchange.
+This guide describes some basic concepts behind DDS data exchange.
 
 DomainParticipant
 -----------------
 
-A Domain is a specific subsection of the DDS shared dataspace and identified by their domain ID which is a 32 bit unsigned integer
-Data exchanges stay limited to the domain they are made on, e.g. data exchanged on domain 456 is not visible on domain 789.
-To be able to exchange data you will need to create a DomainParticipant, which is an entrypoint for the program on the shared dataspace's domain.
+A Domain is a specific subsection of the DDS shared-dataspace and identified by its domain ID, which is a 32-bit unsigned integer.
+Data exchanges are limited to the domain they are made on, for example, data exchanged on domain 456 is not visible on domain 789.
+To exchange data you must create a DomainParticipant, which is an entrypoint for the program on the shared dataspace's domain.
 
 You can either specify the default domain ID:
 
@@ -27,45 +27,44 @@ You can either specify the default domain ID:
 
 	dds::domain::DomainParticipant participant(domain::default_id());
 
-, or, if you want to have more control over the process, select your own ID:
+or, to have more control over the process, select your own ID:
 
 .. code:: C++
 
 	dds::domain::DomainParticipant participant(123456);
 
-The main part here is that you have the same ID on the reading side as the writing, because they won't be visible to eachother otherwise.
+The main point is that you must have the same ID on both the reading side and the writing side, otherwise, they can not see each other.
 ???Explain more about setting QoSes???
 
 Topic
 -----
 
-A Topic is a subsection of a DDS Domain which allows exchange of data of a specific type which adheres to certain restrictions on the exchange before exchange can occur. 
+A Topic is a subsection of a DDS Domain that enables exchange of data of a specific type, and that complies with certain restrictions on the exchange before exchange can occur. 
 A Topic is identifiable by:
 
-- a Name
+- Name
 	- identifies the topic on the Domain
-	- has to be unique on the Domain
-- a Type
+	- must be unique on the Domain
+- Type
 	- the type of data being exchanged
 	- is the template parameter of the dds::topic::Topic class
-- a Quality of Service
-	- determines the restrictions on the exchange occurring
+- Quality of Service
+	- determines the restrictions on the exchange
 	- this is an optional parameter, and can be derived from fallbacks to the participant or defaults
 
-A Topic is for exchanging data of the Type Data_Type is created on the DomainParticipant participant in the following manner:
+A Topic is for exchanging data of the Type Data_Type. The following shows how a topic is created on the DomainParticipant participant:
 
 .. code:: C++
 
 	dds::topic::Topic<Data_Type> topic(participant, "DataType Topic");
 
-The data type of the topic is generated from the user's IDL files by using CycloneDDS's idlc generator with the idlcxx library.
-Using types other than those generated from idlc+idlcxx in the template will not have the prerequisite traits and therefore not result in working code.
+To generate the data type of the topic from the user's IDL files, use CycloneDDS's idlc generator (with the idlcxx library).
+Using types other than those generated from idlc+idlcxx in the template does not have the prerequisite traits, and therefore does not result in working code.
 
 Publishers
 ----------
 
-A Publisher is a producer of data on a Domain. It uses the DomainParticipant to gain access to the Domain and is created using it.
-A Publisher allows the DataWriters associated with it to share the same behaviour, such as:
+A Publisher is a producer of data on a Domain. It uses the DomainParticipant to gain access to the Domain and is created using it. That is, the Publisher passes down the Domain from its parent class DomainParticipant. A Publisher allows the DataWriters associated with it to share the same behaviour, for example:
 
 - liveliness notifications
 - QoS policies
@@ -87,7 +86,7 @@ Or supply your own:
 	dds::pub::qos::PublisherQos pubqos; /*add custom QoS policies that you want for this publisher*/
 	dds::pub::Publisher pub(participant, pubqos, &listener, dds::core::status::StatusMask::publication_matched()); /*in this case, the only status we are interested in is publication_matched*/
 
-Now, any DataWriters created using pub will inherit the qos and listener functionality as set through it.
+Any DataWriters created using pub inherit the qos and listener functionality as set through it.
 
 Subscribers
 -----------
@@ -115,18 +114,20 @@ Or supply your own:
 	dds::sub::qos::SubscriberQos subqos; /*add custom QoS policies that you want for this subscriber*/
 	dds::sub::Subscriber sub(participant, subqos, &listener, dds::core::status::StatusMask::subscription_matched());
 
-Now, any DataReaders created using sub will inherit the qos and listener functionality as set through it.
+Any DataReaders created using sub inherit the qos and listener functionality as set through it.
 
 DataReaders
 -----------
 
-DataReaders allow the user access to the data received by a Subscriber on a Topic, and take as a template parameter the data type being exchanged. The settings for the reader are either inheriting from the subscriber:
+DataReaders enable the user access to the data received by a Subscriber on a Topic, and takes as a template parameter the data type being exchanged. The settings for the reader are:
+
+Either, inheriting from the subscriber:
 
 .. code:: C++
 
 	dds::sub::DataReader<DataType> reader(sub, topic);
 
-, or explicitly setting its own QoS policies and listener:
+Or, explicitly setting its own QoS policies and listener:
 
 .. code:: C++
 
@@ -213,7 +214,7 @@ Or update existing instances through handles, which we will not go into here.
 Small Example
 -------------
 
-Putting it all together we can create the following code for writing data of the type DataType:
+Putting it all together, we can create the following code for writing data of the type DataType:
 
 .. code:: C++
 
@@ -259,7 +260,7 @@ Putting it all together we can create the following code for writing data of the
 		return 0;
 	}
 
-This writer will wait for a reader to appear and then write a single sample to the DDS service, after that it will wait for the reader to disappear and then exit.
+This writer waits for a reader to appear and then writes a single sample to the DDS service, after that, it waits for the reader to disappear and then exits.
 And for reading data:
 
 .. code:: C++
@@ -309,4 +310,4 @@ And for reading data:
 		return 0;
 	}
 
-The reader will periodically (every 20ms) check for received data, and when it has received some, will stop.
+The reader periodically (every 20ms) checks for received data, and stops when it receives some.

@@ -12,12 +12,10 @@
 Listeners
 =========
 
-Listeners allow the code to react to changes in state of DDS entities like readers, writers, etc.
+Listeners enable the code to react to changes in state of DDS entities such as readers, writers, and so on.
 CycloneDDS-CXX implements different listeners for different entities.
 Some types' listeners inherit from other types' listeners, allowing the listener of one type to react to changes in state on subordinate entities.
-E.G.: the listener for a DomainParticipant also implements the functionality of the listeners for Publishers, Subscribers and Topics.
-By using this functionality, the user can avoid large amounts of boilerplate code, since the listener will have to be implemented just one time.
-The listener can then be propagated down to the Publisher and from the Publisher to a DataWriter for instance.
+For example, by implementing the required callback functions for Topics and Subscribers in a DomainParticipantListener, this listener only needs to be set once at the DomainParticipant, and the Topic and Subscriber will then propagate the events to this Listener.
 
 .. table:: CycloneDDS Entities and associated listeners
 
@@ -57,12 +55,12 @@ The listener can then be propagated down to the Publisher and from the Publisher
 	|                       |                           |                       | on_sample_lost                | sample_lost                | SampleLostStatus               |
 	+-----------------------+---------------------------+-----------------------+-------------------------------+----------------------------+--------------------------------+
 
-A Listener is implemented as a virtual base class which defines a number of functions which correspond to status transitions in the underlying entity.
-For instance, the DataReaderListener will have an unimplemented virtual on_data_available function, which will be called each time data is inserted into the associated DataReader's history.
-DDS entities can be passed a listener during creation together with a StatusMask describing which status changes to pass to the listener.
+A Listener is implemented as a virtual base class that defines a number of functions that correspond to status transitions in the underlying entity.
+For example, the DataReaderListener has an unimplemented virtual on_data_available function, which will be called each time data is inserted into the associated DataReader's history.
+DDS entities can be passed to a listener during creation, together with a StatusMask that describes which status changes to pass to the listener.
 
-To make use of the listener functionality, the user needs to create a class deriving from the type of listener necessary and implement the virtual functions.
-To simplify the use of listeners, there are also NoOp listeners, which implement all virtual functions with empty contents, allowing the user to just implement the functions they are interested in.
+To make use of the listener functionality, create a class deriving from the type of listener necessary and implement the virtual functions.
+To simplify the use of listeners, there are also NoOp listeners that implements all virtual functions with empty contents, which enables you to implement the functions you are interested in.
 
 .. code:: C++
 
@@ -82,7 +80,7 @@ To simplify the use of listeners, there are also NoOp listeners, which implement
 			}
 	};
 
-By passing this listener to a reader, and setting the correct status mask, the message "I have $N new samples available.", and then "Of which $I were invalid samples.", where $N is the number of new samples and $I the number of invalid samples, should appear each time the associated reader receives data:
+By passing this listener to a reader and setting the correct status mask, the message "I have $N new samples available.", and then "Of which $I were invalid samples.", where $N is the number of new samples and $I the number of invalid samples, appears each time the associated reader receives data:
 
 .. code:: C++
 
@@ -90,8 +88,8 @@ By passing this listener to a reader, and setting the correct status mask, the m
 	ExampleListener<DataType> listener;
 	dds::sub::DataReader<DataType> reader(subscriber, topic, drqos, &listener, dds::core::status::StatusMask::data_available());
 
-Some listeners' callback functions are passed references to the entities the callback originated from and/or status objects containing information relevant to the status change.
-For example, the listener for DataWriters has the following callback function which is triggered when the Deadline QoS Policy is not adhered to:
+Some listeners' callback functions pass references to the entities that the callback originated from and/or status objects and contain information relevant to the status change.
+For example, the listener for DataWriters has the following callback function that is triggered when the Deadline QoS Policy is not complied with:
 
 .. code:: C++
 

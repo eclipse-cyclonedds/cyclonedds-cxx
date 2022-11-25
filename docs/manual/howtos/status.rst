@@ -12,9 +12,9 @@
 Statuses
 ========
 
-Entities in DDS have statuses indicating the internal state and/or history of said entity.
-These statuses are used to signal Waitsets and Listeners, and are different between types of DDS entities.
-Below is a table explaining enumerating the fields for each status and their meaning:
+Entities in DDS have statuses that indicate the internal state and/or history of an entity.
+These statuses signal Waitsets and Listeners, and are different between types of DDS entities.
+The following table lists the fields for each status and their meaning:
 
 .. table:: CycloneDDS-CXX Status entities and fields
 
@@ -130,7 +130,7 @@ Below is a table explaining enumerating the fields for each status and their mea
 Fields of status objects containing counts of events will have both a cumulative and interval count,
 where the cumulative count will keep track of all changes during the lifetime of the DDS entity,
 and the interval count is the number of changes since the previous readout of the status.
-The statuses can be accessed by the following functions on the entity:
+To access the statuses, use the following functions on the entity:
 
 .. table:: CycloneDDS-CXX Status accessors
 
@@ -160,7 +160,7 @@ The statuses can be accessed by the following functions on the entity:
 	|                       | SampleLostStatus               | sample_lost_status               |
 	+-----------------------+--------------------------------+----------------------------------+
 
-The following piece of code shows using statuses to make a writer wait until readers are present:
+The following code fragment shows statuses that make a writer wait until readers are present:
 
 .. code:: C++
 
@@ -168,4 +168,4 @@ The following piece of code shows using statuses to make a writer wait until rea
 	while (0 == wr.publication_matched_status().current_count())
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
-, here the writer will poll the total number of readers that are receiving data from it at a 20 millisecond interval for as long as there are no readers.
+The writer polls the total number of readers that are receiving data from it at 20 millisecond intervals for as long as there are no readers.
