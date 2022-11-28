@@ -79,7 +79,7 @@ SubscriberQosDelegate::policy<dds::core::policy::Presentation>() const
 }
 
 template<>
-dds::core::policy::Presentation&
+OMG_DDS_API dds::core::policy::Presentation&
 SubscriberQosDelegate::policy<dds::core::policy::Presentation>();
 
 template<>
@@ -90,7 +90,7 @@ SubscriberQosDelegate::policy<dds::core::policy::Partition>() const
 }
 
 template<>
-dds::core::policy::Partition&
+OMG_DDS_API dds::core::policy::Partition&
 SubscriberQosDelegate::policy<dds::core::policy::Partition>();
 
 template<>
@@ -101,7 +101,7 @@ SubscriberQosDelegate::policy<dds::core::policy::GroupData>() const
 }
 
 template<>
-dds::core::policy::GroupData&
+OMG_DDS_API dds::core::policy::GroupData&
 SubscriberQosDelegate::policy<dds::core::policy::GroupData>();
 
 
@@ -113,7 +113,7 @@ SubscriberQosDelegate::policy<dds::core::policy::EntityFactory>() const
 }
 
 template<>
-dds::core::policy::EntityFactory&
+OMG_DDS_API dds::core::policy::EntityFactory&
 SubscriberQosDelegate::policy<dds::core::policy::EntityFactory>();
 
 }
