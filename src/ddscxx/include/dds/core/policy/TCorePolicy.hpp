@@ -1710,11 +1710,11 @@ public:
      * @param force_type_validation whether to force type validation
      */
     explicit TTypeConsistencyEnforcement(
-        dds::core::policy::TypeConsistencyKind::Type kind = dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION,
-        bool ignore_sequence_bounds = false,
-        bool ignore_string_bounds = false,
+        dds::core::policy::TypeConsistencyKind::Type kind = dds::core::policy::TypeConsistencyKind::ALLOW_TYPE_COERCION,
+        bool ignore_sequence_bounds = true,
+        bool ignore_string_bounds = true,
         bool ignore_member_names = false,
-        bool prevent_type_widening = true,
+        bool prevent_type_widening = false,
         bool force_type_validation = false);
 
     /**

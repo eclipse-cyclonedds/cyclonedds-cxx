@@ -139,10 +139,11 @@ TEST_F(ExtendedTypes, appendable)
   validate<appendablestruct_smaller, appendablestruct_larger, basic_cdr_stream>(smaller, false, false);
   validate<appendablestruct_larger, appendablestruct_smaller, basic_cdr_stream>(larger, false, false);
 
-  /* write smaller, read larger, read should fail,
-     as there are not enough bytes to populate larger*/
-  validate<appendablestruct_smaller, appendablestruct_larger, xcdr_v1_stream>(smaller, true, false);
-  validate<appendablestruct_smaller, appendablestruct_larger, xcdr_v2_stream>(smaller, true, false);
+  /* write smaller, read larger, this should be okay,
+     as the read should see that there are not enough
+     bytes to populate the member 'd'*/
+  validate<appendablestruct_smaller, appendablestruct_larger, xcdr_v1_stream>(smaller);
+  validate<appendablestruct_smaller, appendablestruct_larger, xcdr_v2_stream>(smaller);
 
   /* write smaller, read larger, this should be okay,
      as the excess bytes containing 'd' will be ignored*/

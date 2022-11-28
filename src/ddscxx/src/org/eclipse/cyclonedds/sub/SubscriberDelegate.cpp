@@ -52,11 +52,13 @@ SubscriberDelegate::SubscriberDelegate(
 
     qos.delegate().check();
     ddsc_qos = qos.delegate().ddsc_qos();
+
     if (!ddsc_qos) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "Could not convert subscriber QoS.");
     }
 
     ddsc_sub = dds_create_subscriber(ddsc_par, ddsc_qos, NULL);
+
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_sub, "Could not create subscriber.");
     this->set_ddsc_entity(ddsc_sub);

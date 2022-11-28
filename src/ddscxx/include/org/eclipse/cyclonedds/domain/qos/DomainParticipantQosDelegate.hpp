@@ -37,9 +37,6 @@ class OMG_DDS_API DomainParticipantQosDelegate
 {
 public:
     DomainParticipantQosDelegate();
-    DomainParticipantQosDelegate(const DomainParticipantQosDelegate& other);
-
-    ~DomainParticipantQosDelegate();
 
     void policy(const dds::core::policy::UserData& ud);
     void policy(const dds::core::policy::EntityFactory& efp);
@@ -56,11 +53,13 @@ public:
     void check() const;
 
     bool operator ==(const DomainParticipantQosDelegate& other) const;
-    DomainParticipantQosDelegate& operator =(const DomainParticipantQosDelegate& other);
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
-    dds::core::policy::UserData user_data_;
-    dds::core::policy::EntityFactory entity_factory_;
+    uint64_t                          present_ = 0;
+    dds::core::policy::UserData       user_data_;
+    dds::core::policy::EntityFactory  entity_factory_;
 };
 
 
@@ -74,12 +73,10 @@ DomainParticipantQosDelegate::policy<dds::core::policy::UserData> () const
 {
     return user_data_;
 }
+
 template<>
-inline dds::core::policy::UserData&
-DomainParticipantQosDelegate::policy<dds::core::policy::UserData> ()
-{
-    return user_data_;
-}
+dds::core::policy::UserData&
+DomainParticipantQosDelegate::policy<dds::core::policy::UserData> ();
 
 
 template<>
@@ -88,12 +85,10 @@ DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> () const
 {
     return entity_factory_;
 }
+
 template<>
-inline dds::core::policy::EntityFactory&
-DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> ()
-{
-    return entity_factory_;
-}
+dds::core::policy::EntityFactory&
+DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> ();
 
 }
 }

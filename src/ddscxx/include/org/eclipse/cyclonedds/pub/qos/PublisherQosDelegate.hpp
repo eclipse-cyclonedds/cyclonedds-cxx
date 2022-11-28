@@ -37,9 +37,6 @@ class OMG_DDS_API PublisherQosDelegate
 {
 public:
     PublisherQosDelegate();
-    PublisherQosDelegate(const PublisherQosDelegate& other);
-
-    ~PublisherQosDelegate();
 
     void policy(const dds::core::policy::Presentation& presentation);
     void policy(const dds::core::policy::Partition& partition);
@@ -58,9 +55,11 @@ public:
     void check() const;
 
     bool operator ==(const PublisherQosDelegate& other) const;
-    PublisherQosDelegate& operator =(const PublisherQosDelegate& other);
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
+    uint64_t                           present_ = 0;
     dds::core::policy::Presentation    presentation_;
     dds::core::policy::Partition       partition_;
     dds::core::policy::GroupData       gdata_;
@@ -71,20 +70,16 @@ private:
 
 //==============================================================================
 
-
 template<>
 inline const dds::core::policy::Presentation&
 PublisherQosDelegate::policy<dds::core::policy::Presentation>() const
 {
     return presentation_;
 }
-template<>
-inline dds::core::policy::Presentation&
-PublisherQosDelegate::policy<dds::core::policy::Presentation>()
-{
-    return presentation_;
-}
 
+template<>
+dds::core::policy::Presentation&
+PublisherQosDelegate::policy<dds::core::policy::Presentation>();
 
 template<>
 inline const dds::core::policy::Partition&
@@ -92,13 +87,10 @@ PublisherQosDelegate::policy<dds::core::policy::Partition>() const
 {
     return partition_;
 }
-template<>
-inline dds::core::policy::Partition&
-PublisherQosDelegate::policy<dds::core::policy::Partition>()
-{
-    return partition_;
-}
 
+template<>
+dds::core::policy::Partition&
+PublisherQosDelegate::policy<dds::core::policy::Partition>();
 
 template<>
 inline const dds::core::policy::GroupData&
@@ -106,13 +98,10 @@ PublisherQosDelegate::policy<dds::core::policy::GroupData>() const
 {
     return gdata_;
 }
-template<>
-inline dds::core::policy::GroupData&
-PublisherQosDelegate::policy<dds::core::policy::GroupData>()
-{
-    return gdata_;
-}
 
+template<>
+dds::core::policy::GroupData&
+PublisherQosDelegate::policy<dds::core::policy::GroupData>();
 
 template<>
 inline const dds::core::policy::EntityFactory&
@@ -120,12 +109,10 @@ PublisherQosDelegate::policy<dds::core::policy::EntityFactory>() const
 {
     return factory_policy_;
 }
+
 template<>
-inline dds::core::policy::EntityFactory&
-PublisherQosDelegate::policy<dds::core::policy::EntityFactory>()
-{
-    return factory_policy_;
-}
+dds::core::policy::EntityFactory&
+PublisherQosDelegate::policy<dds::core::policy::EntityFactory>();
 
 }
 }

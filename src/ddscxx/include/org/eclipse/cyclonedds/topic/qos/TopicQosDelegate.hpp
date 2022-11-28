@@ -72,7 +72,10 @@ public:
 
     bool operator ==(const TopicQosDelegate& other) const;
 
+    const uint64_t &present() const {return present_;}
+    uint64_t &present() {return present_;}
 private:
+    uint64_t                                  present_ = 0;
     dds::core::policy::TopicData              topic_data_;
     dds::core::policy::Durability             durability_;
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
@@ -98,30 +101,23 @@ private:
 
 //==============================================================================
 
-
 template<> inline const dds::core::policy::TopicData&
 TopicQosDelegate::policy<dds::core::policy::TopicData>() const
 {
     return topic_data_;
 }
-template<> inline dds::core::policy::TopicData&
-TopicQosDelegate::policy<dds::core::policy::TopicData>()
-{
-    return topic_data_;
-}
 
+template<> dds::core::policy::TopicData&
+TopicQosDelegate::policy<dds::core::policy::TopicData>();
 
 template<> inline const dds::core::policy::Durability&
 TopicQosDelegate::policy<dds::core::policy::Durability>() const
 {
     return durability_;
 }
-template<> inline dds::core::policy::Durability&
-TopicQosDelegate::policy<dds::core::policy::Durability>()
-{
-    return durability_;
-}
 
+template<> dds::core::policy::Durability&
+TopicQosDelegate::policy<dds::core::policy::Durability>();
 
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
 template<> inline const dds::core::policy::DurabilityService&
@@ -129,132 +125,100 @@ TopicQosDelegate::policy<dds::core::policy::DurabilityService>() const
 {
     return durability_service_;
 }
-template<> inline dds::core::policy::DurabilityService&
-TopicQosDelegate::policy<dds::core::policy::DurabilityService>()
-{
-    return durability_service_;
-}
-#endif  // OMG_DDS_PERSISTENCE_SUPPORT
 
+template<> dds::core::policy::DurabilityService&
+TopicQosDelegate::policy<dds::core::policy::DurabilityService>();
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
 
 template<> inline const dds::core::policy::Deadline&
 TopicQosDelegate::policy<dds::core::policy::Deadline>() const
 {
     return deadline_;
 }
-template<> inline dds::core::policy::Deadline&
-TopicQosDelegate::policy<dds::core::policy::Deadline>()
-{
-    return deadline_;
-}
 
+template<> dds::core::policy::Deadline&
+TopicQosDelegate::policy<dds::core::policy::Deadline>();
 
 template<> inline const dds::core::policy::LatencyBudget&
 TopicQosDelegate::policy<dds::core::policy::LatencyBudget>() const
 {
     return budget_;
 }
-template<> inline dds::core::policy::LatencyBudget&
-TopicQosDelegate::policy<dds::core::policy::LatencyBudget>()
-{
-    return budget_;
-}
 
+template<> dds::core::policy::LatencyBudget&
+TopicQosDelegate::policy<dds::core::policy::LatencyBudget>();
 
 template<> inline const dds::core::policy::Liveliness&
 TopicQosDelegate::policy<dds::core::policy::Liveliness>() const
 {
     return liveliness_;
 }
-template<> inline dds::core::policy::Liveliness&
-TopicQosDelegate::policy<dds::core::policy::Liveliness>()
-{
-    return liveliness_;
-}
 
+template<> dds::core::policy::Liveliness&
+TopicQosDelegate::policy<dds::core::policy::Liveliness>();
 
 template<> inline const dds::core::policy::Reliability&
 TopicQosDelegate::policy<dds::core::policy::Reliability>() const
 {
     return reliability_;
 }
-template<> inline dds::core::policy::Reliability&
-TopicQosDelegate::policy<dds::core::policy::Reliability>()
-{
-    return reliability_;
-}
 
+template<> dds::core::policy::Reliability&
+TopicQosDelegate::policy<dds::core::policy::Reliability>();
 
 template<> inline const dds::core::policy::DestinationOrder&
 TopicQosDelegate::policy<dds::core::policy::DestinationOrder>() const
 {
     return order_;
 }
-template<> inline dds::core::policy::DestinationOrder&
-TopicQosDelegate::policy<dds::core::policy::DestinationOrder>()
-{
-    return order_;
-}
 
+template<> dds::core::policy::DestinationOrder&
+TopicQosDelegate::policy<dds::core::policy::DestinationOrder>();
 
 template<> inline const dds::core::policy::History&
 TopicQosDelegate::policy<dds::core::policy::History>() const
 {
     return history_;
 }
-template<> inline dds::core::policy::History&
-TopicQosDelegate::policy<dds::core::policy::History>()
-{
-    return history_;
-}
 
+template<> dds::core::policy::History&
+TopicQosDelegate::policy<dds::core::policy::History>();
 
 template<> inline const dds::core::policy::ResourceLimits&
 TopicQosDelegate::policy<dds::core::policy::ResourceLimits>() const
 {
     return resources_;
 }
-template<> inline dds::core::policy::ResourceLimits&
-TopicQosDelegate::policy<dds::core::policy::ResourceLimits>()
-{
-    return resources_;
-}
 
+template<> dds::core::policy::ResourceLimits&
+TopicQosDelegate::policy<dds::core::policy::ResourceLimits>();
 
 template<> inline const dds::core::policy::TransportPriority&
 TopicQosDelegate::policy<dds::core::policy::TransportPriority>() const
 {
     return priority_;
 }
-template<> inline dds::core::policy::TransportPriority&
-TopicQosDelegate::policy<dds::core::policy::TransportPriority>()
-{
-    return priority_;
-}
 
+template<> dds::core::policy::TransportPriority&
+TopicQosDelegate::policy<dds::core::policy::TransportPriority>();
 
 template<> inline const dds::core::policy::Lifespan&
 TopicQosDelegate::policy<dds::core::policy::Lifespan>() const
 {
     return lifespan_;
 }
-template<> inline dds::core::policy::Lifespan&
-TopicQosDelegate::policy<dds::core::policy::Lifespan>()
-{
-    return lifespan_;
-}
 
+template<> dds::core::policy::Lifespan&
+TopicQosDelegate::policy<dds::core::policy::Lifespan>();
 
 template<> inline const  dds::core::policy::Ownership&
 TopicQosDelegate::policy<dds::core::policy::Ownership>() const
 {
     return ownership_;
 }
-template<> inline dds::core::policy::Ownership&
-TopicQosDelegate::policy<dds::core::policy::Ownership>()
-{
-    return ownership_;
-}
+
+template<> dds::core::policy::Ownership&
+TopicQosDelegate::policy<dds::core::policy::Ownership>();
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 template<> inline const  dds::core::policy::DataRepresentation&
@@ -262,22 +226,18 @@ TopicQosDelegate::policy<dds::core::policy::DataRepresentation>() const
 {
     return datarepresentation_;
 }
-template<> inline dds::core::policy::DataRepresentation&
-TopicQosDelegate::policy<dds::core::policy::DataRepresentation>()
-{
-    return datarepresentation_;
-}
+
+template<> dds::core::policy::DataRepresentation&
+TopicQosDelegate::policy<dds::core::policy::DataRepresentation>();
 
 template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
 TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() const
 {
     return typeconsistencyenforcement_;
 }
-template<> inline dds::core::policy::TypeConsistencyEnforcement&
-TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
-{
-    return typeconsistencyenforcement_;
-}
+
+template<> dds::core::policy::TypeConsistencyEnforcement&
+TopicQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>();
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 }
