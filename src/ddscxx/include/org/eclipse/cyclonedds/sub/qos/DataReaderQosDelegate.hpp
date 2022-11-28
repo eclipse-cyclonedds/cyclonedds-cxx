@@ -105,7 +105,7 @@ DataReaderQosDelegate::policy<dds::core::policy::Durability>() const
 }
 
 template<>
-dds::core::policy::Durability&
+OMG_DDS_API dds::core::policy::Durability&
 DataReaderQosDelegate::policy<dds::core::policy::Durability>();
 
 template<>
@@ -115,7 +115,7 @@ DataReaderQosDelegate::policy<dds::core::policy::UserData>() const
     return user_data_;
 }
 template<>
-dds::core::policy::UserData&
+OMG_DDS_API dds::core::policy::UserData&
 DataReaderQosDelegate::policy<dds::core::policy::UserData>();
 
 template<> inline const dds::core::policy::Deadline&
@@ -125,7 +125,7 @@ DataReaderQosDelegate::policy<dds::core::policy::Deadline>() const
 }
 
 template<>
-dds::core::policy::Deadline&
+OMG_DDS_API dds::core::policy::Deadline&
 DataReaderQosDelegate::policy<dds::core::policy::Deadline>();
 
 template<> inline const dds::core::policy::LatencyBudget&
@@ -135,7 +135,7 @@ DataReaderQosDelegate::policy<dds::core::policy::LatencyBudget>() const
 }
 
 template<>
-dds::core::policy::LatencyBudget&
+OMG_DDS_API dds::core::policy::LatencyBudget&
 DataReaderQosDelegate::policy<dds::core::policy::LatencyBudget>();
 
 template<> inline const dds::core::policy::Liveliness&
@@ -145,7 +145,7 @@ DataReaderQosDelegate::policy<dds::core::policy::Liveliness>() const
 }
 
 template<>
-dds::core::policy::Liveliness&
+OMG_DDS_API dds::core::policy::Liveliness&
 DataReaderQosDelegate::policy<dds::core::policy::Liveliness>();
 
 template<> inline const dds::core::policy::Reliability&
@@ -155,7 +155,7 @@ DataReaderQosDelegate::policy<dds::core::policy::Reliability>() const
 }
 
 template<>
-dds::core::policy::Reliability&
+OMG_DDS_API dds::core::policy::Reliability&
 DataReaderQosDelegate::policy<dds::core::policy::Reliability>();
 
 template<> inline const dds::core::policy::DestinationOrder&
@@ -165,7 +165,7 @@ DataReaderQosDelegate::policy<dds::core::policy::DestinationOrder>() const
 }
 
 template<>
-dds::core::policy::DestinationOrder&
+OMG_DDS_API dds::core::policy::DestinationOrder&
 DataReaderQosDelegate::policy<dds::core::policy::DestinationOrder>();
 
 template<> inline const dds::core::policy::History&
@@ -175,7 +175,7 @@ DataReaderQosDelegate::policy<dds::core::policy::History>() const
 }
 
 template<>
-dds::core::policy::History&
+OMG_DDS_API dds::core::policy::History&
 DataReaderQosDelegate::policy<dds::core::policy::History>();
 
 
@@ -186,7 +186,7 @@ DataReaderQosDelegate::policy<dds::core::policy::ResourceLimits>() const
 }
 
 template<>
-dds::core::policy::ResourceLimits&
+OMG_DDS_API dds::core::policy::ResourceLimits&
 DataReaderQosDelegate::policy<dds::core::policy::ResourceLimits>();
 
 template<> inline const dds::core::policy::Ownership&
@@ -196,7 +196,7 @@ DataReaderQosDelegate::policy<dds::core::policy::Ownership>() const
 }
 
 template<>
-dds::core::policy::Ownership&
+OMG_DDS_API dds::core::policy::Ownership&
 DataReaderQosDelegate::policy<dds::core::policy::Ownership>();
 
 template<> inline const dds::core::policy::TimeBasedFilter&
@@ -206,7 +206,7 @@ DataReaderQosDelegate::policy<dds::core::policy::TimeBasedFilter>() const
 }
 
 template<>
-dds::core::policy::TimeBasedFilter&
+OMG_DDS_API dds::core::policy::TimeBasedFilter&
 DataReaderQosDelegate::policy<dds::core::policy::TimeBasedFilter>();
 
 template<> inline const dds::core::policy::ReaderDataLifecycle&
@@ -216,7 +216,7 @@ DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>() const
 }
 
 template<>
-dds::core::policy::ReaderDataLifecycle&
+OMG_DDS_API dds::core::policy::ReaderDataLifecycle&
 DataReaderQosDelegate::policy<dds::core::policy::ReaderDataLifecycle>();
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
@@ -226,7 +226,8 @@ DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>() const
     return datarepresentation_;
 }
 
-template<> dds::core::policy::DataRepresentation&
+template<>
+OMG_DDS_API dds::core::policy::DataRepresentation&
 DataReaderQosDelegate::policy<dds::core::policy::DataRepresentation>();
 
 template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
@@ -235,7 +236,8 @@ DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() c
     return typeconsistencyenforcement_;
 }
 
-template<> dds::core::policy::TypeConsistencyEnforcement&
+template<>
+OMG_DDS_API dds::core::policy::TypeConsistencyEnforcement&
 DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>();
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 

@@ -111,7 +111,7 @@ DataWriterQosDelegate::policy<dds::core::policy::UserData>() const
     return user_data_;
 }
 
-template<> dds::core::policy::UserData&
+template<> OMG_DDS_API dds::core::policy::UserData&
 DataWriterQosDelegate::policy<dds::core::policy::UserData>();
 
 template<> inline const dds::core::policy::Durability&
@@ -120,7 +120,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Durability>() const
     return durability_;
 }
 
-template<> dds::core::policy::Durability&
+template<> OMG_DDS_API dds::core::policy::Durability&
 DataWriterQosDelegate::policy<dds::core::policy::Durability>();
 
 template<> inline const dds::core::policy::Deadline&
@@ -129,7 +129,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Deadline>() const
     return deadline_;
 }
 
-template<> dds::core::policy::Deadline&
+template<> OMG_DDS_API dds::core::policy::Deadline&
 DataWriterQosDelegate::policy<dds::core::policy::Deadline>();
 
 template<> inline const dds::core::policy::LatencyBudget&
@@ -138,7 +138,7 @@ DataWriterQosDelegate::policy<dds::core::policy::LatencyBudget>() const
     return budget_;
 }
 
-template<> dds::core::policy::LatencyBudget&
+template<> OMG_DDS_API dds::core::policy::LatencyBudget&
 DataWriterQosDelegate::policy<dds::core::policy::LatencyBudget>();
 
 
@@ -148,7 +148,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Liveliness>() const
     return liveliness_;
 }
 
-template<> dds::core::policy::Liveliness&
+template<> OMG_DDS_API dds::core::policy::Liveliness&
 DataWriterQosDelegate::policy<dds::core::policy::Liveliness>();
 
 template<> inline const dds::core::policy::Reliability&
@@ -157,7 +157,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Reliability>() const
     return reliability_;
 }
 
-template<> dds::core::policy::Reliability&
+template<> OMG_DDS_API dds::core::policy::Reliability&
 DataWriterQosDelegate::policy<dds::core::policy::Reliability>();
 
 template<> inline const dds::core::policy::DestinationOrder&
@@ -166,7 +166,7 @@ DataWriterQosDelegate::policy<dds::core::policy::DestinationOrder>() const
     return order_;
 }
 
-template<> dds::core::policy::DestinationOrder&
+template<> OMG_DDS_API dds::core::policy::DestinationOrder&
 DataWriterQosDelegate::policy<dds::core::policy::DestinationOrder>();
 
 template<> inline const dds::core::policy::History&
@@ -175,7 +175,7 @@ DataWriterQosDelegate::policy<dds::core::policy::History>() const
     return history_;
 }
 
-template<> dds::core::policy::History&
+template<> OMG_DDS_API dds::core::policy::History&
 DataWriterQosDelegate::policy<dds::core::policy::History>();
 
 
@@ -185,7 +185,7 @@ DataWriterQosDelegate::policy<dds::core::policy::ResourceLimits>() const
     return resources_;
 }
 
-template<> dds::core::policy::ResourceLimits&
+template<> OMG_DDS_API dds::core::policy::ResourceLimits&
 DataWriterQosDelegate::policy<dds::core::policy::ResourceLimits>();
 
 template<> inline const dds::core::policy::TransportPriority&
@@ -194,7 +194,7 @@ DataWriterQosDelegate::policy<dds::core::policy::TransportPriority>() const
     return priority_;
 }
 
-template<> dds::core::policy::TransportPriority&
+template<> OMG_DDS_API dds::core::policy::TransportPriority&
 DataWriterQosDelegate::policy<dds::core::policy::TransportPriority>();
 
 template<> inline const dds::core::policy::Lifespan&
@@ -203,7 +203,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Lifespan>() const
     return lifespan_;
 }
 
-template<> dds::core::policy::Lifespan&
+template<> OMG_DDS_API dds::core::policy::Lifespan&
 DataWriterQosDelegate::policy<dds::core::policy::Lifespan>();
 
 template<> inline const dds::core::policy::Ownership&
@@ -212,7 +212,7 @@ DataWriterQosDelegate::policy<dds::core::policy::Ownership>() const
     return ownership_;
 }
 
-template<> dds::core::policy::Ownership&
+template<> OMG_DDS_API dds::core::policy::Ownership&
 DataWriterQosDelegate::policy<dds::core::policy::Ownership>();
 
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
@@ -222,7 +222,7 @@ DataWriterQosDelegate::policy<dds::core::policy::OwnershipStrength>() const
     return strength_;
 }
 
-template<> dds::core::policy::OwnershipStrength&
+template<> OMG_DDS_API dds::core::policy::OwnershipStrength&
 DataWriterQosDelegate::policy<dds::core::policy::OwnershipStrength>();
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
 
@@ -232,7 +232,7 @@ DataWriterQosDelegate::policy<dds::core::policy::WriterDataLifecycle>() const
     return lifecycle_;
 }
 
-template<> dds::core::policy::WriterDataLifecycle&
+template<> OMG_DDS_API dds::core::policy::WriterDataLifecycle&
 DataWriterQosDelegate::policy<dds::core::policy::WriterDataLifecycle>();
 
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
@@ -243,7 +243,7 @@ DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>() const
     return datarepresentation_;
 }
 
-template<> dds::core::policy::DataRepresentation&
+template<> OMG_DDS_API dds::core::policy::DataRepresentation&
 DataWriterQosDelegate::policy<dds::core::policy::DataRepresentation>();
 
 template<> inline const  dds::core::policy::TypeConsistencyEnforcement&
@@ -252,7 +252,7 @@ DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>() c
     return typeconsistencyenforcement_;
 }
 
-template<> dds::core::policy::TypeConsistencyEnforcement&
+template<> OMG_DDS_API dds::core::policy::TypeConsistencyEnforcement&
 DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>();
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
