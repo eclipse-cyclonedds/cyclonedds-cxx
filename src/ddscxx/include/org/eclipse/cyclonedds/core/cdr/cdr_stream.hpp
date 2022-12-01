@@ -391,12 +391,11 @@ public:
      * Depending on the implementation and mode headers may be read from/written to the stream.
      * This function can be overridden in cdr streaming implementations.
      *
-     * @param[in] prop Properties of the entity to start.
      * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool start_member(entity_properties_t &prop, bool is_set = true) { prop.is_present = is_set; return true;}
+    virtual bool start_member(const entity_properties_t &, bool is_set = true) { (void) is_set; return true;}
 
     /**
      * @brief
@@ -406,11 +405,13 @@ public:
      * Depending on the implementation and mode header length fields may be completed.
      * This function can be overridden in cdr streaming implementations.
      *
+     * @param[in] props Properties of the member to finish.
+     * @param[in] member_ids Container for the member ids of members succesfully streamed at this level
      * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
      *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool finish_member(entity_properties_t &, bool is_set = true) { (void) is_set; return true;}
+    virtual bool finish_member(const entity_properties_t &props, member_id_set &member_ids, bool is_set = true);
 
     /**
      * @brief
@@ -419,11 +420,11 @@ public:
      * This function is called by the instance implementation switchbox and will return the next entity to operate on by calling next_prop.
      * This will also call the implementation specific push/pop entity functions to write/finish headers where necessary.
      *
-     * @param[in, out] prop The property tree to get the next entity from.
+     * @param[in] prop The property tree to get the next entity from.
      *
      * @return The next entity to be processed, or the final entity if the current tree level does not hold more entities.
      */
-    virtual entity_properties_t* next_entity(entity_properties_t *prop);
+    virtual const entity_properties_t* next_entity(const entity_properties_t *prop);
 
     /**
      * @brief
@@ -432,11 +433,11 @@ public:
      * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
      * properties entry is pulled from the tree.
      *
-     * @param[in, out] prop The property tree to get the next entity from.
+     * @param[in] prop The property tree to get the next entity from.
      *
      * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
      */
-    virtual entity_properties_t* first_entity(entity_properties_t *prop);
+    virtual const entity_properties_t* first_entity(const entity_properties_t *prop);
 
     /**
      * @brief
@@ -445,11 +446,9 @@ public:
      * This function is called by the generated functions for the entity, and will trigger the necessary actions on starting a new struct.
      * I.E. starting a new parameter list, writing headers.
      *
-     * @param[in,out] props The entity whose members might be represented by a parameter list.
-     *
      * @return Whether the operation was completed succesfully.
      */
-    virtual bool start_struct(entity_properties_t &props);
+    virtual bool start_struct(const entity_properties_t &) {return true;}
 
     /**
      * @brief
@@ -458,11 +457,12 @@ public:
      * This function is called by the generated functions for the entity, and will trigger the necessary actions on finishing the current struct.
      * I.E. finishing headers, writing length fields.
      *
-     * @param[in,out] props The entity whose members might be represented by a parameter list.
+     * @param[in] props The entity whose members might be represented by a parameter list.
+     * @param[in] member_ids Container for the member ids of members succesfully streamed at this level.
      *
      * @return Whether the struct is complete and correct.
      */
-    virtual bool finish_struct(entity_properties_t &props);
+    virtual bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids);
 
     /**
      * @brief
@@ -506,9 +506,12 @@ protected:
      *
      * Checks whether all fields which must be understood are present.
      *
-     * @param[in,out] props The struct whose start is recorded.
+     * @param[in] props The struct whose start is recorded.
+     * @param[in] member_ids Container for the member ids of members succesfully streamed at this level.
+     *
+     * @return Whether the members indicated to be necessary in props are present in member_ids.
      */
-    void check_struct_completeness(entity_properties_t &props);
+    bool check_struct_completeness(const entity_properties_t &props, const member_id_set &member_ids);
 
     /**
      * @brief
@@ -518,7 +521,7 @@ protected:
      *
      * @return Pointer to the previous entity, or nullptr if there is any.
      */
-    entity_properties_t* previous_entity(entity_properties_t *prop);
+    const entity_properties_t* previous_entity(const entity_properties_t *prop);
 
     static const size_t m_maximum_depth = 32;     /**< the maximum depth of structures in the streamer*/
 

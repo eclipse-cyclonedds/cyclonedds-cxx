@@ -103,11 +103,6 @@ void entity_properties_t::finish(propvec &props, const key_endpoint &keys)
   add_key(keys, props[0]);
 }
 
-void entity_properties_t::reset()
-{
-  is_present = false;
-}
-
 void entity_properties_t::print() const
 {
   std::cout <<  std::string( 2*depth, ' ' ) << "id: " << m_id << std::endl;

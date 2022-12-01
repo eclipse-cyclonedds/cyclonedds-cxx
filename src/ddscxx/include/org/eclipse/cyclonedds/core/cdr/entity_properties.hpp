@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <list>
 #include <vector>
+#include <set>
 #include <map>
 #include <atomic>
 #include <mutex>
@@ -115,6 +116,7 @@ constexpr bit_bound get_bit_bound() { return bb_unset;}
 
 typedef struct entity_properties entity_properties_t;
 typedef std::vector<entity_properties_t> propvec;
+typedef std::set<uint32_t> member_id_set;
 
 /**
  * @brief
@@ -152,21 +154,12 @@ struct OMG_DDS_API entity_properties
   bool ignore = false;                            /**< Indicates that this field must be ignored.*/
   bool is_optional = false;                       /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
   bool is_key = false;                            /**< Indicates that this field is a key field.*/
-  bool is_present = false;                        /**< Indicates that this entity is present in the read stream.*/
   bit_bound e_bb = bb_unset;                      /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
   entity_properties_t  *next_on_level = nullptr,  /**< Pointer to the next entity on the same level.*/
                        *prev_on_level = nullptr,  /**< Pointer to the previous entity on the same level.*/
                        *parent        = nullptr,  /**< Pointer to the parent of this entity.*/
                        *first_member  = nullptr;  /**< Pointer to the first entity which is a member of this entity.*/
-
-  /**
-   * @brief
-   * Reset function.
-   *
-   * This function will reset the fields that may have been set through streaming (is_present).
-   */
-  void reset();
 
   /**
    * @brief
@@ -254,7 +247,7 @@ struct OMG_DDS_API entity_properties
  * @return propvec "Tree" representing the type.
  */
 template<typename T>
-propvec& get_type_props();
+const propvec& get_type_props();
 
 }
 }

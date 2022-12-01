@@ -75,7 +75,7 @@ DomainParticipantQosDelegate::policy<dds::core::policy::UserData> () const
 }
 
 template<>
-dds::core::policy::UserData&
+OMG_DDS_API dds::core::policy::UserData&
 DomainParticipantQosDelegate::policy<dds::core::policy::UserData> ();
 
 
@@ -87,7 +87,7 @@ DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> () const
 }
 
 template<>
-dds::core::policy::EntityFactory&
+OMG_DDS_API dds::core::policy::EntityFactory&
 DomainParticipantQosDelegate::policy<dds::core::policy::EntityFactory> ();
 
 }

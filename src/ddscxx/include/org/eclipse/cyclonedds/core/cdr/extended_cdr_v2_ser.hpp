@@ -53,10 +53,10 @@ public:
    *
    * Determines whether a header is necessary for this entity through em_header_necessary, and if it is, handles the header.
    *
-   * @param[in, out] prop Properties of the member to start.
+   * @param[in] prop Properties of the member to start.
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    */
-  bool start_member(entity_properties_t &prop, bool is_set = true);
+  bool start_member(const entity_properties_t &prop, bool is_set = true);
 
   /**
    * @brief
@@ -64,12 +64,13 @@ public:
    *
    * Determines whether a header is necessary for this entity through em_header_necessary, and if it is, completes the previous header.
    *
-   * @param[in, out] prop Properties of the member to finish.
+   * @param[in] prop Properties of the member to finish.
+   * @param[in] member_ids Container for the member ids of members succesfully streamed at this level
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool finish_member(entity_properties_t &prop, bool is_set = true);
+  bool finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set = true);
 
   /**
    * @brief
@@ -78,11 +79,11 @@ public:
    * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
    * properties entry is pulled from the tree.
    *
-   * @param[in, out] prop The property tree to get the next entity from.
+   * @param[in] prop The property tree to get the next entity from.
    *
    * @return The next entity to be processed, or a nullptr if the current tree level does not hold more entities that match this tree.
    */
-  entity_properties_t* next_entity(entity_properties_t *prop);
+  const entity_properties_t* next_entity(const entity_properties_t *prop);
 
   /**
    * @brief
@@ -91,11 +92,11 @@ public:
    * Depending on the data structure and the streaming mode, either a header is read from the stream, or a
    * properties entry is pulled from the tree.
    *
-   * @param[in, out] prop The property tree to get the next entity from.
+   * @param[in] prop The property tree to get the next entity from.
    *
    * @return The first entity to be processed, or a nullptr if the current tree level does not hold any entities that match this tree.
    */
-  entity_properties_t *first_entity(entity_properties_t *prop);
+  const entity_properties_t *first_entity(const entity_properties_t *prop);
 
   /**
    * @brief
@@ -103,11 +104,11 @@ public:
    *
    * This function is called by the generated streaming functions, and will start a parameter list, if that is relevant for it.
    *
-   * @param[in, out] props The entity whose members might be represented by a parameter list.
+   * @param[in] props The entity whose members might be represented by a parameter list.
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool start_struct(entity_properties_t &props);
+  bool start_struct(const entity_properties_t &props);
 
   /**
    * @brief
@@ -115,11 +116,12 @@ public:
    *
    * This function is called by the generated streaming functions, and will finish the current parameter list, if that is relevant for it.
    *
-   * @param[in, out] props The entity whose members might be represented by a parameter list.
+   * @param[in] props The entity whose members might be represented by a parameter list.
+   * @param[in] member_ids Container for the member ids of members succesfully streamed at this level
    *
    * @return Whether the struct is complete and correct.
    */
-  bool finish_struct(entity_properties_t &props);
+  bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids);
 
   /**
    * @brief
@@ -226,11 +228,11 @@ private:
    * @brief
    * Writes an EM-header to the stream.
    *
-   * @param[in, out] prop The entity to write the EM-header for.
+   * @param[in] prop The entity to write the EM-header for.
    *
-   * @return Whether the header was read succesfully.
+   * @return Whether the EM-header was written succesfully.
    */
-  bool write_em_header(entity_properties_t &prop);
+  bool write_em_header(const entity_properties_t &prop);
 
   /**
    * @brief
