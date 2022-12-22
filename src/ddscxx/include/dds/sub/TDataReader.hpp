@@ -1613,11 +1613,7 @@ public:
      *
      * Be aware that the SUBSCRIPTION_MATCHED_STATUS is not applicable when the
      * infrastructure does not have the information available to determine connectivity.
-     * This is the case when OpenSplice is configured not to maintain discovery
-     * information in the Networking Service. (See the description for the
-     * NetworkingService/Discovery/enabled property in the Deployment
-     * Manual for more information about this subject.) In this case the operation will
-     * throw UnsupportedError.
+     * In this case the operation will throw UnsupportedError.
      *
      * Status bits are declared as a constant and can be used by the application in an OR
      * operation to create a tailored mask. The special constant dds::core::status::StatusMask::none()

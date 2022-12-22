@@ -256,7 +256,7 @@ public:
      *                  The entity has already been closed.
      * @throws dds::core::UnsupportedError
      *                  One or more of the selected QosPolicy values are
-     *                  currently not supported by OpenSplice.
+     *                  currently not supported.
      * @throws dds::core::InconsistentPolicyError
      *                  The parameter qos contains conflicting QosPolicy settings,
      *                  e.g. a history depth that is higher than the specified resource limits.

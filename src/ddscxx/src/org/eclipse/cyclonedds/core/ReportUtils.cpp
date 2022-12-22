@@ -20,10 +20,6 @@
 #include <org/eclipse/cyclonedds/core/ReportUtils.hpp>
 #include <dds/ddsrt/retcode.h>
 
-//#include <os_stdlib.h>
-//#include <os_report.h>
-//#include <os_version.h>
-//#include "vortex_os.h"
 #include <cassert>
 #include <string>
 #include <map>
