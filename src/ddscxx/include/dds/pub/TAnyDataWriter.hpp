@@ -289,11 +289,8 @@ public:
      * dds::pub::ignore operations.
      *
      * The operation may fail if the infrastructure does not hold the information necessary
-     * to fill in the PublicationMatchedStatus. This is the case when OpenSplice is
-     * configured not to maintain discovery information in the Networking Service. (See
-     * the description for the NetworkingService/Discovery/enabled property in
-     * the Deployment Manual for more information about this subject.) In this case the
-     * operation will throw UnsupportedError.
+     * to fill in the PublicationMatchedStatus. In this case the operation
+     * will throw UnsupportedError.
      *
      * The PublicationMatchedStatus can also be monitored using a
      * DataWriterListener or by using the associated StatusCondition.
@@ -304,8 +301,8 @@ public:
      * @throws dds::core::NullReferenceError
      *                  The entity was not properly created and references to dds::core::null.
      * @throws dds::core::UnsupportedError
-     *                  OpenSplice is configured not to maintain the information
-     *                  about “associated” subscriptions.
+     *                  The information about "associated" subscriptions
+     *                  are not maintained.
      * @throws dds::core::AlreadyClosedError
      *                  The entity has already been closed.
      * @throws dds::core::OutOfResourcesError

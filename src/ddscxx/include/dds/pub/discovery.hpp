@@ -85,8 +85,8 @@ void ignore(const dds::domain::DomainParticipant& dp, FwdIterator begin, FwdIter
  * @throws dds::core::NotEnabledError
  *                  The DataWriter has not yet been enabled.
  * @throws dds::core::UnsupportedError
- *                  OpenSplice is configured not to maintain the
- *                  information about “associated” subscriptions.
+ *                  The information about "associated" subscriptions
+ *                  are not maintained.
  * @throws dds::core::OutOfResourcesError
  *                  The Data Distribution Service ran out of resources to
  *                  complete this operation.
@@ -124,8 +124,8 @@ matched_subscriptions(const dds::pub::DataWriter<T>& dw);
  * @throws dds::core::NotEnabledError
  *                  The DataWriter has not yet been enabled.
  * @throws dds::core::UnsupportedError
- *                  OpenSplice is configured not to maintain the
- *                  information about “associated” subscriptions.
+ *                  The information about "associated" subscriptions
+ *                  are not maintained.
  * @throws dds::core::OutOfResourcesError
  *                  The Data Distribution Service ran out of resources to
  *                  complete this operation.
@@ -148,11 +148,7 @@ matched_subscriptions(const dds::pub::DataWriter<T>& dw,
  * be used to find the subscriptions that are currently matched with the DataWriter.
  *
  * The operation may fail if the infrastructure does not locally maintain the
- * connectivity information. This is the case when OpenSplice is configured not to
- * maintain discovery information in the Networking Service. (See the description for
- * the NetworkingService/Discovery/enabled property in the Deployment
- * Manual for more information about this subject.) In such cases the operation will
- * throw UnsupportedError.
+ * connectivity information. In such cases the operation will throw UnsupportedError.
  *
  * See also @ref DCPS_Builtin_Topics and @ref DCPS_Builtin_Topics_SubscriptionData.
  *
@@ -168,8 +164,8 @@ matched_subscriptions(const dds::pub::DataWriter<T>& dw,
  * @throws dds::core::NotEnabledError
  *                  The DataWriter has not yet been enabled.
  * @throws dds::core::UnsupportedError
- *                  OpenSplice is configured not to maintain the
- *                  information about “associated” subscriptions.
+ *                  The information about "associated" subscriptions
+ *                  are not maintained.
  * @throws dds::core::InvalidArgumentError
  *                  Subscription not associated with the DataWriter.
  * @throws dds::core::OutOfResourcesError

@@ -46,7 +46,7 @@ class TQosProvider;
  * The QosProvider API allows users to specify the QoS settings of their DCPS
  * entities outside of application code in XML.
  *
- * The QosProvider is delivered as part of the DCPS API of Vortex OpenSplice.
+ * The QosProvider is delivered as part of the DCPS API.
  *
  * @see for more information: @ref DCPS_QoS_Provider "QoS Provider extensive information."
  */

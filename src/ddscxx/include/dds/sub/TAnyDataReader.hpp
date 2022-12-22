@@ -382,12 +382,9 @@ operator=(const T__& rhs) {
      * operations on the DomainParticipant.
      *
      * The operation may fail if the infrastructure does not hold the information necessary
-     * to fill in the SubscriptionMatchedStatus. This is the case when OpenSplice is
-     * configured not to maintain discovery information in the Networking Service. (See
-     * the description for the NetworkingService/Discovery/enabled property in
-     * the Deployment Manual for more information about this subject.) In this case the
+     * to fill in the SubscriptionMatchedStatus. In this case the
      * operation will throw UnsupportedError.
-     *
+     * 
      * The SubscriptionMatchedStatus can also be monitored using a
      * DataReaderListener or by using the associated StatusCondition.
      *
@@ -402,8 +399,8 @@ operator=(const T__& rhs) {
      *                  The Data Distribution Service ran out of resources to
      *                  complete this operation.
      * @throws dds::core::UnsupportedError
-     *                  OpenSplice is configured not to maintain the information
-     *                  about "associated" publications.
+     *                  The information about "associated" publications
+     *                  are not maintained.
      */
     dds::core::status::SubscriptionMatchedStatus
     subscription_matched_status();
