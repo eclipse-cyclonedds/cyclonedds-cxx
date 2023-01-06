@@ -55,7 +55,7 @@ bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
   return cdr_stream::start_member(prop, is_set);
 }
 
-bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set)
+bool xcdr_v1_stream::finish_member_unchecked(const entity_properties_t &prop, bool is_set)
 {
   if (header_necessary(prop)) {
     switch (m_mode) {
@@ -73,7 +73,7 @@ bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_se
   }
 
   pop_member_start();
-  return cdr_stream::finish_member(prop, member_ids, is_set);
+  return cdr_stream::finish_member_unchecked(prop, is_set);
 }
 
 const entity_properties_t* xcdr_v1_stream::next_entity(const entity_properties_t *prop)
@@ -288,7 +288,7 @@ bool xcdr_v1_stream::finish_write_header(const entity_properties_t &props)
   return true;
 }
 
-bool xcdr_v1_stream::finish_struct(const entity_properties_t &props, const member_id_set &member_ids)
+bool xcdr_v1_stream::finish_struct_unchecked(const entity_properties_t &props)
 {
   switch (m_mode) {
     case stream_mode::write:
@@ -299,9 +299,6 @@ bool xcdr_v1_stream::finish_struct(const entity_properties_t &props, const membe
     case stream_mode::max:
       if (list_necessary(props))
         return move_final_list_entry();
-      break;
-    case stream_mode::read:
-      return check_struct_completeness(props, member_ids);
       break;
     default:
       return false;

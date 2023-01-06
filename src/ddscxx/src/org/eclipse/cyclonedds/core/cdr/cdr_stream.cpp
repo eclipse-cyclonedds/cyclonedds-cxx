@@ -53,17 +53,6 @@ bool cdr_stream::align(size_t newalignment, bool add_zeroes)
   return true;
 }
 
-bool cdr_stream::finish_struct(const entity_properties_t &props, const member_id_set &member_ids)
-{
-  switch (m_mode) {
-    case stream_mode::read:
-      return check_struct_completeness(props, member_ids);
-      break;
-    default:
-      return true;
-  }
-}
-
 const entity_properties_t *cdr_stream::first_entity(const entity_properties_t *props)
 {
   const entity_properties_t *prop = props->first_member;
@@ -140,8 +129,16 @@ bool cdr_stream::check_struct_completeness(const entity_properties_t &props, con
 
 bool cdr_stream::finish_member(const entity_properties_t &props, member_id_set &member_ids, bool is_set)
 {
+  if (!finish_member_unchecked(props, is_set))
+    return false;
+
   if (is_set)
     member_ids.insert(props.m_id);
+  return true;
+}
+
+bool cdr_stream::finish_member_unchecked(const entity_properties_t &, bool)
+{
   return true;
 }
 

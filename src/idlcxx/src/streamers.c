@@ -818,12 +818,20 @@ add_member_finish(
     char *accessor = NULL;
     if (IDL_PRINTA(&accessor, get_instance_accessor, decl, &loc) < 0
      || multi_putf(streams, (WRITE|MOVE), "      }\n")
-     || multi_putf(streams, ALL,
+     || multi_putf(streams, READ,
           "      if (!streamer.finish_member(*prop, member_ids, %1$s.has_value()))\n"
+          "        return false;\n", accessor)
+     || multi_putf(streams, (WRITE|MOVE),
+          "      if (!streamer.finish_member_unchecked(*prop, %1$s.has_value()))\n"
+          "        return false;\n", accessor)
+     || multi_putf(streams, MAX,
+          "      if (!streamer.finish_member_unchecked(*prop, true))\n"
           "        return false;\n", accessor))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (multi_putf(streams, ALL, "      if (!streamer.finish_member(*prop, member_ids))\n"
+    if (multi_putf(streams, READ, "      if (!streamer.finish_member(*prop, member_ids))\n"
+                                 "        return false;\n")
+     || multi_putf(streams, CONST, "      if (!streamer.finish_member_unchecked(*prop))\n"
                                  "        return false;\n"))
       return IDL_RETCODE_NO_MEMORY;
   }
@@ -1067,7 +1075,7 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
     "template<typename T, std::enable_if_t<std::is_base_of<cdr_stream, T>::value, bool> = true >\n"
     "bool {T}(T& streamer, {C}%1$s& instance, const entity_properties_t *props) {\n"
     "  (void)instance;\n"
-    "  member_id_set member_ids;\n";
+    "%2$s";
   static const char *pfmt1 =
     "template<>\n"
     "const propvec &get_type_props<%s>()%s";
@@ -1103,7 +1111,8 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
       assert(0);
   }
 
-  if (multi_putf(streams, ALL, fmt, name)
+  if (multi_putf(streams, READ, fmt, name, "  member_id_set member_ids;\n")
+   || multi_putf(streams, CONST, fmt, name, "")
    || putf(&streams->props, pfmt1, name, pfmt2)
    || idl_fprintf(streams->generator->header.handle, pfmt1, name, ";\n\n") < 0
    || multi_putf(streams, ALL, sfmt)
@@ -1133,7 +1142,7 @@ print_constructed_type_close(
   const void* node)
 {
   const char *fmt =
-    "  return streamer.finish_struct(*props, member_ids);\n"
+    "  return streamer.finish_struct%1$s(*props%2$s);\n"
     "}\n\n";
   static const char *pfmt =
     "\n  entity_properties_t::finish(props, keylist);\n"
@@ -1158,7 +1167,8 @@ print_constructed_type_close(
     ptr++;
   }
 
-  if (multi_putf(streams, ALL, fmt)
+  if (multi_putf(streams, READ, fmt, "", ", member_ids")
+   || multi_putf(streams, CONST, fmt, "_unchecked", "")
    || putf(&streams->props, pfmt)
    || idl_fprintf(streams->generator->header.handle, pfmt2, newname, fullname) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -1384,7 +1394,7 @@ process_typedef_decl(
     "template<typename T, std::enable_if_t<std::is_base_of<cdr_stream, T>::value, bool> = true >\n"
     "bool {T}_%1$s(T& streamer, {C}%2$s& instance) {\n"
     "  (void)instance;\n"
-    "  member_id_set member_ids;\n";
+    "%3$s";
   char* name = NULL;
   if (IDL_PRINTA(&name, get_cpp11_name_typedef, declarator, streams->generator) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -1398,7 +1408,8 @@ process_typedef_decl(
     ts = ((const idl_sequence_t*)ts)->type_spec;
   }
 
-  if (multi_putf(streams, ALL, fmt, name, fullname))
+  if (multi_putf(streams, READ, fmt, name, fullname, "  member_id_set member_ids;\n")
+   || multi_putf(streams, CONST, fmt, name, fullname, ""))
     return IDL_RETCODE_NO_MEMORY;
 
   if (!idl_is_base_type(ts) && !idl_is_enum(ts) && !idl_is_string(ts) && !idl_is_alias(ts)) {

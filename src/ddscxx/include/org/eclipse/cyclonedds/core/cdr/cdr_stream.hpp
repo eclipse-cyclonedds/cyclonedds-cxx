@@ -434,6 +434,21 @@ public:
 
     /**
      * @brief
+     * Function declaration for finishing an existing member.
+     *
+     * This function is called by next_entity for each entity which is iterated over.
+     * Depending on the implementation and mode header length fields may be completed.
+     * This function can be overridden in cdr streaming implementations.
+     *
+     * @param[in] props Properties of the member to finish.
+     * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
+     *
+     * @return Whether the operation was completed succesfully.
+     */
+    virtual bool finish_member_unchecked(const entity_properties_t &props, bool is_set = true);
+
+    /**
+     * @brief
      * Function declaration for retrieving the next entity to be operated on by the streamer.
      *
      * This function is called by the instance implementation switchbox and will return the next entity to operate on by calling next_prop.
@@ -481,7 +496,20 @@ public:
      *
      * @return Whether the struct is complete and correct.
      */
-    virtual bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids);
+    virtual bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids) {return check_struct_completeness(props, member_ids);}
+
+    /**
+     * @brief
+     * Function declaration for finishing a parameter list.
+     *
+     * This function is called by the generated functions for the entity, and will trigger the necessary actions on finishing the current struct.
+     * I.E. finishing headers, writing length fields.
+     *
+     * @param[in] props The entity whose members might be represented by a parameter list.
+     *
+     * @return Whether the struct is complete and correct.
+     */
+    virtual bool finish_struct_unchecked(const entity_properties_t &props) {(void)props; return true;}
 
     /**
      * @brief

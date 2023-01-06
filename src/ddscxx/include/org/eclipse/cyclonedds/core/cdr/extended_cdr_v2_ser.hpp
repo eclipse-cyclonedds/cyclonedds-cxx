@@ -65,12 +65,11 @@ public:
    * Determines whether a header is necessary for this entity through em_header_necessary, and if it is, completes the previous header.
    *
    * @param[in] prop Properties of the member to finish.
-   * @param[in] member_ids Container for the member ids of members succesfully streamed at this level
    * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set = true);
+  bool finish_member_unchecked(const entity_properties_t &prop, bool is_set = true);
 
   /**
    * @brief
@@ -122,6 +121,18 @@ public:
    * @return Whether the struct is complete and correct.
    */
   bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids);
+
+  /**
+   * @brief
+   * Finish the current struct.
+   *
+   * This function is called by the generated streaming functions, and will finish the current parameter list, if that is relevant for it.
+   *
+   * @param[in] props The entity whose members might be represented by a parameter list.
+   *
+   * @return Whether the struct is complete and correct.
+   */
+  bool finish_struct_unchecked(const entity_properties_t &props);
 
   /**
    * @brief
