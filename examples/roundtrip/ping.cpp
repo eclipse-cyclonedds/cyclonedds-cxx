@@ -83,13 +83,19 @@ static void print_usage(void)
 {
   std::cout <<
     "Usage (parameters must be supplied in order):\n"
-    "./cxxRoundtripPong [-l/-h] [payloadSize (bytes, 0 - 100M)] [numSamples (0 = infinite)] [timeOut (seconds, 0 = infinite)]\n"
-    /*"./cxxRoundtripPong quit - ping sends a quit signal to pong.\n"*/
+    "./cxxRoundtripPing [-l/-h] [payloadSize (bytes, 0 - 100M)] [numSamples (0 = infinite)] [timeOut (seconds, 0 = infinite)]\n"
+    /*"./cxxRoundtripPing quit - ping sends a quit signal to pong.\n"*/
     "Defaults:\n"
-    "./cxxRoundtripPong 0 0 0\n" << std::flush;
+    "./cxxRoundtripPing 0 0 0\n" << std::flush;
   exit(EXIT_FAILURE);
 }
 
+/**
+    main data processing function
+    this will take the received samples,
+    store the time difference between sending the previous message and receiving the current
+    and send the return message with the current timestamp
+*/
 static bool data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd, dds::pub::DataWriter<RoundTripModule::DataType>& wr)
 {
   if (done)
@@ -211,30 +217,27 @@ int main (int argc, char *argv[])
   dds::topic::Topic<RoundTripModule::DataType> topic(participant, "RoundTrip");
 
   dds::pub::qos::PublisherQos pqos;
-  pqos.policy(dds::core::policy::Partition("ping"));
+  pqos << dds::core::policy::Partition("ping");
 
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos.policy(
-    dds::core::policy::Reliability(
-      dds::core::policy::ReliabilityKind::Type::RELIABLE,
-      dds::core::Duration::from_secs(10)));
-  wqos.policy(
-    dds::core::policy::WriterDataLifecycle(true));
+  wqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10))
+       << dds::core::policy::WriterDataLifecycle(true);
 
   dds::pub::DataWriter<RoundTripModule::DataType> writer(publisher, topic, wqos);
 
   dds::sub::qos::SubscriberQos sqos;
-  sqos.policy(dds::core::policy::Partition("pong"));
+  sqos << dds::core::policy::Partition("pong");
 
   dds::sub::Subscriber subscriber(participant, sqos);
 
   dds::sub::qos::DataReaderQos rqos;
-  rqos.policy(
-    dds::core::policy::Reliability(
-      dds::core::policy::ReliabilityKind::Type::RELIABLE,
-      dds::core::Duration::from_secs(10)));
+  rqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10));
 
   RoundTripListener list(writer, &data_available);
 

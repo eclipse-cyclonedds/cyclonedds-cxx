@@ -61,7 +61,7 @@ static int parse_args(int argc, char **argv)
   if (argc == 2 && (strcmp (argv[1], "-h") == 0 || strcmp (argv[1], "--help") == 0))
   {
     std::cout << subprefix << "Usage (parameters must be supplied in order):\n" <<
-                 subprefix << "./subscriber [maxCycles (0 = infinite)] [pollingDelay (ms, 0 = waitset, -1 = listener)] [partitionName]\n" <<
+                 subprefix << "./subscriber [maxCycles (0 = infinite)] [pollingDelay (ms, 0 = no polling, use waitset, -1 = no polling, use listener)] [partitionName]\n" <<
                  subprefix << "Defaults:\n" <<
                  subprefix << "./subscriber 0 0 \"Throughput example\"\n" << std::flush;
     return EXIT_FAILURE;
@@ -91,17 +91,17 @@ unsigned long long do_take(dds::sub::DataReader<ThroughputModule::DataType>& rd)
     if (!s.info().valid())
       continue;
 
-    auto ih = s.info().publication_handle();
+    auto pub_handle = s.info().publication_handle();
     auto ct = s.data().count();
-    auto it = mp.find(ih);
+    auto it = mp.insert({pub_handle,ct}).first;
+
     /*check whether the received sequence number matches that which we expect*/
-    if (it != mp.end() &&
-        it->second != ct)
+    if (it->second != ct)
       outOfOrder++;
 
     valid_samples++;
     total_bytes += s.data().payload().size();
-    mp[ih] = ct+1;
+    it->second = ct+1;
   }
 
   total_samples += valid_samples;
@@ -151,7 +151,7 @@ void process_samples(dds::sub::DataReader<ThroughputModule::DataType> &reader, s
 
     for (const auto &c:conditions)
     {
-      if (c == sc)
+      if (c.trigger_value())
       {
         wait_again = false;
         break;
@@ -230,40 +230,15 @@ bool wait_for_writer(dds::sub::DataReader<ThroughputModule::DataType> &reader)
   return false;
 }
 
-class ThroughputListener: public dds::sub::DataReaderListener<ThroughputModule::DataType>
+class ThroughputListener: public dds::sub::NoOpDataReaderListener<ThroughputModule::DataType>
 {
   public:
-  /*implementation of virtual functions*/
+  /*implementation of function overrides*/
 
   /*only on_data_available does anything*/
   void on_data_available(dds::sub::DataReader<ThroughputModule::DataType>& rd) {
     (void)do_take(rd);
   }
-
-  /*all others are just dummies*/
-  void on_requested_deadline_missed(
-      dds::sub::DataReader<ThroughputModule::DataType>&,
-      const dds::core::status::RequestedDeadlineMissedStatus&) { }
-
-  void on_requested_incompatible_qos(
-      dds::sub::DataReader<ThroughputModule::DataType>&,
-      const dds::core::status::RequestedIncompatibleQosStatus&) { }
-
-  void on_sample_rejected(
-      dds::sub::DataReader<ThroughputModule::DataType>&,
-      const dds::core::status::SampleRejectedStatus&) { }
-
-  void on_liveliness_changed(
-      dds::sub::DataReader<ThroughputModule::DataType>&,
-      const dds::core::status::LivelinessChangedStatus&) { }
-
-  void on_subscription_matched(
-      dds::sub::DataReader<ThroughputModule::DataType>&,
-      const dds::core::status::SubscriptionMatchedStatus&) { }
-
-  void on_sample_lost(
-      dds::sub::DataReader<ThroughputModule::DataType>&,
-      const dds::core::status::SampleLostStatus&) { }
 };
 
 int main (int argc, char **argv)
@@ -282,30 +257,28 @@ int main (int argc, char **argv)
   dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput");
 
   dds::sub::qos::SubscriberQos sqos;
-  sqos.policy(dds::core::policy::Partition(partitionName));
+  sqos << dds::core::policy::Partition(partitionName);
 
   dds::sub::Subscriber subscriber(participant, sqos);
 
   dds::sub::qos::DataReaderQos rqos;
-  rqos.policy(
-    dds::core::policy::Reliability(
-      dds::core::policy::ReliabilityKind::Type::RELIABLE,
-      dds::core::Duration::from_secs(10)));
-  rqos.policy(
-    dds::core::policy::History(
-      dds::core::policy::HistoryKind::Type::KEEP_ALL,
-      0));
-  rqos.policy(
-    dds::core::policy::ResourceLimits(MAX_SAMPLES));
+  rqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10))
+       << dds::core::policy::History(
+            dds::core::policy::HistoryKind::Type::KEEP_ALL,
+            0)
+       << dds::core::policy::ResourceLimits(
+            MAX_SAMPLES);
 
-  ThroughputListener list;
+  ThroughputListener listener;
 
   dds::sub::DataReader<ThroughputModule::DataType>
     reader(
       subscriber,
       topic,
       rqos,
-      pollingDelay.count() < 0 ? &list : NULL,
+      pollingDelay.count() < 0 ? &listener : NULL,
       pollingDelay.count() < 0 ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
   /* Process samples until Ctrl-C is pressed or until maxCycles */

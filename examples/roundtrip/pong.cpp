@@ -54,7 +54,6 @@ static void print_usage(void)
   std::cout <<
     "Usage (parameters must be supplied in order):\n"
     "./cxxRoundtripPong [-l/-h] [timeOut (seconds, 0 = infinite)]\n"
-    /*"./ping quit - ping sends a quit signal to pong.\n"*/
     "Defaults:\n"
     "./cxxRoundtripPong 0\n" << std::flush;
 
@@ -105,39 +104,36 @@ int main (int argc, char *argv[])
   dds::topic::Topic<RoundTripModule::DataType> topic(participant, "RoundTrip");
 
   dds::pub::qos::PublisherQos pqos;
-  pqos.policy(dds::core::policy::Partition("pong"));
+  pqos << dds::core::policy::Partition("pong");
 
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos.policy(
-    dds::core::policy::Reliability(
-      dds::core::policy::ReliabilityKind::Type::RELIABLE,
-      dds::core::Duration::from_secs(10)));
-  wqos.policy(
-    dds::core::policy::WriterDataLifecycle(true));
+  wqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10))
+       << dds::core::policy::WriterDataLifecycle(true);
 
   dds::pub::DataWriter<RoundTripModule::DataType> writer(publisher, topic, wqos);
 
   dds::sub::qos::SubscriberQos sqos;
-  sqos.policy(dds::core::policy::Partition("ping"));
+  sqos << dds::core::policy::Partition("ping");
 
   dds::sub::Subscriber subscriber(participant, sqos);
 
   dds::sub::qos::DataReaderQos rqos;
-  rqos.policy(
-    dds::core::policy::Reliability(
-      dds::core::policy::ReliabilityKind::Type::RELIABLE,
-      dds::core::Duration::from_secs(10)));
+  rqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10));
 
-  RoundTripListener list(writer, &data_available);
+  RoundTripListener listener(writer, &data_available);
 
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(
       subscriber,
       topic,
       rqos,
-      use_listener ? &list : NULL,
+      use_listener ? &listener : NULL,
       use_listener ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
   dds::core::Duration waittime = dds::core::Duration::from_secs(static_cast<double>(timeOut ? timeOut : 5));

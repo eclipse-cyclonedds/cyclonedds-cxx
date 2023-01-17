@@ -166,8 +166,10 @@ void start_writing(
         reportstart = n;
       }
 
-    if (writer.publication_matched_status().current_count() == 0)
-      timedOut = true;
+      if (writer.publication_matched_status().current_count() == 0) {
+        std::cout << "\n" << pubprefix "Writer has no reader to communicate with.\n" << std::flush;
+        done = true;
+      }
     }
 
     std::cout << "\n" << pubprefix << (done ? "Terminated" : "Timed out") << ", " << sample.count() << " samples written.\n" << std::flush;
@@ -188,21 +190,19 @@ int main (int argc, char **argv)
   dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput");
 
   dds::pub::qos::PublisherQos pqos;
-  pqos.policy(dds::core::policy::Partition(partitionName));
+  pqos << dds::core::policy::Partition(partitionName);
 
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos.policy(
-    dds::core::policy::Reliability(
-      dds::core::policy::ReliabilityKind::Type::RELIABLE,
-      dds::core::Duration::from_secs(10)));
-  wqos.policy(
-    dds::core::policy::History(
-      dds::core::policy::HistoryKind::Type::KEEP_ALL,
-      0));
-  wqos.policy(
-    dds::core::policy::ResourceLimits(MAX_SAMPLES));
+  wqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10))
+       << dds::core::policy::History(
+            dds::core::policy::HistoryKind::Type::KEEP_ALL,
+            0)
+       << dds::core::policy::ResourceLimits(
+            MAX_SAMPLES);
 
   dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
 

@@ -56,44 +56,18 @@ static bool match_readers_and_writers(
   return true;
 }
 
-class RoundTripListener: public dds::sub::DataReaderListener<RoundTripModule::DataType>
+class RoundTripListener: public dds::sub::NoOpDataReaderListener<RoundTripModule::DataType>
 {
   public:
   using callback_func = std::function<bool(dds::sub::DataReader<RoundTripModule::DataType>&, dds::pub::DataWriter<RoundTripModule::DataType>&)>;
   RoundTripListener() = delete;
   RoundTripListener(dds::pub::DataWriter<RoundTripModule::DataType> &wr, const callback_func &f):
     dds::sub::DataReaderListener<RoundTripModule::DataType>(), _wr(wr), _f(f) { ; }
-  /*implementation of virtual functions*/
 
-  /*only on_data_available does anything*/
+  /*implementation of function overrides*/
   void on_data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd) {
     (void)_f(rd, _wr);
   }
-
-  /*all others are just dummies*/
-  void on_requested_deadline_missed(
-      dds::sub::DataReader<RoundTripModule::DataType>&,
-      const dds::core::status::RequestedDeadlineMissedStatus&) { }
-
-  void on_requested_incompatible_qos(
-      dds::sub::DataReader<RoundTripModule::DataType>&,
-      const dds::core::status::RequestedIncompatibleQosStatus&) { }
-
-  void on_sample_rejected(
-      dds::sub::DataReader<RoundTripModule::DataType>&,
-      const dds::core::status::SampleRejectedStatus&) { }
-
-  void on_liveliness_changed(
-      dds::sub::DataReader<RoundTripModule::DataType>&,
-      const dds::core::status::LivelinessChangedStatus&) { }
-
-  void on_subscription_matched(
-      dds::sub::DataReader<RoundTripModule::DataType>&,
-      const dds::core::status::SubscriptionMatchedStatus&) { }
-
-  void on_sample_lost(
-      dds::sub::DataReader<RoundTripModule::DataType>&,
-      const dds::core::status::SampleLostStatus&) { }
 
   private:
     dds::pub::DataWriter<RoundTripModule::DataType> &_wr;
