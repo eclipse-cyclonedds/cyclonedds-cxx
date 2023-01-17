@@ -127,14 +127,18 @@ int main (int argc, char *argv[])
             dds::core::Duration::from_secs(10));
 
   RoundTripListener listener(writer, &data_available);
+  dds::core::status::StatusMask mask = dds::core::status::StatusMask::liveliness_changed();
+  if (use_listener) {
+    mask << dds::core::status::StatusMask::data_available();
+  }
 
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(
       subscriber,
       topic,
       rqos,
-      use_listener ? &listener : NULL,
-      use_listener ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
+      &listener,
+      mask);
 
   dds::core::Duration waittime = dds::core::Duration::from_secs(static_cast<double>(timeOut ? timeOut : 5));
   if (!match_readers_and_writers(reader, writer, waittime))
@@ -162,8 +166,6 @@ int main (int argc, char *argv[])
       (void) data_available(reader, writer);
     }
   }
-
-  //terminate on receive quit?
 
   return EXIT_SUCCESS;
 }

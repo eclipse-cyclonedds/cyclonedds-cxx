@@ -69,6 +69,12 @@ class RoundTripListener: public dds::sub::NoOpDataReaderListener<RoundTripModule
     (void)_f(rd, _wr);
   }
 
+  void on_liveliness_changed(dds::sub::DataReader<RoundTripModule::DataType>&,
+        const dds::core::status::LivelinessChangedStatus& status) {
+    if (status.not_alive_count_change() > 0)
+      done = true;
+  }
+
   private:
     dds::pub::DataWriter<RoundTripModule::DataType> &_wr;
     callback_func _f;

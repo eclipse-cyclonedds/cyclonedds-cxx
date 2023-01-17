@@ -43,6 +43,8 @@ static dds_time_t
 
 static bool warmUp = true;
 
+static bool sendTerm = false;
+
 static RoundTripModule::DataType roundtrip_msg;
 
 static unsigned long payloadSize = 0,
@@ -84,7 +86,7 @@ static void print_usage(void)
   std::cout <<
     "Usage (parameters must be supplied in order):\n"
     "./cxxRoundtripPing [-l/-h] [payloadSize (bytes, 0 - 100M)] [numSamples (0 = infinite)] [timeOut (seconds, 0 = infinite)]\n"
-    /*"./cxxRoundtripPing quit - ping sends a quit signal to pong.\n"*/
+    "./cxxRoundtripPing quit [ping sends a quit signal to pong.]\n"
     "Defaults:\n"
     "./cxxRoundtripPing 0 0 0\n" << std::flush;
   exit(EXIT_FAILURE);
@@ -169,10 +171,14 @@ static bool parse_args(int argc, char *argv[])
 {
   if (argc >= 2)
   {
-    if (0 == strcmp(argv[1], "-l"))
+    if (0 == strcmp(argv[1], "-l")) {
       use_listener = true;
-    else if (0 == strcmp(argv[1], "-h"))
+    } else if (0 == strcmp(argv[1], "-h")) {
       return false;
+    } else if (0 == strcmp(argv[1], "quit")) {
+      sendTerm = true;
+      return true;
+    }
   }
 
   try {
@@ -250,18 +256,23 @@ int main (int argc, char *argv[])
       use_listener ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
   dds::core::Duration waittime = dds::core::Duration::from_secs(static_cast<double>(timeOut ? timeOut : 5));
-  if (!match_readers_and_writers(reader, writer, waittime))
+  if (sendTerm) {
+    std::cout << "sending termination command to pong program\n" << std::flush;
+    writer.dispose_instance(roundtrip_msg);
     return EXIT_FAILURE;
+  } else if (!match_readers_and_writers(reader, writer, waittime)) {
+    return EXIT_FAILURE;
+  }
 
   roundtrip_msg.payload(std::vector<uint8_t>(payloadSize, 'a'));
 
   startTime = dds_time ();
   preWriteTime = dds_time ();
-  printf ("# Waiting for startup jitter to stabilise\n");
 
   //starting write
+  writer.write(roundtrip_msg);
+  printf ("# Waiting for startup jitter to stabilise\n");
   if (use_listener) {
-    writer.write(roundtrip_msg);
     while (!timedOut && !done && (!numSamples || elapsed < numSamples)) { 
       timedOut = true;
       std::this_thread::sleep_for(std::chrono::seconds(timeOut ? timeOut : 1));
@@ -273,7 +284,6 @@ int main (int argc, char *argv[])
     rsc.enabled_statuses(dds::core::status::StatusMask::data_available());
     waitset.attach_condition(rsc);
 
-    writer.write(roundtrip_msg);
     while (!timedOut && !done && (!numSamples || elapsed < numSamples)) {
       try {
         waitset.wait(waittime);
@@ -290,8 +300,6 @@ int main (int argc, char *argv[])
     std::cout << "# Overall" << std::flush;
     print_all(roundTripOverall, writeAccessOverall, readAccessOverall);
   }
-
-  //send quit?
 
   return EXIT_SUCCESS;
 }
