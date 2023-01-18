@@ -254,15 +254,8 @@ int main (int argc, char **argv)
 
   dds::domain::DomainParticipant participant(domain::default_id());
 
-  dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput");
-
-  dds::sub::qos::SubscriberQos sqos;
-  sqos << dds::core::policy::Partition(partitionName);
-
-  dds::sub::Subscriber subscriber(participant, sqos);
-
-  dds::sub::qos::DataReaderQos rqos;
-  rqos << dds::core::policy::Reliability(
+  dds::topic::qos::TopicQos tqos;
+  tqos << dds::core::policy::Reliability(
             dds::core::policy::ReliabilityKind::Type::RELIABLE,
             dds::core::Duration::from_secs(10))
        << dds::core::policy::History(
@@ -271,13 +264,20 @@ int main (int argc, char **argv)
        << dds::core::policy::ResourceLimits(
             MAX_SAMPLES);
 
+  dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
+
+  dds::sub::qos::SubscriberQos sqos;
+  sqos << dds::core::policy::Partition(partitionName);
+
+  dds::sub::Subscriber subscriber(participant, sqos);
+
   ThroughputListener listener;
 
   dds::sub::DataReader<ThroughputModule::DataType>
     reader(
       subscriber,
       topic,
-      rqos,
+      dds::sub::qos::DataReaderQos(),
       pollingDelay.count() < 0 ? &listener : NULL,
       pollingDelay.count() < 0 ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 

@@ -101,7 +101,12 @@ int main (int argc, char *argv[])
 
   dds::domain::DomainParticipant participant(domain::default_id());
 
-  dds::topic::Topic<RoundTripModule::DataType> topic(participant, "RoundTrip");
+  dds::topic::qos::TopicQos tqos;
+  tqos << dds::core::policy::Reliability(
+            dds::core::policy::ReliabilityKind::Type::RELIABLE,
+            dds::core::Duration::from_secs(10));
+
+  dds::topic::Topic<RoundTripModule::DataType> topic(participant, "RoundTrip", tqos);
 
   dds::pub::qos::PublisherQos pqos;
   pqos << dds::core::policy::Partition("pong");
@@ -109,10 +114,7 @@ int main (int argc, char *argv[])
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos << dds::core::policy::Reliability(
-            dds::core::policy::ReliabilityKind::Type::RELIABLE,
-            dds::core::Duration::from_secs(10))
-       << dds::core::policy::WriterDataLifecycle(true);
+  wqos << dds::core::policy::WriterDataLifecycle(true);
 
   dds::pub::DataWriter<RoundTripModule::DataType> writer(publisher, topic, wqos);
 
@@ -120,11 +122,6 @@ int main (int argc, char *argv[])
   sqos << dds::core::policy::Partition("ping");
 
   dds::sub::Subscriber subscriber(participant, sqos);
-
-  dds::sub::qos::DataReaderQos rqos;
-  rqos << dds::core::policy::Reliability(
-            dds::core::policy::ReliabilityKind::Type::RELIABLE,
-            dds::core::Duration::from_secs(10));
 
   RoundTripListener listener(writer, &data_available);
   dds::core::status::StatusMask mask = dds::core::status::StatusMask::liveliness_changed();
@@ -136,7 +133,7 @@ int main (int argc, char *argv[])
     reader(
       subscriber,
       topic,
-      rqos,
+      dds::sub::qos::DataReaderQos(),
       &listener,
       mask);
 

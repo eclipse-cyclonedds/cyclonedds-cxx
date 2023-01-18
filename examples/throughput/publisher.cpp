@@ -187,15 +187,8 @@ int main (int argc, char **argv)
 
   dds::domain::DomainParticipant participant(domain::default_id());
 
-  dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput");
-
-  dds::pub::qos::PublisherQos pqos;
-  pqos << dds::core::policy::Partition(partitionName);
-
-  dds::pub::Publisher publisher(participant, pqos);
-
-  dds::pub::qos::DataWriterQos wqos;
-  wqos << dds::core::policy::Reliability(
+  dds::topic::qos::TopicQos tqos;
+  tqos << dds::core::policy::Reliability(
             dds::core::policy::ReliabilityKind::Type::RELIABLE,
             dds::core::Duration::from_secs(10))
        << dds::core::policy::History(
@@ -204,7 +197,14 @@ int main (int argc, char **argv)
        << dds::core::policy::ResourceLimits(
             MAX_SAMPLES);
 
-  dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
+  dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
+
+  dds::pub::qos::PublisherQos pqos;
+  pqos << dds::core::policy::Partition(partitionName);
+
+  dds::pub::Publisher publisher(participant, pqos);
+
+  dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic);
 
   if (!wait_for_reader(writer))
     return EXIT_FAILURE;
