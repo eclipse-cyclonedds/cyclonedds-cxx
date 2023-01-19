@@ -255,14 +255,9 @@ int main (int argc, char **argv)
   dds::domain::DomainParticipant participant(domain::default_id());
 
   dds::topic::qos::TopicQos tqos;
-  tqos << dds::core::policy::Reliability(
-            dds::core::policy::ReliabilityKind::Type::RELIABLE,
-            dds::core::Duration::from_secs(10))
-       << dds::core::policy::History(
-            dds::core::policy::HistoryKind::Type::KEEP_ALL,
-            0)
-       << dds::core::policy::ResourceLimits(
-            MAX_SAMPLES);
+  tqos << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(10))
+       << dds::core::policy::History::KeepAll()
+       << dds::core::policy::ResourceLimits(MAX_SAMPLES);
 
   dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
 

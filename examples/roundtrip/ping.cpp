@@ -221,9 +221,7 @@ int main (int argc, char *argv[])
   dds::domain::DomainParticipant participant(domain::default_id());
 
   dds::topic::qos::TopicQos tqos;
-  tqos << dds::core::policy::Reliability(
-            dds::core::policy::ReliabilityKind::Type::RELIABLE,
-            dds::core::Duration::from_secs(10));
+  tqos << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(10));
 
   dds::topic::Topic<RoundTripModule::DataType> topic(participant, "RoundTrip", tqos);
 
@@ -233,7 +231,7 @@ int main (int argc, char *argv[])
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos << dds::core::policy::WriterDataLifecycle(true);
+  wqos << dds::core::policy::WriterDataLifecycle::AutoDisposeUnregisteredInstances();
 
   dds::pub::DataWriter<RoundTripModule::DataType> writer(publisher, topic, wqos);
 
