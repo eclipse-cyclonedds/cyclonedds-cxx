@@ -365,7 +365,8 @@ write_base_type_streaming_functions(
   const idl_type_spec_t* type_spec,
   const char* accessor,
   const char* read_accessor,
-  instance_location_t loc)
+  instance_location_t loc,
+  bool skip_reads)
 {
   const char* fmt =
     "      if (!{T}(streamer, %1$s))\n"
@@ -390,7 +391,7 @@ write_base_type_streaming_functions(
   }
 
   if (multi_putf(streams, CONST, fmt, accessor)
-   || multi_putf(streams, READ, rfmt, read_accessor))
+   || (!skip_reads && multi_putf(streams, READ, rfmt, read_accessor)))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -402,24 +403,25 @@ write_streaming_functions(
   const idl_type_spec_t* type_spec,
   const char* accessor,
   const char* read_accessor,
-  instance_location_t loc)
+  instance_location_t loc,
+  bool skip_reads)
 {
   if (idl_is_alias(type_spec)) {
     const idl_typedef_t *td = idl_parent(type_spec);
     const idl_type_spec_t *ts = idl_type_spec(td);
     //if this is an alias for a bare type, just use the bare type
     if (!idl_is_array(td->declarators) && !idl_is_sequence(ts) && (idl_is_base_type(ts) || idl_is_string(ts)))
-      return write_streaming_functions(streams, ts, accessor, read_accessor, loc);
+      return write_streaming_functions(streams, ts, accessor, read_accessor, loc, skip_reads);
     else
       return write_typedef_streaming_functions(streams, type_spec, accessor, read_accessor);
   } else if (idl_is_forward(type_spec)) {
-    return write_streaming_functions(streams, idl_type_spec(type_spec), accessor, read_accessor, loc);
+    return write_streaming_functions(streams, idl_type_spec(type_spec), accessor, read_accessor, loc, skip_reads);
   } else if (idl_is_string(type_spec)) {
     return write_string_streaming_functions(streams, type_spec, accessor, read_accessor);
   } else if (idl_is_union(type_spec) || idl_is_struct(type_spec)) {
     return write_constructed_type_streaming_functions(streams, accessor, read_accessor);
   } else {
-    return write_base_type_streaming_functions(streams, type_spec, accessor, read_accessor, loc);
+    return write_base_type_streaming_functions(streams, type_spec, accessor, read_accessor, loc, skip_reads);
   }
 }
 
@@ -439,7 +441,8 @@ sequence_writes(const idl_pstate_t* pstate,
   size_t depth,
   const char* accessor,
   const char* read_accessor,
-  instance_location_t loc)
+  instance_location_t loc,
+  bool skip_reads)
 {
   const idl_type_spec_t *type_spec = seq->type_spec;
 
@@ -457,7 +460,7 @@ sequence_writes(const idl_pstate_t* pstate,
     if (IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0
       || multi_putf(streams, MOVE | MAX, mfmt, type, depth)
       || multi_putf(streams, WRITE, sfmt, accessor, depth)
-      || multi_putf(streams, READ, sfmt, read_accessor, depth))
+      || (!skip_reads && multi_putf(streams, READ, sfmt, read_accessor, depth)))
         return IDL_RETCODE_NO_MEMORY;
 
     return IDL_RETCODE_OK;
@@ -483,7 +486,7 @@ sequence_writes(const idl_pstate_t* pstate,
     if (unroll_sequence (pstate, streams, (idl_sequence_t*)type_spec, depth + 1, new_accessor, new_read_accessor, loc))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (write_streaming_functions (streams, type_spec, new_accessor, new_read_accessor, loc))
+    if (write_streaming_functions (streams, type_spec, new_accessor, new_read_accessor, loc, skip_reads))
       return IDL_RETCODE_NO_MEMORY;
   }
 
@@ -513,7 +516,7 @@ unroll_sequence(const idl_pstate_t* pstate,
       "        return false;\n";
   static const char* fmt1 =
     "      {\n"
-    "      uint32_t se_%1$u = uint32_t(%2$s.size());\n";
+    "      uint32_t se_%1$u(static_cast<uint32_t>(%2$s.size()));\n";
   static const char* length_check =
     "      if (se_%1$u > %2$u &&\n"
     "          streamer.status(serialization_status::{T}_bound_exceeded))\n"
@@ -523,23 +526,35 @@ unroll_sequence(const idl_pstate_t* pstate,
     "        return false;\n";
   static const char* rfmt =
     "      %1$s.resize(se_%2$u);\n";
+  static const char* rfmt2 =
+    "      if (!read(streamer,%1$s,se_%2$u))\n"
+    "        return false;\n";
   static const char* mfmt =
     "      {\n"
     "      uint32_t se_%1$u = %2$u;\n";
+  static const char* rfmt3 =
+    "      {\n"
+    "      uint32_t se_%1$u(0);\n";
 
   const idl_type_spec_t *root_type_spec = idl_strip(seq->type_spec, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
   if (multi_putf(streams, ALL, consec_start_fmt, idl_is_base_type(root_type_spec) && !idl_is_array(root_type_spec) ? "true" : "false"))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (multi_putf(streams, READ, fmt1, depth, read_accessor)
+  bool skip_reads = !idl_is_sequence(seq->type_spec) && idl_is_base_type(root_type_spec) && !(idl_mask(root_type_spec) == IDL_BOOL);
+
+  if (multi_putf(streams, READ, rfmt3, depth)
    || multi_putf(streams, (WRITE | MOVE), fmt1, depth, accessor)
    || multi_putf(streams, MAX, mfmt, depth, maximum)
-   || (maximum && multi_putf(streams, NOMAX, length_check, depth, maximum))
    || multi_putf(streams, ALL, fmt2, depth)
-   || multi_putf(streams, READ, rfmt, read_accessor, depth))
+   || (maximum && multi_putf(streams, NOMAX, length_check, depth, maximum)))
     return IDL_RETCODE_NO_MEMORY;
 
-  if (sequence_writes(pstate, streams, seq, depth, accessor, read_accessor, loc))
+  if (!skip_reads && multi_putf(streams, READ, rfmt, read_accessor, depth))
+    return IDL_RETCODE_NO_MEMORY;
+  else if (skip_reads && multi_putf(streams, READ, rfmt2, read_accessor, depth))
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (sequence_writes(pstate, streams, seq, depth, accessor, read_accessor, loc, skip_reads))
     return IDL_RETCODE_NO_MEMORY;
 
   //close sequence
@@ -655,7 +670,7 @@ process_entity(
     if (unroll_sequence(pstate, streams, (idl_sequence_t*)type_spec, 1, accessor, read_accessor, loc))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (write_streaming_functions(streams, type_spec, accessor, read_accessor, loc))
+    if (write_streaming_functions(streams, type_spec, accessor, read_accessor, loc, false))
       return IDL_RETCODE_NO_MEMORY;
   }
 

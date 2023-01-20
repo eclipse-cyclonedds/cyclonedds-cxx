@@ -969,6 +969,39 @@ bool max_string(S& str, const T& max_sz, size_t N)
   return true;
 }
 
+/**
+ * @brief
+ * Sequence of base types read function.
+ *
+ * This is called when a resize + memcpy is way less efficient than an assign,
+ * as this skips the default initialization of entities in the sequence.
+ *
+ * @param[in, out] str The stream being read from.
+ * @param[in] toread The sequence being read into.
+ * @param[in] N Number of base entities to read.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template<typename S, template<typename,typename> class V, typename T, typename A, std::enable_if_t<std::is_base_of<cdr_stream, S>::value && std::is_arithmetic<T>::value && !std::is_same<T,bool>::value, bool> = true >
+bool read(S& str, V<T,A> &toread, size_t N)
+{
+  if (str.position() == SIZE_MAX
+   || !str.align(sizeof(T), false)
+   || !str.bytes_available(sizeof(T)*N))
+    return false;
+
+  auto ptr = reinterpret_cast<const T*>(str.get_cursor());
+  toread.assign(ptr, ptr+N);
+  str.incr_position(N*sizeof(T));
+
+  if (str.swap_endianness()) {
+    for (auto &e:toread)
+      byte_swap(&e);
+  }
+
+  return true;
+}
+
 }
 }
 }
