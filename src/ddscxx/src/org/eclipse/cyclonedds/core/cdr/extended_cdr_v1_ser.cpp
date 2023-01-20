@@ -301,7 +301,7 @@ bool xcdr_v1_stream::finish_struct_unchecked(const entity_properties_t &props)
         return move_final_list_entry();
       break;
     default:
-      return false;
+      break;
   }
   return true;
 }

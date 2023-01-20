@@ -828,14 +828,17 @@ add_member_finish(
   const idl_declarator_t *decl,
   struct streams *streams)
 {
+  const void *_struct = idl_parent(idl_parent(decl));
+  bool is_final = idl_is_extensible(_struct, IDL_FINAL);
+
   if (is_optional(decl)) {
     instance_location_t loc = {.parent = "instance"};
     char *accessor = NULL;
     if (IDL_PRINTA(&accessor, get_instance_accessor, decl, &loc) < 0
      || multi_putf(streams, (WRITE|MOVE), "      }\n")
      || multi_putf(streams, READ,
-          "      if (!streamer.finish_member(*prop, member_ids, %1$s.has_value()))\n"
-          "        return false;\n", accessor)
+          "      if (!streamer.finish_member%1$s(*prop%2$s, %3$s.has_value()))\n"
+          "        return false;\n", is_final ? "_unchecked" : "", is_final ? "" : ", member_ids", accessor)
      || multi_putf(streams, (WRITE|MOVE),
           "      if (!streamer.finish_member_unchecked(*prop, %1$s.has_value()))\n"
           "        return false;\n", accessor)
@@ -844,8 +847,9 @@ add_member_finish(
           "        return false;\n", accessor))
       return IDL_RETCODE_NO_MEMORY;
   } else {
-    if (multi_putf(streams, READ, "      if (!streamer.finish_member(*prop, member_ids))\n"
-                                 "        return false;\n")
+    if (multi_putf(streams, READ,
+          "      if (!streamer.finish_member%1$s(*prop%2$s))\n"
+          "        return false;\n", is_final ? "_unchecked" : "", is_final ? "" : ", member_ids")
      || multi_putf(streams, CONST, "      if (!streamer.finish_member_unchecked(*prop))\n"
                                  "        return false;\n"))
       return IDL_RETCODE_NO_MEMORY;
@@ -1110,10 +1114,11 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
     "  if (!streamer.start_struct(*props))\n"
     "    return false;\n";
 
-
   const char *ext = NULL;
+  bool is_final = false;
   switch (get_extensibility(node)) {
     case IDL_FINAL:
+      is_final = true;
       ext = "ext_final";
       break;
     case IDL_APPENDABLE:
@@ -1126,7 +1131,7 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
       assert(0);
   }
 
-  if (multi_putf(streams, READ, fmt, name, "  member_id_set member_ids;\n")
+  if (multi_putf(streams, READ, fmt, name, is_final ? "" :  "  member_id_set member_ids;\n")
    || multi_putf(streams, CONST, fmt, name, "")
    || putf(&streams->props, pfmt1, name, pfmt2)
    || idl_fprintf(streams->generator->header.handle, pfmt1, name, ";\n\n") < 0
@@ -1182,8 +1187,9 @@ print_constructed_type_close(
     ptr++;
   }
 
-  if (multi_putf(streams, READ, fmt, "", ", member_ids")
-   || multi_putf(streams, CONST, fmt, "_unchecked", "")
+  bool is_final = idl_is_extensible(node, IDL_FINAL);
+  if (multi_putf(streams, CONST, fmt, "_unchecked", "")
+   || multi_putf(streams, READ, fmt, is_final ? "_unchecked" : "", is_final ? "" : ", member_ids")
    || putf(&streams->props, pfmt)
    || idl_fprintf(streams->generator->header.handle, pfmt2, newname, fullname) < 0)
     return IDL_RETCODE_NO_MEMORY;
