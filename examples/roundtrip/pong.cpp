@@ -70,20 +70,21 @@ static bool data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd, 
       return false;
 
     auto info = samples.begin()->info();
-    if (info.valid() == false)
-      return false;
-    else
+    if (info.state().instance_state() == dds::sub::status::InstanceState::not_alive_disposed()) {
+      std::cout << "# Quitting Pong.\n" << std::flush;
+      done = true;
+    } else if (info.valid()) {
       timedOut = false;
-
-    wr.write(samples.begin()->data());
+      wr.write(samples.begin()->data(),samples.begin()->info().timestamp());
+    }
   } catch (const dds::core::TimeoutError &) {
-    std::cout << "Timeout encountered.\n" << std::flush;
+    std::cout << "# Timeout encountered.\n" << std::flush;
     return false;
   } catch (const dds::core::Exception &e) {
-    std::cout << "Error: \"" << e.what() << "\".\n" << std::flush;
+    std::cout << "# Error: \"" << e.what() << "\".\n" << std::flush;
     return false;
   } catch (...) {
-    std::cout << "Generic error.\n" << std::flush;
+    std::cout << "# Generic error.\n" << std::flush;
     return false;
   }
 
@@ -112,7 +113,7 @@ int main (int argc, char *argv[])
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos << dds::core::policy::WriterDataLifecycle::AutoDisposeUnregisteredInstances();
+  wqos << dds::core::policy::WriterDataLifecycle::ManuallyDisposeUnregisteredInstances();
 
   dds::pub::DataWriter<RoundTripModule::DataType> writer(publisher, topic, wqos);
 
@@ -122,27 +123,29 @@ int main (int argc, char *argv[])
   dds::sub::Subscriber subscriber(participant, sqos);
 
   RoundTripListener listener(writer, &data_available);
-  dds::core::status::StatusMask mask = dds::core::status::StatusMask::liveliness_changed();
-  if (use_listener) {
-    mask << dds::core::status::StatusMask::data_available();
-  }
 
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(
       subscriber,
       topic,
       dds::sub::qos::DataReaderQos(),
-      &listener,
-      mask);
+      use_listener ?
+        &listener :
+        nullptr,
+      use_listener ?
+        dds::core::status::StatusMask::data_available() :
+        dds::core::status::StatusMask::none());
 
-  dds::core::Duration waittime = dds::core::Duration::from_secs(static_cast<double>(timeOut ? timeOut : 5));
+  dds::core::Duration waittime = timeOut ?
+    dds::core::Duration::from_secs(static_cast<double>(timeOut)) :
+    dds::core::Duration::infinite();
   if (!match_readers_and_writers(reader, writer, waittime))
     return EXIT_FAILURE;
 
   if (use_listener) {
     while (!timedOut && !done) {
-      timedOut = true;
-      std::this_thread::sleep_for(std::chrono::seconds(timeOut ? timeOut : 5));
+      timedOut = (timeOut != 0);
+      std::this_thread::sleep_for(std::chrono::seconds(timeOut ? timeOut : 1));
     }
   } else {
     dds::core::cond::WaitSet waitset;
@@ -155,8 +158,15 @@ int main (int argc, char *argv[])
       try {
         waitset.wait(waittime);
       } catch (const dds::core::TimeoutError &) {
+        std::cout << "\n# Timeout occurred.\n" << std::flush;
         timedOut = true;
         break;
+      } catch (const dds::core::Exception &e) {
+          std::cout << "\n# Pong encountered the following error: \"" << e.what() << "\".\n" << std::flush;
+          done = true;
+      } catch (...) {
+        std::cout << "\n# Pong encountered an error.\n" << std::flush;
+        done = true;
       }
       (void) data_available(reader, writer);
     }

@@ -42,18 +42,33 @@ static bool match_readers_and_writers(
   wsc.enabled_statuses(dds::core::status::StatusMask::publication_matched());
   rsc.enabled_statuses(dds::core::status::StatusMask::subscription_matched());
 
-  printf ("# Waiting for readers and writers to match up\n");
-  try {
-    waitset.attach_condition(wsc);
-    waitset.wait(timeout);
+  waitset.attach_condition(wsc);
+  waitset.attach_condition(rsc);
 
-    waitset.detach_condition(wsc);
-    waitset.attach_condition(rsc);
-    waitset.wait(timeout);
+  std::cout << "# Waiting for readers and writers to match up\n" << std::flush;
+  try {
+
+    while (0 == rd.subscription_matched_status().current_count() ||
+           0 == wr.publication_matched_status().current_count()) {
+      auto conds = waitset.wait(timeout);
+      for (const auto & c:conds) {
+        if (wsc == c)
+          waitset.detach_condition(wsc);
+        else if (rsc == c)
+          waitset.detach_condition(rsc);
+      }
+    }
+
+    std::cout << "# Reader and writer have matched.\n" << std::flush;
+    return true;
   } catch (const dds::core::TimeoutError &) {
-    return false;
+    std::cout << "\nTimeout occurred during matching readers and writers.\n" << std::flush;
+  } catch (const dds::core::Exception &e) {
+    std::cout << "\nThe following error: \"" << e.what() << "\" was encountered during matching of readers and writers.\n" << std::flush;
+  } catch (...) {
+    std::cout << "\nA generic error was encountered during matching of readers and writers.\n" << std::flush;
   }
-  return true;
+  return false;
 }
 
 class RoundTripListener: public dds::sub::NoOpDataReaderListener<RoundTripModule::DataType>
@@ -67,12 +82,6 @@ class RoundTripListener: public dds::sub::NoOpDataReaderListener<RoundTripModule
   /*implementation of function overrides*/
   void on_data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd) {
     (void)_f(rd, _wr);
-  }
-
-  void on_liveliness_changed(dds::sub::DataReader<RoundTripModule::DataType>&,
-        const dds::core::status::LivelinessChangedStatus& status) {
-    if (status.not_alive_count_change() > 0)
-      done = true;
   }
 
   private:

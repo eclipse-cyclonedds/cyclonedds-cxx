@@ -154,13 +154,13 @@ static bool data_available(dds::sub::DataReader<RoundTripModule::DataType>& rd, 
     wr.write(roundtrip_msg, dds::core::Time(preWriteTime/DDS_NSECS_IN_SEC, static_cast<uint32_t>(preWriteTime%DDS_NSECS_IN_SEC)));
     postWriteTime = dds_time();
   } catch (const dds::core::TimeoutError &) {
-    std::cout << "Timeout encountered.\n" << std::flush;
+    std::cout << "# Timeout encountered.\n" << std::flush;
     return false;
   } catch (const dds::core::Exception &e) {
-    std::cout << "Error: \"" << e.what() << "\".\n" << std::flush;
+    std::cout << "# Error: \"" << e.what() << "\".\n" << std::flush;
     return false;
   } catch (...) {
-    std::cout << "Generic error.\n" << std::flush;
+    std::cout << "# Generic error.\n" << std::flush;
     return false;
   }
 
@@ -231,7 +231,7 @@ int main (int argc, char *argv[])
   dds::pub::Publisher publisher(participant, pqos);
 
   dds::pub::qos::DataWriterQos wqos;
-  wqos << dds::core::policy::WriterDataLifecycle::AutoDisposeUnregisteredInstances();
+  wqos << dds::core::policy::WriterDataLifecycle::ManuallyDisposeUnregisteredInstances();
 
   dds::pub::DataWriter<RoundTripModule::DataType> writer(publisher, topic, wqos);
 
@@ -250,12 +250,10 @@ int main (int argc, char *argv[])
       use_listener ? &list : NULL,
       use_listener ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
-  dds::core::Duration waittime = dds::core::Duration::from_secs(static_cast<double>(timeOut ? timeOut : 5));
-  if (sendTerm) {
-    std::cout << "sending termination command to pong program\n" << std::flush;
-    writer.dispose_instance(roundtrip_msg);
-    return EXIT_FAILURE;
-  } else if (!match_readers_and_writers(reader, writer, waittime)) {
+  dds::core::Duration waittime = timeOut ?
+    dds::core::Duration::from_secs(static_cast<double>(timeOut)) :
+    dds::core::Duration::infinite();
+  if (!match_readers_and_writers(reader, writer, waittime)) {
     return EXIT_FAILURE;
   }
 
@@ -266,10 +264,17 @@ int main (int argc, char *argv[])
 
   //starting write
   writer.write(roundtrip_msg);
+  if (sendTerm) {
+    std::cout << "# Sending termination command to pong program\n" << std::flush;
+    writer.dispose_instance(roundtrip_msg);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    return EXIT_FAILURE;
+  }
+
   printf ("# Waiting for startup jitter to stabilise\n");
   if (use_listener) {
     while (!timedOut && !done && (!numSamples || elapsed < numSamples)) { 
-      timedOut = true;
+      timedOut = (timeOut != 0);
       std::this_thread::sleep_for(std::chrono::seconds(timeOut ? timeOut : 1));
     }
   } else {
@@ -283,8 +288,15 @@ int main (int argc, char *argv[])
       try {
         waitset.wait(waittime);
       } catch (const dds::core::TimeoutError &) {
+        std::cout << "\n# Timeout occurred.\n" << std::flush;
         timedOut = true;
         break;
+      } catch (const dds::core::Exception &e) {
+          std::cout << "\n# Ping encountered the following error: \"" << e.what() << "\".\n" << std::flush;
+          done = true;
+      } catch (...) {
+        std::cout << "\n# Ping encountered an error.\n" << std::flush;
+        done = true;
       }
       (void) data_available(reader, writer);
     }
