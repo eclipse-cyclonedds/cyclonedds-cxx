@@ -97,7 +97,7 @@ int main (int argc, char *argv[])
 
   if (!parse_args(argc, argv)) {
     print_usage();
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
   }
 
   dds::domain::DomainParticipant participant(domain::default_id());
@@ -159,14 +159,13 @@ int main (int argc, char *argv[])
         waitset.wait(waittime);
       } catch (const dds::core::TimeoutError &) {
         std::cout << "\n# Timeout occurred.\n" << std::flush;
-        timedOut = true;
-        break;
+        return EXIT_FAILURE;
       } catch (const dds::core::Exception &e) {
-          std::cout << "\n# Pong encountered the following error: \"" << e.what() << "\".\n" << std::flush;
-          done = true;
+        std::cout << "\n# Pong encountered the following error: \"" << e.what() << "\".\n" << std::flush;
+        return EXIT_FAILURE;
       } catch (...) {
         std::cout << "\n# Pong encountered an error.\n" << std::flush;
-        done = true;
+        return EXIT_FAILURE;
       }
       (void) data_available(reader, writer);
     }

@@ -125,7 +125,8 @@ void start_writing(
   bool timedOut = false;
 
   dds::pub::AnyDataWriter wr(writer);
-  /*wr.set_batch(true);  currently the C++ binding does not support batched writing*/
+  /** wr.set_batch(true);  currently the C++ binding does not support batched writing
+    *  issue #366 will address this */
 
   auto pubStart = std::chrono::steady_clock::now();
   auto reportstart = pubStart;
@@ -153,7 +154,8 @@ void start_writing(
         sample.count()++;
       }
 
-      /*wr.write_flush();  currently the C++ binding does not support batched writing*/
+      /** wr.write_flush();  currently the C++ binding does not support batched writing
+       *  issue #366 will address this */
       std::this_thread::sleep_until(burstStart + d_int);
 
       auto n = std::chrono::steady_clock::now();
@@ -174,7 +176,8 @@ void start_writing(
 
     std::cout << "\n" << pubprefix << (done ? "Terminated" : "Timed out") << ", " << sample.count() << " samples written.\n" << std::flush;
   }
-  /*wr.write_flush();  currently the C++ binding does not support batched writing*/
+  /** wr.write_flush();  currently the C++ binding does not support batched writing
+    *  issue #366 will address this */
 }
 
 int main (int argc, char **argv)
