@@ -20,6 +20,7 @@ strategy:
       analyzer: on
       sanitizer: address
       iceoryx: on
+      examples: off
       cc: gcc-10
       cxx: g++-10
     'Ubuntu 20.04 LTS with GCC 10 (Release, x86_64)':

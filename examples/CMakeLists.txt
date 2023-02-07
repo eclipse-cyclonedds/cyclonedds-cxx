@@ -26,3 +26,26 @@ install(
   COMPONENT dev)
 
 add_subdirectory(helloworld)
+
+install(
+  FILES throughput/publisher.cpp
+        throughput/subscriber.cpp
+        throughput/Throughput.idl
+        throughput/CMakeLists.txt
+        throughput/readme.rst
+  DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/throughput"
+  COMPONENT dev)
+
+add_subdirectory(throughput)
+
+install(
+  FILES roundtrip/ping.cpp
+        roundtrip/ping.cpp
+        roundtrip/roundtrip_common.hpp
+        roundtrip/RoundTrip.idl
+        roundtrip/CMakeLists.txt
+        roundtrip/readme.rst
+  DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/throughput"
+  COMPONENT dev)
+
+add_subdirectory(roundtrip)
