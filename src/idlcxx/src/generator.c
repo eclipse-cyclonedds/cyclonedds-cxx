@@ -570,6 +570,10 @@ bool is_selfcontained(const void *node)
     return sc_struct((const idl_struct_t*)node);
   } else if (idl_is_union(node)) {
     return sc_union((const idl_union_t*)node);
+  } else if (idl_is_declarator(node)) {
+    const idl_node_t *parent = ((const idl_node_t*)node)->parent;
+    assert (idl_is_typedef(parent));
+    return is_selfcontained(parent);
   } else {
     return !is_external(node);
   }
