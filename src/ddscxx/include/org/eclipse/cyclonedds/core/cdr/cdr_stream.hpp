@@ -65,43 +65,62 @@ E enum_conversion(uint32_t in);
 
 /**
  * @brief
- * Byte swapping function, is only enabled for arithmetic (base) types.
+ * Byte swapping function, is only enabled for arithmetic (base) types of size 1.
  *
- * Determines the number of bytes to swap by the size of the template parameter.
- *
- * @param[in, out] toswap The entity whose bytes will be swapped.
+ * Effectively does nothing, sinze size == 1.
  */
-template<typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value> >
-void byte_swap(T& toswap) {
-    union { T a; uint16_t u2; uint32_t u4; uint64_t u8; } u;
-    u.a = toswap;
-    DDSCXX_WARNING_MSVC_OFF(6326)
-    switch (sizeof(T)) {
-    case 1:
-        break;
-    case 2:
-        u.u2 = static_cast<uint16_t>((u.u2 & 0xFF00) >> 8)
-             | static_cast<uint16_t>((u.u2 & 0x00FF) << 8);
-        break;
-    case 4:
-        u.u4 = static_cast<uint32_t>((u.u4 & 0xFFFF0000) >> 16)
-             | static_cast<uint32_t>((u.u4 & 0x0000FFFF) << 16);
-        u.u4 = static_cast<uint32_t>((u.u4 & 0xFF00FF00) >> 8)
-             | static_cast<uint32_t>((u.u4 & 0x00FF00FF) << 8);
-        break;
-    case 8:
-        u.u8 = static_cast<uint64_t>((u.u8 & 0xFFFFFFFF00000000) >> 32)
-             | static_cast<uint64_t>((u.u8 & 0x00000000FFFFFFFF) << 32);
-        u.u8 = static_cast<uint64_t>((u.u8 & 0xFFFF0000FFFF0000) >> 16)
-             | static_cast<uint64_t>((u.u8 & 0x0000FFFF0000FFFF) << 16);
-        u.u8 = static_cast<uint64_t>((u.u8 & 0xFF00FF00FF00FF00) >> 8)
-             | static_cast<uint64_t>((u.u8 & 0x00FF00FF00FF00FF) << 8);
-        break;
-    default:
-        throw std::invalid_argument(std::string("attempted byteswap on variable of invalid size: ") + std::to_string(sizeof(T)));
-    }
-    DDSCXX_WARNING_MSVC_ON(6326)
-    toswap = u.a;
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && sizeof(T) == 1, bool> = true >
+inline void byte_swap(T*) noexcept {
+}
+
+/**
+ * @brief
+ * Byte swapping function, is only enabled for arithmetic (base) types of size 2.
+ *
+ * Swaps the entities in place using bitmasks.
+ *
+ * @param[in, out] toswap Pointer to the entity whose bytes will be swapped.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && sizeof(T) == 2, bool> = true >
+inline void byte_swap(T* toswap) noexcept {
+    uint16_t *u = reinterpret_cast<uint16_t*>(toswap);
+
+    *u = static_cast<uint16_t>(((*u & 0x00FF) << 8)   | ((*u & 0xFF00) >> 8));
+}
+
+/**
+ * @brief
+ * Byte swapping function, is only enabled for arithmetic (base) types of size 4.
+ *
+ * Swaps the entities in place using bitmasks.
+ *
+ * @param[in, out] toswap Pointer to the entity whose bytes will be swapped.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && sizeof(T) == 4, bool> = true >
+inline void byte_swap(T* toswap) noexcept {
+    auto u = reinterpret_cast<uint32_t*>(toswap);
+
+    *u = ((*u & 0x0000FFFF) << 16)   | ((*u & 0xFFFF0000) >> 16);
+    *u = ((*u & 0x00FF00FF) << 8)    | ((*u & 0xFF00FF00) >> 8);
+}
+
+/**
+ * @brief
+ * Byte swapping function, is only enabled for arithmetic (base) types of size 8.
+ *
+ * Needs to split the swap into 2 4 byte swaps, as the the entity might not be located at
+ * an 8 byte offset, causing compiler warnings.
+ *
+ * @param[in, out] toswap Pointer to the entity whose bytes will be swapped.
+ */
+template<typename T, std::enable_if_t<std::is_arithmetic<T>::value && sizeof(T) == 8, bool> = true >
+inline void byte_swap(T* toswap) noexcept {
+    auto u1 = reinterpret_cast<uint32_t*>(toswap);
+    auto u2 = u1+1;
+
+    byte_swap(u1);
+    byte_swap(u2);
+    std::swap(*u1, *u2);
 }
 
 /**
@@ -577,21 +596,17 @@ bool read(S &str, T& toread, size_t N = 1)
    || !str.bytes_available(sizeof(T)*N))
     return false;
 
-  auto from = reinterpret_cast<const T*>(str.get_cursor());
-  T *to = &toread;
-
+  const T* from = reinterpret_cast<const T*>(str.get_cursor());
+  T* to = &toread;
   assert(from);
-
-  if (N == 1) {
-    toread = *from;
-    if (str.swap_endianness())
-        byte_swap(toread);
-  } else {
+  if (N > 1 || sizeof(T) > 4)
     memcpy(to,from,sizeof(T)*N);
-    if (str.swap_endianness()) {
-      for (size_t i = 0; i < N; i++, to++)
-        byte_swap(*to);
-    }
+  else
+    *to = *from;
+
+  if (sizeof(T) > 1 && str.swap_endianness()) {
+    for (size_t i = 0; i < N; i++, to++)
+      byte_swap(to);
   }
 
   str.incr_position(sizeof(T)*N);
@@ -657,21 +672,17 @@ bool write(S& str, const T& towrite, size_t N = 1)
    || !str.bytes_available(sizeof(T)*N))
     return false;
 
-  auto to = reinterpret_cast<T*>(str.get_cursor());
-
+  const T* from = &towrite;
+  T* to = reinterpret_cast<T*>(str.get_cursor());
   assert(to);
-
-  if (N == 1) {
-    *to = towrite;
-    if (str.swap_endianness())
-      byte_swap(*to);
-  } else {
-    const T *from = &towrite;
+  if (N > 1 || sizeof(T) > 4)
     memcpy(to,from,sizeof(T)*N);
-    if (str.swap_endianness()) {
-      for (size_t i = 0; i < N; i++, to++)
-        byte_swap(*to);
-    }
+  else
+    *to = *from;
+
+  if (sizeof(T) > 1 && str.swap_endianness()) {
+    for (size_t i = 0; i < N; i++, to++)
+      byte_swap(to);
   }
 
   str.incr_position(sizeof(T)*N);
