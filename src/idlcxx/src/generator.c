@@ -48,6 +48,8 @@ static int makefmtp(
       if (str[src] == '}' && (num = istok(str+tok, src-tok, toks))) {
         const char *flag;
         assert(toks && flags);
+        if (!flags)
+          return -1;
         flag = flags[num-1];
         len += (size_t)snprintf(buf, sizeof(buf), FMT, num, flag);
         tok = 0;

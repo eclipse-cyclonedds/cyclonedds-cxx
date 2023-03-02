@@ -951,16 +951,25 @@ emit_union(
     ncases++;
   }
 
-  const idl_case_t **cases = ncases ? malloc(sizeof(const idl_case_t *)*ncases) : NULL;
-  if (!cases)
-    return IDL_RETCODE_NO_MEMORY;
+  const idl_case_t **cases = NULL;
+  if (ncases) {
+    cases = malloc(sizeof(const idl_case_t *)*ncases);
+    if (!cases)
+      return IDL_RETCODE_NO_MEMORY;
+    memset(((void*)cases),0x0,sizeof(const idl_case_t *)*ncases);
+  }
 
   size_t i = 0;
   /*deduplicate types in cases*/
   IDL_FOREACH(_case, _union->cases) {
     bool type_already_present = false;
     for (size_t j = 0; j < i && !type_already_present; j++) {
-      if ((ret = is_same_type(pstate, cases[j]->type_spec, cases[j]->declarator, _case->type_spec, _case->declarator, &type_already_present)))
+      assert(cases[j]);
+      if (!cases[j])
+        ret = IDL_RETCODE_BAD_PARAMETER;
+      else
+        ret = is_same_type(pstate, cases[j]->type_spec, cases[j]->declarator, _case->type_spec, _case->declarator, &type_already_present);
+      if (ret != IDL_RETCODE_OK)
         goto cleanup;
     }
 

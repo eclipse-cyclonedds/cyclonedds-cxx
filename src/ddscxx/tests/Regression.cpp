@@ -9,6 +9,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
  */
+
+#include "dds/ddsrt/misc.h"
+
+DDSRT_WARNING_GNUC_OFF(maybe-uninitialized)
+
 #include "dds/dds.hpp"
 #include <gtest/gtest.h>
 #include "RegressionModels.hpp"
@@ -350,3 +355,5 @@ TEST_F(Regression, memberless_struct)
   auto ptr2 = v2.first_entity(props.data());
   EXPECT_EQ(ptr2, nullptr);
 }
+
+DDSRT_WARNING_GNUC_ON(maybe-uninitialized)
