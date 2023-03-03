@@ -27,14 +27,14 @@ strategy:
       cxx: g++-10
     'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64)':
       image: ubuntu-22.04
-      analyzer: on
+      #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
       sanitizer: address
       cc: gcc-12
       cxx: g++-12
     'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, Iceoryx)':
       image: ubuntu-22.04
       iceoryx: on
-      analyzer: on
+      #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
       sanitizer: address
       cc: gcc-12
       cxx: g++-12
