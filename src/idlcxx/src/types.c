@@ -1095,6 +1095,28 @@ cleanup:
   return IDL_RETCODE_OK;
 }
 
+static idl_retcode_t
+emit_forward(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
+{
+  (void)pstate;
+  (void)revisit;
+  (void)path;
+
+  struct generator *gen = user_data;
+  assert(idl_is_forward(node));
+  const char *name = get_cpp11_name(node);
+
+  const char *fmt = "class %1$s;\n";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+  return IDL_RETCODE_OK;
+}
+
 idl_retcode_t
 generate_types(const idl_pstate_t *pstate, struct generator *generator)
 {
@@ -1102,7 +1124,7 @@ generate_types(const idl_pstate_t *pstate, struct generator *generator)
   const char *sources[] = { NULL, NULL };
 
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_CONST | IDL_TYPEDEF | IDL_STRUCT | IDL_MODULE | IDL_ENUM | IDL_UNION | IDL_BITMASK;
+  visitor.visit = IDL_CONST | IDL_TYPEDEF | IDL_STRUCT | IDL_MODULE | IDL_ENUM | IDL_UNION | IDL_BITMASK | IDL_FORWARD;
   visitor.accept[IDL_ACCEPT_CONST] = &emit_const;
   visitor.accept[IDL_ACCEPT_TYPEDEF] = &emit_typedef;
   visitor.accept[IDL_ACCEPT_STRUCT] = &emit_struct;
@@ -1110,6 +1132,7 @@ generate_types(const idl_pstate_t *pstate, struct generator *generator)
   visitor.accept[IDL_ACCEPT_ENUM] = &emit_enum;
   visitor.accept[IDL_ACCEPT_MODULE] = &emit_module;
   visitor.accept[IDL_ACCEPT_BITMASK] = &emit_bitmask;
+  visitor.accept[IDL_ACCEPT_FORWARD] = &emit_forward;
   assert(pstate->sources);
   sources[0] = pstate->sources->path->name;
   visitor.sources = sources;
