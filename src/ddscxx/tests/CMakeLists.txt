@@ -66,7 +66,8 @@ set(sources
   ExtendedTypes.cpp
   Regression.cpp
   External.cpp
-  DataModels.cpp)
+  DataModels.cpp
+  DeferredDestruction.cpp)
 
 if (ENABLE_TYPE_DISCOVERY AND ENABLE_TOPIC_DISCOVERY)
   # Add topic/type discovery tests
