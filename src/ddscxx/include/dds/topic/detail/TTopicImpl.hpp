@@ -307,6 +307,9 @@ dds::topic::detail::Topic<T>::discover_topic(
         const std::string& name,
         const dds::core::Duration& timeout)
 {
+    // One would think it is possible to do some of this for locally defined topics even when
+    // topic discovery is not in the build.
+#ifdef DDSCXX_HAS_TOPIC_DISCOVERY
     dds::topic::Topic<T> found = dds::core::null;
     std::unique_ptr<dds_typeinfo_t, std::function<void(dds_typeinfo_t *)> >
       type_info(org::eclipse::cyclonedds::topic::TopicTraits<T>::getTypeInfo(nullptr),
@@ -348,6 +351,10 @@ dds::topic::detail::Topic<T>::discover_topic(
     }
 
     return found;
+#else
+    (void)dp; (void)name; (void)timeout;
+    throw dds::core::UnsupportedError(std::string("Cyclone DDS was built without topic discovery"));
+#endif
 }
 
 
