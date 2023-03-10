@@ -77,6 +77,13 @@ strategy:
       sanitizer: address
       cc: clang-12
       cxx: clang++-12
+    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type discovery)':
+      image: ubuntu-22.04
+      sanitizer: address
+      cc: gcc-12
+      cxx: g++-12
+      type_discovery: off
+      topic_discovery: off
     'macOS 11 with Clang 12 (Debug, x86_64)':
       image: macOS-11
       sanitizer: address
