@@ -45,7 +45,6 @@ set(sources
   Conversions.cpp
   FindDataWriter.cpp
   FindDataReader.cpp
-  FindTopic.cpp
   Topic.cpp
   Publisher.cpp
   Serdata.cpp
@@ -71,7 +70,9 @@ set(sources
 
 if (ENABLE_TYPE_DISCOVERY AND ENABLE_TOPIC_DISCOVERY)
   # Add topic/type discovery tests
-  list(APPEND sources TopicTypeDiscovery.cpp)
+  list(APPEND sources
+    FindTopic.cpp
+    TopicTypeDiscovery.cpp)
 endif()
 
 if(ENABLE_SHM)
