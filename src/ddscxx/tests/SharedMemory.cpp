@@ -222,7 +222,7 @@ public:
       this->iceoryx_subscriber.emplace(
           iox::capro::ServiceDescription{"DDS_CYCLONE", 
                iox::capro::IdString_t(iox::cxx::TruncateToCapacity, org::eclipse::cyclonedds::topic::TopicTraits<TopicType>::getTypeName()), 
-               TOPIC_NAME});
+               iox::capro::IdString_t(iox::cxx::TruncateToCapacity, std::string(".") + std::string(TOPIC_NAME)) /* default partition . topic name */ });
     }
 
     if (this->flt_reader == dds::core::null) {
