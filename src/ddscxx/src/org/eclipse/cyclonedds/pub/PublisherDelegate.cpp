@@ -58,12 +58,11 @@ PublisherDelegate::PublisherDelegate(const dds::domain::DomainParticipant& dp,
         ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "Could not convert publisher QoS.");
     }
 
-    ddsc_pub = dds_create_publisher(ddsc_par, ddsc_qos, NULL);
+    this->listener(listener, event_mask);
+    ddsc_pub = dds_create_publisher(ddsc_par, ddsc_qos, this->listener_callbacks);
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_pub, "Could not create publisher.");
     this->set_ddsc_entity(ddsc_pub);
-
-    this->listener(listener, event_mask);
 }
 
 PublisherDelegate::~PublisherDelegate()
