@@ -175,8 +175,10 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
 
     ser_type_ = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType();
 
+    this->listener(listener, mask);
+
     dds_entity_t ddsc_topic = dds_create_topic_sertype(
-      ddsc_par, name.c_str(), &ser_type_, ddsc_qos, NULL, NULL);
+      ddsc_par, name.c_str(), &ser_type_, ddsc_qos, this->listener_callbacks, NULL);
 
     dds_delete_qos(ddsc_qos);
 
@@ -186,8 +188,6 @@ dds::topic::detail::Topic<T>::Topic(const dds::domain::DomainParticipant& dp,
     }
 
     this->set_ddsc_entity(ddsc_topic);
-
-    this->listener(listener, mask);
 
     this->AnyTopicDelegate::set_sample(&this->sample_);
 }

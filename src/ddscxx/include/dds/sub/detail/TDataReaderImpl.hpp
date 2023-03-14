@@ -499,7 +499,8 @@ dds::sub::detail::DataReader<T>::common_constructor(
     c_value *params = this->AnyDataReaderDelegate::td_.delegate()->reader_parameters();
 #endif
 
-    dds_entity_t ddsc_reader = dds_create_reader(ddsc_sub, ddsc_top, ddsc_qos, NULL);
+    this->listener(listener, mask);
+    dds_entity_t ddsc_reader = dds_create_reader(ddsc_sub, ddsc_top, ddsc_qos, this->listener_callbacks);
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_reader, "Could not create DataReader.");
 
@@ -507,7 +508,6 @@ dds::sub::detail::DataReader<T>::common_constructor(
 
     this->AnyDataReaderDelegate::setSample(&this->typed_sample_);
     this->set_ddsc_entity(ddsc_reader);
-    this->listener(listener, mask);
 }
 
 template <typename T>
