@@ -124,17 +124,14 @@ int main (int argc, char *argv[])
 
   RoundTripListener listener(writer, &data_available);
 
+  RoundTripListener *list = use_listener ? &listener : nullptr;
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(
       subscriber,
       topic,
       dds::sub::qos::DataReaderQos(),
-      use_listener ?
-        &listener :
-        nullptr,
-      use_listener ?
-        dds::core::status::StatusMask::data_available() :
-        dds::core::status::StatusMask::none());
+      list,
+      use_listener ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
   dds::core::Duration waittime = timeOut ?
     dds::core::Duration::from_secs(static_cast<double>(timeOut)) :
