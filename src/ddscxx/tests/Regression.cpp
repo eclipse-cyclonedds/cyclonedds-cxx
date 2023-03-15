@@ -356,4 +356,54 @@ TEST_F(Regression, memberless_struct)
   EXPECT_EQ(ptr2, nullptr);
 }
 
+TEST_F(Regression, unaligned_access)
+{
+  uint64_t buffer[3];  //assures alignment at 8 bytes
+
+  uint8_t *correct = reinterpret_cast<uint8_t*>(buffer);
+  uint8_t *incorrect = correct+4;
+  for (uint8_t i = 0; i < sizeof(buffer); i++)
+    *(correct+i) = i;
+
+  //make sure byte swaps occur
+  const endianness swap_end = native_endianness() == endianness::big_endian ? endianness::little_endian : endianness::big_endian;
+
+  s_unaligned_access s;
+
+  basic_cdr_stream b(swap_end);
+  b.set_buffer(correct, 16);
+  ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(b, s, false));
+  ASSERT_EQ(s.l(), int32_t(0x00010203));  //size 4 reads should be done at 4 byte offsets in stream
+  ASSERT_EQ(s.ll(), int64_t(0x08090A0B0C0D0E0F));  //size 8 reads should be done at 8 byte offsets in stream
+
+  b.set_buffer(incorrect, 16);
+  ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(b, s, false));
+  ASSERT_EQ(s.l(), int32_t(0x04050607));  //size 4 reads should be done at 4 byte offsets in stream
+  ASSERT_EQ(s.ll(), int64_t(0x0C0D0E0F10111213));  //size 8 reads should be done at 8 byte offsets in stream
+
+  xcdr_v1_stream v1(swap_end);
+
+  v1.set_buffer(correct, 16);
+  ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(v1, s, false));
+  ASSERT_EQ(s.l(), int32_t(0x00010203));  //size 4 reads should be done at 4 byte offsets in stream
+  ASSERT_EQ(s.ll(), int64_t(0x08090A0B0C0D0E0F));  //size 8 reads should be done at 8 byte offsets in stream
+
+  v1.set_buffer(incorrect, 16);
+  ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(v1, s, false));
+  ASSERT_EQ(s.l(), int32_t(0x04050607));  //size 4 reads should be done at 4 byte offsets in stream
+  ASSERT_EQ(s.ll(), int64_t(0x0C0D0E0F10111213));  //size 8 reads should be done at 8 byte offsets in stream
+
+  xcdr_v2_stream v2(swap_end);
+
+  v2.set_buffer(correct, 16);
+  ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(v2, s, false));
+  ASSERT_EQ(s.l(), int32_t(0x00010203));  //size 4 reads should be done at 4 byte offsets in stream
+  ASSERT_EQ(s.ll(), int64_t(0x0405060708090A0B));  //size 4 reads should be done at 4 byte offsets in stream
+
+  v2.set_buffer(incorrect, 16);
+  ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(v2, s, false));
+  ASSERT_EQ(s.l(), int32_t(0x04050607));  //size 4 reads should be done at 4 byte offsets in stream
+  ASSERT_EQ(s.ll(), int64_t(0x08090A0B0C0D0E0F));  //size 4 reads should be done at 4 byte offsets in stream
+}
+
 DDSRT_WARNING_GNUC_ON(maybe-uninitialized)
