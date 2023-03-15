@@ -240,14 +240,15 @@ int main (int argc, char *argv[])
 
   dds::sub::Subscriber subscriber(participant, sqos);
 
-  RoundTripListener list(writer, &data_available);
+  RoundTripListener listener(writer, &data_available);
 
+  RoundTripListener *list = use_listener ? &listener : nullptr;
   dds::sub::DataReader<RoundTripModule::DataType>
     reader(
       subscriber,
       topic,
       dds::sub::qos::DataReaderQos(),
-      use_listener ? &list : NULL,
+      list,
       use_listener ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
   dds::core::Duration waittime = timeOut ?

@@ -223,6 +223,7 @@ TEST_F(Serdata, serialization_enums)
 /*
  * Checking correct (non-)byteswapping serialization of unions.
  */
+DDSRT_WARNING_GNUC_OFF(maybe-uninitialized)
 TEST_F(Serdata, serialization_unions)
 {
     Endianness::UnionStr Ustr;
@@ -236,6 +237,7 @@ TEST_F(Serdata, serialization_unions)
 
     validate(Ustr, le, be);
 }
+DDSRT_WARNING_GNUC_ON(maybe-uninitialized)
 
 using kh_t = std::array<unsigned char, 16>;
 
