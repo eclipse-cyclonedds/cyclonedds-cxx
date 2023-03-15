@@ -28,27 +28,27 @@ strategy:
     'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64)':
       image: ubuntu-22.04
       #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
-      sanitizer: address
+      sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
     'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, Iceoryx)':
       image: ubuntu-22.04
       iceoryx: on
       #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
-      sanitizer: address
+      sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
     'Ubuntu 22.04 LTS with GCC 12 (Release, x86_64)':
       image: ubuntu-22.04
       build_type: Release
-      sanitizer: address
+      sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
     'Ubuntu 22.04 LTS with GCC 12 (Release, x86_64, Iceoryx)':
       image: ubuntu-22.04
       build_type: Release
       iceoryx: on
-      sanitizer: address
+      sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
     'Ubuntu 22.04 LTS with CLang 12 (Debug, x86_64)':
@@ -61,20 +61,20 @@ strategy:
       image: ubuntu-22.04
       iceoryx: on
       analyzer: on
-      sanitizer: address
+      sanitizer: address,undefined
       cc: clang-12
       cxx: clang++-12
     'Ubuntu 22.04 LTS with CLang 12 (Release, x86_64)':
       image: ubuntu-22.04
       build_type: Release
-      sanitizer: address
+      sanitizer: address,undefined
       cc: clang-12
       cxx: clang++-12
     'Ubuntu 22.04 LTS with CLang 12 (Release, x86_64, Iceoryx)':
       image: ubuntu-22.04
       build_type: Release
       iceoryx: on
-      sanitizer: address
+      sanitizer: address,undefined
       cc: clang-12
       cxx: clang++-12
     'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type discovery)':
@@ -92,6 +92,7 @@ strategy:
     'macOS 11 with Clang 12 (Release, x86_64)':
       image: macOS-11
       build_type: Release
+      sanitizer: address,undefined
       cc: clang
       cxx: clang++
     # disabled for now because 32-bit packages are missing
