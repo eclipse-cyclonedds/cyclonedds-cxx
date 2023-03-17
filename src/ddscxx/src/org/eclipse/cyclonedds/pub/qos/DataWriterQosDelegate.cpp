@@ -62,6 +62,16 @@ DataWriterQosDelegate::policy(const dds::core::policy::Durability& durability)
     durability_ = durability;
 }
 
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+void
+DataWriterQosDelegate::policy(const dds::core::policy::DurabilityService& durability_service)
+{
+    durability_service.delegate().check();
+    present_ |= DDSI_QP_DURABILITY_SERVICE;
+    durability_service_ = durability_service;
+}
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
+
 void
 DataWriterQosDelegate::policy(const dds::core::policy::Deadline& deadline)
 {
@@ -189,6 +199,10 @@ DataWriterQosDelegate::ddsc_qos() const
         user_data_   .delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_DURABILITY)
         durability_  .delegate().set_c_policy(qos);
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    if (present_ & DDSI_QP_DURABILITY_SERVICE)
+        durability_service_.delegate().set_c_policy(qos);
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     if (present_ & DDSI_QP_DEADLINE)
         deadline_    .delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_LATENCY_BUDGET)
@@ -233,6 +247,10 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos)
         user_data_   .delegate().set_iso_policy(qos);
     if (present_ & DDSI_QP_DURABILITY)
         durability_  .delegate().set_iso_policy(qos);
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    if (present_ & DDSI_QP_DURABILITY_SERVICE)
+        durability_service_.delegate().set_iso_policy(qos);
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     if (present_ & DDSI_QP_DEADLINE)
         deadline_    .delegate().set_iso_policy(qos);
     if (present_ & DDSI_QP_LATENCY_BUDGET)
@@ -278,6 +296,9 @@ DataWriterQosDelegate::named_qos(const struct _DDS_NamedDataWriterQos &qos)
      * So, cast and use the ddsc policy translations (or builtin when available). */
     user_data_   .delegate().v_policy((v_builtinUserDataPolicy&)(q->user_data)            );
     durability_  .delegate().v_policy((v_durabilityPolicy&)     (q->durability)           );
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    durability_service_.delegate().v_policy((v_durabilityServicePolicy&)(q->durability_service));
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     deadline_    .delegate().v_policy((v_deadlinePolicy&)       (q->deadline)             );
     budget_      .delegate().v_policy((v_latencyPolicy&)        (q->latency_budget)       );
     liveliness_  .delegate().v_policy((v_livelinessPolicy&)     (q->liveliness)           );
@@ -313,6 +334,9 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
     return other.present_     == present_     &&
            other.user_data_   == user_data_   &&
            other.durability_  == durability_  &&
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+           other.durability_service_ == durability_service_ &&
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
            other.deadline_    == deadline_    &&
            other.budget_      == budget_      &&
            other.liveliness_  == liveliness_  &&
@@ -381,6 +405,15 @@ DataWriterQosDelegate::policy<dds::core::policy::Durability>()
     present_ |= DDSI_QP_DURABILITY;
     return durability_;
 }
+
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+template<> dds::core::policy::DurabilityService&
+DataWriterQosDelegate::policy<dds::core::policy::DurabilityService>()
+{
+    present_ |= DDSI_QP_DURABILITY_SERVICE;
+    return durability_service_;
+}
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
 
 template<> dds::core::policy::Deadline&
 DataWriterQosDelegate::policy<dds::core::policy::Deadline>()

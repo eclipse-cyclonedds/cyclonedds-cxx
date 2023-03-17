@@ -42,6 +42,9 @@ public:
 
     void policy(const dds::core::policy::UserData&          user_data);
     void policy(const dds::core::policy::Durability&        durability);
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    void policy(const dds::core::policy::DurabilityService& durability_service);
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     void policy(const dds::core::policy::Deadline&          deadline);
     void policy(const dds::core::policy::LatencyBudget&     budget);
     void policy(const dds::core::policy::Liveliness&        liveliness);
@@ -81,6 +84,9 @@ private:
     uint64_t                                   present_ = 0;
     dds::core::policy::UserData                user_data_;
     dds::core::policy::Durability              durability_;
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    dds::core::policy::DurabilityService       durability_service_;
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     dds::core::policy::Deadline                deadline_;
     dds::core::policy::LatencyBudget           budget_;
     dds::core::policy::Liveliness              liveliness_;
@@ -122,6 +128,17 @@ DataWriterQosDelegate::policy<dds::core::policy::Durability>() const
 
 template<> OMG_DDS_API dds::core::policy::Durability&
 DataWriterQosDelegate::policy<dds::core::policy::Durability>();
+
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+template<> inline const dds::core::policy::DurabilityService&
+DataWriterQosDelegate::policy<dds::core::policy::DurabilityService>() const
+{
+    return durability_service_;
+}
+
+template<> OMG_DDS_API dds::core::policy::DurabilityService&
+DataWriterQosDelegate::policy<dds::core::policy::DurabilityService>();
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
 
 template<> inline const dds::core::policy::Deadline&
 DataWriterQosDelegate::policy<dds::core::policy::Deadline>() const
