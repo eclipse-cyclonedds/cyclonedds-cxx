@@ -39,6 +39,7 @@
  * --------------------------------------- | -------------------------------------------------------------------------- | --------------------
  * dds::core::policy::UserData             | Additional information (@ref DCPS_QoS_UserData "info")                     | UserData::UserData(empty)
  * dds::core::policy::Durability           | Data storage settings for late joiners (@ref DCPS_QoS_Durability "info")   | Durability::Volatile()
+ * dds::core::policy::DurabilityService    | Transient/persistent behaviour (@ref DCPS_QoS_DurabilityService "info")    | DurabilityService::DurabilityService()
  * dds::core::policy::Deadline             | Period in which new sample is written (@ref DCPS_QoS_Deadline "info")      | Deadline::Deadline(infinite)
  * dds::core::policy::LatencyBudget        | Used for optimization (@ref DCPS_QoS_LatencyBudget "info")                 | LatencyBudget::LatencyBudget(zero)
  * dds::core::policy::Liveliness           | Liveliness assertion mechanism (@ref DCPS_QoS_Liveliness "info")           | Liveliness::Automatic()
