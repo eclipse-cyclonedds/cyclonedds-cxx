@@ -186,7 +186,7 @@ template<typename T>
 bool finish_header(void *buffer, size_t bytes_written)
 {
   CHECK_FOR_NULL(buffer);
-  auto alignbytes = static_cast<unsigned char>(4 % (4 - bytes_written % 4));
+  auto alignbytes = static_cast<unsigned char>((4 - (bytes_written % 4)) % 4);
   auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 3));
 
   *ptr = alignbytes;
