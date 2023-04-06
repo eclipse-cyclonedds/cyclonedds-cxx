@@ -125,7 +125,6 @@ void start_writing(
   bool timedOut = false;
 
   auto pubStart = std::chrono::steady_clock::now();
-  auto reportstart = pubStart;
 
   if (!done)
   {
@@ -155,12 +154,8 @@ void start_writing(
 
       auto n = std::chrono::steady_clock::now();
       if (t_out > std::chrono::milliseconds(0) &&
-          n > pubStart+t_out)
-      {
+          n > pubStart+t_out) {
         timedOut = true;
-      } else if (reportstart + std::chrono::seconds(1) < n) {
-        std::cout << "." << std::flush;
-        reportstart = n;
       }
 
       if (writer.publication_matched_status().current_count() == 0) {
