@@ -191,7 +191,7 @@ int main (int argc, char **argv)
 
   dds::pub::Publisher publisher(participant, pqos);
 
-  dds::pub::qos::DataWriterQos wqos;
+  dds::pub::qos::DataWriterQos wqos(tqos);
   wqos << dds::core::policy::WriterBatching::BatchUpdates();
 
   dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
