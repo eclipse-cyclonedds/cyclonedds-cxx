@@ -278,7 +278,7 @@ int main (int argc, char **argv)
     reader(
       subscriber,
       topic,
-      dds::sub::qos::DataReaderQos(),
+      dds::sub::qos::DataReaderQos(tqos),
       pollingDelay.count() < 0 ? &listener : NULL,
       pollingDelay.count() < 0 ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
