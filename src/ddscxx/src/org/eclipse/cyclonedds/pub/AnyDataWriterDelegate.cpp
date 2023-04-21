@@ -500,7 +500,9 @@ AnyDataWriterDelegate::write_flush()
 void
 AnyDataWriterDelegate::set_batch(bool enable)
 {
+DDSRT_WARNING_DEPRECATED_OFF
     dds_write_set_batch (enable);
+DDSRT_WARNING_DEPRECATED_ON
 }
 
 }
