@@ -72,6 +72,21 @@ write_blob(
 }
 
 
+static bool
+emit_isKeyless(
+  const idl_pstate_t* pstate,
+  const void* node)
+{
+  if (!idl_is_struct(node)) {
+    return idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST);
+  } else {
+    const idl_struct_t * _struct = node;
+    while (_struct->inherit_spec)
+      _struct = _struct->inherit_spec->base;
+    return idl_is_keyless(_struct, pstate->config.flags & IDL_FLAG_KEYLIST);
+  }
+}
+
 static idl_retcode_t
 emit_traits(
   const idl_pstate_t* pstate,
@@ -147,7 +162,7 @@ emit_traits(
       idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (idl_is_keyless(node, pstate->config.flags & IDL_FLAG_KEYLIST) &&
+  if (emit_isKeyless(pstate, node) &&
       idl_fprintf(gen->header.handle, keylessfmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
