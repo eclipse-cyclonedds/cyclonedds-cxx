@@ -335,6 +335,9 @@ TEST(Qos, DataWriter)
     DataWriterQos dwQosShifted;
     dwQosShifted << nonDefaultUserData
                  << nonDefaultDurability
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+                 << nonDefaultDurabilityService
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
                  << nonDefaultDeadline
                  << nonDefaultBudget
                  << nonDefaultLiveliness
@@ -379,6 +382,9 @@ TEST(Qos, DataWriter)
     /* Compare the Policies (getting them in different ways). */
     dwQosShifted >> tmpUserData;
     dwQosShifted >> tmpDurability;
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    dwQosShifted >> tmpDurabilityService;
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     dwQosShifted >> tmpDeadline;
     dwQosShifted >> tmpBudget;
     dwQosShifted >> tmpLiveliness;
@@ -396,6 +402,9 @@ TEST(Qos, DataWriter)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    ASSERT_EQ(nonDefaultDurabilityService,  tmpDurabilityService);
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     ASSERT_EQ(nonDefaultDeadline,    tmpDeadline);
     ASSERT_EQ(nonDefaultBudget,      tmpBudget);
     ASSERT_EQ(nonDefaultLiveliness,  tmpLiveliness);
@@ -414,6 +423,9 @@ TEST(Qos, DataWriter)
 
     ASSERT_EQ(nonDefaultUserData,    dwQosWConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  dwQosWConstructed.policy<Durability>());
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    ASSERT_EQ(nonDefaultDurabilityService,  dwQosWConstructed.policy<DurabilityService>());
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     ASSERT_EQ(nonDefaultDeadline,    dwQosWConstructed.policy<Deadline>());
     ASSERT_EQ(nonDefaultBudget,      dwQosWConstructed.policy<LatencyBudget>());
     ASSERT_EQ(nonDefaultLiveliness,  dwQosWConstructed.policy<Liveliness>());

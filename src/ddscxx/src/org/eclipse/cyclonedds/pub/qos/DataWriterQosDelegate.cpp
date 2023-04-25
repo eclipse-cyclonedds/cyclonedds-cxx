@@ -360,6 +360,10 @@ DataWriterQosDelegate::operator =(const org::eclipse::cyclonedds::topic::qos::To
 {
     if (tqos.present() & DDSI_QP_DURABILITY)
       policy(tqos.policy<dds::core::policy::Durability>());
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+    if (tqos.present() & DDSI_QP_DURABILITY_SERVICE)
+      policy(tqos.policy<dds::core::policy::DurabilityService>());
+#endif  // OMG_DDS_PERSISTENCE_SUPPORT
     if (tqos.present() & DDSI_QP_DEADLINE)
       policy(tqos.policy<dds::core::policy::Deadline>());
     if (tqos.present() & DDSI_QP_LATENCY_BUDGET)
