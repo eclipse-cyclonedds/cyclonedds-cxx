@@ -28,100 +28,98 @@ namespace sub
 
 DDSCXX_WARNING_MSVC_OFF(4250)
 
-/**
- * @brief
- * Subscriber events Listener
- *
- * Since a Subscriber is an Entity, it has the ability to have a Listener
- * associated with it. In this case, the associated Listener should be of type
- * SubscriberListener. This interface must be implemented by the
- * application. A user-defined class must be provided by the application which must
- * extend from the SubscriberListener class.
- *
- * <b><i>
- * All operations for this interface must be implemented in the user-defined class, it is
- * up to the application whether an operation is empty or contains some functionality.
- * </i></b>
- *
- * The SubscriberListener provides a generic mechanism (actually a
- * callback function) for the Data Distribution Service to notify the application of
- * relevant asynchronous status change events, such as a missed deadline, violation of
- * a QosPolicy setting, etc. The SubscriberListener is related to
- * changes in communication status StatusConditions.
- *
- * @code{.cpp}
- * // Application example listener
- * class ExampleListener :
- *                public virtual dds::sub::SubscriberListener
- * {
- * public:
- *     virtual void on_requested_deadline_missed (
- *         dds::sub::AnyDataReader& reader,
- *         const dds::core::status::RequestedDeadlineMissedStatus & status)
- *     {
- *         std::cout << "on_requested_deadline_missed" << std::endl;
- *     }
- *
- *     virtual void on_requested_incompatible_qos (
- *         dds::sub::AnyDataReader& reader,
- *         const dds::core::status::RequestedIncompatibleQosStatus & status)
- *     {
- *         std::cout << "on_requested_incompatible_qos" << std::endl;
- *     }
- *
- *     virtual void on_sample_rejected (
- *         dds::sub::AnyDataReader& reader,
- *         const dds::core::status::SampleRejectedStatus & status)
- *     {
- *         std::cout << "on_sample_rejected" << std::endl;
- *     }
- *
- *     virtual void on_liveliness_changed (
- *         dds::sub::AnyDataReader& reader,
- *         const dds::core::status::LivelinessChangedStatus & status)
- *     {
- *         std::cout << "on_liveliness_changed" << std::endl;
- *     }
- *
- *     virtual void on_data_available (
- *         dds::sub::AnyDataReader& reader)
- *     {
- *         std::cout << "on_data_available" << std::endl;
- *     }
- *
- *     virtual void on_subscription_matched (
- *         dds::sub::AnyDataReader& reader,
- *         const dds::core::status::SubscriptionMatchedStatus & status)
- *     {
- *         std::cout << "on_subscription_matched" << std::endl;
- *     }
- *
- *     virtual void on_sample_lost (
- *         dds::sub::AnyDataReader& reader,
- *         const dds::core::status::SampleLostStatus & status)
- *     {
- *         std::cout << "on_sample_lost" << std::endl;
- *     }
- *
- *     virtual void on_data_on_readers (
- *         dds::sub::Subscriber& subs)
- *     {
- *         std::cout << "on_data_on_readers" << std::endl;
- *     }
- * };
- *
- * // Create Subscriber with the listener
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::sub::Subscriber subscriber(participant,
- *                                 participant.default_subscriber_qos(),
- *                                 new ExampleListener(),
- *                                 dds::core::status::StatusMask::all());
- *
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_Subscriber "Subscriber"
- * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
- */
+/// @brief
+/// Subscriber events Listener
+///
+/// Since a Subscriber is an Entity, it has the ability to have a Listener
+/// associated with it. In this case, the associated Listener should be of type
+/// SubscriberListener. This interface must be implemented by the
+/// application. A user-defined class must be provided by the application which must
+/// extend from the SubscriberListener class.
+///
+/// <b><i>
+/// All operations for this interface must be implemented in the user-defined class, it is
+/// up to the application whether an operation is empty or contains some functionality.
+/// </i></b>
+///
+/// The SubscriberListener provides a generic mechanism (actually a
+/// callback function) for the Data Distribution Service to notify the application of
+/// relevant asynchronous status change events, such as a missed deadline, violation of
+/// a QosPolicy setting, etc. The SubscriberListener is related to
+/// changes in communication status StatusConditions.
+///
+/// @code{.cpp}
+/// // Application example listener
+/// class ExampleListener :
+///                public virtual dds::sub::SubscriberListener
+/// {
+/// public:
+///     virtual void on_requested_deadline_missed (
+///         dds::sub::AnyDataReader& reader,
+///         const dds::core::status::RequestedDeadlineMissedStatus & status)
+///     {
+///         std::cout << "on_requested_deadline_missed" << std::endl;
+///     }
+///
+///     virtual void on_requested_incompatible_qos (
+///         dds::sub::AnyDataReader& reader,
+///         const dds::core::status::RequestedIncompatibleQosStatus & status)
+///     {
+///         std::cout << "on_requested_incompatible_qos" << std::endl;
+///     }
+///
+///     virtual void on_sample_rejected (
+///         dds::sub::AnyDataReader& reader,
+///         const dds::core::status::SampleRejectedStatus & status)
+///     {
+///         std::cout << "on_sample_rejected" << std::endl;
+///     }
+///
+///     virtual void on_liveliness_changed (
+///         dds::sub::AnyDataReader& reader,
+///         const dds::core::status::LivelinessChangedStatus & status)
+///     {
+///         std::cout << "on_liveliness_changed" << std::endl;
+///     }
+///
+///     virtual void on_data_available (
+///         dds::sub::AnyDataReader& reader)
+///     {
+///         std::cout << "on_data_available" << std::endl;
+///     }
+///
+///     virtual void on_subscription_matched (
+///         dds::sub::AnyDataReader& reader,
+///         const dds::core::status::SubscriptionMatchedStatus & status)
+///     {
+///         std::cout << "on_subscription_matched" << std::endl;
+///     }
+///
+///     virtual void on_sample_lost (
+///         dds::sub::AnyDataReader& reader,
+///         const dds::core::status::SampleLostStatus & status)
+///     {
+///         std::cout << "on_sample_lost" << std::endl;
+///     }
+///
+///     virtual void on_data_on_readers (
+///         dds::sub::Subscriber& subs)
+///     {
+///         std::cout << "on_data_on_readers" << std::endl;
+///     }
+/// };
+///
+/// // Create Subscriber with the listener
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::sub::Subscriber subscriber(participant,
+///                                 participant.default_subscriber_qos(),
+///                                 new ExampleListener(),
+///                                 dds::core::status::StatusMask::all());
+///
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_Subscriber "Subscriber"
+/// @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
 class OMG_DDS_API SubscriberListener : public virtual AnyDataReaderListener
 {
 public:
@@ -166,22 +164,20 @@ public:
 };
 
 
-/**
- * @brief
- * Subscriber events Listener
- *
- * This listener is just like SubscriberListener, except
- * that the application doesn't have to implement all operations.
- *
- * @code{.cpp}
- * class ExampleListener : public virtual dds::sub::NoOpSubscriberListener
- * {
- *    // Not necessary to implement any Listener operations.
- * };
- * @endcode
- *
- * @see dds::sub::SubscriberListener
- */
+/// @brief
+/// Subscriber events Listener
+///
+/// This listener is just like SubscriberListener, except
+/// that the application doesn't have to implement all operations.
+///
+/// @code{.cpp}
+/// class ExampleListener : public virtual dds::sub::NoOpSubscriberListener
+/// {
+///    // Not necessary to implement any Listener operations.
+/// };
+/// @endcode
+///
+/// @see dds::sub::SubscriberListener
 class OMG_DDS_API NoOpSubscriberListener :
     public virtual SubscriberListener,
     public virtual NoOpAnyDataReaderListener

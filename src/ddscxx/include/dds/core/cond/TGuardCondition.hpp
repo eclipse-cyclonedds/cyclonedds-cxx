@@ -33,35 +33,33 @@ class TGuardCondition;
 }
 }
 
-/**
- * @brief
- * A GuardCondition object is a specific Condition whose trigger_value is
- * completely under the control of the application.
- *
- * When a GuardCondition is initially created, the trigger_value is FALSE.
- *
- * The purpose of the GuardCondition is to provide the means for the
- * application to manually triggering a WaitSet to stop waiting. This is accomplished by
- * attaching the GuardCondition to the WaitSet and then setting the
- * trigger_value by means of the set trigger_value operation.
- *
- * @code{.cpp}
- * dds::core::cond::GuardCondition guard;
- * dds::core::cond::WaitSet waitset;
- * waitset.attach_condition(guard);
- * waitset.wait();
- * ...
- * // To wakeup waitset, do in another thread:
- * guard.trigger_value(true);
- * @endcode
- * See the @ref anchor_dds_core_cond_waitset_examples "WaitSet examples" for more examples.<br>
- * Although the WaitSet examples use the StatusCondition, the basic usage of this Condition
- * with a WaitSet is the same.
- *
- * @see dds::core::cond::Condition
- * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
- * @see for more information: @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
- */
+/// @brief
+/// A GuardCondition object is a specific Condition whose trigger_value is
+/// completely under the control of the application.
+///
+/// When a GuardCondition is initially created, the trigger_value is FALSE.
+///
+/// The purpose of the GuardCondition is to provide the means for the
+/// application to manually triggering a WaitSet to stop waiting. This is accomplished by
+/// attaching the GuardCondition to the WaitSet and then setting the
+/// trigger_value by means of the set trigger_value operation.
+///
+/// @code{.cpp}
+/// dds::core::cond::GuardCondition guard;
+/// dds::core::cond::WaitSet waitset;
+/// waitset.attach_condition(guard);
+/// waitset.wait();
+/// ...
+/// // To wakeup waitset, do in another thread:
+/// guard.trigger_value(true);
+/// @endcode
+/// See the @ref anchor_dds_core_cond_waitset_examples "WaitSet examples" for more examples.<br>
+/// Although the WaitSet examples use the StatusCondition, the basic usage of this Condition
+/// with a WaitSet is the same.
+///
+/// @see dds::core::cond::Condition
+/// @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
+/// @see for more information: @ref anchor_dds_core_cond_waitset_examples "WaitSet examples"
 template <typename DELEGATE>
 class dds::core::cond::TGuardCondition : public dds::core::cond::TCondition<DELEGATE>
 {

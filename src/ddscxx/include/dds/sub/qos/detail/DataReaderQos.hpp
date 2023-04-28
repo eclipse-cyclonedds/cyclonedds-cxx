@@ -79,62 +79,58 @@ public:
      */
     DataReaderQos(const DataReaderQos& qos);
 
-    /**
-     * Create a DataReader QoS from a TopicQos.
-     *
-     * This operation will copy the QosPolicy settings from the TopicQos to the
-     * corresponding QosPolicy settings in the DataReaderQos. The related value
-     * in DataReaderQos will be repliced, while the other policies will get the
-     * @ref anchor_dds_sub_datareader_qos_defaults "default" QoS policies.
-     *
-     * This is a "convenience" operation. It can be used to merge
-     * @ref anchor_dds_sub_datareader_qos_defaults "default" DataReader
-     * QosPolicy settings with the corresponding ones on the Topic. The resulting
-     * DataReaderQos can then be used to create a new DataReader, or set its
-     * DataReaderQos.
-     * @code{.cpp}
-     * dds::topic::qos::TopicQos topicQos = topic.qos();
-     * dds::sub::qos::DataReaderQos readerQos(topicQos);
-     * // Policies of the DataReaderQos that are not present in the TopicQos
-     * // have the default value.
-     * @endcode
-     *
-     * This operation does not check the resulting DataReaderQos for self
-     * consistency. This is because the "merged" DataReaderQos may not be the
-     * final one, as the application can still modify some QosPolicy settings prior to
-     * applying the DataReaderQos to the DataReader.
-     *
-     * @param qos the QoS to copy policies from.
-     */
+    /// Create a DataReader QoS from a TopicQos.
+    ///
+    /// This operation will copy the QosPolicy settings from the TopicQos to the
+    /// corresponding QosPolicy settings in the DataReaderQos. The related value
+    /// in DataReaderQos will be repliced, while the other policies will get the
+    /// @ref anchor_dds_sub_datareader_qos_defaults "default" QoS policies.
+    ///
+    /// This is a "convenience" operation. It can be used to merge
+    /// @ref anchor_dds_sub_datareader_qos_defaults "default" DataReader
+    /// QosPolicy settings with the corresponding ones on the Topic. The resulting
+    /// DataReaderQos can then be used to create a new DataReader, or set its
+    /// DataReaderQos.
+    /// @code{.cpp}
+    /// dds::topic::qos::TopicQos topicQos = topic.qos();
+    /// dds::sub::qos::DataReaderQos readerQos(topicQos);
+    /// // Policies of the DataReaderQos that are not present in the TopicQos
+    /// // have the default value.
+    /// @endcode
+    ///
+    /// This operation does not check the resulting DataReaderQos for self
+    /// consistency. This is because the "merged" DataReaderQos may not be the
+    /// final one, as the application can still modify some QosPolicy settings prior to
+    /// applying the DataReaderQos to the DataReader.
+    ///
+    /// @param qos the QoS to copy policies from.
     DataReaderQos(const dds::topic::qos::TopicQos& qos);
 
-    /**
-     * Assign dds::topic::qos::TopicQos policies to the DataReaderQos.
-     *
-     * This operation will copy the QosPolicy settings from the TopicQos to the
-     * corresponding QosPolicy settings in the DataReaderQos (replacing the values,
-     * if present).
-     *
-     * This is a "convenience" operation, useful in combination with the operations
-     * Subscriber::default_datareader_qos() and dds::topic::Topic::qos().
-     * This operation can be used to merge the DataReader
-     * QosPolicy settings with the corresponding ones on the Topic. The resulting
-     * DataReaderQos can then be used to create a new DataReader, or set its
-     * DataReaderQos.
-     * @code{.cpp}
-     * dds::topic::qos::TopicQos topicQos = topic.qos();
-     * dds::sub::qos::DataReaderQos readerQos = subscriber.default_datareader_qos();
-     * readerQos = topicQos;
-     * // Policies of the DataReaderQos that are not present in the TopicQos are untouched.
-     * @endcode
-     *
-     * This operation does not check the resulting DataReaderQos for self
-     * consistency. This is because the "merged" DataReaderQos may not be the
-     * final one, as the application can still modify some QosPolicy settings prior to
-     * applying the DataReaderQos to the DataReader.
-     *
-     * @param qos the QoS to copy policies from.
-     */
+    /// Assign dds::topic::qos::TopicQos policies to the DataReaderQos.
+    ///
+    /// This operation will copy the QosPolicy settings from the TopicQos to the
+    /// corresponding QosPolicy settings in the DataReaderQos (replacing the values,
+    /// if present).
+    ///
+    /// This is a "convenience" operation, useful in combination with the operations
+    /// Subscriber::default_datareader_qos() and dds::topic::Topic::qos().
+    /// This operation can be used to merge the DataReader
+    /// QosPolicy settings with the corresponding ones on the Topic. The resulting
+    /// DataReaderQos can then be used to create a new DataReader, or set its
+    /// DataReaderQos.
+    /// @code{.cpp}
+    /// dds::topic::qos::TopicQos topicQos = topic.qos();
+    /// dds::sub::qos::DataReaderQos readerQos = subscriber.default_datareader_qos();
+    /// readerQos = topicQos;
+    /// // Policies of the DataReaderQos that are not present in the TopicQos are untouched.
+    /// @endcode
+    ///
+    /// This operation does not check the resulting DataReaderQos for self
+    /// consistency. This is because the "merged" DataReaderQos may not be the
+    /// final one, as the application can still modify some QosPolicy settings prior to
+    /// applying the DataReaderQos to the DataReader.
+    ///
+    /// @param qos the QoS to copy policies from.
     DataReaderQos& operator= (const dds::topic::qos::TopicQos& other);
 };
 

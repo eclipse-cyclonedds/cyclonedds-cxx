@@ -70,36 +70,34 @@ public:
     /** @endcond */
 
 public:
-    /**
-     * Retrieve information about the exception that was thrown.
-     *
-     * Example
-     * @code{.cpp}
-     * try {
-     *     // Do something that will trigger a dds exception, like:
-     *     dds::domain::DomainParticipant participant = dds::core::null;
-     *     participant.domain_id();
-     * } catch (const dds::core::Exception& e) {
-     *     std::cout << e.what() << std::endl;
-     * }
-     * @endcode
-     * %Exception information (of the NullReferenceError in this case)
-     * @code
-     * Null reference: Reference[157] == dds::core::null
-     * ========================================================================================
-     * Context     : dds::domain::DomainParticipant::domain_id
-     * Date        : Wed Oct 21 19:28:00 CET 2015
-     * Node        : DeLorean
-     * Process     : flux_capacitor <15423>
-     * Thread      : mr_fusion b6f25700
-     * Internals   : ReferenceImpl.hpp/157/V6.6.0
-     * ----------------------------------------------------------------------------------------
-     * Report      : Null reference: Reference[157] == dds::core::null
-     * Internals   : dds::core::Reference<DELEGATE>::delegate/ReferenceImpl.hpp/157
-     * @endcode
-     *
-     * @return Exception information
-     */
+    /// Retrieve information about the exception that was thrown.
+    ///
+    /// Example
+    /// @code{.cpp}
+    /// try {
+    ///     // Do something that will trigger a dds exception, like:
+    ///     dds::domain::DomainParticipant participant = dds::core::null;
+    ///     participant.domain_id();
+    /// } catch (const dds::core::Exception& e) {
+    ///     std::cout << e.what() << std::endl;
+    /// }
+    /// @endcode
+    /// %Exception information (of the NullReferenceError in this case)
+    /// @code
+    /// Null reference: Reference[157] == dds::core::null
+    /// ========================================================================================
+    /// Context     : dds::domain::DomainParticipant::domain_id
+    /// Date        : Wed Oct 21 19:28:00 CET 2015
+    /// Node        : DeLorean
+    /// Process     : flux_capacitor <15423>
+    /// Thread      : mr_fusion b6f25700
+    /// Internals   : ReferenceImpl.hpp/157/V6.6.0
+    /// ----------------------------------------------------------------------------------------
+    /// Report      : Null reference: Reference[157] == dds::core::null
+    /// Internals   : dds::core::Reference<DELEGATE>::delegate/ReferenceImpl.hpp/157
+    /// @endcode
+    ///
+    /// @return Exception information
     virtual const char* what() const throw() = 0;
 };
 

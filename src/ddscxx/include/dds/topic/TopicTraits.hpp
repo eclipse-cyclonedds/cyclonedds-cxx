@@ -54,18 +54,16 @@ struct topic_type_name
 }
 
 //==============================================================================
-/**
- * @brief
- * Support functionality to check if a given object type is a Topic.
- *
- * @code{.cpp}
- * if (dds::topic::is_topic_type<Foo::Bar>::value) {
- *     // Foo::Bar type is considered a Topic
- * } else {
- *     // Foo::Bar type is NOT considered a Topic
- * }
- * @endcode
- */
+/// @brief
+/// Support functionality to check if a given object type is a Topic.
+///
+/// @code{.cpp}
+/// if (dds::topic::is_topic_type<Foo::Bar>::value) {
+///     // Foo::Bar type is considered a Topic
+/// } else {
+///     // Foo::Bar type is NOT considered a Topic
+/// }
+/// @endcode
 template <typename T>
 struct dds::topic::is_topic_type
 {

@@ -41,49 +41,47 @@ template <typename T> class DataWriterListener;
 }
 /** @endcond */
 
-/**
- * @brief
- * DataWriter allows the application to set the value of the sample to be published
- * under a given Topic.
- *
- * A DataWriter is attached to exactly one Publisher.
- *
- * A DataWriter is bound to exactly one Topic and therefore to exactly one data
- * type. The Topic must exist prior to the DataWriter's creation.
- * DataWriter is an abstract class. It must be specialized for each particular
- * application data type. For a fictional application data type Bar (defined in the
- * module Foo) the specialized class would be dds::pub::DataWriter<Foo::Bar>.
- *
- * The pre-processor generates from IDL type descriptions the application
- * DataWriter<type> classes. For each application data type that is used as Topic
- * data type, a typed class DataWriter<type> is derived from the AnyDataWriter
- * class.
- *
- * For instance, for an application, the definitions are located in the Foo.idl file.
- * The pre-processor will generate a ccpp_Foo.h include file.
- *
- * <b>General note:</b> The name ccpp_Foo.h is derived from the IDL file Foo.idl,
- * that defines Foo::Bar, for all relevant DataWriter<Foo::Bar> operations.
- *
- * @note Apart from idl files, Google protocol buffers are also supported. For the
- *       API itself, it doesn't matter if the type header files were generated from
- *       idl or protocol buffers. The resulting API usage and includes remain the same.
- *
- * @code{.cpp}
- * // Default creation of a DataWriter
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
- * dds::pub::Publisher publisher(participant);
- * dds::pub::DataWriter<Foo::Bar> writer(publisher, topic);
- *
- * // Default write of a sample on the DataWriter
- * Foo::Bar sample;
- * writer.write(sample);
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_Publication "Publication concept"
- * @see for more information: @ref DCPS_Modules_Publication_DataWriter "DataWriter concept"
- */
+/// @brief
+/// DataWriter allows the application to set the value of the sample to be published
+/// under a given Topic.
+///
+/// A DataWriter is attached to exactly one Publisher.
+///
+/// A DataWriter is bound to exactly one Topic and therefore to exactly one data
+/// type. The Topic must exist prior to the DataWriter's creation.
+/// DataWriter is an abstract class. It must be specialized for each particular
+/// application data type. For a fictional application data type Bar (defined in the
+/// module Foo) the specialized class would be dds::pub::DataWriter<Foo::Bar>.
+///
+/// The pre-processor generates from IDL type descriptions the application
+/// DataWriter<type> classes. For each application data type that is used as Topic
+/// data type, a typed class DataWriter<type> is derived from the AnyDataWriter
+/// class.
+///
+/// For instance, for an application, the definitions are located in the Foo.idl file.
+/// The pre-processor will generate a ccpp_Foo.h include file.
+///
+/// <b>General note:</b> The name ccpp_Foo.h is derived from the IDL file Foo.idl,
+/// that defines Foo::Bar, for all relevant DataWriter<Foo::Bar> operations.
+///
+/// @note Apart from idl files, Google protocol buffers are also supported. For the
+///       API itself, it doesn't matter if the type header files were generated from
+///       idl or protocol buffers. The resulting API usage and includes remain the same.
+///
+/// @code{.cpp}
+/// // Default creation of a DataWriter
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
+/// dds::pub::Publisher publisher(participant);
+/// dds::pub::DataWriter<Foo::Bar> writer(publisher, topic);
+///
+/// // Default write of a sample on the DataWriter
+/// Foo::Bar sample;
+/// writer.write(sample);
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_Publication "Publication concept"
+/// @see for more information: @ref DCPS_Modules_Publication_DataWriter "DataWriter concept"
 template <typename T, template <typename Q> class DELEGATE>
 class dds::pub::DataWriter final : public ::dds::pub::TAnyDataWriter< DELEGATE<T> >
 {
@@ -120,52 +118,50 @@ public:
     DataWriter(const dds::pub::Publisher& pub,
                const ::dds::topic::Topic<T>& topic);
 
-    /**
-     * Create a new DataWriter for the desired Topic, using the given Publisher and
-     * DataWriterQos and attaches the optionally specified DataWriterListener to it.
-     *
-     * <i>QoS</i><br>
-     * A possible application pattern to construct the DataWriterQos for the
-     * DataWriter is to:
-     * @code{.cpp}
-     * // 1) Retrieve the QosPolicy settings on the associated Topic
-     * dds::topic::qos::TopicQos topicQos = topic.qos();
-     * // 2) Retrieve the default DataWriterQos from the related Publisher
-     * dds::pub::qos::DataWriterQos writerQos = publisher.default_datawriter_qos();
-     * // 3) Combine those two lists of QosPolicy settings by overwriting DataWriterQos
-     * //    policies that are also present TopicQos
-     * writerQos = topicQos;
-     * // 4) Selectively modify QosPolicy settings as desired.
-     * writerQos << dds::core::policy::WriterDataLifecycle::ManuallyDisposeUnregisteredInstances();
-     * // 5) Use the resulting QoS to construct the DataWriter.
-     * dds::pub::DataWriter<Foo::Bar> writer(publisher, topic, writerQos);
-     * @endcode
-     *
-     * <i>Listener</i><br>
-     * The following statuses are applicable to the DataWriterListener:
-     *  - dds::core::status::StatusMask::offered_deadline_missed()
-     *  - dds::core::status::StatusMask::offered_incompatible_qos()
-     *  - dds::core::status::StatusMask::liveliness_lost()
-     *  - dds::core::status::StatusMask::publication_matched()
-     *
-     * See @ref DCPS_Modules_Infrastructure_Listener "listener concept",
-     * @ref anchor_dds_pub_datawriter_commstatus "communication status" and
-     * @ref anchor_dds_pub_datawriter_commpropagation "communication propagation"
-     * for more information.
-     *
-     * @param pub the Publisher that will contain this DataWriter
-     * @param topic the Topic associated with this DataWriter
-     * @param qos the DataWriter qos.
-     * @param listener the DataWriter listener.
-     * @param mask the listener event mask.
-     * @throws dds::core::Error
-     *                  An internal error has occurred.
-     * @throws dds::core::OutOfResourcesError
-     *                  The Data Distribution Service ran out of resources to
-     *                  complete this operation.
-     * @throws dds::core::InconsistentPolicyError
-     *                  The parameter qos contains conflicting QosPolicy settings.
-     */
+    /// Create a new DataWriter for the desired Topic, using the given Publisher and
+    /// DataWriterQos and attaches the optionally specified DataWriterListener to it.
+    ///
+    /// <i>QoS</i><br>
+    /// A possible application pattern to construct the DataWriterQos for the
+    /// DataWriter is to:
+    /// @code{.cpp}
+    /// // 1) Retrieve the QosPolicy settings on the associated Topic
+    /// dds::topic::qos::TopicQos topicQos = topic.qos();
+    /// // 2) Retrieve the default DataWriterQos from the related Publisher
+    /// dds::pub::qos::DataWriterQos writerQos = publisher.default_datawriter_qos();
+    /// // 3) Combine those two lists of QosPolicy settings by overwriting DataWriterQos
+    /// //    policies that are also present TopicQos
+    /// writerQos = topicQos;
+    /// // 4) Selectively modify QosPolicy settings as desired.
+    /// writerQos << dds::core::policy::WriterDataLifecycle::ManuallyDisposeUnregisteredInstances();
+    /// // 5) Use the resulting QoS to construct the DataWriter.
+    /// dds::pub::DataWriter<Foo::Bar> writer(publisher, topic, writerQos);
+    /// @endcode
+    ///
+    /// <i>Listener</i><br>
+    /// The following statuses are applicable to the DataWriterListener:
+    ///  - dds::core::status::StatusMask::offered_deadline_missed()
+    ///  - dds::core::status::StatusMask::offered_incompatible_qos()
+    ///  - dds::core::status::StatusMask::liveliness_lost()
+    ///  - dds::core::status::StatusMask::publication_matched()
+    ///
+    /// See @ref DCPS_Modules_Infrastructure_Listener "listener concept",
+    /// @ref anchor_dds_pub_datawriter_commstatus "communication status" and
+    /// @ref anchor_dds_pub_datawriter_commpropagation "communication propagation"
+    /// for more information.
+    ///
+    /// @param pub the Publisher that will contain this DataWriter
+    /// @param topic the Topic associated with this DataWriter
+    /// @param qos the DataWriter qos.
+    /// @param listener the DataWriter listener.
+    /// @param mask the listener event mask.
+    /// @throws dds::core::Error
+    ///                  An internal error has occurred.
+    /// @throws dds::core::OutOfResourcesError
+    ///                  The Data Distribution Service ran out of resources to
+    ///                  complete this operation.
+    /// @throws dds::core::InconsistentPolicyError
+    ///                  The parameter qos contains conflicting QosPolicy settings.
     DataWriter(const dds::pub::Publisher& pub,
                const ::dds::topic::Topic<T>& topic,
                const dds::pub::qos::DataWriterQos& qos,

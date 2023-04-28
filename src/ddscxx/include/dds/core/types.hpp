@@ -46,18 +46,16 @@ typedef std::vector<std::string> StringSeq;
  * @brief This class is used to create dds::core::null objects.
  */
 class OMG_DDS_API null_type { };
-/**
- * This is the DDS Null-Reference.<br>
- * A dds reference object that doesn't reference to anything can be compared with this object.
- * @code{.cpp}
- * dds::domain::DomainParticipant participant = dds::core::null;
- * ...
- * if (participant == dds::core::null) {
- *     // The participant is not yet properly created.
- *     // Using it now will trigger the dds::core::NullReferenceError exception.
- * }
- * @endcode
- */
+/// This is the DDS Null-Reference.<br>
+/// A dds reference object that doesn't reference to anything can be compared with this object.
+/// @code{.cpp}
+/// dds::domain::DomainParticipant participant = dds::core::null;
+/// ...
+/// if (participant == dds::core::null) {
+///     // The participant is not yet properly created.
+///     // Using it now will trigger the dds::core::NullReferenceError exception.
+/// }
+/// @endcode
 extern const null_type OMG_DDS_API null;
 
 /** @cond

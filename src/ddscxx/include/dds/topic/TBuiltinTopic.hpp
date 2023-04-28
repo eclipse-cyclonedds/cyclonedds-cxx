@@ -41,41 +41,39 @@ class TSubscriptionBuiltinTopicData;
 }
 }
 
-/**
- * @brief
- * Class that contains information about available DomainParticipants within
- * the system.
- *
- * The DCPSParticipant topic communicates the existence of DomainParticipants
- * by means of the ParticipantBuiltinTopicData datatype. Each
- * ParticipantBuiltinTopicData sample in a Domain represents a DomainParticipant
- * that participates in that Domain: a new ParticipantBuiltinTopicData instance
- * is created when a newly-added DomainParticipant is enabled, and it is disposed
- * when that DomainParticipant is deleted. An updated ParticipantBuiltinTopicData
- * sample is written each time the DomainParticipant modifies its UserDataQosPolicy.
- *
- * @code{.cpp}
- * // Get builtin subscriber
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
- *
- * // Get DCPSParticipant builtin reader (happy flow)
- * string name = "DCPSParticipant";
- * vector<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> > readersVector;
- * dds::sub::find<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData>,
- *                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> > > >(
- *           builtinSubscriber,
- *           name,
- *           back_inserter<vector<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> > >(readersVector));
- * dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> builtinReader = readersVector[0];
- *
- * // The builtinReader can now be used just as a normal dds::sub::DataReader to get
- * // dds::topic::ParticipantBuiltinTopicData samples.
- * @endcode
- *
- * @see for more information: @ref DCPS_Builtin_Topics
- * @see for more information: @ref DCPS_Builtin_Topics_ParticipantData
- */
+/// @brief
+/// Class that contains information about available DomainParticipants within
+/// the system.
+///
+/// The DCPSParticipant topic communicates the existence of DomainParticipants
+/// by means of the ParticipantBuiltinTopicData datatype. Each
+/// ParticipantBuiltinTopicData sample in a Domain represents a DomainParticipant
+/// that participates in that Domain: a new ParticipantBuiltinTopicData instance
+/// is created when a newly-added DomainParticipant is enabled, and it is disposed
+/// when that DomainParticipant is deleted. An updated ParticipantBuiltinTopicData
+/// sample is written each time the DomainParticipant modifies its UserDataQosPolicy.
+///
+/// @code{.cpp}
+/// // Get builtin subscriber
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
+///
+/// // Get DCPSParticipant builtin reader (happy flow)
+/// string name = "DCPSParticipant";
+/// vector<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> > readersVector;
+/// dds::sub::find<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData>,
+///                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> > > >(
+///           builtinSubscriber,
+///           name,
+///           back_inserter<vector<dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> > >(readersVector));
+/// dds::sub::DataReader<dds::topic::ParticipantBuiltinTopicData> builtinReader = readersVector[0];
+///
+/// // The builtinReader can now be used just as a normal dds::sub::DataReader to get
+/// // dds::topic::ParticipantBuiltinTopicData samples.
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Builtin_Topics
+/// @see for more information: @ref DCPS_Builtin_Topics_ParticipantData
 template <typename D>
 class dds::topic::TParticipantBuiltinTopicData : public ::dds::core::Value<D>
 {
@@ -91,42 +89,40 @@ public:
     const ::dds::core::policy::UserData& user_data() const;
 };
 
-/**
- * @brief
- * Class that contains information about available Topics within
- * the system.
- *
- * The DCPSTopic topic communicates the existence of topics by means of the
- * TopicBuiltinTopicData datatype. Each TopicBuiltinTopicData sample in
- * a Domain represents a Topic in that Domain: a new TopicBuiltinTopicData
- * instance is created when a newly-added Topic is enabled. However, the instance is
- * not disposed when a Topic is deleted by its participant because a topic lifecycle
- * is tied to the lifecycle of a Domain, not to the lifecycle of an individual
- * participant. An updated TopicBuiltinTopicData sample is written each time a
- * Topic modifies one or more of its QosPolicy values.
- *
- * @code{.cpp}
- * // Get builtin subscriber
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
- *
- * // Get DCPSTopic builtin reader (happy flow)
- * string name = "DCPSTopic";
- * vector<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> > readersVector;
- * dds::sub::find<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData>,
- *                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> > > >(
- *           builtinSubscriber,
- *           name,
- *           back_inserter<vector<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> > >(readersVector));
- * dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> builtinReader = readersVector[0];
- *
- * // The builtinReader can now be used just as a normal dds::sub::DataReader to get
- * // dds::topic::TopicBuiltinTopicData samples.
- * @endcode
- *
- * @see for more information: @ref DCPS_Builtin_Topics
- * @see for more information: @ref DCPS_Builtin_Topics_TopicData
- */
+/// @brief
+/// Class that contains information about available Topics within
+/// the system.
+///
+/// The DCPSTopic topic communicates the existence of topics by means of the
+/// TopicBuiltinTopicData datatype. Each TopicBuiltinTopicData sample in
+/// a Domain represents a Topic in that Domain: a new TopicBuiltinTopicData
+/// instance is created when a newly-added Topic is enabled. However, the instance is
+/// not disposed when a Topic is deleted by its participant because a topic lifecycle
+/// is tied to the lifecycle of a Domain, not to the lifecycle of an individual
+/// participant. An updated TopicBuiltinTopicData sample is written each time a
+/// Topic modifies one or more of its QosPolicy values.
+///
+/// @code{.cpp}
+/// // Get builtin subscriber
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
+///
+/// // Get DCPSTopic builtin reader (happy flow)
+/// string name = "DCPSTopic";
+/// vector<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> > readersVector;
+/// dds::sub::find<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData>,
+///                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> > > >(
+///           builtinSubscriber,
+///           name,
+///           back_inserter<vector<dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> > >(readersVector));
+/// dds::sub::DataReader<dds::topic::TopicBuiltinTopicData> builtinReader = readersVector[0];
+///
+/// // The builtinReader can now be used just as a normal dds::sub::DataReader to get
+/// // dds::topic::TopicBuiltinTopicData samples.
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Builtin_Topics
+/// @see for more information: @ref DCPS_Builtin_Topics_TopicData
 template <typename D>
 class dds::topic::TTopicBuiltinTopicData : public ::dds::core::Value<D>
 {
@@ -214,43 +210,41 @@ public:
     const ::dds::core::policy::TopicData&          topic_data() const;
 };
 
-/**
- * @brief
- * Class that contains information about available DataWriters within
- * the system.
- *
- * The DCPSPublication topic communicates the existence of datawriters by means
- * of the PublicationBuiltinTopicData datatype. Each PublicationBuiltinTopicData
- * sample in a Domain represents a datawriter in that Domain: a new
- * PublicationBuiltinTopicData instance is created when a newly-added DataWriter
- * is enabled, and it is disposed when that DataWriter is deleted. An updated
- * PublicationBuiltinTopicData sample is written each time the DataWriter (or
- * the Publisher to which it belongs) modifies a QosPolicy that applies to the
- * entities connected to it. Also will it be updated when the writer looses or
- * regains its liveliness.
- *
- * @code{.cpp}
- * // Get builtin subscriber
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
- *
- * // Get DCPSPublication builtin reader (happy flow)
- * string name = "DCPSPublication";
- * vector<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> > readersVector;
- * dds::sub::find<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData>,
- *                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> > > >(
- *           builtinSubscriber,
- *           name,
- *           back_inserter<vector<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> > >(readersVector));
- * dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> builtinReader = readersVector[0];
- *
- * // The builtinReader can now be used just as a normal dds::sub::DataReader to get
- * // dds::topic::PublicationBuiltinTopicData samples.
- * @endcode
- *
- * @see for more information: @ref DCPS_Builtin_Topics
- * @see for more information: @ref DCPS_Builtin_Topics_PublicationData
- */
+/// @brief
+/// Class that contains information about available DataWriters within
+/// the system.
+///
+/// The DCPSPublication topic communicates the existence of datawriters by means
+/// of the PublicationBuiltinTopicData datatype. Each PublicationBuiltinTopicData
+/// sample in a Domain represents a datawriter in that Domain: a new
+/// PublicationBuiltinTopicData instance is created when a newly-added DataWriter
+/// is enabled, and it is disposed when that DataWriter is deleted. An updated
+/// PublicationBuiltinTopicData sample is written each time the DataWriter (or
+/// the Publisher to which it belongs) modifies a QosPolicy that applies to the
+/// entities connected to it. Also will it be updated when the writer looses or
+/// regains its liveliness.
+///
+/// @code{.cpp}
+/// // Get builtin subscriber
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
+///
+/// // Get DCPSPublication builtin reader (happy flow)
+/// string name = "DCPSPublication";
+/// vector<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> > readersVector;
+/// dds::sub::find<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData>,
+///                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> > > >(
+///           builtinSubscriber,
+///           name,
+///           back_inserter<vector<dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> > >(readersVector));
+/// dds::sub::DataReader<dds::topic::PublicationBuiltinTopicData> builtinReader = readersVector[0];
+///
+/// // The builtinReader can now be used just as a normal dds::sub::DataReader to get
+/// // dds::topic::PublicationBuiltinTopicData samples.
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Builtin_Topics
+/// @see for more information: @ref DCPS_Builtin_Topics_PublicationData
 template <typename D>
 class dds::topic::TPublicationBuiltinTopicData  : public ::dds::core::Value<D>
 {
@@ -356,42 +350,40 @@ public:
 
 };
 
-/**
- * @brief
- * Class that contains information about available DataReaders within
- * the system.
- *
- * The DCPSSubscription topic communicates the existence of datareaders by
- * means of the SubscriptionBuiltinTopicData datatype. Each
- * SubscriptionBuiltinTopicData sample in a Domain represents a datareader
- * in that Domain: a new SubscriptionBuiltinTopicData instance is created
- * when a newly-added DataReader is enabled, and it is disposed when that
- * DataReader is deleted. An updated SubscriptionBuiltinTopicData sample is
- * written each time the DataReader (or the Subscriber to which it belongs)
- * modifies a QosPolicy that applies to the entities connected to it.
- *
- * @code{.cpp}
- * // Get builtin subscriber
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
- *
- * // Get DCPSSubscription builtin reader (happy flow)
- * string name = "DCPSSubscription";
- * vector<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> > readersVector;
- * dds::sub::find<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData>,
- *                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> > > >(
- *           builtinSubscriber,
- *           name,
- *           back_inserter<vector<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> > >(readersVector));
- * dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> builtinReader = readersVector[0];
- *
- * // The builtinReader can now be used just as a normal dds::sub::DataReader to get
- * // dds::topic::SubscriptionBuiltinTopicData samples.
- * @endcode
- *
- * @see for more information: @ref DCPS_Builtin_Topics
- * @see for more information: @ref DCPS_Builtin_Topics_SubscriptionData
- */
+/// @brief
+/// Class that contains information about available DataReaders within
+/// the system.
+///
+/// The DCPSSubscription topic communicates the existence of datareaders by
+/// means of the SubscriptionBuiltinTopicData datatype. Each
+/// SubscriptionBuiltinTopicData sample in a Domain represents a datareader
+/// in that Domain: a new SubscriptionBuiltinTopicData instance is created
+/// when a newly-added DataReader is enabled, and it is disposed when that
+/// DataReader is deleted. An updated SubscriptionBuiltinTopicData sample is
+/// written each time the DataReader (or the Subscriber to which it belongs)
+/// modifies a QosPolicy that applies to the entities connected to it.
+///
+/// @code{.cpp}
+/// // Get builtin subscriber
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::sub::Subscriber builtinSubscriber = dds::sub::builtin_subscriber(participant);
+///
+/// // Get DCPSSubscription builtin reader (happy flow)
+/// string name = "DCPSSubscription";
+/// vector<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> > readersVector;
+/// dds::sub::find<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData>,
+///                       back_insert_iterator<vector<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> > > >(
+///           builtinSubscriber,
+///           name,
+///           back_inserter<vector<dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> > >(readersVector));
+/// dds::sub::DataReader<dds::topic::SubscriptionBuiltinTopicData> builtinReader = readersVector[0];
+///
+/// // The builtinReader can now be used just as a normal dds::sub::DataReader to get
+/// // dds::topic::SubscriptionBuiltinTopicData samples.
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Builtin_Topics
+/// @see for more information: @ref DCPS_Builtin_Topics_SubscriptionData
 template <typename D>
 class dds::topic::TSubscriptionBuiltinTopicData  : public ::dds::core::Value<D>
 {

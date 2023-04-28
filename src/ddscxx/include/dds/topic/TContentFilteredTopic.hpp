@@ -37,41 +37,39 @@ class ContentFilteredTopic;
 }
 
 
-/**
- * @brief
- * ContentFilteredTopic is a specialization of TopicDescription that allows
- * for content-based subscriptions.
- *
- * ContentFilteredTopic describes a more sophisticated subscription which
- * indicates that the Subscriber does not necessarily want to see all values of each
- * instance published under the Topic. Rather, it only wants to see the values whose
- * contents satisfy certain criteria. Therefore this class must be used to request
- * content-based subscriptions.
- *
- * The selection of the content is done using the SQL based filter with parameters to
- * adapt the filter clause.
- *
- * <b><i>Example</i></b>
- * @code{.cpp}
- * // Default creation of a Topic
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
- *
- * // Creation of a ContentFilteredTopic (assume Foo::Bar contains long_1 element).
- * std::vector<std::string> params;
- * params.push_back("1");
- * dds::topic::Filter filter("long_1=%0", params);
- * dds::topic::ContentFilteredTopic<Foo::Bar> cfTopic(topic,
- *                                                    "ContentFilteredTopicName",
- *                                                    filter);
- *
- * // The ContentFilteredTopic can be used to create readers
- * dds::sub::Subscriber subscriber(participant);
- * dds::sub::DataReader<Foo::Bar> reader(subscriber, cfTopic);
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
- */
+/// @brief
+/// ContentFilteredTopic is a specialization of TopicDescription that allows
+/// for content-based subscriptions.
+///
+/// ContentFilteredTopic describes a more sophisticated subscription which
+/// indicates that the Subscriber does not necessarily want to see all values of each
+/// instance published under the Topic. Rather, it only wants to see the values whose
+/// contents satisfy certain criteria. Therefore this class must be used to request
+/// content-based subscriptions.
+///
+/// The selection of the content is done using the SQL based filter with parameters to
+/// adapt the filter clause.
+///
+/// <b><i>Example</i></b>
+/// @code{.cpp}
+/// // Default creation of a Topic
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
+///
+/// // Creation of a ContentFilteredTopic (assume Foo::Bar contains long_1 element).
+/// std::vector<std::string> params;
+/// params.push_back("1");
+/// dds::topic::Filter filter("long_1=%0", params);
+/// dds::topic::ContentFilteredTopic<Foo::Bar> cfTopic(topic,
+///                                                    "ContentFilteredTopicName",
+///                                                    filter);
+///
+/// // The ContentFilteredTopic can be used to create readers
+/// dds::sub::Subscriber subscriber(participant);
+/// dds::sub::DataReader<Foo::Bar> reader(subscriber, cfTopic);
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
 template <typename T, template <typename Q> class DELEGATE>
 class dds::topic::ContentFilteredTopic final : public dds::topic::TTopicDescription< DELEGATE<T> >
 {
