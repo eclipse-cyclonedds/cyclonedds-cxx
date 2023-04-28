@@ -76,7 +76,7 @@ public:
     const dds::domain::DomainParticipant& participant() const;
 
     /** @internal @todo OSPL-1944 Subscriber Listener should return list of affected DataReaders (on_data_on_readers) **/
-    //dds::sub::AnyDataReader get_datareaders(); /* TODO: OSPL-1944? */
+    // dds::sub::AnyDataReader get_datareaders(); // TODO: OSPL-1944?
 
     bool contains_entity(
             const ::dds::core::InstanceHandle& handle);
