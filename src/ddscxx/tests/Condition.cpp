@@ -87,7 +87,7 @@ private:
 // class FunctorQueryCondition {
 // public:
 //     void operator ()(dds::sub::cond::QueryCondition) {
-//         /* Empty. */
+//         // Empty
 //     }
 // };
 
