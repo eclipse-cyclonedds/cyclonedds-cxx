@@ -25,54 +25,52 @@ namespace dds
 namespace topic
 {
 
-/**
- * @brief
- * Topic events Listener
- *
- * Since a Topic is an Entity, it has the ability to have a Listener
- * associated with it. In this case, the associated Listener should be of type
- * TopicListener. This interface must be implemented by the
- * application. A user-defined class must be provided by the application which must
- * extend from the TopicListener class.
- *
- * <b><i>
- * All operations for this interface must be implemented in the user-defined class, it is
- * up to the application whether an operation is empty or contains some functionality.
- * </i></b>
- *
- * The TopicListener provides a generic mechanism (actually a
- * callback function) for the Data Distribution Service to notify the application of
- * relevant asynchronous status change events, such as a missed deadline, violation of
- * a QosPolicy setting, etc. The TopicListener is related to
- * changes in communication status StatusConditions.
- *
- * @code{.cpp}
- * // Application example listener
- * class ExampleListener :
- *                public virtual dds::topic::TopicListener<Foo::Bar>
- * {
- * public:
- *     virtual void on_inconsistent_topic (
- *         dds::topic::Topic<Foo::Bar>& topic,
- *         const dds::core::status::InconsistentTopicStatus& status)
- *     {
- *         std::cout << "on_inconsistent_topic" << std::endl;
- *     }
- * };
- *
- * // Create Topic with the listener
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::topic::Topic<Foo::Bar> topic(participant,
- *                                   "TopicName",
- *                                   participant.default_topic_qos(),
- *                                   new ExampleListener(),
- *                                   dds::core::status::StatusMask::all());
- *
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_Topic "Topic"
- * @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
- */
+/// @brief
+/// Topic events Listener
+///
+/// Since a Topic is an Entity, it has the ability to have a Listener
+/// associated with it. In this case, the associated Listener should be of type
+/// TopicListener. This interface must be implemented by the
+/// application. A user-defined class must be provided by the application which must
+/// extend from the TopicListener class.
+///
+/// <b><i>
+/// All operations for this interface must be implemented in the user-defined class, it is
+/// up to the application whether an operation is empty or contains some functionality.
+/// </i></b>
+///
+/// The TopicListener provides a generic mechanism (actually a
+/// callback function) for the Data Distribution Service to notify the application of
+/// relevant asynchronous status change events, such as a missed deadline, violation of
+/// a QosPolicy setting, etc. The TopicListener is related to
+/// changes in communication status StatusConditions.
+///
+/// @code{.cpp}
+/// // Application example listener
+/// class ExampleListener :
+///                public virtual dds::topic::TopicListener<Foo::Bar>
+/// {
+/// public:
+///     virtual void on_inconsistent_topic (
+///         dds::topic::Topic<Foo::Bar>& topic,
+///         const dds::core::status::InconsistentTopicStatus& status)
+///     {
+///         std::cout << "on_inconsistent_topic" << std::endl;
+///     }
+/// };
+///
+/// // Create Topic with the listener
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::topic::Topic<Foo::Bar> topic(participant,
+///                                   "TopicName",
+///                                   participant.default_topic_qos(),
+///                                   new ExampleListener(),
+///                                   dds::core::status::StatusMask::all());
+///
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_Topic "Topic"
+/// @see for more information: @ref DCPS_Modules_Infrastructure_Listener "Listener information"
 template <typename T>
 class TopicListener
 {
@@ -104,22 +102,20 @@ public:
 };
 
 
-/**
- * @brief
- * Topic events Listener
- *
- * This listener is just like TopicListener, except
- * that the application doesn't have to implement all operations.
- *
- * @code{.cpp}
- * class ExampleListener : public virtual dds::topic::NoOpTopicListener<Foo::Bar>
- * {
- *    // Not necessary to implement any Listener operations.
- * };
- * @endcode
- *
- * @see dds::topic::TopicListener
- */
+/// @brief
+/// Topic events Listener
+///
+/// This listener is just like TopicListener, except
+/// that the application doesn't have to implement all operations.
+///
+/// @code{.cpp}
+/// class ExampleListener : public virtual dds::topic::NoOpTopicListener<Foo::Bar>
+/// {
+///    // Not necessary to implement any Listener operations.
+/// };
+/// @endcode
+///
+/// @see dds::topic::TopicListener
 template <typename T>
 class NoOpTopicListener : public virtual TopicListener<T>
 {

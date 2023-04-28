@@ -37,74 +37,72 @@ class TWaitSet;
 }
 
 
-/**
- * @brief
- * A WaitSet object allows an application to wait until one or more of
- * the attached Condition objects has a trigger_value of TRUE or else
- * until the timeout expires.
- *
- * A WaitSet is not necessarily associated with a single DomainParticipant
- * and could be used to wait for Condition objects associated with different
- * DomainParticipant objects.
- *
- * @anchor anchor_dds_core_cond_waitset_examples
- * <b><i>Example with wait()</i></b><br>
- * When using the wait() operation, the triggered Conditions are returned in a list.
- * @code{.cpp}
- * // Create a Condition to attach to a Waitset
- * dds::core::cond::StatusCondition readerSC = dds::core::cond::StatusCondition(reader);
- * readerSC.enabled_statuses(dds::core::status::StatusMask::data_available());
- *
- * // Create WaitSet and attach Condition
- * dds::core::cond::WaitSet waitset;
- * waitset.attach_condition(readerSC); // or waitset += readerSC;
- *
- * dds::core::cond::WaitSet::ConditionSeq conditions;
- * while(true) {
- *     // Wait for any Condition to trigger.
- *     conditions = waitset.wait();
- *
- *     // Loop through the triggered conditions.
- *     for (int i=0; i < conditions.size(); i++) {
- *         // Handle data_available when right Condition triggered.
- *         if (conditions[i] == readerSC) {
- *             // Read samples from the DataReader
- *         }
- *     }
- * }
- * @endcode
-
- * <b><i>Example with dispatch()</i></b><br>
- * When using the dispatch() operation, the Functors of the triggered Conditions
- * will be called.
- * @code{.cpp}
- * // Functor to add to a Condition
- * class FunctorStatusCondition {
- * public:
- *     void operator()(const dds::core::cond::StatusCondition& condition) {
- *         // Possibly get reader from the condition and read some samples.
- *     }
- * };
- * FunctorStatusCondition functor;
- *
- * // Create a Condition with functor to attach to a Waitset
- * dds::core::cond::StatusCondition readerSC = dds::core::cond::StatusCondition(reader, functor);
- * readerSC.enabled_statuses(dds::core::status::StatusMask::data_available());
- *
- * // Create WaitSet and attach Condition
- * dds::core::cond::WaitSet waitset;
- * waitset.attach_condition(readerSC); // or waitset += readerSC;
- *
- * while(true) {
- *     // Wait for any Condition to trigger.
- *     // The functors of the Conditions are automatically called
- *     // when the Condition triggers.
- *     waitset.dispatch();
- * }
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
- */
+/// @brief
+/// A WaitSet object allows an application to wait until one or more of
+/// the attached Condition objects has a trigger_value of TRUE or else
+/// until the timeout expires.
+///
+/// A WaitSet is not necessarily associated with a single DomainParticipant
+/// and could be used to wait for Condition objects associated with different
+/// DomainParticipant objects.
+///
+/// @anchor anchor_dds_core_cond_waitset_examples
+/// <b><i>Example with wait()</i></b><br>
+/// When using the wait() operation, the triggered Conditions are returned in a list.
+/// @code{.cpp}
+/// // Create a Condition to attach to a Waitset
+/// dds::core::cond::StatusCondition readerSC = dds::core::cond::StatusCondition(reader);
+/// readerSC.enabled_statuses(dds::core::status::StatusMask::data_available());
+///
+/// // Create WaitSet and attach Condition
+/// dds::core::cond::WaitSet waitset;
+/// waitset.attach_condition(readerSC); // or waitset += readerSC;
+///
+/// dds::core::cond::WaitSet::ConditionSeq conditions;
+/// while(true) {
+///     // Wait for any Condition to trigger.
+///     conditions = waitset.wait();
+///
+///     // Loop through the triggered conditions.
+///     for (int i=0; i < conditions.size(); i++) {
+///         // Handle data_available when right Condition triggered.
+///         if (conditions[i] == readerSC) {
+///             // Read samples from the DataReader
+///         }
+///     }
+/// }
+/// @endcode
+///
+/// <b><i>Example with dispatch()</i></b><br>
+/// When using the dispatch() operation, the Functors of the triggered Conditions
+/// will be called.
+/// @code{.cpp}
+/// // Functor to add to a Condition
+/// class FunctorStatusCondition {
+/// public:
+///     void operator()(const dds::core::cond::StatusCondition& condition) {
+///         // Possibly get reader from the condition and read some samples.
+///     }
+/// };
+/// FunctorStatusCondition functor;
+///
+/// // Create a Condition with functor to attach to a Waitset
+/// dds::core::cond::StatusCondition readerSC = dds::core::cond::StatusCondition(reader, functor);
+/// readerSC.enabled_statuses(dds::core::status::StatusMask::data_available());
+///
+/// // Create WaitSet and attach Condition
+/// dds::core::cond::WaitSet waitset;
+/// waitset.attach_condition(readerSC); // or waitset += readerSC;
+///
+/// while(true) {
+///     // Wait for any Condition to trigger.
+///     // The functors of the Conditions are automatically called
+///     // when the Condition triggers.
+///     waitset.dispatch();
+/// }
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_Infrastructure_Waitset "WaitSet concept"
 template <typename DELEGATE>
 class dds::core::cond::TWaitSet final : public dds::core::Reference<DELEGATE>
 {

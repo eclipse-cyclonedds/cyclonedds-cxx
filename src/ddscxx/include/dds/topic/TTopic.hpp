@@ -40,36 +40,34 @@ class TopicListener;
 }
 
 
-/**
- * @brief
- * Topic is the most basic description of the data to be published and
- * subscribed.
- *
- * A Topic is identified by its name, which must be unique in the whole Domain.
- * In addition (by virtue of extending TopicDescription) it fully specifies the
- * type of the data that can be communicated when publishing or subscribing to
- * the Topic.
- *
- * Topic is the only TopicDescription that can be used for publications and
- * therefore associated with a DataWriter.
- *
- * <b><i>Example</i></b>
- * @code{.cpp}
- * // Default creation of a Topic
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
- *
- * // The Topic can be used to create readers and writers
- * // DataReader
- * dds::sub::Subscriber subscriber(participant);
- * dds::sub::DataReader<Foo::Bar> reader(subscriber, topic);
- * // DataWriter
- * dds::pub::Publisher publisher(participant);
- * dds::pub::DataWriter<Foo::Bar> writer(publisher, topic);
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
- */
+/// @brief
+/// Topic is the most basic description of the data to be published and
+/// subscribed.
+///
+/// A Topic is identified by its name, which must be unique in the whole Domain.
+/// In addition (by virtue of extending TopicDescription) it fully specifies the
+/// type of the data that can be communicated when publishing or subscribing to
+/// the Topic.
+///
+/// Topic is the only TopicDescription that can be used for publications and
+/// therefore associated with a DataWriter.
+///
+/// <b><i>Example</i></b>
+/// @code{.cpp}
+/// // Default creation of a Topic
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
+///
+/// // The Topic can be used to create readers and writers
+/// // DataReader
+/// dds::sub::Subscriber subscriber(participant);
+/// dds::sub::DataReader<Foo::Bar> reader(subscriber, topic);
+/// // DataWriter
+/// dds::pub::Publisher publisher(participant);
+/// dds::pub::DataWriter<Foo::Bar> writer(publisher, topic);
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_TopicDefinition "Topic Definition"
 template <typename T, template <typename Q> class DELEGATE>
 class dds::topic::Topic final : public dds::topic::TAnyTopic< DELEGATE<T> >
 {
@@ -173,123 +171,119 @@ public:
           const std::string& topic_name,
           const std::string& type_name);
 
-    /**
-     * Create a new Topic.
-     *
-     * This operation creates a reference to a new or existing Topic under the given name,
-     * for a specific data type.
-     *
-     * <i>QoS</i><br>
-     * A possible application pattern to construct the TopicQos for the
-     * Topic is to:
-     * @code{.cpp}
-     * // 1) Retrieve the QosPolicy settings on the associated DomainParticipant
-     * dds::topic::qos::TopicQos topicQos = participant.default_datareader_qos();
-     * // 2) Selectively modify QosPolicy settings as desired.
-     * topicQos << dds::core::policy::Durability::Transient();
-     * // 3) Use the resulting QoS to construct the DataReader.
-     * dds::topic::Topic<Foo::Bar> topic(participant, "TopicName", topicQos);
-     * @endcode
-     *
-     * <i>Existing Topic Name</i><br>
-     * Before creating a new Topic, this operation performs a
-     * lookup_topicdescription for the specified topic_name. When a Topic is
-     * found with the same name in the current domain, the QoS and type_name of the
-     * found Topic are matched against the parameters qos and type_name. When they
-     * are the same, no Topic is created but a new proxy of the existing Topic is returned.
-     * When they are not exactly the same, no Topic is created and dds::core::Error is thrown.
-     *
-     * <i>Local Proxy</i><br>
-     * Since a Topic is a global concept in the system, access is provided through a local
-     * proxy. In other words, the reference returned is actually not a reference to a Topic
-     * but to a locally created proxy. The Data Distribution Service propagates Topics
-     * and makes remotely created Topics locally available through this proxy. The deletion
-     * of a Topic object will not delete the Topic from the domain, just the local proxy is
-     * deleted.
-     *
-     * <i>Listener</i><br>
-     * The following statuses are applicable to the TopicListener:
-     *  - dds::core::status::StatusMask::inconsistent_topic()
-     *
-     * See @ref DCPS_Modules_Infrastructure_Listener "listener concept",
-     * @ref anchor_dds_topic_listener_commstatus "communication status" and
-     * @ref anchor_dds_topic_listener_commpropagation "communication propagation"
-     * for more information.
-     *
-     * @param dp the domain participant on which the topic will be defined
-     * @param topic_name the topic's name
-     * @param qos the topic listener
-     * @param listener the topic listener
-     * @param mask the listener event mask
-     * @throws dds::core::Error
-     *                  A other Topic with the same name but different type or QoS was
-     *                  detected in the current domain or another internal error has occurred.
-     * @throws dds::core::OutOfResourcesError
-     *                  The Data Distribution Service ran out of resources to
-     *                  complete this operation.
-     */
+    /// Create a new Topic.
+    ///
+    /// This operation creates a reference to a new or existing Topic under the given name,
+    /// for a specific data type.
+    ///
+    /// <i>QoS</i><br>
+    /// A possible application pattern to construct the TopicQos for the
+    /// Topic is to:
+    /// @code{.cpp}
+    /// // 1) Retrieve the QosPolicy settings on the associated DomainParticipant
+    /// dds::topic::qos::TopicQos topicQos = participant.default_datareader_qos();
+    /// // 2) Selectively modify QosPolicy settings as desired.
+    /// topicQos << dds::core::policy::Durability::Transient();
+    /// // 3) Use the resulting QoS to construct the DataReader.
+    /// dds::topic::Topic<Foo::Bar> topic(participant, "TopicName", topicQos);
+    /// @endcode
+    ///
+    /// <i>Existing Topic Name</i><br>
+    /// Before creating a new Topic, this operation performs a
+    /// lookup_topicdescription for the specified topic_name. When a Topic is
+    /// found with the same name in the current domain, the QoS and type_name of the
+    /// found Topic are matched against the parameters qos and type_name. When they
+    /// are the same, no Topic is created but a new proxy of the existing Topic is returned.
+    /// When they are not exactly the same, no Topic is created and dds::core::Error is thrown.
+    ///
+    /// <i>Local Proxy</i><br>
+    /// Since a Topic is a global concept in the system, access is provided through a local
+    /// proxy. In other words, the reference returned is actually not a reference to a Topic
+    /// but to a locally created proxy. The Data Distribution Service propagates Topics
+    /// and makes remotely created Topics locally available through this proxy. The deletion
+    /// of a Topic object will not delete the Topic from the domain, just the local proxy is
+    /// deleted.
+    ///
+    /// <i>Listener</i><br>
+    /// The following statuses are applicable to the TopicListener:
+    ///  - dds::core::status::StatusMask::inconsistent_topic()
+    ///
+    /// See @ref DCPS_Modules_Infrastructure_Listener "listener concept",
+    /// @ref anchor_dds_topic_listener_commstatus "communication status" and
+    /// @ref anchor_dds_topic_listener_commpropagation "communication propagation"
+    /// for more information.
+    ///
+    /// @param dp the domain participant on which the topic will be defined
+    /// @param topic_name the topic's name
+    /// @param qos the topic listener
+    /// @param listener the topic listener
+    /// @param mask the listener event mask
+    /// @throws dds::core::Error
+    ///                  A other Topic with the same name but different type or QoS was
+    ///                  detected in the current domain or another internal error has occurred.
+    /// @throws dds::core::OutOfResourcesError
+    ///                  The Data Distribution Service ran out of resources to
+    ///                  complete this operation.
     Topic(const dds::domain::DomainParticipant& dp,
           const std::string& topic_name,
           const dds::topic::qos::TopicQos& qos,
           dds::topic::TopicListener<T>* listener = NULL,
           const dds::core::status::StatusMask& mask = dds::core::status::StatusMask::none());
 
-    /**
-     * Create a new Topic.
-     *
-     * This operation creates a reference to a new or existing Topic under the given name,
-     * for a specific data type and type_name.
-     *
-     * <i>QoS</i><br>
-     * A possible application pattern to construct the TopicQos for the
-     * Topic is to:
-     * @code{.cpp}
-     * // 1) Retrieve the QosPolicy settings on the associated DomainParticipant
-     * dds::topic::qos::TopicQos topicQos = participant.default_datareader_qos();
-     * // 2) Selectively modify QosPolicy settings as desired.
-     * topicQos << dds::core::policy::Durability::Transient();
-     * // 3) Use the resulting QoS to construct the DataReader.
-     * dds::topic::Topic<Foo::Bar> topic(participant, "TopicName", "TypeName", topicQos);
-     * @endcode
-     *
-     * <i>Existing Topic Name</i><br>
-     * Before creating a new Topic, this operation performs a
-     * lookup_topicdescription for the specified topic_name. When a Topic is
-     * found with the same name in the current domain, the QoS and type_name of the
-     * found Topic are matched against the parameters qos and type_name. When they
-     * are the same, no Topic is created but a new proxy of the existing Topic is returned.
-     * When they are not exactly the same, no Topic is created and dds::core::Error is thrown.
-     *
-     * <i>Local Proxy</i><br>
-     * Since a Topic is a global concept in the system, access is provided through a local
-     * proxy. In other words, the reference returned is actually not a reference to a Topic
-     * but to a locally created proxy. The Data Distribution Service propagates Topics
-     * and makes remotely created Topics locally available through this proxy. The deletion
-     * of a Topic object will not delete the Topic from the domain, just the local proxy is
-     * deleted.
-     *
-     * <i>Listener</i><br>
-     * The following statuses are applicable to the TopicListener:
-     *  - dds::core::status::StatusMask::inconsistent_topic()
-     *
-     * See @ref DCPS_Modules_Infrastructure_Listener "listener concept",
-     * @ref anchor_dds_topic_listener_commstatus "communication status" and
-     * @ref anchor_dds_topic_listener_commpropagation "communication propagation"
-     * for more information.
-     *
-     * @param dp the domain participant on which the topic will be defined
-     * @param topic_name the topic's name
-     * @param type_name a local alias of the data type
-     * @param qos the topic listener
-     * @param listener the topic listener
-     * @param mask the listener event mask
-     * @throws dds::core::Error
-     *                  A other Topic with the same name but different type or QoS was
-     *                  detected in the current domain or another internal error has occurred.
-     * @throws dds::core::OutOfResourcesError
-     *                  The Data Distribution Service ran out of resources to
-     *                  complete this operation.
-     */
+    /// Create a new Topic.
+    ///
+    /// This operation creates a reference to a new or existing Topic under the given name,
+    /// for a specific data type and type_name.
+    ///
+    /// <i>QoS</i><br>
+    /// A possible application pattern to construct the TopicQos for the
+    /// Topic is to:
+    /// @code{.cpp}
+    /// // 1) Retrieve the QosPolicy settings on the associated DomainParticipant
+    /// dds::topic::qos::TopicQos topicQos = participant.default_datareader_qos();
+    /// // 2) Selectively modify QosPolicy settings as desired.
+    /// topicQos << dds::core::policy::Durability::Transient();
+    /// // 3) Use the resulting QoS to construct the DataReader.
+    /// dds::topic::Topic<Foo::Bar> topic(participant, "TopicName", "TypeName", topicQos);
+    /// @endcode
+    ///
+    /// <i>Existing Topic Name</i><br>
+    /// Before creating a new Topic, this operation performs a
+    /// lookup_topicdescription for the specified topic_name. When a Topic is
+    /// found with the same name in the current domain, the QoS and type_name of the
+    /// found Topic are matched against the parameters qos and type_name. When they
+    /// are the same, no Topic is created but a new proxy of the existing Topic is returned.
+    /// When they are not exactly the same, no Topic is created and dds::core::Error is thrown.
+    ///
+    /// <i>Local Proxy</i><br>
+    /// Since a Topic is a global concept in the system, access is provided through a local
+    /// proxy. In other words, the reference returned is actually not a reference to a Topic
+    /// but to a locally created proxy. The Data Distribution Service propagates Topics
+    /// and makes remotely created Topics locally available through this proxy. The deletion
+    /// of a Topic object will not delete the Topic from the domain, just the local proxy is
+    /// deleted.
+    ///
+    /// <i>Listener</i><br>
+    /// The following statuses are applicable to the TopicListener:
+    ///  - dds::core::status::StatusMask::inconsistent_topic()
+    ///
+    /// See @ref DCPS_Modules_Infrastructure_Listener "listener concept",
+    /// @ref anchor_dds_topic_listener_commstatus "communication status" and
+    /// @ref anchor_dds_topic_listener_commpropagation "communication propagation"
+    /// for more information.
+    ///
+    /// @param dp the domain participant on which the topic will be defined
+    /// @param topic_name the topic's name
+    /// @param type_name a local alias of the data type
+    /// @param qos the topic listener
+    /// @param listener the topic listener
+    /// @param mask the listener event mask
+    /// @throws dds::core::Error
+    ///                  A other Topic with the same name but different type or QoS was
+    ///                  detected in the current domain or another internal error has occurred.
+    /// @throws dds::core::OutOfResourcesError
+    ///                  The Data Distribution Service ran out of resources to
+    ///                  complete this operation.
     Topic(const dds::domain::DomainParticipant& dp,
           const std::string& topic_name,
           const std::string& type_name,

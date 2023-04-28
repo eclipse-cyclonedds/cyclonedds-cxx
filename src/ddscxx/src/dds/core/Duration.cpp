@@ -54,8 +54,8 @@ void dds::core::Duration::sec(int64_t s)
     if(s < 0) {
         ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "dds::core::Duration::sec out of bounds");
     } else {
-        /** @internal @bug OSPL-2308 RTF Time-ish coercion issue
-        @see http://jira.prismtech.com:8080/browse/OSPL-2308 */
+        /// @internal @bug OSPL-2308 RTF Time-ish coercion issue
+        /// @see http://jira.prismtech.com:8080/browse/OSPL-2308
         sec_ = static_cast<int32_t>(s);
     }
 }

@@ -38,9 +38,9 @@ TUserData<D>::TUserData() : dds::core::Value<D>() { }
 template <typename D>
 TUserData<D>::TUserData(const dds::core::ByteSeq& sequence) : dds::core::Value<D>(sequence) { }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 TUserData<D>::TUserData(const uint8_t* value_begin, const uint8_t* value_end)
 {
@@ -59,9 +59,9 @@ TUserData<D>& TUserData<D>::value(const dds::core::ByteSeq& sequence)
     return *this;
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 template <typename OCTET_ITER>
 TUserData<D>& TUserData<D>::value(OCTET_ITER begin, OCTET_ITER end)
@@ -78,9 +78,9 @@ const dds::core::ByteSeq TUserData<D>::value() const
     return this->delegate().value();
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 const uint8_t* TUserData<D>::begin() const
 {
@@ -88,9 +88,9 @@ const uint8_t* TUserData<D>::begin() const
     return NULL;
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 const uint8_t* TUserData<D>::end() const
 {
@@ -124,9 +124,9 @@ TGroupData<D>& TGroupData<D>::value(const dds::core::ByteSeq& sequence)
     return *this;
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 template <typename OCTET_ITER>
 TGroupData<D>& TGroupData<D>::value(OCTET_ITER begin, OCTET_ITER end)
@@ -143,9 +143,9 @@ const dds::core::ByteSeq TGroupData<D>::value() const
     return this->delegate().value();
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 const uint8_t* TGroupData<D>::begin() const
 {
@@ -153,9 +153,9 @@ const uint8_t* TGroupData<D>::begin() const
     return NULL;
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 const uint8_t* TGroupData<D>::end() const
 {
@@ -174,9 +174,9 @@ TTopicData<D>::TTopicData(const dds::core::ByteSeq& sequence) : dds::core::Value
 template <typename D>
 TTopicData<D>::TTopicData(const TTopicData& other) : dds::core::Value<D>(other.delegate()) { }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 TTopicData<D>::TTopicData(const uint8_t* value_begin, const uint8_t* value_end)
 {
@@ -192,9 +192,9 @@ TTopicData<D>& TTopicData<D>::value(const dds::core::ByteSeq& sequence)
     return *this;
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 template <typename OCTET_ITER>
 TTopicData<D>& TTopicData<D>::value(OCTET_ITER begin, OCTET_ITER end)
@@ -211,9 +211,9 @@ const dds::core::ByteSeq TTopicData<D>::value() const
     return this->delegate().value();
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 const uint8_t* TTopicData<D>::begin() const
 {
@@ -221,9 +221,9 @@ const uint8_t* TTopicData<D>::begin() const
     return NULL;
 }
 
-/** @internal @bug OSPL-1746 No implementation
- * @todo Implementation required - see OSPL-1746
- * @see http://jira.prismtech.com:8080/browse/OSPL-1746 */
+/// @internal @bug OSPL-1746 No implementation
+/// @todo Implementation required - see OSPL-1746
+/// @see http://jira.prismtech.com:8080/browse/OSPL-1746
 template <typename D>
 const uint8_t* TTopicData<D>::end() const
 {

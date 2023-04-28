@@ -41,48 +41,46 @@ template <typename T> typename T::const_iterator cend(const T& t);
 }
 /** @endcond */
 
-/**
- * @brief
- * This class encapsulates and automates the management of loaned samples.
- *
- * It is a container which is used to hold samples which have been read
- * or taken by the DataReader. Samples are effectively "loaned" from the
- * DataReader to avoid the need to copy the data. When the LoanedSamples
- * container goes out of scope the loan is automatically returned.
- *
- * LoanedSamples maintains a ref count so that the loan will only be
- * returned once all copies of the same LoanedSamples have been destroyed.
- *
- * @anchor anchor_dds_sub_loanedsamples_example
- * @code{.cpp}
- * dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
- * dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
- * dds::sub::Subscriber subscriber(participant);
- * dds::sub::DataReader<Foo::Bar> reader(subscriber, topic);
- *
- * // Assume there is data to read
- * {
- *     dds::sub::LoanedSamples<Foo::Bar> samples = reader.read();
- *     dds::sub::LoanedSamples<Foo::Bar>::const_iterator it;
- *     for (it = samples.begin(); it != samples.end(); ++it) {
- *         const dds::sub::Sample<Foo::Bar>& sample = *it;
- *         const Foo::Bar& data = sample.data();
- *         const dds::sub::SampleInfo& info = sample.info();
- *         // Use sample data and meta information.
- *     }
- *
- *     function(samples);
- * }
- * // LoanedSamples out of scope. Whether the loan is returned, depends what the reference
- * // count of the LoanedSamples is. That again, depends on what the function() did with it.
- * // Maybe function() stored the LoanedSamples, maybe not. Whatever the case, LoanedSamples
- * // takes care of the loan and resource handling.
- * @endcode
- *
- * @see for more information: @ref DCPS_Modules_Subscription_DataSample "DataSample"
- * @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
- * @see for more information: @ref DCPS_Modules_Subscription "Subscription"
- */
+/// @brief
+/// This class encapsulates and automates the management of loaned samples.
+///
+/// It is a container which is used to hold samples which have been read
+/// or taken by the DataReader. Samples are effectively "loaned" from the
+/// DataReader to avoid the need to copy the data. When the LoanedSamples
+/// container goes out of scope the loan is automatically returned.
+///
+/// LoanedSamples maintains a ref count so that the loan will only be
+/// returned once all copies of the same LoanedSamples have been destroyed.
+///
+/// @anchor anchor_dds_sub_loanedsamples_example
+/// @code{.cpp}
+/// dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+/// dds::topic::Topic<Foo::Bar> topic(participant, "TopicName");
+/// dds::sub::Subscriber subscriber(participant);
+/// dds::sub::DataReader<Foo::Bar> reader(subscriber, topic);
+///
+/// // Assume there is data to read
+/// {
+///     dds::sub::LoanedSamples<Foo::Bar> samples = reader.read();
+///     dds::sub::LoanedSamples<Foo::Bar>::const_iterator it;
+///     for (it = samples.begin(); it != samples.end(); ++it) {
+///         const dds::sub::Sample<Foo::Bar>& sample = *it;
+///         const Foo::Bar& data = sample.data();
+///         const dds::sub::SampleInfo& info = sample.info();
+///         // Use sample data and meta information.
+///     }
+///
+///     function(samples);
+/// }
+/// // LoanedSamples out of scope. Whether the loan is returned, depends what the reference
+/// // count of the LoanedSamples is. That again, depends on what the function() did with it.
+/// // Maybe function() stored the LoanedSamples, maybe not. Whatever the case, LoanedSamples
+/// // takes care of the loan and resource handling.
+/// @endcode
+///
+/// @see for more information: @ref DCPS_Modules_Subscription_DataSample "DataSample"
+/// @see for more information: @ref DCPS_Modules_Subscription_SampleInfo "SampleInfo"
+/// @see for more information: @ref DCPS_Modules_Subscription "Subscription"
 template <typename T, template <typename Q> class DELEGATE>
 class dds::sub::LoanedSamples
 {
