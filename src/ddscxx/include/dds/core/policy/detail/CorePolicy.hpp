@@ -105,6 +105,9 @@ namespace dds { namespace core { namespace policy { namespace detail {
 
     typedef dds::core::policy::TWriterDataLifecycle<org::eclipse::cyclonedds::core::policy::WriterDataLifecycleDelegate>
     WriterDataLifecycle;
+
+    typedef dds::core::policy::TWriterBatching<org::eclipse::cyclonedds::core::policy::WriterBatchingDelegate>
+    WriterBatching;
 } } } } // namespace dds::core::policy::detail
 
 
