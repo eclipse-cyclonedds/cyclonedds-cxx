@@ -102,7 +102,7 @@ unsigned long long do_take(dds::sub::DataReader<ThroughputModule::DataType>& rd)
       outOfOrder++;
 
     valid_samples++;
-    payloadSize = s.data().payload().size();
+    payloadSize = static_cast<unsigned long>(s.data().payload().size());
     total_bytes += payloadSize;
     it->second = ct+1;
   }
