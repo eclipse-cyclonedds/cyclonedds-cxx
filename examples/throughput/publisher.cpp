@@ -124,10 +124,6 @@ void start_writing(
 {
   bool timedOut = false;
 
-  dds::pub::AnyDataWriter wr(writer);
-  /** wr.set_batch(true);  currently the C++ binding does not support batched writing
-    *  issue #366 will address this */
-
   auto pubStart = std::chrono::steady_clock::now();
   auto reportstart = pubStart;
 
@@ -154,8 +150,7 @@ void start_writing(
         sample.count()++;
       }
 
-      /** wr.write_flush();  currently the C++ binding does not support batched writing
-       *  issue #366 will address this */
+      writer->write_flush();
       std::this_thread::sleep_until(burstStart + d_int);
 
       auto n = std::chrono::steady_clock::now();
@@ -176,8 +171,7 @@ void start_writing(
 
     std::cout << "\n" << pubprefix << (done ? "Terminated" : "Timed out") << ", " << sample.count() << " samples written.\n" << std::flush;
   }
-  /** wr.write_flush();  currently the C++ binding does not support batched writing
-    *  issue #366 will address this */
+  writer->write_flush();
 }
 
 int main (int argc, char **argv)
@@ -202,7 +196,10 @@ int main (int argc, char **argv)
 
   dds::pub::Publisher publisher(participant, pqos);
 
-  dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic);
+  dds::pub::qos::DataWriterQos wqos;
+  wqos << dds::core::policy::WriterBatching::BatchUpdates();
+
+  dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
 
   if (!wait_for_reader(writer))
     return EXIT_FAILURE;
