@@ -1624,6 +1624,43 @@ void WriterDataLifecycleDelegate::set_c_policy(dds_qos_t* qos) const
 
 //==============================================================================
 
+WriterBatchingDelegate::WriterBatchingDelegate(bool batch_updates): batch_updates_(batch_updates)
+{
+}
+
+bool WriterBatchingDelegate::batch_updates() const
+{
+    return batch_updates_;
+}
+
+void WriterBatchingDelegate::batch_updates(bool b)
+{
+    batch_updates_ = b;
+}
+
+bool WriterBatchingDelegate::operator ==(const WriterBatchingDelegate& other) const
+{
+    return other.batch_updates() == batch_updates_;
+}
+
+void WriterBatchingDelegate::check() const
+{
+    /* The batch_updates is just a boolean: nothing to check. */
+}
+
+void WriterBatchingDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    (void)dds_qget_writer_batching(qos, &batch_updates_);
+}
+
+void WriterBatchingDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    dds_qset_writer_batching(qos, batch_updates_);
+}
+
+
+//==============================================================================
+
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
 DataRepresentationDelegate::DataRepresentationDelegate(const DataRepresentationDelegate& other)
