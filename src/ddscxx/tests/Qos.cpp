@@ -366,9 +366,9 @@ TEST(Qos, DataWriter)
     DataWriterQos dwQosTAssigned2;
     dwQosWAssigned2 = dwQosShifted;
     dwQosTAssigned2 = tQosShifted;
-    dwQosTConstructed << nonDefaultWriterBatching;  /* !!!inelegant!!! */
-    dwQosTAssigned1 << nonDefaultWriterBatching;  /* !!!inelegant!!! */
-    dwQosTAssigned2 << nonDefaultWriterBatching;  /* !!!inelegant!!! */
+    dwQosTConstructed << nonDefaultWriterBatching;  /* Necessary, since the TopicQos does not have the WriterBatching QoSPolicy. */
+    dwQosTAssigned1 << nonDefaultWriterBatching;  /* Necessary, since the TopicQos does not have the WriterBatching QoSPolicy. */
+    dwQosTAssigned2 << nonDefaultWriterBatching;  /* Necessary, since the TopicQos does not have the WriterBatching QoSPolicy. */
 
     /* Compare the QoSses. */
     ASSERT_NE(dwQosDefault,      dwQosWConstructed);
