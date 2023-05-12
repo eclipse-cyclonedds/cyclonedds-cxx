@@ -60,6 +60,7 @@ public:
     void policy(const dds::core::policy::DataRepresentation& datarepresentation);
     void policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    void policy(const dds::core::policy::WriterBatching&    writerbatching);
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -96,6 +97,7 @@ private:
     dds::core::policy::DataRepresentation      datarepresentation_;
     dds::core::policy::TypeConsistencyEnforcement typeconsistencyenforcement_;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    dds::core::policy::WriterBatching          writerbatching_;
 };
 
 
@@ -295,6 +297,18 @@ DataWriterQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
     return typeconsistencyenforcement_;
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
+template<> inline const  dds::core::policy::WriterBatching&
+DataWriterQosDelegate::policy<dds::core::policy::WriterBatching>() const
+{
+    return writerbatching_;
+}
+
+template<> inline dds::core::policy::WriterBatching&
+DataWriterQosDelegate::policy<dds::core::policy::WriterBatching>()
+{
+    return writerbatching_;
+}
 
 }
 }
