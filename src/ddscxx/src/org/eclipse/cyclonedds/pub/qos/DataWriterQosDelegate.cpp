@@ -160,6 +160,13 @@ DataWriterQosDelegate::policy(const dds::core::policy::TypeConsistencyEnforcemen
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+void
+DataWriterQosDelegate::policy(const dds::core::policy::WriterBatching& writerbatching)
+{
+    writerbatching.delegate().check();
+    writerbatching_ = writerbatching;
+}
+
 dds_qos_t*
 DataWriterQosDelegate::ddsc_qos() const
 {
@@ -184,6 +191,7 @@ DataWriterQosDelegate::ddsc_qos() const
     datarepresentation_.delegate().set_c_policy(qos);
     typeconsistencyenforcement_.delegate().set_c_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    writerbatching_.delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -211,6 +219,7 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos)
     datarepresentation_.delegate().set_iso_policy(qos);
     typeconsistencyenforcement_.delegate().set_iso_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    writerbatching_.delegate().set_iso_policy(qos);
 }
 
 void
@@ -242,6 +251,7 @@ DataWriterQosDelegate::named_qos(const struct _DDS_NamedDataWriterQos &qos)
     datarepresentation_.delegate().v_policy((v_writerDataRepresentationPolicy&)(q->writer_datarepresentation));
     typeconsistencyenforcement_.delegate().v_policy((v_writerTypeConsistencyEnforcementPolicy&)(q->writer_typeconsistencyenforcement));
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    writerbatching_.delegate().v_policy((v_writerbatchingPolicy&)(q->writer_batching)     );
 #endif
 }
 
@@ -276,6 +286,7 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
         && other.datarepresentation_ == datarepresentation_
         && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+        && other.writerbatching_ == writerbatching_
            ;
 }
 

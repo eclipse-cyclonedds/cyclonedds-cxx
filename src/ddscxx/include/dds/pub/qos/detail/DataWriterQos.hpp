@@ -53,6 +53,7 @@
  * dds::core::policy::WriterDataLifecycle  | Dispose with unregister or not (@ref DCPS_QoS_WriterDataLifecycle "info")  | WriterDataLifecycle::AutoDisposeUnregisteredInstances()
  * dds::core::policy::DataRepresentation   | Supported data representation kinds (@ref DCPS_QoS_DataRepresentation "info") | DataRepresentation::DataRepresentation(dds::core::policy::DataRepresentationId::XCDR1)
  * dds::core::policy::TypeConsistencyEnforcement | Type consistency enforcement policies (@ref DCPS_QoS_TypeConsistencyEnforcement "info") | dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION
+ * dds::core::policy::WriterBatching       | Writer data batching                                                       | dds::core::policy::WriterBatching::DoNotBatchUpdates()
  *
  * A QosPolicy can be set when the DataWriter is created or modified with the set
  * qos operation.

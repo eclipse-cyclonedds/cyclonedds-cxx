@@ -501,6 +501,45 @@ TWriterDataLifecycle<D> TWriterDataLifecycle<D>::ManuallyDisposeUnregisteredInst
     return TWriterDataLifecycle(false);
 }
 
+//TWriterBatching
+template <typename D>
+TWriterBatching<D>::TWriterBatching(bool batch_updates): dds::core::Value<D>(batch_updates)
+{
+}
+
+template <typename D>
+TWriterBatching<D>::TWriterBatching(const TWriterBatching& other): dds::core::Value<D>(other.delegate())
+{
+}
+
+template <typename D>
+bool TWriterBatching<D>::batch_updates() const
+{
+    return this->delegate().batch_updates();
+}
+
+template <typename D>
+TWriterBatching<D>& TWriterBatching<D>::batch_updates(
+        bool batch_updates)
+{
+    this->delegate().batch_updates(batch_updates);
+    return *this;
+}
+
+template <typename D>
+TWriterBatching<D> TWriterBatching<D>::BatchUpdates()
+{
+  return TWriterBatching(true);
+}
+
+
+template <typename D>
+TWriterBatching<D> TWriterBatching<D>::DoNotBatchUpdates()
+{
+  return TWriterBatching(false);
+}
+
+
 //TReaderDataLifecycle
 template <typename D>
 TReaderDataLifecycle<D>::TReaderDataLifecycle(const dds::core::Duration& autopurge_nowriter_samples_delay, const dds::core::Duration& autopurge_disposed_samples_delay)

@@ -898,6 +898,29 @@ private:
     bool autodispose_;
 };
 
+//==============================================================================
+
+class OMG_DDS_API WriterBatchingDelegate
+{
+public:
+    WriterBatchingDelegate(const WriterBatchingDelegate& other);
+    explicit WriterBatchingDelegate(bool batch_updates);
+
+    bool batch_updates() const;
+    void batch_updates(bool b);
+
+    bool operator ==(const WriterBatchingDelegate& other) const;
+
+    WriterBatchingDelegate& operator =(const WriterBatchingDelegate& other) = default;
+
+    void check() const;
+
+    void set_iso_policy(const dds_qos_t* qos);
+    void set_c_policy(dds_qos_t* qos) const;
+
+private:
+    bool batch_updates_;
+};
 
 
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT

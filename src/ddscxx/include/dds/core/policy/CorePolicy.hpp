@@ -152,6 +152,9 @@ UserData;
 typedef dds::core::policy::detail::WriterDataLifecycle
 WriterDataLifecycle;
 
+typedef dds::core::policy::detail::WriterBatching
+WriterBatching;
+
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
 typedef ::dds::core::policy::detail::DurabilityService
 DurabilityService;
@@ -192,6 +195,7 @@ OMG_DDS_POLICY_TRAITS(DurabilityService,    22)
 OMG_DDS_POLICY_TRAITS(DataRepresentation,   23)
 OMG_DDS_POLICY_TRAITS(TypeConsistencyEnforcement, 24)
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+OMG_DDS_POLICY_TRAITS(WriterBatching,       25)
 
 }
 }

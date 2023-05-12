@@ -843,6 +843,66 @@ public:
     static TWriterDataLifecycle ManuallyDisposeUnregisteredInstances();
 
 };
+//==============================================================================
+
+template <typename D>
+class TWriterBatching : public dds::core::Value<D>
+{
+public:
+    /**
+     * Creates a WriterBatching QoS instance
+     *
+     * @param batch_updates a boolean indicating if updates should be batched
+     * before being explicitly flushed
+     */
+    explicit TWriterBatching(bool batch_updates = false);
+
+    /**
+     * Copies a WriterBatching QoS instance
+     *
+     * @param other the WriterBatching QoS instance to copy
+     */
+    TWriterBatching(const TWriterBatching& other);
+
+    /**
+     * Copies a WriterBatching QoS instance
+     *
+     * @param other the WriterBatching QoS instance to copy
+     *
+     * @return reference to the WriterBatching QoS instance that was copied to
+     */
+    TWriterBatching& operator=(const TWriterBatching& other) = default;
+
+public:
+    /**
+     * Gets a boolean indicating if updates should be batched
+     *
+     * @return a boolean indicating if updates should be batched
+     */
+    bool batch_updates() const;
+
+    /**
+     * Sets a boolean indicating if updates should be batched
+     *
+     * @param batch_updates a boolean indicating if updates should be batched
+     */
+    TWriterBatching& batch_updates(
+        bool batch_updates);
+
+public:
+    /**
+     * @return a WriterBatching QoS instance with batch_updates
+     * set to true
+     */
+    static TWriterBatching BatchUpdates();
+
+    /**
+     * @return a WriterBatching QoS instance with batch_updates
+     * set to false
+     */
+    static TWriterBatching DoNotBatchUpdates();
+
+};
 
 //==============================================================================
 
