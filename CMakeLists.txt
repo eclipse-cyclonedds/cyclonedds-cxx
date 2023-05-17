@@ -60,6 +60,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
     -Wunused -Winfinite-recursion -Wassign-enum -Wcomma -Wdocumentation
     -Wconditional-uninitialized -Wshadow -Wsign-conversion -Wpedantic)
   add_compile_options("$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-Wold-style-cast>")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12.0.0")
+    #the dtor-name compiler option did not exist for older versions
+  else()
+    add_compile_options(-Wno-dtor-name) #suppressing these errors due to CLang adhering too close to the standard, which will be made more in the "spirit" of template classes starting C++23
+  endif()
   if(WERROR)
     add_compile_options(-Werror)
   endif()
