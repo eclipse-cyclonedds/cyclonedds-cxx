@@ -647,16 +647,22 @@ ddsi_serdata * serdata_from_iox_buffer(
     }
 
     // key handling
-    T msg;
-    iceoryx_header_t *iox_header = iceoryx_header_from_chunk(d->iox_chunk);
-    if (!deserialize_sample_from_buffer(d->iox_chunk, iox_header->data_size, msg, kind)) {
-      delete d;
-      d = nullptr;
-    } else {
+    if (typecmn->fixed_size == 1) {
+      const auto& msg = *static_cast<const T*>(d->iox_chunk);
       d->key_md5_hashed() = to_key(msg, d->key());
       d->populate_hash();
+    } else {
+      T msg;
+      iceoryx_header_t *iox_header = iceoryx_header_from_chunk(d->iox_chunk);
+      if (deserialize_sample_from_buffer(d->iox_chunk, iox_header->data_size, msg, kind)) {
+        d->key_md5_hashed() = to_key(msg, d->key());
+        d->populate_hash();
+      } else {
+        delete d;
+        d = nullptr;
+      }
     }
-  
+
     return d;
   }
   catch (std::exception&) {
