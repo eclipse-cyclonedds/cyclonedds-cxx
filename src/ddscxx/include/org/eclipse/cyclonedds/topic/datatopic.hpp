@@ -647,7 +647,7 @@ ddsi_serdata * serdata_from_iox_buffer(
     }
 
     // key handling
-    if (typecmn->fixed_size == 1) {
+    if (typecmn->fixed_size) {
       const auto& msg = *static_cast<const T*>(d->iox_chunk);
       d->key_md5_hashed() = to_key(msg, d->key());
       d->populate_hash();
