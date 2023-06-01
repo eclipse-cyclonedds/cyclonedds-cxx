@@ -991,7 +991,12 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
   }
 
   file = sep ? sep + 1 : path;
-  if (idl_isabsolute(path) || !sep)
+  if (pstate->outdir) {
+    if (!(dir = idl_strdup(pstate->outdir))) {
+      goto err_dir;
+    }
+  }
+  else if (idl_isabsolute(path) || !sep)
     dir = empty;
   else if (!(dir = idl_strndup(path, (size_t)(sep-path))))
     goto err_dir;
