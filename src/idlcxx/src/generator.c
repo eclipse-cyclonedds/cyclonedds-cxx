@@ -991,24 +991,41 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
   }
 
   file = sep ? sep + 1 : path;
-  if (idl_isabsolute(path) || !sep)
-    dir = empty;
-  else if (!(dir = idl_strndup(path, (size_t)(sep-path))))
+  if (idl_isabsolute(path) || !sep) {
+    if (config->output_dir) {
+      if (idl_isabsolute(config->output_dir)) {
+        dir = idl_strndup(config->output_dir, strlen(config->output_dir));
+      } else {
+        char* basedir = idl_strndup(path, (size_t)(sep-path));
+        idl_asprintf(&dir, "%s/%s", basedir, config->output_dir);
+        free(basedir);
+      }
+      if(idl_mkpath(dir) < 0)
+        goto err_basename;
+    } else {
+      dir = empty;
+    }
+  } else if (!(dir = idl_strndup(path, (size_t)(sep-path)))) {
     goto err_dir;
+  }
   if (!(basename = idl_strndup(file, ext ? (size_t)(ext-file) : strlen(file))))
     goto err_basename;
 
-  /* replace backslashes by forward slashes */
   for (char *ptr = dir; *ptr; ptr++) {
+    /* replace backslashes by forward slashes */
     if (*ptr == '\\')
       *ptr = '/';
+
+    /*remove any trailing backslashes from the directory*/
+    if (*ptr == '/' && 0 == *(ptr+1))
+      *ptr = 0x0;
   }
 
   memset(&gen, 0, sizeof(gen));
   gen.path = file;
   gen.config = config;
 
-  sep = dir[0] == '\0' ? "" : "/";
+  sep = (dir[0] == '\0' ? "" : "/");
   if (idl_asprintf(&gen.header.path, "%s%s%s.hpp", dir, sep, basename) < 0)
     goto err_hdr;
   if (!(gen.header.handle = idl_fopen(gen.header.path, "wb")))
