@@ -971,66 +971,22 @@ __declspec(dllexport)
 idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t *config)
 {
   idl_retcode_t ret = IDL_RETCODE_NO_MEMORY;
-  char *dir = NULL, *basename = NULL, *empty = "";
-  const char *sep, *ext, *file, *path;
   struct generator gen;
+  const char* path = NULL;
 
   assert(pstate->paths);
   assert(pstate->paths->name);
   path = pstate->sources->path->name;
-  assert(path);
-
-  /* use relative directory if user provided a relative path, use current
-     word directory otherwise */
-  sep = ext = NULL;
-  for (const char *ptr = path; ptr[0]; ptr++) {
-    if (idl_isseparator((unsigned char)ptr[0]) && ptr[1] != '\0')
-      sep = ptr;
-    else if (ptr[0] == '.')
-      ext = ptr;
-  }
-
-  file = sep ? sep + 1 : path;
-  if (idl_isabsolute(path) || !sep) {
-    if (config->output_dir) {
-      if (idl_isabsolute(config->output_dir)) {
-        dir = idl_strndup(config->output_dir, strlen(config->output_dir));
-      } else {
-        char* basedir = idl_strndup(path, (size_t)(sep-path));
-        idl_asprintf(&dir, "%s/%s", basedir, config->output_dir);
-        free(basedir);
-      }
-      if(idl_mkpath(dir) < 0)
-        goto err_basename;
-    } else {
-      dir = empty;
-    }
-  } else if (!(dir = idl_strndup(path, (size_t)(sep-path)))) {
-    goto err_dir;
-  }
-  if (!(basename = idl_strndup(file, ext ? (size_t)(ext-file) : strlen(file))))
-    goto err_basename;
-
-  for (char *ptr = dir; *ptr; ptr++) {
-    /* replace backslashes by forward slashes */
-    if (*ptr == '\\')
-      *ptr = '/';
-
-    /*remove any trailing backslashes from the directory*/
-    if (*ptr == '/' && 0 == *(ptr+1))
-      *ptr = 0x0;
-  }
 
   memset(&gen, 0, sizeof(gen));
-  gen.path = file;
+  gen.path = path;
   gen.config = config;
 
-  sep = (dir[0] == '\0' ? "" : "/");
-  if (idl_asprintf(&gen.header.path, "%s%s%s.hpp", dir, sep, basename) < 0)
+  if (idl_generate_out_file(path, config->output_dir, config->base_dir, "hpp", &gen.header.path, false) < 0)
     goto err_hdr;
   if (!(gen.header.handle = idl_fopen(gen.header.path, "wb")))
     goto err_hdr_fh;
-  if (idl_asprintf(&gen.impl.path, "%s%s%s.cpp", dir, sep, basename) < 0)
+  if (idl_generate_out_file(path, config->output_dir, config->base_dir, "cpp", &gen.impl.path, false) < 0)
     goto err_impl;
   if (!(gen.impl.handle = idl_fopen(gen.impl.path, "wb")))
     goto err_impl_fh;
@@ -1092,11 +1048,6 @@ err_impl:
 err_hdr_fh:
   free(gen.header.path);
 err_hdr:
-  free(basename);
-err_basename:
-  if (dir && dir != empty)
-    free(dir);
-err_dir:
   return ret;
 }
 

@@ -11,7 +11,7 @@
 #
 
 function(IDLCXX_GENERATE)
-  set(one_value_keywords TARGET DEFAULT_EXTENSIBILITY OUTPUT_DIR)
+  set(one_value_keywords TARGET DEFAULT_EXTENSIBILITY BASE_DIR OUTPUT_DIR)
   set(multi_value_keywords FILES FEATURES INCLUDES WARNINGS)
   cmake_parse_arguments(
     IDLCXX "" "${one_value_keywords}" "${multi_value_keywords}" "" ${ARGN})
@@ -34,6 +34,7 @@ function(IDLCXX_GENERATE)
 
   idlc_generate_generic(TARGET ${IDLCXX_TARGET}
     BACKEND ${_idlcxx_shared_lib}
+    BASE_DIR ${IDLCXX_BASE_DIR}
     FILES ${IDLCXX_FILES}
     FEATURES ${IDLCXX_FEATURES}
     INCLUDES ${IDLCXX_INCLUDES}
