@@ -972,44 +972,34 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
 {
   idl_retcode_t ret = IDL_RETCODE_NO_MEMORY;
   struct generator gen;
-  const char* path = NULL;
 
   assert(pstate->paths);
   assert(pstate->paths->name);
-  path = pstate->sources->path->name;
+  assert(config);
 
   memset(&gen, 0, sizeof(gen));
-  gen.path = path;
+  gen.path = pstate->sources->path->name;
   gen.config = config;
 
-  if (idl_generate_out_file(path, config->output_dir, config->base_dir, "hpp", &gen.header.path, false) < 0)
-    goto err_hdr;
-  if (!(gen.header.handle = idl_fopen(gen.header.path, "wb")))
-    goto err_hdr_fh;
-  if (idl_generate_out_file(path, config->output_dir, config->base_dir, "cpp", &gen.impl.path, false) < 0)
-    goto err_impl;
-  if (!(gen.impl.handle = idl_fopen(gen.impl.path, "wb")))
-    goto err_impl_fh;
+  /* generate output filenames and open output files */
+  if (idl_generate_out_file(gen.path, config->output_dir, config->base_dir, "hpp", &gen.header.path, false) < 0 ||
+      idl_generate_out_file(gen.path, config->output_dir, config->base_dir, "cpp", &gen.impl.path, false) < 0 ||
+      !(gen.header.handle = idl_fopen(gen.header.path, "wb")) ||
+      !(gen.impl.handle = idl_fopen(gen.impl.path, "wb")))
+    goto err;
 
   /* generate format strings from templates */
-  if (makefmtp(&gen.array_format, arr_tmpl, arr_toks, arr_flags) < 0)
-    goto err_arr;
-  if (makefmtp(&gen.sequence_format, seq_tmpl, seq_toks, seq_flags) < 0)
-    goto err_seq;
-  if (makefmtp(&gen.bounded_sequence_format, bnd_seq_tmpl, bnd_seq_toks, bnd_seq_flags) < 0)
-    goto err_bnd_seq;
-  if (makefmtp(&gen.string_format, str_tmpl, NULL, NULL) < 0)
-    goto err_str;
-  if (makefmtp(&gen.bounded_string_format, bnd_str_tmpl, bnd_str_toks, bnd_str_flags) < 0)
-    goto err_bnd_str;
-  if (makefmtp(&gen.optional_format, opt_tmpl, NULL, NULL) < 0)
-    goto err_opt;
-  if (makefmtp(&gen.external_format, ext_tmpl, NULL, NULL) < 0)
-    goto err_ext;
-  if (makefmtp(&gen.union_format, uni_tmpl, NULL, NULL) < 0)
-    goto err_uni;
-  if (makefmtp(&gen.union_getter_format, uni_get_tmpl, NULL, NULL) < 0)
-    goto err_uni_get;
+  if (makefmtp(&gen.array_format, arr_tmpl, arr_toks, arr_flags) < 0 ||
+      makefmtp(&gen.sequence_format, seq_tmpl, seq_toks, seq_flags) < 0 ||
+      makefmtp(&gen.bounded_sequence_format, bnd_seq_tmpl, bnd_seq_toks, bnd_seq_flags) < 0 ||
+      makefmtp(&gen.string_format, str_tmpl, NULL, NULL) < 0 ||
+      makefmtp(&gen.bounded_string_format, bnd_str_tmpl, bnd_str_toks, bnd_str_flags) < 0 ||
+      makefmtp(&gen.optional_format, opt_tmpl, NULL, NULL) < 0 ||
+      makefmtp(&gen.external_format, ext_tmpl, NULL, NULL) < 0 ||
+      makefmtp(&gen.union_format, uni_tmpl, NULL, NULL) < 0 ||
+      makefmtp(&gen.union_getter_format, uni_get_tmpl, NULL, NULL) < 0)
+    goto err;
+
   /* copy include directives verbatim */
   gen.array_include = arr_inc;
   gen.sequence_include = seq_inc;
@@ -1020,34 +1010,37 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
   gen.union_include = uni_inc;
   gen.external_include = ext_inc;
 
+  /* invoke code generation */
   ret = generate_nosetup(pstate, &gen);
 
-  free(gen.union_getter_format);
-err_uni_get:
-  free(gen.union_format);
-err_uni:
-  free(gen.external_format);
-err_ext:
-  free(gen.optional_format);
-err_opt:
-  free(gen.bounded_string_format);
-err_bnd_str:
-  free(gen.string_format);
-err_str:
-  free(gen.bounded_sequence_format);
-err_bnd_seq:
-  free(gen.sequence_format);
-err_seq:
-  free(gen.array_format);
-err_arr:
-  fclose(gen.impl.handle);
-err_impl_fh:
-  free(gen.impl.path);
-err_impl:
-  fclose(gen.header.handle);
-err_hdr_fh:
-  free(gen.header.path);
-err_hdr:
+err:
+  /* cleanup */
+  if (gen.union_getter_format)
+    free(gen.union_getter_format);
+  if (gen.union_format)
+    free(gen.union_format);
+  if (gen.external_format)
+    free(gen.external_format);
+  if (gen.optional_format)
+    free(gen.optional_format);
+  if (gen.bounded_string_format)
+    free(gen.bounded_string_format);
+  if (gen.string_format)
+    free(gen.string_format);
+  if (gen.bounded_sequence_format)
+    free(gen.bounded_sequence_format);
+  if (gen.sequence_format)
+    free(gen.sequence_format);
+  if (gen.array_format)
+    free(gen.array_format);
+  if (gen.impl.path)
+    free(gen.impl.path);
+  if (gen.header.path)
+    free(gen.header.path);
+  if (gen.impl.handle)
+    fclose(gen.impl.handle);
+  if (gen.header.handle)
+    fclose(gen.header.handle);
   return ret;
 }
 
