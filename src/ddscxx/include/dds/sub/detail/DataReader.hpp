@@ -45,18 +45,13 @@ public:
 
     DataReader(const dds::sub::Subscriber& sub,
                const dds::topic::Topic<T>& topic,
-               const dds::sub::qos::DataReaderQos& qos,
-               dds::sub::DataReaderListener<T>* listener = NULL,
-               const dds::core::status::StatusMask& mask = ::dds::core::status::StatusMask::none());
+               const dds::sub::qos::DataReaderQos& qos);
 
     DataReader(const dds::sub::Subscriber& sub,
                const dds::topic::ContentFilteredTopic<T, dds::topic::detail::ContentFilteredTopic>& topic,
-               const dds::sub::qos::DataReaderQos& qos,
-               dds::sub::DataReaderListener<T>* listener = NULL,
-               const dds::core::status::StatusMask& mask = ::dds::core::status::StatusMask::none());
+               const dds::sub::qos::DataReaderQos& qos);
 
-    void common_constructor(dds::sub::DataReaderListener<T>* listener,
-                            const dds::core::status::StatusMask& mask);
+    void common_constructor();
 
     virtual ~DataReader();
 

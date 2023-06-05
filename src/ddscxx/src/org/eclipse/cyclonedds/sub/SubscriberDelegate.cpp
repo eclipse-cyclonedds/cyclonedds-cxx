@@ -98,7 +98,7 @@ SubscriberDelegate::close()
     this->readers.all_close();
 
     /* Stop listener. */
-    this->listener_set(NULL, dds::core::status::StatusMask::none());
+    this->listener_set(NULL, dds::core::status::StatusMask::none(), true);
 
     /* Unregister Subscriber from Participant. */
     this->dp_.delegate()->remove_subscriber(*this);
@@ -173,7 +173,7 @@ SubscriberDelegate::listener(dds::sub::SubscriberListener* listener,
                             const ::dds::core::status::StatusMask& mask)
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-    this->listener_set(listener, mask);
+    this->listener_set(listener, mask, true);
     scopedLock.unlock();
 }
 

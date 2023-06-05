@@ -30,6 +30,14 @@ namespace cyclonedds
 {
 namespace core
 {
+class OMG_DDS_API EntityDelegate;
+
+struct ListenerArg {
+    EntityDelegate *cpp_ref;
+    bool reset_on_invoke;
+
+    ListenerArg(EntityDelegate *cpp_ref_, bool reset_on_invoke_);
+};
 
 class OMG_DDS_API EntityDelegate :
     public virtual ::org::eclipse::cyclonedds::core::DDScObjectDelegate
@@ -62,7 +70,10 @@ public:
 
 protected:
     void listener_set(void *listener,
-            const dds::core::status::StatusMask& mask);
+            const dds::core::status::StatusMask& mask,
+            bool reset_on_invoke);
+
+    void prevent_callbacks();
 
 public:
     const dds::core::status::StatusMask get_listener_mask() const ;
@@ -118,7 +129,6 @@ protected:
     static volatile unsigned int entityID_;
     bool enabled_;
     dds::core::status::StatusMask listener_mask;
-    void prevent_callbacks();
     long callback_count;
     dds_listener_t *listener_callbacks;
 

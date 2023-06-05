@@ -228,6 +228,7 @@ DataReader<T, DELEGATE>::DataReader(
     const dds::topic::Topic<T>& topic):
         ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, sub->default_datareader_qos()))
 {
+    this->delegate()->listener(NULL, dds::core::status::StatusMask::none());
     this->delegate()->init(this->impl_);
 }
 
@@ -238,8 +239,9 @@ DataReader<T, DELEGATE>::DataReader(
     const dds::sub::qos::DataReaderQos& qos,
     dds::sub::DataReaderListener<T>* listener,
     const dds::core::status::StatusMask& mask) :
-        ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, qos, listener, mask))
+        ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, qos))
 {
+    this->delegate()->listener(listener, mask);
     this->delegate()->init(this->impl_);
 }
 
@@ -250,6 +252,7 @@ DataReader<T, DELEGATE>::DataReader(
     const dds::topic::ContentFilteredTopic<T>& topic) :
         ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, sub.default_datareader_qos()))
 {
+    this->delegate()->listener(NULL, dds::core::status::StatusMask::none());
     this->delegate()->init(this->impl_);
 }
 
@@ -260,8 +263,9 @@ DataReader<T, DELEGATE>::DataReader(
     const dds::sub::qos::DataReaderQos& qos,
     dds::sub::DataReaderListener<T>* listener,
     const dds::core::status::StatusMask& mask) :
-    ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, qos, listener, mask))
+    ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, qos))
 {
+    this->delegate()->listener(listener, mask);
     this->delegate()->init(this->impl_);
 }
 #endif /* OMG_DDS_CONTENT_SUBSCRIPTION_SUPPORT */
@@ -273,6 +277,7 @@ DataReader<T, DELEGATE>::DataReader(
     const dds::topic::MultiTopic<T>& topic) :
         ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic))
 {
+    this->delegate()->listener(NULL, dds::core::status::StatusMask::none());
     this->delegate()->init(this->impl_);
 }
 
@@ -283,8 +288,9 @@ DataReader<T, DELEGATE>::DataReader(
     const dds::sub::qos::DataReaderQos& qos,
     dds::sub::DataReaderListener<T>* listener,
     const dds::core::status::StatusMask& mask) :
-       ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, qos, listener, mask))
+       ::dds::core::Reference< DELEGATE<T> >(new DELEGATE<T>(sub, topic, qos))
 {
+    this->delegate()->listener(listener, mask);
     this->delegate()->init(this->impl_);
 }
 #endif /* OMG_DDS_MULTI_TOPIC_SUPPORT */
@@ -448,33 +454,27 @@ DataReader<T, DELEGATE>::listener() const
 template <typename T>
 dds::sub::detail::DataReader<T>::DataReader(const dds::sub::Subscriber& sub,
            const dds::topic::Topic<T>& topic,
-           const dds::sub::qos::DataReaderQos& qos,
-           dds::sub::DataReaderListener<T>* listener,
-           const dds::core::status::StatusMask& mask)
+           const dds::sub::qos::DataReaderQos& qos)
     : ::org::eclipse::cyclonedds::sub::AnyDataReaderDelegate(qos, topic), sub_(sub),
       typed_sample_()
 {
-    common_constructor(listener, mask);
+    common_constructor();
 }
 
 template <typename T>
 dds::sub::detail::DataReader<T>::DataReader(const dds::sub::Subscriber& sub,
            const dds::topic::ContentFilteredTopic<T, dds::topic::detail::ContentFilteredTopic>& topic,
-           const dds::sub::qos::DataReaderQos& qos,
-           dds::sub::DataReaderListener<T>* listener,
-           const dds::core::status::StatusMask& mask)
+           const dds::sub::qos::DataReaderQos& qos)
   : ::org::eclipse::cyclonedds::sub::AnyDataReaderDelegate(qos, topic), sub_(sub),
     typed_sample_()
 
 {
-    common_constructor(listener, mask);
+    common_constructor();
 }
 
 template <typename T>
 void
-dds::sub::detail::DataReader<T>::common_constructor(
-            dds::sub::DataReaderListener<T>* listener,
-            const dds::core::status::StatusMask& mask)
+dds::sub::detail::DataReader<T>::common_constructor()
 {
     DDSCXX_WARNING_MSVC_OFF(4127)
     DDSCXX_WARNING_MSVC_OFF(6326)
@@ -498,7 +498,7 @@ dds::sub::detail::DataReader<T>::common_constructor(
     c_value *params = this->AnyDataReaderDelegate::td_.delegate()->reader_parameters();
 #endif
 
-    this->listener(listener, mask);
+    this->listener_set(nullptr, dds::core::status::StatusMask::all(), false);
     dds_entity_t ddsc_reader = dds_create_reader(ddsc_sub, ddsc_top, ddsc_qos, this->listener_callbacks);
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_reader, "Could not create DataReader.");
@@ -757,7 +757,7 @@ dds::sub::detail::DataReader<T>::close()
     this->prevent_callbacks();
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
 
-    this->listener_set(NULL, dds::core::status::StatusMask::none());
+    this->listener_set(NULL, dds::core::status::StatusMask::none(), true);
 
     this->sub_.delegate()->remove_datareader(*this);
 
@@ -790,7 +790,7 @@ dds::sub::detail::DataReader<T>::listener(
         const dds::core::status::StatusMask& event_mask)
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-    this->listener_set( l, event_mask ) ;
+    this->listener_set( l, event_mask, true ) ;
     scopedLock.unlock();
 }
 

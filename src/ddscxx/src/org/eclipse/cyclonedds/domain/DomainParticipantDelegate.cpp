@@ -274,7 +274,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::close()
     this->topics.all_close();
 
     /* Stop listener. */
-    this->listener_set(NULL, dds::core::status::StatusMask::none());
+    this->listener_set(NULL, dds::core::status::StatusMask::none(), true);
 
     org::eclipse::cyclonedds::domain::DomainParticipantRegistry::remove(this);
 
@@ -584,7 +584,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::listener(
         const ::dds::core::status::StatusMask& mask)
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-    this->listener_set(listener, mask);
+    this->listener_set(listener, mask, true);
     scopedLock.unlock();
 }
 
