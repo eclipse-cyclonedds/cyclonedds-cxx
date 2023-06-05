@@ -230,7 +230,7 @@ dds::topic::detail::Topic<T>::close()
         ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "Topic still has unclosed dependencies (e.g. Readers/Writers/ContentFilteredTopics)");
     }
 
-    this->listener_set(NULL, dds::core::status::StatusMask::none());
+    this->listener_set(NULL, dds::core::status::StatusMask::none(), true);
 
     this->myParticipant.delegate()->remove_topic(*this);
 
@@ -261,7 +261,7 @@ dds::topic::detail::Topic<T>::listener(TopicListener<T>* listener,
                                        const ::dds::core::status::StatusMask& mask)
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
-    this->listener_set(listener, mask);
+    this->listener_set(listener, mask, true);
     scopedLock.unlock();
 }
 
