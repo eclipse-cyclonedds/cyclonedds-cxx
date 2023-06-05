@@ -1015,7 +1015,7 @@ TEST_F(Listener, liveliness_changed)
     ASSERT_EQ(status.last_publication_handle(), instance_handle);
 }
 
-TEST_F(Listener, DISABLED_incompatible_qos)
+TEST_F(Listener, incompatible_qos)
 {
     DataReaderListener readerListener;
     DataWriterListener writerListener;
@@ -1421,7 +1421,7 @@ TEST_F(Listener, data_available_participant)
 // TODO:
 // this test does not work because listener on publisher is triggered when writer is created
 // but before ddsc handle for writer is stored in the writer entity.
-TEST_F(Listener, DISABLED_propagation)
+TEST_F(Listener, propagation)
 {
     DomainParticipantListener participantListener;
     SubscriberListener subscriberListener;

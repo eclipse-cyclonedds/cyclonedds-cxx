@@ -60,9 +60,7 @@ public:
 
     DataWriter(const dds::pub::Publisher& pub,
                const ::dds::topic::Topic<T>& topic,
-               const dds::pub::qos::DataWriterQos& qos,
-               dds::pub::DataWriterListener<T>* listener,
-               const dds::core::status::StatusMask& mask);
+               const dds::pub::qos::DataWriterQos& qos);
 
     virtual ~DataWriter();
 

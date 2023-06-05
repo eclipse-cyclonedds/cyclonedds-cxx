@@ -40,8 +40,9 @@ DataWriter<T, DELEGATE>::DataWriter(
     const dds::pub::Publisher& pub,
     const dds::topic::Topic<T>& topic) :
         dds::core::Reference< DELEGATE<T> >(
-            new DELEGATE<T>(pub, topic, pub.default_datawriter_qos(), NULL, dds::core::status::StatusMask::none()))
+            new DELEGATE<T>(pub, topic, pub.default_datawriter_qos()))
 {
+    this->delegate()->listener(NULL, dds::core::status::StatusMask::none());
     this->delegate()->init(this->impl_);
 }
 
@@ -52,8 +53,9 @@ DataWriter<T, DELEGATE>::DataWriter(const dds::pub::Publisher& pub,
      dds::pub::DataWriterListener<T>* listener,
      const dds::core::status::StatusMask& mask) :
          dds::core::Reference< DELEGATE<T> >(
-            new DELEGATE<T>(pub, topic, qos, listener, mask))
+            new DELEGATE<T>(pub, topic, qos))
 {
+    this->delegate()->listener(listener, mask);
     this->delegate()->init(this->impl_);
 }
 
@@ -363,9 +365,7 @@ template <typename T>
 dds::pub::detail::DataWriter<T>::DataWriter(
     const dds::pub::Publisher& pub,
     const ::dds::topic::Topic<T>& topic,
-    const dds::pub::qos::DataWriterQos& qos,
-    dds::pub::DataWriterListener<T>* listener,
-    const dds::core::status::StatusMask& mask)
+    const dds::pub::qos::DataWriterQos& qos)
     : ::org::eclipse::cyclonedds::pub::AnyDataWriterDelegate(qos, topic), pub_(pub), topic_(topic)
 {
     DDSCXX_WARNING_MSVC_OFF(6326)
@@ -385,7 +385,7 @@ dds::pub::detail::DataWriter<T>::DataWriter(
 
     std::string name = topic.name() + "_datawriter";
 
-    this->listener(listener, mask);
+    this->listener_set(nullptr, dds::core::status::StatusMask::all(), false);
     dds_entity_t ddsc_writer = dds_create_writer (ddsc_pub, ddsc_topic, ddsc_qos, this->listener_callbacks);
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_writer, "Could not create DataWriter.");
@@ -416,38 +416,6 @@ dds::pub::detail::DataWriter<T>::init(ObjectDelegate::weak_ref_type weak_ref)
     this->add_to_entity_map(weak_ref);
     /* Register writer at publisher. */
     this->pub_.delegate()->add_datawriter(*this);
-
-    // Because listeners are added after writer is created (which is in enabled state, because
-    // disabled state is not yet supported), events could have occured before listeners were
-    // registered. Therefore the event handlers for those events are called here.
-    if (this->listener_get()) {
-        dds::core::status::StatusMask writerStatus = status_changes();
-
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::liveliness_lost().to_ulong()
-                && writerStatus.test(DDS_LIVELINESS_LOST_STATUS_ID))
-        {
-            dds::core::status::LivelinessLostStatus status = liveliness_lost_status();
-            on_liveliness_lost(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::offered_deadline_missed().to_ulong()
-                && writerStatus.test(DDS_OFFERED_DEADLINE_MISSED_STATUS_ID))
-        {
-            dds::core::status::OfferedDeadlineMissedStatus status = offered_deadline_missed_status();
-            on_offered_deadline_missed(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::offered_incompatible_qos().to_ulong()
-                && writerStatus.test(DDS_OFFERED_INCOMPATIBLE_QOS_STATUS_ID))
-        {
-            dds::core::status::OfferedIncompatibleQosStatus status = offered_incompatible_qos_status();
-            on_offered_incompatible_qos(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::publication_matched().to_ulong()
-                && writerStatus.test(DDS_PUBLICATION_MATCHED_STATUS_ID))
-        {
-            dds::core::status::PublicationMatchedStatus status = publication_matched_status();
-            on_publication_matched(this->ddsc_entity, status);
-        }
-    }
 
     /* Enable when needed. */
     if (this->pub_.delegate()->is_auto_enable()) {
@@ -878,7 +846,7 @@ dds::pub::detail::DataWriter<T>::listener(DataWriterListener<T>* listener,
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     this->check();
-    this->listener_set(listener, mask);
+    this->listener_set(listener, mask, true);
 }
 
 template <typename T>
@@ -896,7 +864,7 @@ dds::pub::detail::DataWriter<T>::close()
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
 
-    this->listener_set(NULL, dds::core::status::StatusMask::none());
+    this->listener_set(NULL, dds::core::status::StatusMask::none(), true);
 
     topic_.delegate()->decrNrDependents();
 
