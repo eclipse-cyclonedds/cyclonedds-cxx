@@ -338,7 +338,7 @@ bool xcdr_v1_stream::move_header(const entity_properties_t &props)
 
 bool xcdr_v1_stream::extended_header(const entity_properties_t &props)
 {
-  return props.e_bb == bb_unset || props.m_id >= pid_extended;
+  return props.e_bb == bit_bound::bb_unset || props.m_id >= pid_extended;
 }
 
 }

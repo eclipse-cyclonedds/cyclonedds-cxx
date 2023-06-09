@@ -715,7 +715,7 @@ generate_member_properties(
   }
 
   if (reset_bit_bound) {
-    if (putf(&streams->props, "  props.push_back(entity_properties_t(1, %1$"PRIu32", %2$s, bb_unset, extensibility::%3$s, %4$s));  //::%5$s\n", decl->id.value, opt, ext, m_u, idl_identifier(decl)))
+    if (putf(&streams->props, "  props.push_back(entity_properties_t(1, %1$"PRIu32", %2$s, bit_bound::bb_unset, extensibility::%3$s, %4$s));  //::%5$s\n", decl->id.value, opt, ext, m_u, idl_identifier(decl)))
       return IDL_RETCODE_NO_MEMORY;
   } else {
     if (putf(&streams->props, "  props.push_back(entity_properties_t(1, %1$"PRIu32", %2$s, get_bit_bound<%3$s>(), extensibility::%4$s, %5$s));  //::%6$s\n", decl->id.value, opt, type, ext, m_u, idl_identifier(decl)))
@@ -1106,7 +1106,7 @@ print_constructed_type_open(struct streams *streams, const idl_node_t *node)
    || putf(&streams->props, pfmt1, name, pfmt2)
    || idl_fprintf(streams->generator->header.handle, pfmt1, name, ";\n\n") < 0
    || multi_putf(streams, ALL, sfmt)
-   || putf(&streams->props, "  props.push_back(entity_properties_t(0, 0, false, bb_unset, extensibility::%1$s));  //root\n", ext))
+   || putf(&streams->props, "  props.push_back(entity_properties_t(0, 0, false, bit_bound::bb_unset, extensibility::%1$s));  //root\n", ext))
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1466,7 +1466,7 @@ process_enum(
   static const char *conv_func = "template<>\n"\
                     "%s enum_conversion<%s>(uint32_t in)%s",
                     *bb_func = "template<>\n"\
-                    "constexpr bit_bound get_bit_bound<%s>() { return bb_%d_bits; }\n\n";
+                    "constexpr bit_bound get_bit_bound<%s>() { return bit_bound::bb_%d_bits; }\n\n";
 
   if (putf(&str->props, conv_func, fullname, fullname, " {\n  switch (in) {\n")
    || idl_fprintf(gen->header.handle, conv_func, fullname, fullname, ";\n\n") < 0)

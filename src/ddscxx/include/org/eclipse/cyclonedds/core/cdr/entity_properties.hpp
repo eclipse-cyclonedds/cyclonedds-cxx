@@ -53,7 +53,7 @@ namespace cdr {
  * @var bit_bound::bb_32_bits The bit width of the entity is at most 32 bits (4 bytes).
  * @var bit_bound::bb_64_bits The bit width of the entity is at most 64 bits (8 bytes).
  */
-enum bit_bound {
+enum class bit_bound {
   bb_unset = 0,
   bb_8_bits = 1,
   bb_16_bits = 2,
@@ -86,19 +86,19 @@ template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_arithmetic<T>::value |
 bit_bound get_bit_bound() {
   switch (sizeof(T)) {
     case 1:
-      return bb_8_bits;
+      return bit_bound::bb_8_bits;
       break;
     case 2:
-      return bb_16_bits;
+      return bit_bound::bb_16_bits;
       break;
     case 4:
-      return bb_32_bits;
+      return bit_bound::bb_32_bits;
       break;
     case 8:
-      return bb_64_bits;
+      return bit_bound::bb_64_bits;
       break;
     default:
-      return bb_unset;
+      return bit_bound::bb_unset;
   }
 }
 
@@ -111,7 +111,7 @@ bit_bound get_bit_bound() {
  * @return bb_unset always.
  */
 template<typename T, DDSCXX_STD_IMPL::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-constexpr bit_bound get_bit_bound() { return bb_unset;}
+constexpr bit_bound get_bit_bound() { return bit_bound::bb_unset;}
 
 typedef struct entity_properties entity_properties_t;
 typedef std::vector<entity_properties_t> propvec;
@@ -132,7 +132,7 @@ struct OMG_DDS_API entity_properties
     uint32_t _depth = 0,
     uint32_t _m_id = 0,
     bool _is_optional = false,
-    bit_bound _bb = bb_unset,
+    bit_bound _bb = bit_bound::bb_unset,
     extensibility _ext = extensibility::ext_final,
     bool _must_understand = true):
       e_ext(_ext),
@@ -153,7 +153,7 @@ struct OMG_DDS_API entity_properties
   bool ignore = false;                            /**< Indicates that this field must be ignored.*/
   bool is_optional = false;                       /**< Indicates that this field can be empty (length 0) for reading/writing purposes.*/
   bool is_key = false;                            /**< Indicates that this field is a key field.*/
-  bit_bound e_bb = bb_unset;                      /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
+  bit_bound e_bb = bit_bound::bb_unset;           /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
   entity_properties_t  *next_on_level = nullptr,  /**< Pointer to the next entity on the same level.*/
                        *prev_on_level = nullptr,  /**< Pointer to the previous entity on the same level.*/
