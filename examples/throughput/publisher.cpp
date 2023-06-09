@@ -39,11 +39,11 @@ static volatile sig_atomic_t done(false); /*semaphore for keeping track of wheth
 
 static uint32_t payloadSize(8192); /*size of the payload of the sent messages*/
 
-static std::chrono::milliseconds burstInterval(100); /*interval between bursts of messages*/
+static std::chrono::milliseconds burstInterval(0); /*interval between bursts of messages*/
 
-static uint32_t burstSize(10); /*number of messages to send each burst*/
+static uint32_t burstSize(1); /*number of messages to send each burst*/
 
-static std::chrono::seconds timeOut(30); /*timeout before the writer will give up*/
+static std::chrono::seconds timeOut(0); /*timeout before the writer will give up*/
 
 static std::string partitionName("Throughput example"); /*name of the domain on which the throughput test is run*/
 
@@ -117,15 +117,11 @@ bool wait_for_reader(dds::pub::DataWriter<ThroughputModule::DataType> &writer)
 
 void start_writing(
   dds::pub::DataWriter<ThroughputModule::DataType> &writer,
-  ThroughputModule::DataType &sample,
-  std::chrono::milliseconds &d_int,
-  uint32_t b_size,
-  std::chrono::seconds &t_out)
+  ThroughputModule::DataType &sample)
 {
   bool timedOut = false;
 
   auto pubStart = std::chrono::steady_clock::now();
-  auto reportstart = pubStart;
 
   if (!done)
   {
@@ -134,7 +130,7 @@ void start_writing(
     while (!done && !timedOut)
     {
       auto burstStart = std::chrono::steady_clock::now();
-      for (uint32_t i = 0; i < b_size; i++)
+      for (uint32_t i = 0; i < burstSize; i++)
       {
         try {
           writer.write(sample);
@@ -150,17 +146,15 @@ void start_writing(
         sample.count()++;
       }
 
-      writer->write_flush();
-      std::this_thread::sleep_until(burstStart + d_int);
+      if (burstInterval > std::chrono::seconds(0)) {
+        writer->write_flush();
+        std::this_thread::sleep_until(burstStart + burstInterval);
+      }
 
       auto n = std::chrono::steady_clock::now();
-      if (t_out > std::chrono::milliseconds(0) &&
-          n > pubStart+t_out)
-      {
+      if (timeOut > std::chrono::milliseconds(0) &&
+          n > pubStart+timeOut) {
         timedOut = true;
-      } else if (reportstart + std::chrono::seconds(1) < n) {
-        std::cout << "." << std::flush;
-        reportstart = n;
       }
 
       if (writer.publication_matched_status().current_count() == 0) {
@@ -196,7 +190,7 @@ int main (int argc, char **argv)
 
   dds::pub::Publisher publisher(participant, pqos);
 
-  dds::pub::qos::DataWriterQos wqos;
+  dds::pub::qos::DataWriterQos wqos(tqos);
   wqos << dds::core::policy::WriterBatching::BatchUpdates();
 
   dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
@@ -211,7 +205,7 @@ int main (int argc, char **argv)
   signal (SIGINT, sigint);
 
   /* Register the sample instance and write samples repeatedly or until time out */
-  start_writing(writer, sample, burstInterval, burstSize, timeOut);
+  start_writing(writer, sample);
 
   /* Cleanup */
   writer.dispose_instance(sample);

@@ -40,6 +40,8 @@ static unsigned long long outOfOrder(0); /*keeps track of out of order samples*/
 
 static unsigned long long total_bytes(0); /*keeps track of total bytes received*/
 
+static unsigned long payloadSize(0); /*size of the last payload received*/
+
 static unsigned long long total_samples(0); /*keeps track of total samples received*/
 
 static std::chrono::milliseconds pollingDelay(-1); /*default is a listener*/
@@ -100,7 +102,8 @@ unsigned long long do_take(dds::sub::DataReader<ThroughputModule::DataType>& rd)
       outOfOrder++;
 
     valid_samples++;
-    total_bytes += s.data().payload().size();
+    payloadSize = static_cast<unsigned long>(s.data().payload().size());
+    total_bytes += payloadSize;
     it->second = ct+1;
   }
 
@@ -179,11 +182,13 @@ void process_samples(dds::sub::DataReader<ThroughputModule::DataType> &reader, s
       if (time_now > prev_time + std::chrono::seconds(1) && total_samples != prev_samples)
       {
         /* Output intermediate statistics */
-        auto deltaTime = static_cast<double>((time_now-prev_time).count())/1e9; //always 1e9?
-        std::cout << subprefix << "Received " << total_samples-prev_samples << " samples totalling " << total_bytes-prev_bytes << " bytes in "
-                  << std::setprecision(4) << deltaTime << " seconds " << "| Rates: " << static_cast<double>(total_samples - prev_samples) / deltaTime
-                  << " samples/s, " << static_cast<double>(total_bytes - prev_bytes) / (deltaTime*BYTES_PER_SEC_TO_MEGABITS_PER_SEC) << " Mbit/s, with "
-                  << outOfOrder << " samples received out of order.\n" << std::flush;
+        auto deltaTime = std::chrono::duration<double>(time_now - prev_time).count();
+        printf ("=== [Subscriber] %5.3f Payload size: %lu | Total received: %llu samples, %llu bytes | Out of order: %llu samples "
+                "Transfer rate: %.2lf samples/s, %.2lf Mbit/s\n",
+                deltaTime, payloadSize, total_samples, total_bytes, outOfOrder,
+                (deltaTime != 0.0) ? (static_cast<double>(total_samples - prev_samples) / deltaTime) : 0,
+                (deltaTime != 0.0) ? ((static_cast<double>(total_bytes - prev_bytes) / BYTES_PER_SEC_TO_MEGABITS_PER_SEC) / deltaTime) : 0);
+        fflush (stdout);
         cycles++;
         prev_time = time_now;
         prev_bytes = total_bytes;
@@ -193,11 +198,12 @@ void process_samples(dds::sub::DataReader<ThroughputModule::DataType> &reader, s
   }
 
   /* Output totals and averages */
-  auto deltaTime = static_cast<double>((std::chrono::steady_clock::now()-startTime).count())/1e9; //always 1e9?
-  std::cout << "\n" << subprefix << "Total received: " << total_samples << " samples, " << total_bytes << " bytes.\n";
-  std::cout << subprefix << "Out of order: " << outOfOrder << " samples.\n";
-  std::cout << subprefix << std::setprecision(4) << "Average transfer rate: " << static_cast<double>(total_samples) / deltaTime << " samples/s, "
-            << static_cast<double>(total_bytes) / (deltaTime*BYTES_PER_SEC_TO_MEGABITS_PER_SEC)  << " Mbit/s.\n" << std::flush;
+  auto deltaTime = std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
+  printf ("\nTotal received: %llu samples, %llu bytes\n", total_samples, total_bytes);
+  printf ("Out of order: %llu samples\n", outOfOrder);
+  printf ("Average transfer rate: %.2lf samples/s, ", static_cast<double>(total_samples) / deltaTime);
+  printf ("%.2lf Mbit/s\n", (static_cast<double>(total_bytes) / BYTES_PER_SEC_TO_MEGABITS_PER_SEC) / deltaTime);
+  fflush (stdout);
 }
 
 static void sigint (int sig)
@@ -272,7 +278,7 @@ int main (int argc, char **argv)
     reader(
       subscriber,
       topic,
-      dds::sub::qos::DataReaderQos(),
+      dds::sub::qos::DataReaderQos(tqos),
       pollingDelay.count() < 0 ? &listener : NULL,
       pollingDelay.count() < 0 ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
 
