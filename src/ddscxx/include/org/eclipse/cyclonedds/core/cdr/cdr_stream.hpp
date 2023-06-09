@@ -387,7 +387,7 @@ public:
      *
      * @return Whether the streaming is done only over the key values.
      */
-    inline bool is_key() const {return m_key;}
+    inline bool is_key() const {assert(m_key != key_mode::unset); return m_key == key_mode::sorted || m_key == key_mode::unsorted;}
 
     /**
      * @brief
@@ -399,7 +399,7 @@ public:
      * @param[in] mode The streaming mode to set for the stream.
      * @param[in] key The key mode to set for the stream.
      */
-    void set_mode(stream_mode mode, bool key) {m_mode = mode; m_key = key; reset();}
+    void set_mode(stream_mode mode, key_mode key) {assert(key != key_mode::unset); m_mode = mode; m_key = key; reset();}
 
     /**
      * @brief
@@ -553,7 +553,7 @@ protected:
              m_fault_mask;                        /**< the mask for statuses that will cause streaming
                                                        to be aborted*/
     stream_mode m_mode = stream_mode::unset;      /**< the current streaming mode*/
-    bool m_key = false;                           /**< the current key mode*/
+    key_mode m_key = key_mode::unset;             /**< the current key mode*/
     bool m_swap = false;                          /**< whether to swap endianness*/
 
     DDSCXX_WARNING_MSVC_OFF(4251)

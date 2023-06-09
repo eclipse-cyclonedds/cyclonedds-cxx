@@ -186,7 +186,7 @@ TEST_F(Bounds, strings)
     str.set_buffer(arr, 16);
 
     Bounded::Msg msg;
-    read(str, msg, false);
+    read(str, msg, key_mode::not_key);
 
     ASSERT_EQ (static_cast<serialization_status>(str.status()), serialization_status::illegal_field_value);
 }

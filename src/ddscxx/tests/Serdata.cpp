@@ -76,14 +76,14 @@ private:
     void validate_impl(const T &msg, const std::vector<uint8_t> &exp, endianness end) {
         basic_cdr_stream str(end);
 
-        move(str, msg, false);
+        move(str, msg, key_mode::not_key);
 
         size_t sz = str.position();
         ASSERT_EQ(sz, exp.size());
         std::vector<uint8_t> buffer(sz, 0x0);
         str.set_buffer(buffer.data(), buffer.size());
 
-        write(str, msg, false);
+        write(str, msg, key_mode::not_key);
 
         ASSERT_EQ(buffer, exp);
     }
@@ -103,7 +103,7 @@ TEST_F(Serdata, alignment)
     std::vector<unsigned char> vec(8,0x0);
     str.set_buffer(vec.data(), vec.size());
 
-    write(str, msg, false);
+    write(str, msg, key_mode::not_key);
 
     ASSERT_EQ(vec, std::vector<unsigned char>({16,25,36,0,255,255,0,0}));
 }

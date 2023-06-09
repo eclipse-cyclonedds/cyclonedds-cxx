@@ -63,6 +63,27 @@ enum class bit_bound {
 
 /**
  * @brief
+ * Key mode descriptors.
+ *
+ * @enum key_mode Describes the manner of writing of a stream.
+ *
+ * This value is used to determine which fields to write and in which order to write them.
+ * Mainly used to get the first/next/previous entity from the entity properties describing a datatype.
+ *
+ * @var key_mode::unset The key_mode of streaming is unset.
+ * @var key_mode::not_key The key_mode of streaming is not a key, all members will be streamed in declaration order.
+ * @var key_mode::unsorted The key_mode of streaming is key mode, only members will be streamed in declaration order.
+ * @var key_mode::sorted The key_mode of streaming is keyhash mode, only members will be streamed in member id order.
+ */
+enum class key_mode {
+  unset,
+  not_key,
+  unsorted,
+  sorted
+};
+
+/**
+ * @brief
  * Helper struct to keep track of key endpoints of the a struct
  */
 DDSCXX_WARNING_MSVC_OFF(4251)
@@ -155,10 +176,16 @@ struct OMG_DDS_API entity_properties
   bool is_key = false;                            /**< Indicates that this field is a key field.*/
   bit_bound e_bb = bit_bound::bb_unset;           /**< The minimum number of bytes necessary to represent this entity/bitmask.*/
 
-  entity_properties_t  *next_on_level = nullptr,  /**< Pointer to the next entity on the same level.*/
-                       *prev_on_level = nullptr,  /**< Pointer to the previous entity on the same level.*/
-                       *parent        = nullptr,  /**< Pointer to the parent of this entity.*/
-                       *first_member  = nullptr;  /**< Pointer to the first entity which is a member of this entity.*/
+  entity_properties_t  *parent              = nullptr,  /**< Pointer to the parent of this entity.*/
+                       *first_member        = nullptr,  /**< Pointer to the first entity which is a member of this entity.*/
+                       *next_on_level       = nullptr,  /**< Pointer to the next entity on the same level.*/
+                       *prev_on_level       = nullptr,  /**< Pointer to the previous entity on the same level.*/
+                       *first_unsorted_key  = nullptr,  /**< Pointer to the first entity which is a key member of this entity, going by declaration order.*/
+                       *next_unsorted_key   = nullptr,  /**< Pointer to the next entity which is a key member on the same level, going by declaration order.*/
+                       *prev_unsorted_key   = nullptr,  /**< Pointer to the previous entity which is a key member on the same level, going by declaration order.*/
+                       *first_sorted_key    = nullptr,  /**< Pointer to the first entity which is a key member of this entity, going by member id order.*/
+                       *next_sorted_key     = nullptr,  /**< Pointer to the next entity which is a key member on the same level, going by member id order.*/
+                       *prev_sorted_key     = nullptr;  /**< Pointer to the previous entity which is a key member on the same level, going by member id order.*/
 
   /**
    * @brief
@@ -233,6 +260,36 @@ struct OMG_DDS_API entity_properties
    * @param[in] in The tree to print.
    */
   static void print(const propvec &in);
+
+  /**
+    * @brief
+    * Returns the previous entity at the current level (if any).
+    *
+    * @param[in] key The key mode to get the first entity for.
+    *
+    * @return Pointer to the first entity, or nullptr if there are none.
+    */
+  const entity_properties_t* first_entity(key_mode key) const;
+
+  /**
+    * @brief
+    * Returns the next entity at the current level (if any).
+    *
+    * @param[in] key The key mode to get the next entity for.
+    *
+    * @return Pointer to the next entity, or nullptr if there are none.
+    */
+  const entity_properties_t* next_entity(key_mode key) const;
+
+  /**
+    * @brief
+    * Returns the previous entity at the current level (if any).
+    *
+    * @param[in] key The key mode to get the previous entity for.
+    *
+    * @return Pointer to the previous entity, or nullptr if there are none.
+    */
+  const entity_properties_t* previous_entity(key_mode key) const;
 };
 
 /**

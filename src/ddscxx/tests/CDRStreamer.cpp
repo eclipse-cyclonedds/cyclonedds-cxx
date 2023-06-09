@@ -72,10 +72,10 @@ public:
 };
 
 template<typename T, typename S>
-void VerifyWrite_Impl(const T& in, const bytes &out, S &stream, bool as_key, bool write_success = true, bool compare_success = true)
+void VerifyWrite_Impl(const T& in, const bytes &out, S &stream, key_mode _key, bool write_success = true, bool compare_success = true)
 {
   bytes buffer;
-  bool result = move(stream, in, as_key);
+  bool result = move(stream, in, _key);
   ASSERT_EQ(result, write_success);
 
   if (!result)
@@ -83,25 +83,25 @@ void VerifyWrite_Impl(const T& in, const bytes &out, S &stream, bool as_key, boo
 
   buffer.resize(stream.position());
   stream.set_buffer(buffer.data(), buffer.size());
-  ASSERT_TRUE(write(stream, in, as_key));
+  ASSERT_TRUE(write(stream, in, _key));
 
   result = (buffer == out);
   ASSERT_EQ(result, compare_success);
 }
 
 template<typename T, typename S>
-void VerifyRead_Impl(const bytes &in, const T& out, S &stream, bool as_key, bool read_success = true, bool compare_success = true)
+void VerifyRead_Impl(const bytes &in, const T& out, S &stream, key_mode _key, bool read_success = true, bool compare_success = true)
 {
   bytes incopy(in);
   T buffer;
   stream.set_buffer(incopy.data(), incopy.size());
-  bool result = read(stream, buffer, as_key);
+  bool result = read(stream, buffer, _key);
   ASSERT_EQ(result, read_success);
 
   if (!result)
     return;
 
-  if (as_key)
+  if (_key == key_mode::sorted || _key == key_mode::unsorted)
     result = (buffer.c() == out.c());
   else
     result = (buffer == out);
@@ -110,15 +110,15 @@ void VerifyRead_Impl(const bytes &in, const T& out, S &stream, bool as_key, bool
 }
 
 template<typename T, typename S>
-void VerifyReadOneDeeper_Impl(const bytes &in, const T& out, S &stream, bool as_key)
+void VerifyReadOneDeeper_Impl(const bytes &in, const T& out, S &stream, key_mode _key)
 {
   bytes incopy(in);
   T buffer;
 
   stream.set_buffer(incopy.data(), incopy.size());
-  ASSERT_TRUE(read(stream, buffer, as_key));
+  ASSERT_TRUE(read(stream, buffer, _key));
 
-  if (as_key) {
+  if (_key == key_mode::sorted || _key == key_mode::unsorted) {
     ASSERT_EQ(buffer.c().size(), out.c().size());
     for (size_t i = 0; i < buffer.c().size() && i < out.c().size(); i++)
       ASSERT_EQ(buffer.c()[i].c(), out.c()[i].c());
@@ -127,52 +127,52 @@ void VerifyReadOneDeeper_Impl(const bytes &in, const T& out, S &stream, bool as_
   }
 }
 
-#define VerifyRead(_bytes, _struct, _streamer, _as_key, _read_success, _compare_success)\
+#define VerifyRead(_bytes, _struct, _streamer, _key, _read_success, _compare_success)\
 {\
 _streamer streamer_1(endianness::big_endian);\
-VerifyRead_Impl(_bytes, _struct, streamer_1, _as_key, _read_success, _compare_success);\
+VerifyRead_Impl(_bytes, _struct, streamer_1, _key, _read_success, _compare_success);\
 }
 
-#define VerifyReadOneDeeper(_bytes, _struct, _streamer, _as_key)\
+#define VerifyReadOneDeeper(_bytes, _struct, _streamer, _key)\
 {\
 _streamer streamer_1(endianness::big_endian);\
-VerifyReadOneDeeper_Impl(_bytes, _struct, streamer_1, _as_key);\
+VerifyReadOneDeeper_Impl(_bytes, _struct, streamer_1, _key);\
 }
 
 #define read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 {\
-VerifyRead(normal_bytes, test_struct, streamer, false, true, true);\
-VerifyRead(key_bytes, key_struct, streamer, true, true, true);\
+VerifyRead(normal_bytes, test_struct, streamer, key_mode::not_key, true, true);\
+VerifyRead(key_bytes, key_struct, streamer, key_mode::unsorted, true, true);\
 }
 
 #define read_test_fail(test_struct, key_struct, key_bytes, streamer)\
 {\
-VerifyRead(bytes(256, 0x0), test_struct, streamer, false, false, true);\
-VerifyRead(key_bytes, key_struct, streamer, true, true, true);\
+VerifyRead(bytes(256, 0x0), test_struct, streamer, key_mode::not_key, false, true);\
+VerifyRead(key_bytes, key_struct, streamer, key_mode::unsorted, true, true);\
 }
 
 #define read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 {\
-VerifyRead(normal_bytes, test_struct, streamer, false, true, true);\
-VerifyReadOneDeeper(key_bytes, key_struct, streamer, true);\
+VerifyRead(normal_bytes, test_struct, streamer, key_mode::not_key, true, true);\
+VerifyReadOneDeeper(key_bytes, key_struct, streamer, key_mode::unsorted);\
 }
 
-#define VerifyWrite(_bytes, _struct, _streamer, _as_key, _write_success, _compare_success)\
+#define VerifyWrite(_bytes, _struct, _streamer, _key, _write_success, _compare_success)\
 {\
 _streamer streamer_1(endianness::big_endian);\
-VerifyWrite_Impl(_bytes, _struct, streamer_1, _as_key, _write_success, _compare_success);\
+VerifyWrite_Impl(_bytes, _struct, streamer_1, _key, _write_success, _compare_success);\
 }
 
 #define write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 {\
-VerifyWrite(test_struct, normal_bytes, streamer, false, true, true);\
-VerifyWrite(key_struct, key_bytes, streamer, true, true, true);\
+VerifyWrite(test_struct, normal_bytes, streamer, key_mode::not_key, true, true);\
+VerifyWrite(key_struct, key_bytes, streamer, key_mode::unsorted, true, true);\
 }
 
 #define write_test_fail(test_struct, key_struct, key_bytes, streamer)\
 {\
-VerifyWrite(test_struct, bytes(256, 0x0), streamer, false, false, false);\
-VerifyWrite(test_struct, key_bytes, streamer, true, true, true);\
+VerifyWrite(test_struct, bytes(256, 0x0), streamer, key_mode::not_key, false, false);\
+VerifyWrite(test_struct, key_bytes, streamer, key_mode::unsorted, true, true);\
 }
 
 #define readwrite_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
@@ -220,21 +220,21 @@ TEST_F(CDRStreamer, cdr_boundary)
   basic_cdr_stream str;
   str.set_buffer(buffer.data(), 12);
 
-  ASSERT_FALSE(write(str, BS, false)); /*this write should fail, as the buffer limit is too small*/
+  ASSERT_FALSE(write(str, BS, key_mode::not_key)); /*this write should fail, as the buffer limit is too small*/
   ASSERT_EQ(str.status(), serialization_status::write_bound_exceeded);
 
   str.reset();
 
-  ASSERT_FALSE(read(str, BS2, false)); /*this read should fail too, as the buffer limit is too small*/
+  ASSERT_FALSE(read(str, BS2, key_mode::not_key)); /*this read should fail too, as the buffer limit is too small*/
   ASSERT_EQ(str.status(), serialization_status::read_bound_exceeded);
 
   str.set_buffer(buffer.data(), 32);
 
-  ASSERT_TRUE(write(str, BS, false)); /*this write should finish, as the buffer limit is set as "unlimited"*/
+  ASSERT_TRUE(write(str, BS, key_mode::not_key)); /*this write should finish, as the buffer limit is set as "unlimited"*/
 
   str.reset();
 
-  ASSERT_TRUE(read(str, BS2, false)); /*this write should finish, as the buffer limit is set as "unlimited"*/
+  ASSERT_TRUE(read(str, BS2, key_mode::not_key)); /*this write should finish, as the buffer limit is set as "unlimited"*/
   ASSERT_EQ(BS, BS2);
 }
 
@@ -324,8 +324,8 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x00, 0x01, 0xE2, 0x40 /*mutablestruct.l*/};
 
   stream_test_fail_basic(MS, MS_xcdr_v1_normal, MS_xcdr_v2_normal, BS_basic_key)
-  VerifyRead(MS_xcdr_v1_normal_reordered, MS, xcdr_v1_stream, false, true, true);
-  VerifyRead(MS_xcdr_v2_normal_reordered, MS, xcdr_v2_stream, false, true, true);
+  VerifyRead(MS_xcdr_v1_normal_reordered, MS, xcdr_v1_stream, key_mode::not_key, true, true);
+  VerifyRead(MS_xcdr_v2_normal_reordered, MS, xcdr_v2_stream, key_mode::not_key, true, true);
 }
 
 /*verifying reads/writes of a nested struct*/
@@ -558,13 +558,13 @@ TEST_F(CDRStreamer, cdr_union)
 
   stream_test(US, US_normal, US_normal)
 
-  VerifyRead(US_normal, US_k, basic_cdr_stream, false, true, true);
-  VerifyRead(US_normal, US_k, xcdr_v1_stream, false, true, true);
-  VerifyRead(US_normal, US_k, xcdr_v2_stream, false, true, true);
+  VerifyRead(US_normal, US_k, basic_cdr_stream, key_mode::not_key, true, true);
+  VerifyRead(US_normal, US_k, xcdr_v1_stream, key_mode::not_key, true, true);
+  VerifyRead(US_normal, US_k, xcdr_v2_stream, key_mode::not_key, true, true);
 
-  VerifyRead(US_k_key, US_k_read, basic_cdr_stream, true, true, true);
-  VerifyRead(US_k_key, US_k_read, xcdr_v1_stream, true, true, true);
-  VerifyRead(US_k_key, US_k_read, xcdr_v2_stream, true, true, true);
+  VerifyRead(US_k_key, US_k_read, basic_cdr_stream, key_mode::unsorted, true, true);
+  VerifyRead(US_k_key, US_k_read, xcdr_v1_stream, key_mode::unsorted, true, true);
+  VerifyRead(US_k_key, US_k_read, xcdr_v2_stream, key_mode::unsorted, true, true);
 
   write_test(US_k, US_k, US_normal, US_k_key, basic_cdr_stream)
   write_test(US_k, US_k, US_normal, US_k_key, xcdr_v1_stream)
@@ -595,13 +595,13 @@ TEST_F(CDRStreamer, cdr_pragma)
       0x00, 0x00, 0x03, 0x7A/*pragma_keys.d.s_2.l_2*/
       };
 
-  VerifyRead(PS_basic_normal, PS, basic_cdr_stream, false, true, true);
-  VerifyRead(PS_basic_normal, PS, xcdr_v1_stream, false, true, true);
-  VerifyRead(PS_basic_normal, PS, xcdr_v2_stream, false, true, true);
+  VerifyRead(PS_basic_normal, PS, basic_cdr_stream, key_mode::not_key, true, true);
+  VerifyRead(PS_basic_normal, PS, xcdr_v1_stream, key_mode::not_key, true, true);
+  VerifyRead(PS_basic_normal, PS, xcdr_v2_stream, key_mode::not_key, true, true);
 
-  VerifyRead(PS_basic_key, PS_key_test, basic_cdr_stream, true, true, true);
-  VerifyRead(PS_basic_key, PS_key_test, xcdr_v1_stream, true, true, true);
-  VerifyRead(PS_basic_key, PS_key_test, xcdr_v2_stream, true, true, true);
+  VerifyRead(PS_basic_key, PS_key_test, basic_cdr_stream, key_mode::unsorted, true, true);
+  VerifyRead(PS_basic_key, PS_key_test, xcdr_v1_stream, key_mode::unsorted, true, true);
+  VerifyRead(PS_basic_key, PS_key_test, xcdr_v2_stream, key_mode::unsorted, true, true);
 
   write_test(PS, PS, PS_basic_normal, PS_basic_key, basic_cdr_stream)
   write_test(PS, PS, PS_basic_normal, PS_basic_key, xcdr_v1_stream)
@@ -765,8 +765,8 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
-  VerifyRead(v1_missing, MU, xcdr_v1_stream, false, false, true);
-  VerifyRead(v2_missing, MU, xcdr_v2_stream, false, false, true);
+  VerifyRead(v1_missing, MU, xcdr_v1_stream, key_mode::not_key, false, true);
+  VerifyRead(v2_missing, MU, xcdr_v2_stream, key_mode::not_key, false, true);
 
   /*these cdr streams contain a field with id 0 which is not in the definition of
     must_understand_struct but is set to must_understand, and therefore must
@@ -803,8 +803,8 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
-  VerifyRead(v1_missing, MU, xcdr_v1_stream, false, false, true);
-  VerifyRead(v2_missing, MU, xcdr_v2_stream, false, false, true);
+  VerifyRead(v1_missing, MU, xcdr_v1_stream, key_mode::not_key, false, true);
+  VerifyRead(v2_missing, MU, xcdr_v2_stream, key_mode::not_key, false, true);
 }
 
 /*verifying correct insertion of d-headers after opening arrays and sequences of non-primitive types*/

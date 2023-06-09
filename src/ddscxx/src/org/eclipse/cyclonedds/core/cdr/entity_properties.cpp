@@ -59,6 +59,45 @@ static void add_key(const key_endpoint &key, entity_properties_t &props)
   }
 }
 
+static void link_keys_unsorted(entity_properties_t *prop)
+{
+  entity_properties_t *member = prop->first_member,  *prev_key = nullptr;
+  while (member) {
+    if (member->is_key) {
+      if (!prop->first_unsorted_key)
+        prop->first_unsorted_key = member;
+      member->prev_unsorted_key = prev_key;
+      if (prev_key)
+        prev_key->next_unsorted_key = member;
+      prev_key = member;
+      link_keys_unsorted(member);
+    }
+    member = member->next_on_level;
+  }
+}
+
+static void link_keys_sorted(entity_properties_t *prop)
+{
+  entity_properties_t *member = prop->first_unsorted_key,  *prev_key = nullptr;
+  std::map<uint32_t,entity_properties_t*> mapping;
+  while (member) {
+    if (member->is_key) {
+      mapping[member->m_id] = member;
+      link_keys_sorted(member);
+    }
+    member = member->next_unsorted_key;
+  }
+
+  for (const auto &p:mapping) {
+    if (!prop->first_sorted_key)
+      prop->first_sorted_key = p.second;
+    p.second->prev_sorted_key = prev_key;
+    if (prev_key)
+      prev_key->next_sorted_key = p.second;
+    prev_key = p.second;
+  }
+}
+
 void entity_properties_t::finish(propvec &props, const key_endpoint &keys)
 {
   assert(props.size());
@@ -99,6 +138,66 @@ void entity_properties_t::finish(propvec &props, const key_endpoint &keys)
 
   //use key endpoints
   add_key(keys, props[0]);
+
+  //add unsorted key linkage
+  link_keys_unsorted(&props[0]);
+
+  //add sorted key linkage
+  link_keys_sorted(&props[0]);
+}
+
+const entity_properties_t *entity_properties_t::first_entity(key_mode key) const
+{
+  switch (key) {
+    case key_mode::not_key:
+      return first_member;
+      break;
+    case key_mode::unsorted:
+      return first_unsorted_key;
+      break;
+    case key_mode::sorted:
+      return first_sorted_key;
+      break;
+    default:
+      assert(false);
+      return nullptr;
+  }
+}
+
+const entity_properties_t* entity_properties_t::next_entity(key_mode key) const
+{
+  switch (key) {
+    case key_mode::not_key:
+      return next_on_level;
+      break;
+    case key_mode::unsorted:
+      return next_unsorted_key;
+      break;
+    case key_mode::sorted:
+      return next_sorted_key;
+      break;
+    default:
+      assert(false);
+      return nullptr;
+  }
+}
+
+const entity_properties_t* entity_properties_t::previous_entity(key_mode key) const
+{
+  switch (key) {
+    case key_mode::not_key:
+      return prev_on_level;
+      break;
+    case key_mode::unsorted:
+      return prev_unsorted_key;
+      break;
+    case key_mode::sorted:
+      return prev_sorted_key;
+      break;
+    default:
+      assert(false);
+      return nullptr;
+  }
 }
 
 void entity_properties_t::print() const
@@ -151,10 +250,16 @@ void entity_properties_t::append_struct_contents(propvec &appendto, const propve
 
   for (size_t i = oldsize; i < appendto.size(); i++) {
     appendto[i].depth++;
-    appendto[i].next_on_level = nullptr;
-    appendto[i].prev_on_level = nullptr;
-    appendto[i].parent        = nullptr;
-    appendto[i].first_member  = nullptr;
+    appendto[i].next_on_level       = nullptr;
+    appendto[i].prev_on_level       = nullptr;
+    appendto[i].parent              = nullptr;
+    appendto[i].first_member        = nullptr;
+    appendto[i].first_unsorted_key  = nullptr;
+    appendto[i].first_sorted_key    = nullptr;
+    appendto[i].next_unsorted_key   = nullptr;
+    appendto[i].next_sorted_key     = nullptr;
+    appendto[i].prev_unsorted_key   = nullptr;
+    appendto[i].prev_sorted_key     = nullptr;
   }
 }
 

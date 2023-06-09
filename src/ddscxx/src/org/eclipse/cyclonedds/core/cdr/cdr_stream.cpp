@@ -63,33 +63,22 @@ bool cdr_stream::finish_struct(const entity_properties_t &props, const member_id
   }
 }
 
-const entity_properties_t *cdr_stream::first_entity(const entity_properties_t *props)
+const entity_properties_t *cdr_stream::first_entity(const entity_properties_t *prop)
 {
-  const entity_properties_t *prop = props->first_member;
-  while (m_key && prop && !prop->is_key)
-    prop = next_entity(prop);
-
-  return prop;
+  assert(prop);
+  return prop->first_entity(m_key);
 }
 
 const entity_properties_t* cdr_stream::next_entity(const entity_properties_t *prop)
 {
-  prop = prop->next_on_level;
-  if (m_key) {
-    while (prop && !prop->is_key)
-      prop = prop->next_on_level;
-  }
-  return prop;
+  assert(prop);
+  return prop->next_entity(m_key);
 }
 
 const entity_properties_t* cdr_stream::previous_entity(const entity_properties_t *prop)
 {
-  prop = prop->prev_on_level;
-  if (m_key) {
-    while (prop && !prop->is_key)
-      prop = prop->prev_on_level;
-  }
-  return prop;
+  assert(prop);
+  return prop->previous_entity(m_key);
 }
 
 bool cdr_stream::bytes_available(size_t N, bool peek)
