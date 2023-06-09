@@ -234,7 +234,7 @@ TEST_F(Regression, delimiters_bitmask)
 
 TEST_F(Regression, emumerators_properties)
 {
-  EXPECT_EQ(org::eclipse::cyclonedds::core::cdr::get_bit_bound<e1>(), bb_8_bits);
+  EXPECT_EQ(org::eclipse::cyclonedds::core::cdr::get_bit_bound<e1>(), bit_bound::bb_8_bits);
 }
 
 TEST_F(Regression, delimiters_emumerators)

@@ -313,15 +313,15 @@ private:
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
+  switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
   {
-    case bb_8_bits:
+    case bit_bound::bb_8_bits:
       return read_enum_impl<xcdr_v2_stream,T,uint8_t>(str, toread, N);
       break;
-    case bb_16_bits:
+    case bit_bound::bb_16_bits:
       return read_enum_impl<xcdr_v2_stream,T,uint16_t>(str, toread, N);
       break;
-    case bb_32_bits:
+    case bit_bound::bb_32_bits:
       return read_enum_impl<xcdr_v2_stream,T,uint32_t>(str, toread, N);
       break;
     default:
@@ -342,15 +342,15 @@ bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
+  switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
   {
-    case bb_8_bits:
+    case bit_bound::bb_8_bits:
       return write_enum_impl<xcdr_v2_stream,T,uint8_t>(str, towrite, N);
       break;
-    case bb_16_bits:
+    case bit_bound::bb_16_bits:
       return write_enum_impl<xcdr_v2_stream,T,uint16_t>(str, towrite, N);
       break;
-    case bb_32_bits:
+    case bit_bound::bb_32_bits:
       return write_enum_impl<xcdr_v2_stream,T,uint32_t>(str, towrite, N);
       break;
     default:
@@ -370,15 +370,15 @@ bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
 bool move(xcdr_v2_stream& str, const T&, size_t N = 1) {
-  switch (str.is_key() ? bb_32_bits : get_bit_bound<T>())
+  switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
   {
-    case bb_8_bits:
+    case bit_bound::bb_8_bits:
       return move(str, int8_t(0), N);
       break;
-    case bb_16_bits:
+    case bit_bound::bb_16_bits:
       return move(str, int16_t(0), N);
       break;
-    case bb_32_bits:
+    case bit_bound::bb_32_bits:
       return move(str, int32_t(0), N);
       break;
     default:
