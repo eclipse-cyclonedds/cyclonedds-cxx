@@ -182,7 +182,7 @@ void process_samples(dds::sub::DataReader<ThroughputModule::DataType> &reader, s
       if (time_now > prev_time + std::chrono::seconds(1) && total_samples != prev_samples)
       {
         /* Output intermediate statistics */
-        auto deltaTime = static_cast<double>((time_now-prev_time).count())/(std::chrono::seconds(1).count());
+        auto deltaTime = std::chrono::duration<double>(time_now - prev_time).count();
         printf ("=== [Subscriber] %5.3f Payload size: %lu | Total received: %llu samples, %llu bytes | Out of order: %llu samples "
                 "Transfer rate: %.2lf samples/s, %.2lf Mbit/s\n",
                 deltaTime, payloadSize, total_samples, total_bytes, outOfOrder,
@@ -198,7 +198,7 @@ void process_samples(dds::sub::DataReader<ThroughputModule::DataType> &reader, s
   }
 
   /* Output totals and averages */
-  auto deltaTime = static_cast<double>((std::chrono::steady_clock::now()-startTime).count())/(std::chrono::seconds(1).count());
+  auto deltaTime = std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
   printf ("\nTotal received: %llu samples, %llu bytes\n", total_samples, total_bytes);
   printf ("Out of order: %llu samples\n", outOfOrder);
   printf ("Average transfer rate: %.2lf samples/s, ", static_cast<double>(total_samples) / deltaTime);
