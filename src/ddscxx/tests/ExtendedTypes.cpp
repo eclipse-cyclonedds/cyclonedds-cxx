@@ -39,7 +39,7 @@ public:
     bool exp_contents = true)
   {
     S str;
-    bool move_result = move(str, in, false);
+    bool move_result = move(str, in, key_mode::not_key);
     ASSERT_EQ(move_result, exp_write_result);
 
     if (!move_result)
@@ -48,7 +48,7 @@ public:
     bytes buffer(str.position(), 0x0);
     str.set_buffer(buffer.data(), buffer.size());
 
-    bool write_result = write(str, in, false);
+    bool write_result = write(str, in, key_mode::not_key);
     ASSERT_EQ(write_result, exp_write_result);
 
     if (!write_result)
@@ -56,7 +56,7 @@ public:
 
     MSGOUT out;
     str.reset();
-    bool read_result = read(str, out, false);
+    bool read_result = read(str, out, key_mode::not_key);
     ASSERT_EQ(read_result, exp_read_result);
 
     if (!read_result || !exp_read_result)
@@ -73,7 +73,7 @@ public:
     bool exp_contents = true)
   {
     S str;
-    bool move_result = move(str, in, false);
+    bool move_result = move(str, in, key_mode::not_key);
     ASSERT_EQ(move_result, exp_write_result);
 
     if (!move_result)
@@ -82,7 +82,7 @@ public:
     bytes buffer(str.position(), 0x0);
     str.set_buffer(buffer.data(), buffer.size());
 
-    bool write_result = write(str, in, false);
+    bool write_result = write(str, in, key_mode::not_key);
     ASSERT_EQ(write_result, exp_write_result);
 
     if (!write_result)
@@ -90,7 +90,7 @@ public:
 
     MSGOUT out;
     str.reset();
-    bool read_result = read(str, out, false);
+    bool read_result = read(str, out, key_mode::not_key);
     ASSERT_EQ(read_result, exp_read_result);
 
     if (!read_result || !exp_read_result)

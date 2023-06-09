@@ -1186,9 +1186,9 @@ print_entry_point_functions(
 {
   static const char *fmt =
     "template<typename S, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >\n"
-    "bool {T}(S& str, {C}%1$s& instance, bool as_key) {\n"
+    "bool {T}(S& str, {C}%1$s& instance, key_mode key) {\n"
     "  const auto &props = get_type_props<%1$s>();\n"
-    "  str.set_mode(cdr_stream::stream_mode::{T}, as_key);\n"
+    "  str.set_mode(cdr_stream::stream_mode::{T}, key);\n"
     "  return {T}(str, instance, props.data()); \n"
     "}\n\n";
 
