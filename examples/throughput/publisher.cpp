@@ -146,8 +146,10 @@ void start_writing(
         sample.count()++;
       }
 
-      writer->write_flush();
-      std::this_thread::sleep_until(burstStart + burstInterval);
+      if (burstInterval > std::chrono::seconds(0)) {
+        writer->write_flush();
+        std::this_thread::sleep_until(burstStart + burstInterval);
+      }
 
       auto n = std::chrono::steady_clock::now();
       if (timeOut > std::chrono::milliseconds(0) &&
