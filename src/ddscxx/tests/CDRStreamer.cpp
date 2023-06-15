@@ -1,4 +1,4 @@
-// Copyright(c) 2006 to 2022 ZettaScale Technology and others
+// Copyright(c) 2006 to 2023 ZettaScale Technology and others
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License v. 2.0 which is available at
@@ -8,28 +8,14 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
-#include "dds/dds.hpp"
-#include <gtest/gtest.h>
+#include "StreamingUtility.hpp"
 #include "CdrDataModels.hpp"
 #include "CdrDataModels_pragma.hpp"
 
-#if DDSCXX_USE_BOOST
-#include <boost/optional.hpp>
-#include <boost/none.hpp>
-#define DDSCXX_STD_IMPL boost
-#define DDSCXX_STD_IMPL_NULLOPT boost::none
-#else
-#define DDSCXX_STD_IMPL std
-#define DDSCXX_STD_IMPL_NULLOPT std::nullopt
-#endif
-
-using namespace org::eclipse::cyclonedds::core::cdr;
 using namespace CDR_testing;
 
-typedef std::vector<unsigned char> bytes;
-
 /**
- * Fixture for the DataWriter tests
+ * Fixture for the CDRStreamer tests
  */
 class CDRStreamer : public ::testing::Test
 {
@@ -70,142 +56,6 @@ public:
     void TearDown() { }
 
 };
-
-template<typename T, typename S>
-void VerifyWrite_Impl(const T& in, const bytes &out, S &stream, key_mode _key, bool write_success = true, bool compare_success = true)
-{
-  bytes buffer;
-  bool result = move(stream, in, _key);
-  ASSERT_EQ(result, write_success);
-
-  if (!result)
-    return;
-
-  buffer.resize(stream.position());
-  stream.set_buffer(buffer.data(), buffer.size());
-  ASSERT_TRUE(write(stream, in, _key));
-
-  result = (buffer == out);
-  ASSERT_EQ(result, compare_success);
-}
-
-template<typename T, typename S>
-void VerifyRead_Impl(const bytes &in, const T& out, S &stream, key_mode _key, bool read_success = true, bool compare_success = true)
-{
-  bytes incopy(in);
-  T buffer;
-  stream.set_buffer(incopy.data(), incopy.size());
-  bool result = read(stream, buffer, _key);
-  ASSERT_EQ(result, read_success);
-
-  if (!result)
-    return;
-
-  if (_key == key_mode::sorted || _key == key_mode::unsorted)
-    result = (buffer.c() == out.c());
-  else
-    result = (buffer == out);
-
-  ASSERT_EQ(result, compare_success);
-}
-
-template<typename T, typename S>
-void VerifyReadOneDeeper_Impl(const bytes &in, const T& out, S &stream, key_mode _key)
-{
-  bytes incopy(in);
-  T buffer;
-
-  stream.set_buffer(incopy.data(), incopy.size());
-  ASSERT_TRUE(read(stream, buffer, _key));
-
-  if (_key == key_mode::sorted || _key == key_mode::unsorted) {
-    ASSERT_EQ(buffer.c().size(), out.c().size());
-    for (size_t i = 0; i < buffer.c().size() && i < out.c().size(); i++)
-      ASSERT_EQ(buffer.c()[i].c(), out.c()[i].c());
-  } else {
-    ASSERT_EQ(buffer, out);
-  }
-}
-
-#define VerifyRead(_bytes, _struct, _streamer, _key, _read_success, _compare_success)\
-{\
-_streamer streamer_1(endianness::big_endian);\
-VerifyRead_Impl(_bytes, _struct, streamer_1, _key, _read_success, _compare_success);\
-}
-
-#define VerifyReadOneDeeper(_bytes, _struct, _streamer, _key)\
-{\
-_streamer streamer_1(endianness::big_endian);\
-VerifyReadOneDeeper_Impl(_bytes, _struct, streamer_1, _key);\
-}
-
-#define read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-{\
-VerifyRead(normal_bytes, test_struct, streamer, key_mode::not_key, true, true);\
-VerifyRead(key_bytes, key_struct, streamer, key_mode::unsorted, true, true);\
-}
-
-#define read_test_fail(test_struct, key_struct, key_bytes, streamer)\
-{\
-VerifyRead(bytes(256, 0x0), test_struct, streamer, key_mode::not_key, false, true);\
-VerifyRead(key_bytes, key_struct, streamer, key_mode::unsorted, true, true);\
-}
-
-#define read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-{\
-VerifyRead(normal_bytes, test_struct, streamer, key_mode::not_key, true, true);\
-VerifyReadOneDeeper(key_bytes, key_struct, streamer, key_mode::unsorted);\
-}
-
-#define VerifyWrite(_bytes, _struct, _streamer, _key, _write_success, _compare_success)\
-{\
-_streamer streamer_1(endianness::big_endian);\
-VerifyWrite_Impl(_bytes, _struct, streamer_1, _key, _write_success, _compare_success);\
-}
-
-#define write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-{\
-VerifyWrite(test_struct, normal_bytes, streamer, key_mode::not_key, true, true);\
-VerifyWrite(key_struct, key_bytes, streamer, key_mode::unsorted, true, true);\
-}
-
-#define write_test_fail(test_struct, key_struct, key_bytes, streamer)\
-{\
-VerifyWrite(test_struct, bytes(256, 0x0), streamer, key_mode::not_key, false, false);\
-VerifyWrite(test_struct, key_bytes, streamer, key_mode::unsorted, true, true);\
-}
-
-#define readwrite_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)
-
-#define readwrite_test_fail(test_struct, key_struct, key_bytes, streamer)\
-read_test_fail(test_struct, key_struct, key_bytes, streamer)\
-write_test_fail(test_struct, key_struct, key_bytes, streamer)
-
-#define readwrite_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
-write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)
-
-#define stream_test(test_struct, cdr_normal_bytes, key_bytes)\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)
-
-#define stream_test_union(test_struct, key_struct, cdr_normal_bytes, key_bytes)\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)
-
-#define stream_test_fail_basic(test_struct, xcdr_v1_normal_bytes, xcdr_v2_normal_bytes, key_bytes)\
-readwrite_test_fail(test_struct, test_struct, key_bytes, basic_cdr_stream)\
-readwrite_test(test_struct, test_struct, xcdr_v1_normal_bytes, key_bytes, xcdr_v1_stream)\
-readwrite_test(test_struct, test_struct, xcdr_v2_normal_bytes, key_bytes, xcdr_v2_stream)
-
-#define stream_deeper_test(test_struct, cdr_normal_bytes, cdr_delimited_bytes, key_bytes)\
-readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
-readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
-readwrite_deeper_test(test_struct, test_struct, cdr_delimited_bytes, key_bytes, xcdr_v2_stream)
 
 /*verifying streamer will not read/write beyond the end of the indicated buffer*/
 
