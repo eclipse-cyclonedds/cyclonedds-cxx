@@ -71,7 +71,7 @@ public:
  * @param[out] toread The variable to read into.
  * @param[in] N The number of entities to read.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool read(basic_cdr_stream& str, T& toread, size_t N = 1) {
   return read_enum_impl<basic_cdr_stream,T,uint32_t>(str, toread, N);
 }
@@ -84,7 +84,7 @@ bool read(basic_cdr_stream& str, T& toread, size_t N = 1) {
  * @param[in] towrite The variable to write.
  * @param[in] N The number of entities to write.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool write(basic_cdr_stream& str, const T& towrite, size_t N = 1) {
   return write_enum_impl<basic_cdr_stream,T,uint32_t>(str, towrite, N);
 }
@@ -96,7 +96,7 @@ bool write(basic_cdr_stream& str, const T& towrite, size_t N = 1) {
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] N The number of entities to move.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool move(basic_cdr_stream& str, const T&, size_t N = 1) {
   return move(str, uint32_t(0), N);
 }
@@ -108,7 +108,7 @@ bool move(basic_cdr_stream& str, const T&, size_t N = 1) {
  * @param[in, out] str The stream whose cursor is moved.
  * @param[in] N The number of entities at most to move.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool max(basic_cdr_stream& str, const T&, size_t N = 1) {
   return max(str, uint32_t(0), N);
 }

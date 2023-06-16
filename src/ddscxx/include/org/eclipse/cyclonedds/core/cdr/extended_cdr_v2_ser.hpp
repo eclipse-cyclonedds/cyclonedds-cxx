@@ -311,7 +311,7 @@ private:
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
   switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
   {
@@ -340,7 +340,7 @@ bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
   switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
   {
@@ -368,7 +368,7 @@ bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool move(xcdr_v2_stream& str, const T&, size_t N = 1) {
   switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
   {
@@ -397,7 +397,7 @@ bool move(xcdr_v2_stream& str, const T&, size_t N = 1) {
  *
  * @return Whether the operation was completed succesfully.
  */
-template<typename T, std::enable_if_t<std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool max(xcdr_v2_stream& str, const T& max_sz, size_t N = 1) {
   return move(str, max_sz, N);
 }

@@ -589,7 +589,6 @@ protected:
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
 bool read(S &str, T& toread, size_t N = 1)
 {
@@ -665,7 +664,6 @@ bool read_enum_impl(S& str, T& toread, size_t N)
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
 bool write(S& str, const T& towrite, size_t N = 1)
 {
@@ -741,7 +739,6 @@ bool write_enum_impl(S& str, const T& towrite, size_t N)
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
 bool move(S& str, const T&, size_t N = 1)
 {
@@ -776,7 +773,6 @@ bool move(S& str, const T&, size_t N = 1)
  * @return Whether the operation was completed succesfully.
  */
 template<typename S, typename T, std::enable_if_t<std::is_arithmetic<T>::value
-                                               && !std::is_enum<T>::value
                                                && std::is_base_of<cdr_stream, S>::value, bool> = true >
 bool max(S& str, const T& max_sz, size_t N = 1)
 {
