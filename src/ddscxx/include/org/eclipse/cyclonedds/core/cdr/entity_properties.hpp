@@ -96,43 +96,63 @@ DDSCXX_WARNING_MSVC_ON(4251)
 
 /**
  * @brief
- * Primitive type/enum get_bit_bound function.
- *
- * Returns a bb_unset for all primitive types and enums.
- * This function will be implemented for all enums with a manually defined bit_bound.
- *
- * @return The bit bound for the primitive type.
- */
-template<typename T, DDSCXX_STD_IMPL::enable_if_t<std::is_arithmetic<T>::value || std::is_enum<T>::value, bool> = true >
-bit_bound get_bit_bound() {
-  switch (sizeof(T)) {
-    case 1:
-      return bit_bound::bb_8_bits;
-      break;
-    case 2:
-      return bit_bound::bb_16_bits;
-      break;
-    case 4:
-      return bit_bound::bb_32_bits;
-      break;
-    case 8:
-      return bit_bound::bb_64_bits;
-      break;
-    default:
-      return bit_bound::bb_unset;
-  }
-}
-
-/**
- * @brief
  * Generic get_bit_bound fallback function.
  *
- * Returns a bb_unset for all non-primitive, non-enum types.
+ * Returns a bb_unset for all non-primitive, non-enum types or primitives/enums with non 1,2,4,8 sizes.
  *
  * @return bb_unset always.
  */
-template<typename T, DDSCXX_STD_IMPL::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<(!std::is_arithmetic<T>::value && !std::is_enum<T>::value) || (sizeof(T) != 1 && sizeof(T) != 2 && sizeof(T) != 4 && sizeof(T) != 8), bool> = true >
 constexpr bit_bound get_bit_bound() { return bit_bound::bb_unset; }
+
+/**
+ * @brief
+ * Primitive type/enum get_bit_bound function.
+ *
+ * Returns the bitbound for primitives/enums with size 1.
+ * This function will be specialized for all enums with a manually defined bit_bound.
+ *
+ * @return bb_8_bits always.
+ */
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<(std::is_arithmetic<T>::value || std::is_enum<T>::value) && sizeof(T) == 1, bool> = true >
+constexpr bit_bound get_bit_bound() { return bit_bound::bb_8_bits; }
+
+/**
+ * @brief
+ * Primitive type/enum get_bit_bound function.
+ *
+ * Returns the bitbound for primitives/enums with size 2.
+ * This function will be specialized for all enums with a manually defined bit_bound.
+ *
+ * @return bb_16_bits always.
+ */
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<(std::is_arithmetic<T>::value || std::is_enum<T>::value) && sizeof(T) == 2, bool> = true >
+constexpr bit_bound get_bit_bound() { return bit_bound::bb_16_bits; }
+
+/**
+ * @brief
+ * Primitive type/enum get_bit_bound function.
+ *
+ * Returns the bitbound for primitives/enums with size 4.
+ * This function will be specialized for all enums with a manually defined bit_bound.
+ *
+ * @return bb_32_bits always.
+ */
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<(std::is_arithmetic<T>::value || std::is_enum<T>::value) && sizeof(T) == 4, bool> = true >
+constexpr bit_bound get_bit_bound() { return bit_bound::bb_32_bits; }
+
+
+/**
+ * @brief
+ * Primitive type/enum get_bit_bound function.
+ *
+ * Returns the bitbound for primitives/enums with size 8.
+ * This function will be specialized for all enums with a manually defined bit_bound.
+ *
+ * @return bb_64_bits always.
+ */
+template<typename T, DDSCXX_STD_IMPL::enable_if_t<(std::is_arithmetic<T>::value || std::is_enum<T>::value) && sizeof(T) == 8, bool> = true >
+constexpr bit_bound get_bit_bound() { return bit_bound::bb_64_bits; }
 
 typedef struct entity_properties entity_properties_t;
 typedef std::vector<entity_properties_t> propvec;
