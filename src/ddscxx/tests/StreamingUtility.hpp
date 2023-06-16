@@ -91,10 +91,10 @@ VerifyRead(normal_bytes, test_struct, streamer, key_mode::not_key, true, true);\
 VerifyRead(key_bytes, key_struct, streamer, key_mode::unsorted, true, true);\
 }
 
-#define read_test_fail(test_struct, key_struct, key_bytes, streamer)\
+#define read_test_fail(test_struct, key_struct, streamer)\
 {\
-VerifyRead(bytes(256, 0x0), test_struct, streamer, key_mode::not_key, false, true);\
-VerifyRead(key_bytes, key_struct, streamer, key_mode::unsorted, true, true);\
+VerifyRead(bytes(256, 0x0), test_struct, streamer, key_mode::not_key, false, false);\
+VerifyRead(bytes(256, 0x0), key_struct, streamer, key_mode::unsorted, false, false);\
 }
 
 #define read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
@@ -115,19 +115,19 @@ VerifyWrite(test_struct, normal_bytes, streamer, key_mode::not_key, true, true);
 VerifyWrite(key_struct, key_bytes, streamer, key_mode::unsorted, true, true);\
 }
 
-#define write_test_fail(test_struct, key_struct, key_bytes, streamer)\
+#define write_test_fail(test_struct, key_struct, streamer)\
 {\
 VerifyWrite(test_struct, bytes(256, 0x0), streamer, key_mode::not_key, false, false);\
-VerifyWrite(test_struct, key_bytes, streamer, key_mode::unsorted, true, true);\
+VerifyWrite(key_struct, bytes(256, 0x0), streamer, key_mode::unsorted, false, false);\
 }
 
 #define readwrite_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 read_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)
 
-#define readwrite_test_fail(test_struct, key_struct, key_bytes, streamer)\
-read_test_fail(test_struct, key_struct, key_bytes, streamer)\
-write_test_fail(test_struct, key_struct, key_bytes, streamer)
+#define readwrite_test_fail(test_struct, key_struct, streamer)\
+read_test_fail(test_struct, key_struct, streamer)\
+write_test_fail(test_struct, key_struct, streamer)
 
 #define readwrite_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
@@ -142,13 +142,3 @@ readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v2_st
 readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
 readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
 readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)
-
-#define stream_test_fail_basic(test_struct, xcdr_v1_normal_bytes, xcdr_v2_normal_bytes, key_bytes)\
-readwrite_test_fail(test_struct, test_struct, key_bytes, basic_cdr_stream)\
-readwrite_test(test_struct, test_struct, xcdr_v1_normal_bytes, key_bytes, xcdr_v1_stream)\
-readwrite_test(test_struct, test_struct, xcdr_v2_normal_bytes, key_bytes, xcdr_v2_stream)
-
-#define stream_deeper_test(test_struct, cdr_normal_bytes, cdr_delimited_bytes, key_bytes)\
-readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
-readwrite_deeper_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
-readwrite_deeper_test(test_struct, test_struct, cdr_delimited_bytes, key_bytes, xcdr_v2_stream)

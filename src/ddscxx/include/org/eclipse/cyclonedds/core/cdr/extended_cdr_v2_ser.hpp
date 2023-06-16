@@ -275,7 +275,7 @@ private:
    *
    * @return Whether the entity props needs a D-header
    */
-  bool d_header_necessary(const entity_properties_t &props) const;
+  inline bool d_header_necessary(const entity_properties_t &props) const { return props.e_ext == extensibility::ext_appendable || props.e_ext == extensibility::ext_mutable; }
 
   /**
    * @brief
@@ -285,7 +285,7 @@ private:
    *
    * @return Whether the entity props needs a EM-header
    */
-  inline bool em_header_necessary(const entity_properties_t &props) const { return props.p_ext == extensibility::ext_mutable && !is_key(); }
+  inline bool em_header_necessary(const entity_properties_t &props) const { return props.p_ext == extensibility::ext_mutable; }
 
   /**
    * @brief
@@ -298,7 +298,7 @@ private:
    *
    * @return Whether a list is necessary for this entity.
    */
-  inline bool list_necessary(const entity_properties_t &props) const { return props.e_ext == extensibility::ext_mutable && !is_key(); }
+  inline bool list_necessary(const entity_properties_t &props) const { return props.e_ext == extensibility::ext_mutable; }
 };
 
 /**
@@ -313,7 +313,7 @@ private:
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
-  switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
+  switch (get_bit_bound<T>())
   {
     case bit_bound::bb_8_bits:
       return read_enum_impl<xcdr_v2_stream,T,uint8_t>(str, toread, N);
@@ -342,7 +342,7 @@ bool read(xcdr_v2_stream& str, T& toread, size_t N = 1) {
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
-  switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
+  switch (get_bit_bound<T>())
   {
     case bit_bound::bb_8_bits:
       return write_enum_impl<xcdr_v2_stream,T,uint8_t>(str, towrite, N);
@@ -370,7 +370,7 @@ bool write(xcdr_v2_stream& str, const T& towrite, size_t N = 1) {
  */
 template<typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true >
 bool move(xcdr_v2_stream& str, const T&, size_t N = 1) {
-  switch (str.is_key() ? bit_bound::bb_32_bits : get_bit_bound<T>())
+  switch (get_bit_bound<T>())
   {
     case bit_bound::bb_8_bits:
       return move(str, int8_t(0), N);
