@@ -273,15 +273,10 @@ bool xcdr_v2_stream::read_d_header()
   return true;
 }
 
-bool xcdr_v2_stream::d_header_necessary(const entity_properties_t &props)
+bool xcdr_v2_stream::d_header_necessary(const entity_properties_t &props) const
 {
   return (props.e_ext == extensibility::ext_appendable || props.e_ext == extensibility::ext_mutable)
       && !is_key();
-}
-
-bool xcdr_v2_stream::list_necessary(const entity_properties_t &props)
-{
-  return props.e_ext == extensibility::ext_mutable && !is_key();
 }
 
 bool xcdr_v2_stream::start_struct(const entity_properties_t &props)
@@ -457,11 +452,6 @@ bool xcdr_v2_stream::finish_em_header()
   alignment(current_alignment);
 
   return true;
-}
-
-bool xcdr_v2_stream::em_header_necessary(const entity_properties_t &props)
-{
-  return props.p_ext == extensibility::ext_mutable && !is_key();
 }
 
 }

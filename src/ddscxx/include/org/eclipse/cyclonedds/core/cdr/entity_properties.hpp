@@ -132,7 +132,7 @@ bit_bound get_bit_bound() {
  * @return bb_unset always.
  */
 template<typename T, DDSCXX_STD_IMPL::enable_if_t<!std::is_enum<T>::value && !std::is_arithmetic<T>::value, bool> = true >
-constexpr bit_bound get_bit_bound() { return bit_bound::bb_unset;}
+constexpr bit_bound get_bit_bound() { return bit_bound::bb_unset; }
 
 typedef struct entity_properties entity_properties_t;
 typedef std::vector<entity_properties_t> propvec;
@@ -194,18 +194,6 @@ struct OMG_DDS_API entity_properties
    * This function write the contents (id, is_key, is_optional, must_understand, xtypes_necessary) of this entity to std::cout.
    */
   void print() const;
-
-  /**
-   * @brief
-   * Checks whether this entity is not keyless.
-   *
-   * This function will check all members (if any) and if any of them has the is_key flag set, this will return true.
-   * If none have this flag set, it will return false.
-   * Used in the finish function to finish the entire entity_properties_t tree.
-   *
-   * @return true if any of the members have a key, false otherwise.
-   */
-  bool has_keys() const;
 
   /**
    * @brief
@@ -290,6 +278,21 @@ struct OMG_DDS_API entity_properties
     * @return Pointer to the previous entity, or nullptr if there are none.
     */
   const entity_properties_t* previous_entity(key_mode key) const;
+
+private:
+
+  /**
+   * @brief
+   * Checks whether this entity is not keyless.
+   *
+   * This function will check all members (if any) and if any of them has the is_key flag set, this will return true.
+   * This function is called BEFORE the total key calculation is done, so looking at the pointers to key members does not work yet.
+   * If none have this flag set, it will return false.
+   * Used in the finish function to finish the entire entity_properties_t tree.
+   *
+   * @return true if any of the members have a key, false otherwise.
+   */
+  bool has_keys() const;
 };
 
 /**

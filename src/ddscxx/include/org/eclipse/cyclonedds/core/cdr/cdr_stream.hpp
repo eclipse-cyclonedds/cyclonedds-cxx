@@ -199,7 +199,7 @@ public:
      *
      * @return The current stream alignment.
      */
-    size_t alignment() const { return m_current_alignment; }
+    inline size_t alignment() const { return m_current_alignment; }
 
     /**
      * @brief
@@ -211,7 +211,7 @@ public:
      *
      * @return The value the alignment has been set to.
      */
-    size_t alignment(size_t newalignment) { return m_current_alignment = newalignment; }
+    inline size_t alignment(size_t newalignment) { return m_current_alignment = newalignment; }
 
     /**
      * @brief
@@ -245,7 +245,7 @@ public:
      *
      * @return The value the offset has been set to.
      */
-    size_t position(size_t newposition) { return m_position = newposition; }
+    inline size_t position(size_t newposition) { return m_position = newposition; }
 
     /**
      * @brief
@@ -258,7 +258,7 @@ public:
      *
      * @return The cursor position after this operation.
      */
-    size_t incr_position(size_t incr_by) { if (m_position != SIZE_MAX) m_position += incr_by; return m_position; }
+    size_t incr_position(size_t incr_by);
 
     /**
      * @brief
@@ -300,7 +300,7 @@ public:
      *
      * @return The stream endianness.
      */
-    const endianness& stream_endianness() const { return m_stream_endianness; }
+    inline const endianness& stream_endianness() const { return m_stream_endianness; }
 
     /**
      * @brief
@@ -311,7 +311,7 @@ public:
      * @retval false If the stream endianness DOES match the local endianness.
      * @retval true If the stream endianness DOES NOT match the local endianness.
      */
-    bool swap_endianness() const { return m_swap; }
+    inline bool swap_endianness() const { return m_swap; }
 
     /**
      * @brief
@@ -337,7 +337,7 @@ public:
      *
      * @return The current status of serialization.
      */
-    uint64_t status() const { return m_status; }
+    inline uint64_t status() const { return m_status; }
 
     /**
      * @brief
@@ -350,7 +350,7 @@ public:
      * @retval false If the serialization status of the stream HAS NOT YET reached one of the serialization errors which it is not set to ignore.
      * @retval true If the serialization status of the stream HAS reached one of the serialization errors which it is not set to ignore.
      */
-    bool status(serialization_status toadd) { m_status |= static_cast<uint64_t>(toadd); return abort_status(); }
+    bool status(serialization_status toadd);
 
     /**
      * @brief
@@ -387,7 +387,7 @@ public:
      *
      * @return Whether the streaming is done only over the key values.
      */
-    inline bool is_key() const {assert(m_key != key_mode::unset); return m_key == key_mode::sorted || m_key == key_mode::unsorted;}
+    bool is_key() const;
 
     /**
      * @brief
@@ -399,7 +399,7 @@ public:
      * @param[in] mode The streaming mode to set for the stream.
      * @param[in] key The key mode to set for the stream.
      */
-    void set_mode(stream_mode mode, key_mode key) {assert(key != key_mode::unset); m_mode = mode; m_key = key; reset();}
+    void set_mode(stream_mode mode, key_mode key);
 
     /**
      * @brief
@@ -509,14 +509,14 @@ public:
 protected:
 
     /**
-     * @brief Implementation for starting the recording the size and starting offset of a member.
+     * @brief Function for starting the recording the size and starting offset of a member.
      */
-    inline void push_member_start() { m_e_sz.push(0); m_e_off.push(static_cast<uint32_t>(position())); }
+    void push_member_start();
 
     /**
-     * @brief Implementation for finishing the recording the size and starting offset of a member.
+     * @brief Function for finishing the recording the size and starting offset of a member.
      */
-    inline void pop_member_start() { m_e_sz.pop(); m_e_off.pop(); }
+    void pop_member_start();
 
     /**
      * @brief

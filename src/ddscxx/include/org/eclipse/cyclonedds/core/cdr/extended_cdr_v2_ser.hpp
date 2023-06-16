@@ -241,7 +241,7 @@ private:
    *
    * @return Whether the operation was completed succesfully.
    */
-  bool move_d_header() {return move(*this, uint32_t(0));}
+  inline bool move_d_header() {return move(*this, uint32_t(0));}
 
   /**
    * @brief
@@ -275,7 +275,7 @@ private:
    *
    * @return Whether the entity props needs a D-header
    */
-  bool d_header_necessary(const entity_properties_t &props);
+  bool d_header_necessary(const entity_properties_t &props) const;
 
   /**
    * @brief
@@ -285,7 +285,7 @@ private:
    *
    * @return Whether the entity props needs a EM-header
    */
-  bool em_header_necessary(const entity_properties_t &props);
+  inline bool em_header_necessary(const entity_properties_t &props) const { return props.p_ext == extensibility::ext_mutable && !is_key(); }
 
   /**
    * @brief
@@ -298,7 +298,7 @@ private:
    *
    * @return Whether a list is necessary for this entity.
    */
-  bool list_necessary(const entity_properties_t &props);
+  inline bool list_necessary(const entity_properties_t &props) const { return props.e_ext == extensibility::ext_mutable && !is_key(); }
 };
 
 /**
