@@ -217,7 +217,9 @@ const entity_properties_t* xcdr_v2_stream::first_entity(const entity_properties_
 bool xcdr_v2_stream::read_em_header(entity_properties_t &props)
 {
   uint32_t emheader = 0;
-  if (!read(*this,emheader))
+  size_t align_bytes = (4-(position()%4))%4;
+  if (!bytes_available(4+align_bytes,true) ||
+      !read(*this,emheader))
     return false;
 
   uint32_t factor = 0;
@@ -273,12 +275,6 @@ bool xcdr_v2_stream::read_d_header()
   return true;
 }
 
-bool xcdr_v2_stream::d_header_necessary(const entity_properties_t &props) const
-{
-  return (props.e_ext == extensibility::ext_appendable || props.e_ext == extensibility::ext_mutable)
-      && !is_key();
-}
-
 bool xcdr_v2_stream::start_struct(const entity_properties_t &props)
 {
   if (d_header_necessary(props)) {
@@ -326,9 +322,6 @@ bool xcdr_v2_stream::finish_struct(const entity_properties_t &props, const membe
 
 bool xcdr_v2_stream::start_consecutive(bool is_array, bool primitive)
 {
-  if (is_key())
-    return true;
-
   bool d_hdr_necessary =  false;
   if (!primitive) {
     if (is_array) {
@@ -365,9 +358,6 @@ bool xcdr_v2_stream::start_consecutive(bool is_array, bool primitive)
 
 bool xcdr_v2_stream::finish_consecutive()
 {
-  if (is_key())
-    return true;
-
   assert(m_consecutives.size());
   bool d_hdr = m_consecutives.top().d_header_present;
   m_consecutives.pop();
