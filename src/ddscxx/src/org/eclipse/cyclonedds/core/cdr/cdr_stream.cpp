@@ -133,6 +133,45 @@ bool cdr_stream::finish_member(const entity_properties_t &props, member_id_set &
   return true;
 }
 
+void cdr_stream::set_mode(stream_mode mode, key_mode key)
+{
+  assert(key != key_mode::unset);
+  m_mode = mode;
+  m_key = key;
+  reset();
+}
+
+size_t cdr_stream::incr_position(size_t incr_by)
+{
+  if (m_position != SIZE_MAX)
+    m_position += incr_by;
+  return m_position;
+}
+
+bool cdr_stream::status(serialization_status toadd)
+{
+  m_status |= static_cast<uint64_t>(toadd);
+  return abort_status();
+}
+
+bool cdr_stream::is_key() const
+{
+  assert(m_key != key_mode::unset);
+  return m_key == key_mode::sorted || m_key == key_mode::unsorted;
+}
+
+void cdr_stream::push_member_start()
+{
+  m_e_sz.push(0);
+  m_e_off.push(static_cast<uint32_t>(position()));
+}
+
+void cdr_stream::pop_member_start()
+{
+  m_e_sz.pop();
+  m_e_off.pop();
+}
+
 }
 }
 }
