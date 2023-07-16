@@ -42,10 +42,33 @@ strategy:
     'Ubuntu 20.04 LTS with Clang 10 (Release, x86_64)':
       image: ubuntu-20.04
       build_type: Release
-      cc: clang-10
-      cxx: clang++-10
-    'macOS 10.15 with Clang 12 (Debug, x86_64)':
-      image: macOS-10.15
+      sanitizer: address,undefined
+      cc: clang-12
+      cxx: clang++-12
+    'Ubuntu 22.04 LTS with CLang 12 (Release, x86_64, Iceoryx)':
+      image: ubuntu-22.04
+      build_type: Release
+      iceoryx: on
+      sanitizer: address,undefined
+      cc: clang-12
+      cxx: clang++-12
+    # C++11 requires boost, installing boost on Windows takes forever, so use Linux
+    # Google test requires C++14 at minimum, so we can't build tests ...
+    'Ubuntu 22.04 LTS with CLang 12 (Debug, x86_64, C++11)':
+      image: ubuntu-22.04
+      build_type: Debug
+      cc: clang-12
+      cxx: clang++-12
+      legacy: on
+    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type discovery)':
+      image: ubuntu-22.04
+      sanitizer: address
+      cc: gcc-12
+      cxx: g++-12
+      type_discovery: off
+      topic_discovery: off
+    'macOS 11 with Clang 12 (Debug, x86_64)':
+      image: macOS-11
       sanitizer: address
       cc: clang
       cxx: clang++
@@ -58,7 +81,6 @@ strategy:
     #'Windows 2019 with Visual Studio 2019 (Visual Studio 2017, Debug, x86)':
     #  arch: x86
     #  image: windows-2019
-    #  conanfile: conanfile102.txt
     #  generator: 'Visual Studio 16 2019'
     #  toolkit: v141
     'Windows 2019 with Visual Studio 2019 (Debug, x86_64)':
@@ -69,11 +91,12 @@ strategy:
       image: windows-2019
       build_type: Release
       generator: 'Visual Studio 16 2019'
-    'Windows 2019 with Visual Studio 2019 (Release, x86_64, c++11)':
-      image: windows-2019
-      build_type: Release
-      generator: 'Visual Studio 16 2019'
-      legacy: on
+    #C++11 needs boost, installing boost takes forever on Windows
+    #'Windows 2019 with Visual Studio 2019 (Release, x86_64, c++11)':
+    #  image: windows-2019
+    #  build_type: Release
+    #  generator: 'Visual Studio 16 2019'
+    #  legacy: on
 
 pool:
   vmImage: $(image)
