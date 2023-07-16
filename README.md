@@ -126,22 +126,10 @@ variable `BUILD_TESTING` to on when configuring, e.g.:
     $ cmake --build .
     $ ctest
 
-Such a build requires the presence of [Google Test][7]. You can install this
-yourself, or you can choose to instead rely on the [Conan][8] package manager
-that the CI build infrastructure also uses. In that case, install Conan and do:
-
-    $ conan install .. --build missing
-
-in the build directory prior to running `cmake`. This will automatically
-download and/or build Google Test.
-
-For Windows, depending on the generator, you might also need to add switches
-to select the architecture and build type, e.g.,
-
-    $ conan install -s arch=x86_64 -s build_type=Debug ..
+Such a build requires the presence of [Google Test][7]. You need to install this
+yourself.
 
 [7]: https://github.com/google/googletest
-[8]: https://conan.io/
 
 ## Documentation
 
