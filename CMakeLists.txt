@@ -15,33 +15,6 @@ project(CycloneDDS-CXX VERSION 0.11.0 LANGUAGES C CXX)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
 set(CMAKE_CXX_STANDARD 11)
 
-# Conan
-if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake" AND NOT CONAN_DEPENDENCIES)
-  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-  if(APPLE)
-    # By default Conan strips all RPATHs (see conanbuildinfo.cmake), which
-    # causes tests to fail as the executables cannot find the library target.
-    # By setting KEEP_RPATHS, Conan does not set CMAKE_SKIP_RPATH and the
-    # resulting binaries still have the RPATH information. This is fine because
-    # CMake will strip the build RPATH information in the install step.
-    #
-    # NOTE:
-    # Conan's default approach is to use the "imports" feature, which copies
-    # all the dependencies into the bin directory. Of course, this doesn't work
-    # quite that well for libraries generated in this Project (see Conan
-    # documentation).
-    #
-    # See the links below for more information.
-    # https://github.com/conan-io/conan/issues/337
-    # https://docs.conan.io/en/latest/howtos/manage_shared_libraries/rpaths.html
-    # https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
-    conan_basic_setup(KEEP_RPATHS)
-  else()
-    conan_basic_setup()
-  endif()
-  conan_define_targets()
-endif()
-
 # By default don't treat warnings as errors, else anyone building it with a
 # different compiler that just happens to generate a warning, as well as
 # anyone adding or modifying something and making a small mistake would run
@@ -172,11 +145,13 @@ set(SANITIZER "" CACHE STRING "Sanitizers to enable on the build.")
 if(SANITIZER)
   string(REGEX REPLACE " " "" SANITIZER "${SANITIZER}")
   string(REGEX REPLACE "[,;]+" ";" SANITIZER "${SANITIZER}")
-  add_compile_options("-fno-sanitize-recover=all")
   foreach(san ${SANITIZER})
     if(san STREQUAL "address")
       add_compile_options("-fno-omit-frame-pointer")
       add_link_options("-fno-omit-frame-pointer")
+    endif()
+    if(san STREQUAL "undefined")
+      add_compile_options("-fno-sanitize-recover=all")
     endif()
     if(san AND NOT san STREQUAL "none")
       message(STATUS "Enabling sanitizer: ${san}")
