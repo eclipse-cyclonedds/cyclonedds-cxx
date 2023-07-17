@@ -106,8 +106,6 @@ void multiReaderSingleWriter(uint32_t readerCount)
     std::vector<std::thread> threads;
     for (uint32_t i = 0; i < readerCount; i++) {
         threads.emplace_back(std::thread([&participant, &topic] {
-            using namespace std::literals;
-
             sub::Subscriber sub(participant);
             auto reader = sub::DataReader<Msg>(sub, topic);
         }));
@@ -146,8 +144,6 @@ void multiWriterSingleReader(uint32_t writerCount)
     std::vector<std::thread> threads;
     for (uint32_t i = 0; i < writerCount; i++) {
         threads.emplace_back(std::thread([&participant, &topic] {
-            using namespace std::literals;
-
             pub::Publisher pub(participant);
             pub::DataWriter<Msg> writer(pub, topic);
         }));
