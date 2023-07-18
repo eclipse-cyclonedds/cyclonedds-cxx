@@ -433,6 +433,21 @@ public:
 
     /**
      * @brief
+     * Function declaration for finishing an existing member.
+     *
+     * This function is called by next_entity for each entity which is iterated over.
+     * Depending on the implementation and mode header length fields may be completed.
+     * This function can be overridden in cdr streaming implementations.
+     *
+     * @param[in] props Properties of the member to finish.
+     * @param[in] is_set Whether the entity represented by prop is present, if it is an optional entity.
+     *
+     * @return Whether the operation was completed succesfully.
+     */
+    virtual bool finish_member_unchecked(const entity_properties_t &props, bool is_set = true);
+
+    /**
+     * @brief
      * Function declaration for retrieving the next entity to be operated on by the streamer.
      *
      * This function is called by the instance implementation switchbox and will return the next entity to operate on by calling next_prop.
@@ -480,7 +495,20 @@ public:
      *
      * @return Whether the struct is complete and correct.
      */
-    virtual bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids);
+    virtual bool finish_struct(const entity_properties_t &props, const member_id_set &member_ids) {return check_struct_completeness(props, member_ids);}
+
+    /**
+     * @brief
+     * Function declaration for finishing a parameter list.
+     *
+     * This function is called by the generated functions for the entity, and will trigger the necessary actions on finishing the current struct.
+     * I.E. finishing headers, writing length fields.
+     *
+     * @param[in] props The entity whose members might be represented by a parameter list.
+     *
+     * @return Whether the struct is complete and correct.
+     */
+    virtual bool finish_struct_unchecked(const entity_properties_t &props) {(void)props; return true;}
 
     /**
      * @brief
@@ -936,6 +964,39 @@ bool max_string(S& str, const T& max_sz, size_t N)
     str.position(SIZE_MAX); //unbounded string, theoretical length unlimited
   else
     return move_string(str, max_sz, N);
+
+  return true;
+}
+
+/**
+ * @brief
+ * Sequence of base types read function.
+ *
+ * This is called when a resize + memcpy is way less efficient than an assign,
+ * as this skips the default initialization of entities in the sequence.
+ *
+ * @param[in, out] str The stream being read from.
+ * @param[in] toread The sequence being read into.
+ * @param[in] N Number of base entities to read.
+ *
+ * @return Whether the operation was completed succesfully.
+ */
+template<typename S, template<typename,typename> class V, typename T, typename A, std::enable_if_t<std::is_base_of<cdr_stream, S>::value && std::is_arithmetic<T>::value && !std::is_same<T,bool>::value, bool> = true >
+bool read(S& str, V<T,A> &toread, size_t N)
+{
+  if (str.position() == SIZE_MAX
+   || !str.align(sizeof(T), false)
+   || !str.bytes_available(sizeof(T)*N))
+    return false;
+
+  auto ptr = reinterpret_cast<const T*>(str.get_cursor());
+  toread.assign(ptr, ptr+N);
+  str.incr_position(N*sizeof(T));
+
+  if (str.swap_endianness()) {
+    for (auto &e:toread)
+      byte_swap(&e);
+  }
 
   return true;
 }
