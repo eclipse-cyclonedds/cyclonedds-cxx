@@ -59,21 +59,16 @@ namespace sub
 namespace detail
 {
 
-class SamplesHolder
+class OMG_DDS_API SamplesHolder
 {
 public:
     SamplesHolder() {}
     virtual ~SamplesHolder() {}
 
-    virtual void set_length(uint32_t len) = 0;
     virtual uint32_t get_length() const = 0;
     virtual SamplesHolder& operator++(int) = 0;
-    virtual void *data() = 0;
-    virtual detail::SampleInfo& info() = 0;
-    virtual void **cpp_sample_pointers(size_t length) = 0;
-    virtual dds_sample_info_t *cpp_info_pointers(size_t length) = 0;
-    virtual void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info) = 0;
-    virtual void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos) = 0;
+    virtual void append_sample(void *sample, const dds_sample_info_t *si) = 0;
+    static dds::sub::SampleInfo sample_info_from_c(const dds_sample_info_t *si);
 };
 
 }
@@ -102,10 +97,6 @@ public:
     AnyDataReaderDelegate(const dds::sub::qos::DataReaderQos& qos,
                           const dds::topic::TopicDescription& td);
     virtual ~AnyDataReaderDelegate();
-
-    static void copy_sample_infos(
-        const dds_sample_info_t &from,
-        dds::sub::SampleInfo &to);
 
 public:
     /* DDS API mirror. */
@@ -270,17 +261,15 @@ public:
     void close();
 
 private:
-    bool init_samples_buffers(
-            const uint32_t                    requested_max_samples,
-            uint32_t&                         samples_to_read_cnt,
-            size_t&                           c_sample_pointers_size,
-            dds::sub::detail::SamplesHolder&  samples,
-            void**&                           c_sample_pointers,
-            dds_sample_info_t*&               c_sample_infos);
-
     void fini_samples_buffers(
             void**& c_sample_pointers,
             dds_sample_info_t*& c_sample_infos);
+
+    static dds_return_t collector_callback_fn (
+        void *arg,
+        const dds_sample_info_t *si,
+        const struct ddsi_sertype *,
+        struct ddsi_serdata *sd);
 
 protected:
     org::eclipse::cyclonedds::core::ObjectSet queries;

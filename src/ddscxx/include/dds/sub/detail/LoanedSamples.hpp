@@ -76,6 +76,10 @@ public:
         return this->samples_.data();
     }
 
+    void append_sample(dds::sub::SampleRef<T, dds::sub::detail::SampleRef>& s) {
+        samples_.push_back(s);
+    }
+
 
 private:
     LoanedSamplesContainer samples_;
@@ -137,6 +141,10 @@ public:
 
     dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> * get_buffer() {
         return this->samples_.data();
+    }
+
+    void append_sample(dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample>& s) {
+        samples_.push_back(s);
     }
 
 

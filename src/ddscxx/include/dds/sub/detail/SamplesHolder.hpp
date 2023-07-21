@@ -34,10 +34,6 @@ public:
     {
     }
 
-    void set_length(uint32_t len) {
-        this->samples_.delegate()->resize(len);
-    }
-
     uint32_t get_length() const {
         return this->index_;
     }
@@ -48,46 +44,17 @@ public:
         return *this;
     }
 
-    void *data()
+    void append_sample(void *sample, const dds_sample_info_t *si)
     {
-        return (*this->samples_.delegate())[this->index_].delegate().data_ptr();
-    }
-
-    detail::SampleInfo& info()
-    {
-        return (*this->samples_.delegate())[this->index_].delegate().info();
-    }
-
-    void **cpp_sample_pointers(size_t length)
-    {
-
-        return new void * [length];
-    }
-
-    dds_sample_info_t *cpp_info_pointers(size_t length)
-    {
-        return new dds_sample_info_t[length];
-    }
-
-    void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info)
-    {
-        uint32_t cpp_sample_size = this->samples_.delegate()->length();
-        auto tmp_iterator = samples_.delegate()->mbegin();
-        for (uint32_t i = 0; i < cpp_sample_size; ++i, ++tmp_iterator) {
-            /* Transfer ownership for ddscxx_serdata from c_sample_pointers to SampleRef objects. */
-            tmp_iterator->delegate().data_ptr() = static_cast<ddscxx_serdata<T>*>(c_sample_pointers[i]);
-            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], tmp_iterator->delegate().info());
-        }
-    }
-
-    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
-    {
-        delete [] c_sample_pointers;
-        delete [] c_sample_infos;
+        ddscxx_serdata<T> *sd = static_cast<ddscxx_serdata<T>*>(sample);
+        latest_sample.delegate().data_ptr(sd);
+        latest_sample.delegate().info(sample_info_from_c(si));
+        samples_.delegate()->append_sample(latest_sample);
     }
 
 private:
     dds::sub::LoanedSamples<T>& samples_;
+    dds::sub::SampleRef<T> latest_sample;
     uint32_t index_;
 };
 
@@ -98,10 +65,6 @@ public:
     {
     }
 
-    void set_length(uint32_t len) {
-        this->samples_.delegate()->resize(len);
-    }
-
     uint32_t get_length() const {
         return this->index_;
     }
@@ -112,55 +75,24 @@ public:
         return *this;
     }
 
-    void *data()
+    void append_sample(void *sample, const dds_sample_info_t *si)
     {
-        return (*this->samples_.delegate())[this->index_].delegate().data_ptr();
-    }
+        ddsrt_iovec_t blob_content;
+        ddscxx_serdata<org::eclipse::cyclonedds::topic::CDRBlob> *sd;
+        org::eclipse::cyclonedds::topic::CDRBlob emptyBlob;
+        dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> *buffer;
 
-    detail::SampleInfo& info()
-    {
-        return (*this->samples_.delegate())[this->index_].delegate().info();
-    }
-
-    void **cpp_sample_pointers(size_t length)
-    {
-        return new void * [length];
-    }
-
-    dds_sample_info_t *cpp_info_pointers(size_t length)
-    {
-        return new dds_sample_info_t[length];
-    }
-
-    void set_sample_contents(void** c_sample_pointers, dds_sample_info_t *info)
-    {
-      struct ddsi_serdata **cdr_blobs = reinterpret_cast<struct ddsi_serdata **>(c_sample_pointers);
-      const uint32_t cpp_sample_size = this->samples_.delegate()->length();
-      for (uint32_t i = 0; i < cpp_sample_size; ++i)
-      {
-        struct ddsi_serdata * current_blob = cdr_blobs[i];
-        org::eclipse::cyclonedds::topic::CDRBlob &sample_data = (*this->samples_.delegate())[i].delegate().data();
-        // update the data kind
-        sample_data.kind(static_cast<org::eclipse::cyclonedds::topic::BlobKind>(current_blob->kind));
-
-        // if data is transferred using SHM, update the CDRBlob with iox_chunk
-        if(!update_cdrblob_from_iox_chunk(*current_blob, sample_data)) {
-          ddsrt_iovec_t blob_content;
-          ddsi_serdata_to_ser_ref(current_blob, 0, ddsi_serdata_size(current_blob), &blob_content);
-          copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(blob_content.iov_base),
-                                  blob_content.iov_len, sample_data.kind(), sample_data);
-          ddsi_serdata_to_ser_unref(current_blob, &blob_content);
-          ddsi_serdata_unref(current_blob);
-        }
-        // copy sample infos
-        org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], (*samples_.delegate())[i].delegate().info());
-      }
-    }
-
-    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
-    {
-        delete [] c_sample_pointers;
-        delete [] c_sample_infos;
+        sd = static_cast<ddscxx_serdata<org::eclipse::cyclonedds::topic::CDRBlob> *>(sample);
+        dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> blob_ssmple(
+            emptyBlob, sample_info_from_c(si));
+        samples_.delegate()->append_sample(blob_ssmple);
+        ddsi_serdata_to_ser_ref(sd, 0, ddsi_serdata_size(sd), &blob_content);
+        buffer = samples_.delegate()->get_buffer();
+        org::eclipse::cyclonedds::topic::CDRBlob &sample_data = buffer[samples_.length() - 1].delegate().data();
+        copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(blob_content.iov_base),
+                                blob_content.iov_len, sample_data.kind(), sample_data);
+        ddsi_serdata_to_ser_unref(sd, &blob_content);
+        ddsi_serdata_unref(sd);
     }
 
 private:
@@ -171,13 +103,13 @@ private:
                                  const org::eclipse::cyclonedds::topic::BlobKind data_kind,
                                  org::eclipse::cyclonedds::topic::CDRBlob & cdr_blob) const
     {
-      // update the CDR header
-      memcpy(cdr_blob.encoding().data(), buffer, CDR_HEADER_SIZE);
-      // if the data kind is not empty
-      if (data_kind != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
-        // get the actual data from the buffer
-        cdr_blob.payload().assign(buffer + CDR_HEADER_SIZE, buffer + size);
-      }
+        // update the CDR header
+        memcpy(cdr_blob.encoding().data(), buffer, CDR_HEADER_SIZE);
+        // if the data kind is not empty
+        if (data_kind != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
+            // get the actual data from the buffer
+            cdr_blob.payload().assign(buffer + CDR_HEADER_SIZE, buffer + size);
+        }
     }
 
   bool update_cdrblob_from_iox_chunk (ddsi_serdata & current_blob,
@@ -229,11 +161,6 @@ public:
     {
     }
 
-    void set_length(uint32_t len) {
-        this->size = len;
-
-    }
-
     uint32_t get_length() const {
         return this->size;
     }
@@ -244,44 +171,11 @@ public:
         return *this;
     }
 
-    void *data()
+    void append_sample(void *sample, const dds_sample_info_t *si)
     {
-        return (*iterator).delegate().data_ptr();
-    }
-
-    detail::SampleInfo& info()
-    {
-        return (*iterator).delegate().info();
-    }
-
-    void **cpp_sample_pointers(size_t length)
-    {
-        void **c_sample_pointers = new void * [length];
-        SamplesFWIterator tmp_iterator = iterator;
-        for (uint32_t i = 0; i < length; ++i, ++tmp_iterator) {
-            c_sample_pointers[i] = (*tmp_iterator).delegate().data_ptr();
-        }
-        return c_sample_pointers;
-    }
-
-    dds_sample_info_t *cpp_info_pointers(size_t length)
-    {
-      return new dds_sample_info_t[length];
-    }
-
-    void set_sample_contents(void**, dds_sample_info_t *info)
-    {
-        /* Samples have already been deserialized in their containers during the read/take call. */
-        SamplesFWIterator tmp_iterator = iterator;
-        for (uint32_t i = 0; i < size; ++i, ++tmp_iterator) {
-            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], tmp_iterator->delegate().info());
-        }
-    }
-
-    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
-    {
-        delete [] c_sample_infos;
-        delete [] c_sample_pointers;
+        ddscxx_serdata<T>* sd = static_cast<ddscxx_serdata<T>*>(sample);
+        (iterator++)->delegate() = dds::sub::detail::Sample<T>(*sd->getT(), sample_info_from_c(si));
+        ++size;
     }
 
 private:
@@ -298,11 +192,6 @@ public:
     {
     }
 
-    void set_length(uint32_t len) {
-        this->size = len;
-        samples.resize(len);
-    }
-
     uint32_t get_length() const {
         return this->size;
     }
@@ -313,51 +202,19 @@ public:
         return *this;
     }
 
-    void *data()
+    void append_sample(void *sample, const dds_sample_info_t *si)
     {
-        return this->samples[0].delegate().data_ptr();
-    }
-
-    detail::SampleInfo& info()
-    {
-        return this->samples[0].delegate().info();
-    }
-
-    void **cpp_sample_pointers(size_t length)
-    {
-        set_length(static_cast<uint32_t>(length));
-        void **c_sample_pointers = new void*[length];
-        for (uint32_t i = 0; i < length; ++i) {
-          c_sample_pointers[i] = samples[i].delegate().data_ptr();
-        }
-        return c_sample_pointers;
-    }
-
-    dds_sample_info_t *cpp_info_pointers(size_t length)
-    {
-        dds_sample_info_t *c_info_pointers = new dds_sample_info_t[length];
-        return c_info_pointers;
-    }
-
-    void set_sample_contents(void**, dds_sample_info_t *info)
-    {
-        /* Samples have already been deserialized in their containers during the read/take call. */
-        for (uint32_t i = 0; i < size; ++i) {
-            org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(info[i], samples[i].delegate().info());
-            this->iterator = std::move(samples[i]);
-            this->iterator++;
-        }
-    }
-
-    void fini_samples_buffers(void**& c_sample_pointers, dds_sample_info_t*& c_sample_infos)
-    {
-        delete [] c_sample_infos;
-        delete [] c_sample_pointers;
+        ddscxx_serdata<T>* sd = static_cast<ddscxx_serdata<T>*>(sample);
+        last_sample.delegate().data() = *sd->getT();
+        last_sample.delegate().info(sample_info_from_c(si));
+        iterator = std::move(last_sample);
+        ++iterator;
+        ++size;
     }
 
 private:
     SamplesBIIterator& iterator;
-    std::vector< dds::sub::Sample<T, dds::sub::detail::Sample> > samples;
+    dds::sub::Sample<T> last_sample;
     uint32_t size;
 
 };

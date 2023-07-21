@@ -46,9 +46,9 @@ public:
       this->data_ = nullptr;
     }
 
-    SampleRef(ddscxx_serdata<T>* d, const dds::sub::SampleInfo& i)
+    SampleRef(ddscxx_serdata<T>* sd, const dds::sub::SampleInfo& i)
     {
-        this->data_ = d;
+        this->data_ = static_cast<ddscxx_serdata<T> *>(ddsi_serdata_ref (sd));
         this->info_ = i;
     }
 
@@ -59,9 +59,9 @@ public:
 
     virtual ~SampleRef()
     {
-      if (data_ != nullptr) {
-        ddsi_serdata_unref(reinterpret_cast<ddsi_serdata *>(data_));
-      }
+        if (data_ != nullptr) {
+            ddsi_serdata_unref(data_);
+        }
     }
 
     SampleRef& operator=(const SampleRef& other)
@@ -78,7 +78,7 @@ public:
     {
       if (data_ == nullptr)
       {
-        throw dds::core::Error("Data is Null");
+          throw dds::core::Error("Data is Null");
       }
       return *data_->getT();
     }
@@ -93,6 +93,10 @@ public:
         return info_;
     }
 
+    void info(const dds::sub::SampleInfo &sid) {
+        this->info_ = sid;
+    }
+
     bool operator ==(const SampleRef& other) const
     {
         (void)other;
@@ -104,6 +108,13 @@ public:
         return this->data_;
     }
 
+    void data_ptr(const ddscxx_serdata<T> *sd)
+    {
+        if (data_ != nullptr) {
+            ddsi_serdata_unref(data_);
+        }
+        this->data_ = static_cast<ddscxx_serdata<T> *>(ddsi_serdata_ref (sd));
+    }
 
 private:
     void copy(const SampleRef& other)
@@ -112,8 +123,7 @@ private:
         {
             throw dds::core::Error("Other data is Null");
         }
-        static_cast<void>(ddsi_serdata_ref(reinterpret_cast<ddsi_serdata* const>(other.data_)));
-        this->data_ = other.data_;
+        this->data_ = static_cast<ddscxx_serdata<T> *>(ddsi_serdata_ref (other.data_));
         this->info_ = other.info_;
     }
 

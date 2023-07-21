@@ -30,6 +30,9 @@ template <typename DELEGATE>
 TSampleInfo<DELEGATE>::TSampleInfo() { }
 
 template <typename DELEGATE>
+TSampleInfo<DELEGATE>::TSampleInfo(const DELEGATE &d) : dds::core::Value<DELEGATE>(d) { }
+
+template <typename DELEGATE>
 const dds::core::Time TSampleInfo<DELEGATE>::timestamp() const
 {
     return this->delegate().timestamp();

@@ -213,11 +213,7 @@ public:
 
     bool check_sample(const void *, const dds_sample_info_t * sampleinfo) override
     {
-      dds::sub::SampleInfo cxxSampleInfo;
-      org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(
-        *sampleinfo,
-        cxxSampleInfo);
-      return myFunctor(cxxSampleInfo);
+      return myFunctor(dds::sub::detail::SamplesHolder::sample_info_from_c(sampleinfo));
     }
 
 private:
@@ -234,10 +230,7 @@ public:
 
     bool check_sample(const void * sample, const dds_sample_info_t * sampleinfo) override
     {
-      dds::sub::SampleInfo cxxSampleInfo;
-      org::eclipse::cyclonedds::sub::AnyDataReaderDelegate::copy_sample_infos(*sampleinfo,
-        cxxSampleInfo);
-      return myFunctor(*(reinterpret_cast<const T*>(sample)), cxxSampleInfo);
+      return myFunctor(*(reinterpret_cast<const T*>(sample)), dds::sub::detail::SamplesHolder::sample_info_from_c(sampleinfo));
     }
 
 private:
