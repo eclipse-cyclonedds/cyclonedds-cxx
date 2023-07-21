@@ -59,6 +59,7 @@ set(sources
     src/org/eclipse/cyclonedds/sub/SubscriberDelegate.cpp
     src/org/eclipse/cyclonedds/sub/BuiltinSubscriberDelegate.cpp
     src/org/eclipse/cyclonedds/sub/QueryDelegate.cpp
+    src/org/eclipse/cyclonedds/sub/SampleInfoImpl.cpp
     src/org/eclipse/cyclonedds/sub/cond/ReadConditionDelegate.cpp
     src/org/eclipse/cyclonedds/sub/cond/QueryConditionDelegate.cpp
     src/org/eclipse/cyclonedds/sub/qos/SubscriberQosDelegate.cpp

@@ -29,7 +29,7 @@ class Sample;
 }}}
 
 #include <dds/sub/SampleInfo.hpp>
-//#include <dds/sub/detail/TSampleImpl.hpp>
+#include <org/eclipse/cyclonedds/topic/datatopic.hpp>
 
 namespace dds
 {
@@ -43,11 +43,8 @@ class Sample
 public:
     Sample() { }
 
-    Sample(const T& d, const dds::sub::SampleInfo& i)
-    {
-        this->data_ = d;
-        this->info_ = i;
-    }
+    Sample(const T& d, const dds::sub::SampleInfo& i) : data_(d), info_(i)
+    {  }
 
     Sample(const Sample& other)
     {

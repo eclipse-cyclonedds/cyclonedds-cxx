@@ -18,6 +18,11 @@
 #include <org/eclipse/cyclonedds/core/config.hpp>
 #include <dds/sub/Rank.hpp>
 #include <dds/sub/GenerationCount.hpp>
+#include <dds/core/Time.hpp>
+#include <dds/sub/status/DataState.hpp>
+#include <dds/core/InstanceHandle.hpp>
+
+#include <dds/dds.h>
 
 namespace org
 {
@@ -38,7 +43,8 @@ class org::eclipse::cyclonedds::sub::SampleInfoImpl
 {
 public:
     SampleInfoImpl() : valid_(false) { }
-public:
+
+    SampleInfoImpl(const dds_sample_info_t *from);
 
     inline const dds::core::Time timestamp() const
     {
@@ -110,27 +116,13 @@ public:
         this->publication_handle_ = h;
     }
 
-    bool operator==(const SampleInfoImpl& other) const
-    {
-        return this->source_timestamp_ == other.timestamp()
-               && state_is_equal(this->state_, other.state())
-               && this->generation_count_ == other.generation_count()
-               && this->rank_ == other.rank()
-               && this->valid_ == other.valid()
-               && this->instance_handle_ == other.instance_handle()
-               && this->publication_handle_ == other.publication_handle();
-    }
+    bool operator==(const SampleInfoImpl& other) const;
 
 
 private:
     static bool state_is_equal(
                     const dds::sub::status::DataState& s1,
-                    const dds::sub::status::DataState& s2)
-    {
-        return s1.instance_state() == s2.instance_state()
-               && s1.view_state() == s2.view_state()
-               && s1.sample_state() == s2.sample_state();
-    }
+                    const dds::sub::status::DataState& s2);
 
 private:
     dds::core::Time source_timestamp_;
@@ -142,6 +134,5 @@ private:
     dds::core::InstanceHandle publication_handle_;
 
 };
-
 
 #endif /* CYCLONEDDS_SUB_SAMPLE_INFO_IMPL_HPP_ */

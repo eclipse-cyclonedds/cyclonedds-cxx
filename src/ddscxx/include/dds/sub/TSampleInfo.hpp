@@ -71,6 +71,14 @@ public:
     TSampleInfo();
     /** @endcond */
 
+    /** @cond
+     * Create a SampleInfo with the specified contents in the delegate.
+     * This constructor is required for containers.
+     * An application would normally not create a SampleInfo itself.
+     * So, do not put the creation in the API documentation for clarity.
+     */
+    TSampleInfo(const DELEGATE &d);
+
 public:
     /**
      * Gets the timestamp of the sample.
