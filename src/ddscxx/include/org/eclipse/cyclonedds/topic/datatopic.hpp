@@ -553,7 +553,7 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
 
   auto t = d->getT();
   size_t sz = 0;
-  if (t == nullptr || !get_serialized_size<T,S,key_mode::sorted>(*t, sz))
+  if (t == nullptr || !get_serialized_size<T,S,key_mode::unsorted>(*t, sz))
     goto failure;
 
   sz += CDR_HEADER_SIZE;
