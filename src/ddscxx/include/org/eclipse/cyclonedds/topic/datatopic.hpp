@@ -311,7 +311,7 @@ template<typename T, class S>
 bool serialize_into(void *buffer,
                     size_t buf_sz,
                     const T &sample,
-                    bool as_key)
+                    key_mode mode)
 {
   CHECK_FOR_NULL(buffer);
   assert(buf_sz >= CDR_HEADER_SIZE);
@@ -319,7 +319,7 @@ bool serialize_into(void *buffer,
   S str;
   str.set_buffer(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE);
   return (write_header<T,S>(buffer)
-        && write(str, sample, as_key ? key_mode::unsorted : key_mode::not_key)
+        && write(str, sample, mode)
         && finish_header<T>(buffer, buf_sz));
 }
 
@@ -480,7 +480,7 @@ ddsi_serdata *serdata_from_sample(
   sz += CDR_HEADER_SIZE;
   d->resize(sz);
 
-  if (!serialize_into<T,S>(d->data(), sz, msg, k))
+  if (!serialize_into<T,S>(d->data(), sz, msg, k ? key_mode::unsorted : key_mode::not_key))
     goto failure;
 
   d->key_md5_hashed() = to_key(msg, d->key());
@@ -559,7 +559,7 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   sz += CDR_HEADER_SIZE;
   d1->resize(sz);
 
-  if (!serialize_into<T,S>(d1->data(), sz, *t, true))
+  if (!serialize_into<T,S>(d1->data(), sz, *t, key_mode::unsorted))
     goto failure;
 
   d1->key_md5_hashed() = to_key(*t, d1->key());
@@ -974,7 +974,7 @@ bool sertype_serialize_into(const ddsi_sertype*,
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
 
-  return serialize_into<T,S>(dst_buffer, sz, msg, false);
+  return serialize_into<T,S>(dst_buffer, sz, msg, key_mode::not_key);
 }
 
 template<typename T,
