@@ -85,12 +85,12 @@ strategy:
       cc: clang-12
       cxx: clang++-12
       legacy: on
-    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type discovery)':
+    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type lib)':
       image: ubuntu-22.04
       sanitizer: address
       cc: gcc-12
       cxx: g++-12
-      type_discovery: off
+      type_lib: off
       topic_discovery: off
     'macOS 11 with Clang 12 (Debug, x86_64)':
       image: macOS-11

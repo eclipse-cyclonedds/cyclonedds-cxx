@@ -128,7 +128,7 @@ emit_traits(
     "  return extensibility::ext_%2$s;\n"
     "}\n\n";
   static const char *type_info_decl1 =
-    "#ifdef DDSCXX_HAS_TYPE_DISCOVERY\n"
+    "#ifdef DDSCXX_HAS_TYPELIB\n"
     "template<> constexpr unsigned int TopicTraits<%1$s>::type_map_blob_sz() { return %2$u; }\n"
     "template<> constexpr unsigned int TopicTraits<%1$s>::type_info_blob_sz() { return %3$u; }\n"
     "template<> inline const uint8_t * TopicTraits<%1$s>::type_map_blob() {\n"
@@ -143,7 +143,7 @@ emit_traits(
     "};\n"
     "  return blob;\n"
     "}\n"
-    "#endif //DDSCXX_HAS_TYPE_DISCOVERY\n\n";
+    "#endif //DDSCXX_HAS_TYPELIB\n\n";
 
   if (IDL_PRINTA(&name, get_cpp11_fully_scoped_name, node, gen) < 0 ||
       idl_fprintf(gen->header.handle, fmt, name, name+2) < 0)

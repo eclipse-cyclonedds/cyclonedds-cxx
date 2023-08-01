@@ -989,7 +989,7 @@ struct ddscxx_sertype_ops: public ddsi_sertype_ops {
   sertype_free_samples<T>,
   sertype_equal<T>,
   sertype_hash<T>,
-  #ifdef DDSCXX_HAS_TYPE_DISCOVERY
+  #ifdef DDSCXX_HAS_TYPELIB
   TopicTraits<T>::getTypeId,
   TopicTraits<T>::getTypeMap,
   TopicTraits<T>::getTypeInfo,
@@ -997,7 +997,7 @@ struct ddscxx_sertype_ops: public ddsi_sertype_ops {
   nullptr,
   nullptr,
   nullptr,
-  #endif //DDSCXX_HAS_TYPE_DISCOVERY
+  #endif //DDSCXX_HAS_TYPELIB
   TopicTraits<T>::deriveSertype,
   sertype_get_serialized_size<T,S>,
   sertype_serialize_into<T,S>
