@@ -1,9 +1,6 @@
 #ifndef __OMG_DDS_DDSCXX_FEATURES_HPP__
 #define __OMG_DDS_DDSCXX_FEATURES_HPP__
 
-/* Whether or not support for shared memory is included */
-#cmakedefine DDSCXX_HAS_SHM @DDSCXX_HAS_SHM@
-
 /* Whether or not support for type discovery is included */
 #cmakedefine DDSCXX_HAS_TYPELIB @DDSCXX_HAS_TYPELIB@
 
