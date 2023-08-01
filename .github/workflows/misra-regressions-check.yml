@@ -67,7 +67,7 @@ jobs:
       - name: Build Cyclone DDS CXX
         run: |
           mkdir build
-          cmake -DCMAKE_INSTALL_PREFIX=install -DCMAKE_PREFIX_PATH="$CYCLONEDDS_HOME" -DENABLE_TOPIC_DISCOVERY=TRUE -DENABLE_TYPE_DISCOVERY=TRUE -B build
+          cmake -DCMAKE_INSTALL_PREFIX=install -DCMAKE_PREFIX_PATH="$CYCLONEDDS_HOME" -DENABLE_TOPIC_DISCOVERY=TRUE -DENABLE_TYPELIB=TRUE -B build
           cmake --build build
 
       - name: Perform CodeQL Analysis

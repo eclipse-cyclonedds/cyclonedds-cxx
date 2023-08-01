@@ -7,7 +7,7 @@
 // http://www.eclipse.org/org/documents/edl-v10.php.
 //
 // SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
- 
+
 /**
  * @file
  */
@@ -19,6 +19,10 @@
 #include "dds/ddsi/ddsi_serdata.h"
 #include "org/eclipse/cyclonedds/core/cdr/cdr_enums.hpp"
 #include "dds/features.hpp"
+
+#ifdef DDSCXX_HAS_TYPELIB
+#include "dds/ddsi/ddsi_typelib.h"
+#endif
 
 //forward declaration of c++ sertype wrapper
 template <typename T, class S> class ddscxx_sertype;
@@ -149,7 +153,7 @@ public:
         return extensibility::ext_final;
     }
 
-#ifdef DDSCXX_HAS_TYPE_DISCOVERY
+#ifdef DDSCXX_HAS_TYPELIB
     /**
      * @brief Returns the typeid for TOPIC.
      *
@@ -247,7 +251,7 @@ public:
     {
         return nullptr;
     }
-#endif  //DDSCXX_HAS_TYPE_DISCOVERY
+#endif  //DDSCXX_HAS_TYPELIB
 
     /**
      * @brief Returns a pointer to the derived sertype.

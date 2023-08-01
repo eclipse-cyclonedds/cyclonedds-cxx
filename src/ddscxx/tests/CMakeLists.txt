@@ -71,7 +71,7 @@ set(sources
   DeferredDestruction.cpp
   KeyHash.cpp)
 
-if (ENABLE_TYPE_DISCOVERY AND ENABLE_TOPIC_DISCOVERY)
+if (ENABLE_TYPELIB AND ENABLE_TOPIC_DISCOVERY)
   # Add topic/type discovery tests
   list(APPEND sources
     FindTopic.cpp
