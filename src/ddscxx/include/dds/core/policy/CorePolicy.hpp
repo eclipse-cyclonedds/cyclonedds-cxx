@@ -145,6 +145,9 @@ typedef dds::core::policy::detail::TypeConsistencyEnforcement
 TypeConsistencyEnforcement;
 #endif  //OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+typedef dds::core::policy::detail::PSMXInstances
+PSMXInstances;
+
 typedef dds::core::policy::detail::UserData
 UserData;
 
@@ -195,6 +198,7 @@ OMG_DDS_POLICY_TRAITS(DataRepresentation,   23)
 OMG_DDS_POLICY_TRAITS(TypeConsistencyEnforcement, 24)
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 OMG_DDS_POLICY_TRAITS(WriterBatching,       25)
+OMG_DDS_POLICY_TRAITS(PSMXInstances,        34)
 
 }
 }

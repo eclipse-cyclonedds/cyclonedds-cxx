@@ -193,6 +193,14 @@ DataWriterQosDelegate::policy(const dds::core::policy::WriterBatching& writerbat
     writerbatching_ = writerbatching;
 }
 
+void
+DataWriterQosDelegate::policy(const dds::core::policy::PSMXInstances& psmxinstances)
+{
+    psmxinstances.delegate().check();
+    present_ |= DDSI_QP_PSMX;
+    psmxinstances_ = psmxinstances;
+}
+
 dds_qos_t*
 DataWriterQosDelegate::ddsc_qos() const
 {
@@ -242,6 +250,8 @@ DataWriterQosDelegate::ddsc_qos() const
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     if (present_ & DDSI_QP_CYCLONE_WRITER_BATCHING)
         writerbatching_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_PSMX)
+        psmxinstances_.delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -292,6 +302,8 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     if (present_ & DDSI_QP_CYCLONE_WRITER_BATCHING)
         writerbatching_.delegate().set_iso_policy(qos);
+    if (present_ & DDSI_QP_PSMX)
+        psmxinstances_.delegate().set_iso_policy(qos);
 }
 
 void
@@ -327,6 +339,7 @@ DataWriterQosDelegate::named_qos(const struct _DDS_NamedDataWriterQos &qos)
     typeconsistencyenforcement_.delegate().v_policy((v_writerTypeConsistencyEnforcementPolicy&)(q->writer_typeconsistencyenforcement));
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     writerbatching_.delegate().v_policy((v_writerbatchingPolicy&)(q->writer_batching)     );
+    psmxinstances_.delegate().v_policy((v_psmxinstancesPolicy&)(q->psmxinstances)     );
 #endif
 }
 
@@ -366,6 +379,7 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
         && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
         && other.writerbatching_ == writerbatching_
+        && other.psmxinstances_ == psmxinstances_
            ;
 }
 
@@ -537,6 +551,13 @@ DataWriterQosDelegate::policy<dds::core::policy::WriterBatching>()
 {
     present_ |= DDSI_QP_CYCLONE_WRITER_BATCHING;
     return writerbatching_;
+}
+
+template<> dds::core::policy::PSMXInstances&
+DataWriterQosDelegate::policy<dds::core::policy::PSMXInstances>()
+{
+    present_ |= DDSI_QP_PSMX;
+    return psmxinstances_;
 }
 
 }

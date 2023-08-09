@@ -61,6 +61,7 @@ public:
     void policy(const dds::core::policy::TypeConsistencyEnforcement& typeconsistencyenforcement);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     void policy(const dds::core::policy::WriterBatching&    writerbatching);
+    void policy(const dds::core::policy::PSMXInstances&     psmxinstances);
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -104,6 +105,7 @@ private:
     dds::core::policy::TypeConsistencyEnforcement typeconsistencyenforcement_;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     dds::core::policy::WriterBatching          writerbatching_;
+    dds::core::policy::PSMXInstances           psmxinstances_;
 };
 
 
@@ -280,6 +282,17 @@ DataWriterQosDelegate::policy<dds::core::policy::WriterBatching>() const
 
 template<> OMG_DDS_API dds::core::policy::WriterBatching&
 DataWriterQosDelegate::policy<dds::core::policy::WriterBatching>();
+
+template<>
+OMG_DDS_API dds::core::policy::PSMXInstances&
+DataWriterQosDelegate::policy<dds::core::policy::PSMXInstances>();
+
+template<>
+inline const dds::core::policy::PSMXInstances&
+DataWriterQosDelegate::policy<dds::core::policy::PSMXInstances>() const
+{
+    return psmxinstances_;
+}
 
 }
 }

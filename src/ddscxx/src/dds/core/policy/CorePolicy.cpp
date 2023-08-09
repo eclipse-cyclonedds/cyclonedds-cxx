@@ -48,3 +48,4 @@ OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::TypeConsistencyEnforcement, Type
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::DurabilityService,   DurabilityService)
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::WriterBatching,      WriterBatching)
+OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::PSMXInstances,       PSMXInstances)

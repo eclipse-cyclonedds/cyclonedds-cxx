@@ -1887,6 +1887,19 @@ public:
 //==============================================================================
 
 
+template <typename D>
+class TPSMXInstances : public dds::core::Value<D>
+{
+public:
+
+    TPSMXInstances(const TPSMXInstances& other);
+    explicit TPSMXInstances(const dds::core::StringSeq &instances = {});
+    TPSMXInstances& operator=(const TPSMXInstances& other) = default;
+
+    void instances(const dds::core::StringSeq &instances);
+    const dds::core::StringSeq instances() const;
+};
+
 }
 }
 }
