@@ -30,12 +30,6 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
-if(ENABLE_SHM)
-  # Packages required packages for SHM tests
-  find_package(iceoryx_posh REQUIRED)
-  find_package(iceoryx_posh_testing REQUIRED)
-endif()
-
 set(sources
   Bounded.cpp
   EntityStatus.cpp
@@ -78,11 +72,6 @@ if (ENABLE_TYPELIB AND ENABLE_TOPIC_DISCOVERY)
     TopicTypeDiscovery.cpp)
 endif()
 
-if(ENABLE_SHM)
-  # Add shared memory tests
-  list(APPEND sources SharedMemory.cpp)
-endif()
-
 add_executable(ddscxx_tests ${sources})
 
 # Disable the static analyzer in GCC to avoid crashing the GNU C++ compiler
@@ -100,17 +89,6 @@ target_link_libraries(
     GTest::GTest
     GTest::Main
     ddscxx_test_types)
-
-if(ENABLE_SHM)
-  target_link_libraries(
-    ddscxx_tests PRIVATE
-      iceoryx_posh::iceoryx_posh_roudi
-      iceoryx_posh_testing::iceoryx_posh_testing
-      # iceoryx_posh_testing depends on GoogleMock but does not propagate the
-      # the dependency. Workaround it by requiring the package here.
-      GTest::GMock
-      GTest::GMockMain)
-endif()
 
 target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS})
 
@@ -131,10 +109,6 @@ endif()
 get_target_property(cyclonedds_lib CycloneDDS::ddsc LOCATION)
 get_target_property(gtest_lib GTest::GTest IMPORTED_LOCATION)
 get_target_property(gtest_main_lib GTest::Main IMPORTED_LOCATION)
-if(ENABLE_SHM)
-  get_target_property(gmock_lib GTest::GMock IMPORTED_LOCATION)
-  get_target_property(gmock_main_lib GTest::GMockMain IMPORTED_LOCATION)
-endif()
 
 # Ignore false positives due to gtest not being compiled with asan
 if(SANITIZER MATCHES "address")

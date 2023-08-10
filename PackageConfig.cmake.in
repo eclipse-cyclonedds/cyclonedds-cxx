@@ -13,11 +13,6 @@
 
 find_package(CycloneDDS REQUIRED)
 
-if(@ENABLE_SHM@)
-  include(CMakeFindDependencyMacro)
-  find_dependency(iceoryx_binding_c)
-endif()
-
 if(@ENABLE_LEGACY@)
   include(CMakeFindDependencyMacro)
   find_dependency(Boost)
