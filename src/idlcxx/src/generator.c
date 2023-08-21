@@ -613,11 +613,14 @@ idl_type_t unalias_bitmask(const idl_node_t *node)
 }
 
 static char *
-figure_guard(const char *file)
+figure_guard(const char *file, const idl_md5_byte_t digest[16])
 {
   char *inc = NULL;
 
-  if (idl_asprintf(&inc, "DDSCXX_%s", file) == -1)
+  if (idl_asprintf(&inc, "DDSCXX_%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+                   file, digest[0], digest[1], digest[2], digest[3], digest[4], digest[5],
+                   digest[6], digest[7], digest[8], digest[9], digest[10], digest[11],
+                   digest[12], digest[13], digest[14], digest[15]) == -1 )
     return NULL;
 
   /* replace any non-alphanumeric characters */
@@ -905,7 +908,7 @@ idl_retcode_t generate_nosetup(const idl_pstate_t *pstate, struct generator *gen
   idl_retcode_t ret;
   char *guard;
 
-  if (!(guard = figure_guard(gen->header.path)))
+  if (!(guard = figure_guard(gen->header.path, pstate->digest)))
     return IDL_RETCODE_NO_MEMORY;
   if ((ret = print_header(gen->header.handle, gen->path, gen->header.path)))
     goto err_print;
