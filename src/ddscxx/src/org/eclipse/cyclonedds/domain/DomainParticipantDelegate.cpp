@@ -732,3 +732,59 @@ void org::eclipse::cyclonedds::domain::DomainParticipantDelegate::on_sample_lost
 
     this->listener()->on_sample_lost(adr, s);
 }
+
+void org::eclipse::cyclonedds::domain::DomainParticipantDelegate::on_offered_deadline_missed(dds_entity_t writer,
+        org::eclipse::cyclonedds::core::OfferedDeadlineMissedStatusDelegate &sd)
+{
+    org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
+           ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+                this->extract_strong_ref(writer));
+    dds::pub::AnyDataWriter adw(ref);
+
+    dds::core::status::OfferedDeadlineMissedStatus s;
+    s.delegate() = sd;
+
+    this->listener()->on_offered_deadline_missed(adw, s);
+}
+
+void org::eclipse::cyclonedds::domain::DomainParticipantDelegate::on_offered_incompatible_qos(dds_entity_t writer,
+        org::eclipse::cyclonedds::core::OfferedIncompatibleQosStatusDelegate &sd)
+{
+    org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+                this->extract_strong_ref(writer));
+    dds::pub::AnyDataWriter adw(ref);
+
+    dds::core::status::OfferedIncompatibleQosStatus s;
+    s.delegate() = sd;
+
+    this->listener()->on_offered_incompatible_qos(adw, s);
+}
+
+void org::eclipse::cyclonedds::domain::DomainParticipantDelegate::on_liveliness_lost(dds_entity_t writer,
+        org::eclipse::cyclonedds::core::LivelinessLostStatusDelegate &sd)
+{
+    org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+                this->extract_strong_ref(writer));
+    dds::pub::AnyDataWriter adw(ref);
+
+    dds::core::status::LivelinessLostStatus s;
+    s.delegate() = sd;
+
+    this->listener()->on_liveliness_lost(adw, s);
+}
+
+void org::eclipse::cyclonedds::domain::DomainParticipantDelegate::on_publication_matched(dds_entity_t writer,
+        org::eclipse::cyclonedds::core::PublicationMatchedStatusDelegate &sd)
+{
+    org::eclipse::cyclonedds::pub::AnyDataWriterDelegate::ref_type ref =
+            ::std::dynamic_pointer_cast<org::eclipse::cyclonedds::pub::AnyDataWriterDelegate>(
+                this->extract_strong_ref(writer));
+    dds::pub::AnyDataWriter adw(ref);
+
+    dds::core::status::PublicationMatchedStatus s;
+    s.delegate() = sd;
+
+    this->listener()->on_publication_matched(adw, s);
+}
