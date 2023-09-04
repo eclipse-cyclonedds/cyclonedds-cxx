@@ -28,12 +28,14 @@ class DomainParticipantListener : public virtual dds::domain::NoOpDomainParticip
 {
 public:
     dds::sub::Subscriber data_on_readers_subscriber;
-
     dds::sub::AnyDataReader data_available_reader;
+    dds::pub::AnyDataWriter publication_matched_writer;
+    dds::core::status::PublicationMatchedStatus publication_matched_status;
 
     DomainParticipantListener() :
         data_on_readers_subscriber(dds::core::null),
-        data_available_reader(dds::core::null) { }
+        data_available_reader(dds::core::null),
+        publication_matched_writer(dds::core::null) { }
 
 protected:
     virtual void on_data_on_readers(dds::sub::Subscriber& subs)
@@ -53,6 +55,18 @@ protected:
         ddsrt_cond_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
+
+    virtual void on_publication_matched(dds::pub::AnyDataWriter& writer,
+            const ::dds::core::status::PublicationMatchedStatus& status)
+    {
+        ddsrt_mutex_lock(&g_mutex);
+        cb_called |= DDS_PUBLICATION_MATCHED_STATUS;
+        this->publication_matched_writer = writer;
+        this->publication_matched_status = status;
+        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_mutex_unlock(&g_mutex);
+    }
+
 };
 
 class TopicListener : public virtual dds::topic::NoOpTopicListener<HelloWorldData::Msg>
@@ -1469,5 +1483,51 @@ TEST_F(Listener, propagation)
     triggered = waitfor_cb(DDS_DATA_ON_READERS_STATUS);
     ASSERT_EQ(triggered & DDS_DATA_ON_READERS_STATUS, DDS_DATA_ON_READERS_STATUS);
     ASSERT_EQ(publisherListener.publication_matched_writer.delegate(), writer.delegate());
+    ASSERT_EQ(participantListener.data_on_readers_subscriber.delegate(), subscriber.delegate());
+}
+
+TEST_F(Listener, propagation2)
+{
+    DomainParticipantListener participantListener;
+    SubscriberListener subscriberListener;
+    PublisherListener publisherListener;
+    dds::core::status::StatusMask participantMask =
+        dds::core::status::StatusMask() <<
+        dds::core::status::StatusMask::data_on_readers() <<
+        dds::core::status::StatusMask::publication_matched();
+    dds::core::status::StatusMask subscriberMask =
+        dds::core::status::StatusMask() <<
+        dds::core::status::StatusMask::subscription_matched();
+
+    // Set listener on participant
+    participant.listener(&participantListener, participantMask);
+
+    // Set listener on subscriber
+    subscriber.listener(&subscriberListener, subscriberMask);
+
+    // Create reader and writer without listener
+    dds::sub::DataReader<HelloWorldData::Msg> reader(
+        subscriber, topic);
+    ASSERT_NE(reader, dds::core::null);
+
+    dds::pub::DataWriter<HelloWorldData::Msg> writer(
+        publisher, topic);
+    ASSERT_NE(writer, dds::core::null);
+
+    // Publication and Subscription should be matched.
+    uint32_t triggered = waitfor_cb(DDS_PUBLICATION_MATCHED_STATUS | DDS_SUBSCRIPTION_MATCHED_STATUS);
+    ASSERT_EQ(triggered & DDS_SUBSCRIPTION_MATCHED_STATUS, DDS_SUBSCRIPTION_MATCHED_STATUS);
+    ASSERT_EQ(triggered & DDS_PUBLICATION_MATCHED_STATUS,  DDS_PUBLICATION_MATCHED_STATUS);
+    ASSERT_EQ(participantListener.publication_matched_writer.delegate(), writer.delegate());
+    ASSERT_EQ(subscriberListener.subscription_matched_reader.delegate(), reader.delegate());
+
+    // Write sample
+    HelloWorldData::Msg sample(1, "test");
+    writer << sample;
+
+    // Data on readers should be triggered with the right status.
+    triggered = waitfor_cb(DDS_DATA_ON_READERS_STATUS);
+    ASSERT_EQ(triggered & DDS_DATA_ON_READERS_STATUS, DDS_DATA_ON_READERS_STATUS);
+    ASSERT_EQ(participantListener.publication_matched_writer.delegate(), writer.delegate());
     ASSERT_EQ(participantListener.data_on_readers_subscriber.delegate(), subscriber.delegate());
 }

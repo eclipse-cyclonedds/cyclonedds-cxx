@@ -161,7 +161,14 @@ public:
         org::eclipse::cyclonedds::core::SubscriptionMatchedStatusDelegate &sd);
     void on_sample_lost(dds_entity_t reader,
         org::eclipse::cyclonedds::core::SampleLostStatusDelegate &sd);
-
+    void on_offered_deadline_missed(dds_entity_t writer,
+          org::eclipse::cyclonedds::core::OfferedDeadlineMissedStatusDelegate &sd);
+    void on_offered_incompatible_qos(dds_entity_t writer,
+          org::eclipse::cyclonedds::core::OfferedIncompatibleQosStatusDelegate &sd);
+    void on_liveliness_lost(dds_entity_t writer,
+          org::eclipse::cyclonedds::core::LivelinessLostStatusDelegate &sd);
+    void on_publication_matched(dds_entity_t writer,
+          org::eclipse::cyclonedds::core::PublicationMatchedStatusDelegate &sd);
 
 private:
     static org::eclipse::cyclonedds::core::EntitySet participants;

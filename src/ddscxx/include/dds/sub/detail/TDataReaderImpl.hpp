@@ -532,55 +532,6 @@ dds::sub::detail::DataReader<T>::init(ObjectDelegate::weak_ref_type weak_ref)
     /* Add the datareader to the datareader set of the subscriber */
     this->sub_.delegate()->add_datareader(*this);
 
-    // Because listeners are added after reader is created (which is in enabled state, because
-    // disabled state is not yet supported), events could have occured before listeners were
-    // registered. Therefore the event handlers for those events are called here.
-    if (this->listener_get()) {
-        dds::core::status::StatusMask readerStatus = status_changes();
-
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::data_available().to_ulong()
-                && readerStatus.test(DDS_DATA_AVAILABLE_STATUS_ID))
-        {
-            on_data_available(this->ddsc_entity);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::liveliness_changed().to_ulong()
-                && readerStatus.test(DDS_LIVELINESS_CHANGED_STATUS_ID))
-        {
-            dds::core::status::LivelinessChangedStatus status = liveliness_changed_status();
-            on_liveliness_changed(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::requested_deadline_missed().to_ulong()
-                && readerStatus.test(DDS_REQUESTED_DEADLINE_MISSED_STATUS_ID))
-        {
-            dds::core::status::RequestedDeadlineMissedStatus status = requested_deadline_missed_status();
-            on_requested_deadline_missed(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::requested_incompatible_qos().to_ulong()
-                && readerStatus.test(DDS_REQUESTED_INCOMPATIBLE_QOS_STATUS_ID))
-        {
-            dds::core::status::RequestedIncompatibleQosStatus status = requested_incompatible_qos_status();
-            on_requested_incompatible_qos(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::sample_lost().to_ulong()
-                && readerStatus.test(DDS_SAMPLE_LOST_STATUS_ID))
-        {
-            dds::core::status::SampleLostStatus status = sample_lost_status();
-            on_sample_lost(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::sample_rejected().to_ulong()
-                && readerStatus.test(DDS_SAMPLE_REJECTED_STATUS_ID))
-        {
-            dds::core::status::SampleRejectedStatus status = sample_rejected_status();
-            on_sample_rejected(this->ddsc_entity, status);
-        }
-        if (listener_mask.to_ulong() & dds::core::status::StatusMask::subscription_matched().to_ulong()
-                && readerStatus.test(DDS_SUBSCRIPTION_MATCHED_STATUS_ID))
-        {
-            dds::core::status::SubscriptionMatchedStatus status = subscription_matched_status();
-            on_subscription_matched(this->ddsc_entity, status);
-        }
-    }
-
     this->enable();
 }
 
