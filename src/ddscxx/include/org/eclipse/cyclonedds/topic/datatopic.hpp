@@ -634,7 +634,7 @@ void serdata_get_keyhash(
   }
 }
 
-static bool psmx_endpoint_serialization_required(struct dds_psmx_endpoint *psmx_endpoint)
+static inline bool psmx_endpoint_serialization_required(struct dds_psmx_endpoint *psmx_endpoint)
 {
   assert (psmx_endpoint && psmx_endpoint->psmx_topic);
   return psmx_endpoint->psmx_topic->ops.serialization_required (psmx_endpoint->psmx_topic->data_type_props);
