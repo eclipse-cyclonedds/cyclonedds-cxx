@@ -649,6 +649,7 @@ struct ddsi_serdata* serdata_from_loaned_sample (
   bool force_serialization)
 {
   assert (loan->loan_origin.origin_kind == DDS_LOAN_ORIGIN_KIND_PSMX);
+  const bool key = (kind == SDK_KEY);
   bool serialize_data = force_serialization || psmx_endpoint_serialization_required(loan->loan_origin.psmx_endpoint);
 
   const T* sample_in = reinterpret_cast<const T*>(sample);
@@ -663,7 +664,6 @@ struct ddsi_serdata* serdata_from_loaned_sample (
     if (serialize_data)
     {
       bool ser_result = false;
-      const bool key = (kind == SDK_KEY);
       if(TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
           ser_result = serialize_into_impl<T,basic_cdr_stream>(hdr, sample_out, metadata->sample_size, *sample_in, key ? key_mode::unsorted : key_mode::not_key);
       else if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR2)
@@ -683,11 +683,10 @@ struct ddsi_serdata* serdata_from_loaned_sample (
   }
 
   if (!serialize_data)
-    metadata->sample_state = DDS_LOANED_SAMPLE_STATE_RAW;
+    metadata->sample_state = (key ? DDS_LOANED_SAMPLE_STATE_RAW_KEY : DDS_LOANED_SAMPLE_STATE_RAW_DATA);
 
   metadata->cdr_identifier = hdr[0];  //remove endianness?
   metadata->cdr_options = hdr[1];
-  metadata->hash = d->hash;
 
   d->key_md5_hashed() = to_key(*sample_in, d->key());
   d->populate_hash();
@@ -706,10 +705,11 @@ struct ddsi_serdata* serdata_from_psmx (
   enum ddsi_serdata_kind kind = SDK_EMPTY;
   switch (md->sample_state)
   {
-    case DDS_LOANED_SAMPLE_STATE_RAW:
+    case DDS_LOANED_SAMPLE_STATE_RAW_DATA:
     case DDS_LOANED_SAMPLE_STATE_SERIALIZED_DATA:
       kind = SDK_DATA;
       break;
+    case DDS_LOANED_SAMPLE_STATE_RAW_KEY:
     case DDS_LOANED_SAMPLE_STATE_SERIALIZED_KEY:
       kind = SDK_KEY;
       break;
@@ -718,7 +718,7 @@ struct ddsi_serdata* serdata_from_psmx (
   }
 
   ddscxx_serdata<T> *d = new ddscxx_serdata<T>(type, kind);
-  if (DDS_LOANED_SAMPLE_STATE_RAW != md->sample_state)
+  if (DDS_LOANED_SAMPLE_STATE_RAW_DATA != md->sample_state && DDS_LOANED_SAMPLE_STATE_RAW_KEY != md->sample_state)
   {
     bool deser_result = false;
     const endianness end = (md->cdr_identifier & BO_LITTLE ? endianness::little_endian : endianness::big_endian);
