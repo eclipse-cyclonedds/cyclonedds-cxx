@@ -157,7 +157,9 @@ AnyDataWriterDelegate::unregister_instance_cdr(
 bool
 AnyDataWriterDelegate::is_loan_supported(const dds_entity_t writer)
 {
-  return dds_is_loan_available(writer);
+    DDSRT_WARNING_DEPRECATED_OFF
+    return dds_is_loan_available(writer);
+    DDSRT_WARNING_DEPRECATED_ON
 }
 
 void
@@ -167,7 +169,7 @@ AnyDataWriterDelegate::loan_sample(
 {
     dds_return_t ret;
 
-    ret = dds_loan_sample(writer, sample);
+    ret = dds_request_loan(writer, sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "sample loan failed.");
 }
 

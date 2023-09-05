@@ -148,7 +148,9 @@ AnyDataReaderDelegate::collector_callback_fn (
 bool
 AnyDataReaderDelegate::is_loan_supported(const dds_entity_t reader) const
 {
+    DDSRT_WARNING_DEPRECATED_OFF
     return dds_is_loan_available(reader);
+    DDSRT_WARNING_DEPRECATED_ON
 }
 
 void
