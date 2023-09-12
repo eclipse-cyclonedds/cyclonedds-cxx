@@ -1,0 +1,22 @@
+
+module KeylessSpace {
+    enum Enumeration
+    {
+        VALUE1,
+        VALUE2
+    };
+
+    struct Type1 {
+        long long_1;
+        long long_2;
+        long long_3;
+    };
+
+    struct Type2 {
+        long long_1;
+        long long_2;
+        long long_3;
+        Enumeration enum_1;
+    };
+};
+
