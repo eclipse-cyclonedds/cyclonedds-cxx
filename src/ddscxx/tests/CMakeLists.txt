@@ -13,6 +13,7 @@ find_package(GTest REQUIRED)
 
 idlcxx_generate(TARGET ddscxx_test_types FILES
   data/Space.idl
+  data/KeylessSpace.idl
   data/HelloWorldData.idl
   data/Serialization.idl
   data/CdrDataModels.idl

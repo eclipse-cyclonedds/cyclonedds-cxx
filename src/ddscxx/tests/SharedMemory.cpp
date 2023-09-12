@@ -16,7 +16,7 @@
 #include "dds/ddsi/ddsi_shm_transport.h"
 #include "iceoryx_posh/testing/roudi_gtest.hpp"
 #include "HelloWorldData.hpp"
-#include "Space.hpp"
+#include "KeylessSpace.hpp"
 #include "Serialization.hpp"
 #include "iceoryx_posh/popo/subscriber.hpp"
 #include "iceoryx_posh/popo/sample.hpp"
@@ -41,7 +41,7 @@ template<class T>
 void make_sample_(T & sample, const int32_t cnt);
 
 template<>
-void make_sample_(Space::Type1 & sample, const int32_t cnt)
+void make_sample_(KeylessSpace::Type1 & sample, const int32_t cnt)
 {
   sample.long_1(cnt);
   sample.long_2(cnt + 1);
@@ -49,7 +49,7 @@ void make_sample_(Space::Type1 & sample, const int32_t cnt)
 }
 
 template<>
-void make_sample_(Space::Type2 & sample, const int32_t cnt)
+void make_sample_(KeylessSpace::Type2 & sample, const int32_t cnt)
 {
   sample.long_1(cnt);
   sample.long_2(cnt + 1);
@@ -135,7 +135,7 @@ public:
   // read condition for the reader of content filtered topic
   dds::sub::cond::ReadCondition flt_rc;
   dds::core::cond::WaitSet waitset;
-  iox::cxx::optional<iox::popo::Subscriber<T, iceoryx_header_t>> iceoryx_subscriber;
+  iox::cxx::optional<iox::popo::Subscriber<T, dds_psmx_metadata_t>> iceoryx_subscriber;
 
   static constexpr char TOPIC_NAME[] = "datareader_test_topic";
 
@@ -163,7 +163,15 @@ public:
     if (this->participant == dds::core::null) {
       // configuration to enable shared memory communication
       static const std::string shm_config {
-        "<CycloneDDS><Domain><SharedMemory><Enable>true</Enable><LogLevel>verbose</LogLevel></SharedMemory></Domain></CycloneDDS>"};
+        "<CycloneDDS><Domain>"
+        "<General>"
+        "  <Interfaces>"
+        "    <PubSubMessageExchange name=\"iox\" library=\"psmx_iox\" "
+        "config=\"SERVICE_NAME=CYCLONEDDS;KEYED_TOPICS=true;LOG_LEVEL=VERBOSE\"/>"
+        "  </Interfaces>"
+        "</General>"
+        "</Domain></CycloneDDS>"   
+      };
 
       this->participant = dds::domain::DomainParticipant(
         0,
@@ -220,7 +228,7 @@ public:
       ASSERT_NE(this->reader, dds::core::null);
 
       this->iceoryx_subscriber.emplace(
-          iox::capro::ServiceDescription{"DDS_CYCLONE", 
+          iox::capro::ServiceDescription{"CYCLONEDDS", 
                iox::capro::IdString_t(iox::cxx::TruncateToCapacity, org::eclipse::cyclonedds::topic::TopicTraits<TopicType>::getTypeName()), 
                iox::capro::IdString_t(iox::cxx::TruncateToCapacity, std::string(".") + std::string(TOPIC_NAME)) /* default partition . topic name */ });
     }
@@ -335,19 +343,19 @@ public:
       auto iceoryx_data = iox_sample.get();
 
       // if the data in the chunk is of the serialized type
-      if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
+      if (user_header.sample_state == DDS_LOANED_SAMPLE_STATE_SERIALIZED_DATA) {
         // Since the data in iceoryx chunk is in the serialized form, take the
         // sample and deserialize the data and then compare with the sent data
         auto buf_ptr = reinterpret_cast<unsigned char *>(const_cast<T *>(iceoryx_data));
         T msg;
         deserialize_sample_from_buffer(buf_ptr, SIZE_MAX, msg);
         ASSERT_EQ(msg, test_data);
-      } else if (user_header.shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
+      } else if (user_header.sample_state == DDS_LOANED_SAMPLE_STATE_RAW_DATA) {
         // the chunk already has deserialized data and can be compared directly
         ASSERT_EQ(*iceoryx_data, test_data);
       } else {
         throw std::runtime_error(
-                "the data state is not expected " + std::to_string(user_header.shm_data_state));
+                "the data state is not expected " + std::to_string(user_header.sample_state));
       }
     } else {
       ASSERT_FALSE(iceoryx_subscriber->hasData());
@@ -435,7 +443,7 @@ public:
  * Tests
  */
 
-using TestTypes = ::testing::Types<Space::Type1, Space::Type2, HelloWorldData::Msg,
+using TestTypes = ::testing::Types<KeylessSpace::Type1, KeylessSpace::Type2, HelloWorldData::Msg,
      Bounded::Msg, UnBounded::Msg>;
 
 TYPED_TEST_SUITE(SharedMemoryTest, TestTypes, );

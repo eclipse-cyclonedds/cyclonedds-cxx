@@ -559,7 +559,11 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   auto d1 = new ddscxx_serdata<T>(d->type, SDK_KEY);
   d1->type = nullptr;
 
-  auto t = d->getT();
+  const T* t;
+  if (d->loan && (d->loan->metadata->sample_state == DDS_LOANED_SAMPLE_STATE_RAW_KEY || d->loan->metadata->sample_state == DDS_LOANED_SAMPLE_STATE_RAW_DATA))
+    t = static_cast<const T*>(d->loan->sample_ptr);
+  else
+    t = d->getT();
   size_t sz = 0;
   if (t == nullptr || !get_serialized_size<T,S,key_mode::unsorted>(*t, sz))
     goto failure;
@@ -634,13 +638,7 @@ void serdata_get_keyhash(
   }
 }
 
-static inline bool psmx_endpoint_serialization_required(struct dds_psmx_endpoint *psmx_endpoint)
-{
-  assert (psmx_endpoint && psmx_endpoint->psmx_topic);
-  return psmx_endpoint->psmx_topic->ops.serialization_required (psmx_endpoint->psmx_topic->data_type_props);
-}
-
-template<typename T>
+template<typename T, typename S>
 struct ddsi_serdata* serdata_from_loaned_sample (
   const struct ddsi_sertype *type,
   enum ddsi_serdata_kind kind,
@@ -649,49 +647,40 @@ struct ddsi_serdata* serdata_from_loaned_sample (
   bool force_serialization)
 {
   assert (loan->loan_origin.origin_kind == DDS_LOAN_ORIGIN_KIND_PSMX);
-  const bool key = (kind == SDK_KEY);
-  bool serialize_data = force_serialization || psmx_endpoint_serialization_required(loan->loan_origin.psmx_endpoint);
-
+  const bool serialize_data = force_serialization || !(type->data_type_props & DDS_DATA_TYPE_IS_MEMCPY_SAFE);
   const T* sample_in = reinterpret_cast<const T*>(sample);
-  T* sample_out = static_cast<T*>(loan->sample_ptr);
-  struct dds_psmx_metadata *metadata = loan->metadata;
-  ddscxx_serdata<T> *d = new ddscxx_serdata<T>(type, kind);
+  ddscxx_serdata<T> *d;
 
-  uint16_t hdr[CDR_HEADER_SIZE*sizeof(uint8_t)/sizeof(uint16_t)] = {DDSI_RTPS_SAMPLE_NATIVE, 0};
-  if (sample_out != sample_in) //the sample we are sending across PSMX has been supplied during the call to dds_write, not a loan from the user
+  if (!serialize_data)
+    d = new ddscxx_serdata<T>(type, kind);
+  else
+    d = static_cast<ddscxx_serdata<T> *>(serdata_from_sample<T, S>(type, kind, sample));
+  if (d == nullptr)
+    return nullptr;
+
+  d->loan = loan;
+  if (d->loan->sample_ptr == sample || !serialize_data)
   {
-    assert (metadata->sample_state == DDS_LOANED_SAMPLE_STATE_UNITIALIZED);
-    if (serialize_data)
-    {
-      bool ser_result = false;
-      if(TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
-          ser_result = serialize_into_impl<T,basic_cdr_stream>(hdr, sample_out, metadata->sample_size, *sample_in, key ? key_mode::unsorted : key_mode::not_key);
-      else if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR2)
-          ser_result = serialize_into_impl<T,xcdr_v2_stream>(hdr, sample_out, metadata->sample_size, *sample_in, key ? key_mode::unsorted : key_mode::not_key);
-      if (!ser_result)  //serialization unsuccesful, abort
-      {
-        delete d;
-        return nullptr;
-      }
-      metadata->sample_state = (key ? DDS_LOANED_SAMPLE_STATE_SERIALIZED_KEY : DDS_LOANED_SAMPLE_STATE_SERIALIZED_DATA);
-    }
-    else
-    {
-      // if you are not serializing, you still need to copy into the loaned sample
-      *sample_out = *sample_in;
-    }
+    d->loan->metadata->sample_state = (kind == SDK_KEY ? DDS_LOANED_SAMPLE_STATE_RAW_KEY : DDS_LOANED_SAMPLE_STATE_RAW_DATA);
+    d->loan->metadata->cdr_identifier = DDSI_RTPS_SAMPLE_NATIVE;
+    d->loan->metadata->cdr_options = 0;
+    if (d->loan->sample_ptr != sample)
+      memcpy (d->loan->sample_ptr, sample, d->loan->metadata->sample_size);
+  }
+  else
+  {
+    d->loan->metadata->sample_state = (kind == SDK_KEY ? DDS_LOANED_SAMPLE_STATE_SERIALIZED_KEY : DDS_LOANED_SAMPLE_STATE_SERIALIZED_DATA);
+    const char *hdr = static_cast<const char *>(calc_offset(d->data(), 4));
+    memcpy (&d->loan->metadata->cdr_identifier, hdr, sizeof (d->loan->metadata->cdr_identifier));
+    memcpy (&d->loan->metadata->cdr_options, hdr + 2, sizeof (d->loan->metadata->cdr_identifier));
+    memcpy (d->loan->sample_ptr, calc_offset(d->data(), 4), d->loan->metadata->sample_size);
   }
 
   if (!serialize_data)
-    metadata->sample_state = (key ? DDS_LOANED_SAMPLE_STATE_RAW_KEY : DDS_LOANED_SAMPLE_STATE_RAW_DATA);
-
-  metadata->cdr_identifier = hdr[0];  //remove endianness?
-  metadata->cdr_options = hdr[1];
-
-  d->key_md5_hashed() = to_key(*sample_in, d->key());
-  d->populate_hash();
-  d->loan = loan;
-
+  {
+    d->key_md5_hashed() = to_key(*sample_in, d->key());
+    d->populate_hash();
+  }
   return d;
 }
 
@@ -778,7 +767,7 @@ struct ddscxx_serdata_ops: public ddsi_serdata_ops {
   &serdata_free<T>,
   &serdata_print<T>,
   &serdata_get_keyhash<T>,
-  &serdata_from_loaned_sample<T>,
+  &serdata_from_loaned_sample<T, S>,
   &serdata_from_psmx<T>
   } { ; }
 };
@@ -1089,16 +1078,21 @@ template <typename T, class S>
 ddscxx_sertype<T,S>::ddscxx_sertype()
   : ddsi_sertype{}
 {
-  uint32_t flags = (TopicTraits<T>::isKeyless() ? DDSI_SERTYPE_FLAG_TOPICKIND_NO_KEY : 0u) | (TopicTraits<T>::isSelfContained() ? DDSI_SERTYPE_FLAG_FIXED_SIZE : 0u);
-
-  ddsi_sertype_init_flags(
+  dds_data_type_properties_t dtp = 0;
+  if (! TopicTraits<T>::isKeyless())
+    dtp |= DDS_DATA_TYPE_CONTAINS_KEY;
+  if (TopicTraits<T>::isSelfContained())
+    dtp |= DDS_DATA_TYPE_IS_MEMCPY_SAFE;
+  
+  ddsi_sertype_init_props(
       static_cast<ddsi_sertype*>(this),
       TopicTraits<T>::getTypeName(),
       &sertype_ops,
       &serdata_ops,
-      flags);
-
-  allowed_data_representation = TopicTraits<T>::allowableEncodings();
+      sizeof(T),
+      dtp,
+      TopicTraits<T>::allowableEncodings(),
+      0);
 }
 
 #endif  // DDSCXXDATATOPIC_HPP_
