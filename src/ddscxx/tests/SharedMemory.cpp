@@ -347,7 +347,7 @@ public:
         T msg;
         endianness end;
         encoding_version ver;
-        unsigned char hdr[CDR_HEADER_SIZE];
+        unsigned char hdr[DDSI_RTPS_HEADER_SIZE];
         memcpy (hdr, &user_header.cdr_identifier, 2);
         memcpy (hdr + 2, &user_header.cdr_options, 2);
         read_header<T>(hdr, ver, end);

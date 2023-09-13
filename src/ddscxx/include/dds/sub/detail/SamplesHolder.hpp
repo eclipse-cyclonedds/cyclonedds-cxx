@@ -104,11 +104,11 @@ private:
                                  org::eclipse::cyclonedds::topic::CDRBlob & cdr_blob) const
     {
         // update the CDR header
-        memcpy(cdr_blob.encoding().data(), buffer, CDR_HEADER_SIZE);
+        memcpy(cdr_blob.encoding().data(), buffer, DDSI_RTPS_HEADER_SIZE);
         // if the data kind is not empty
         if (data_kind != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
             // get the actual data from the buffer
-            cdr_blob.payload().assign(buffer + CDR_HEADER_SIZE, buffer + size);
+            cdr_blob.payload().assign(buffer + DDSI_RTPS_HEADER_SIZE, buffer + size);
         }
     }
 };

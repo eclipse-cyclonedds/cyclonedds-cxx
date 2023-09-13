@@ -27,13 +27,41 @@
 #include "org/eclipse/cyclonedds/topic/TopicTraits.hpp"
 #include "org/eclipse/cyclonedds/topic/hash.hpp"
 
-constexpr size_t CDR_HEADER_SIZE = 4U;
-#define BO_LITTLE   0X01
-#define PLAIN_CDR   0x00
-#define PL_CDR      0x02
-#define PLAIN_CDR2  0x06
-#define D_CDR       0x08
-#define PL_CDR2     0x0A
+constexpr size_t DDSI_RTPS_HEADER_SIZE = 4u;
+
+#if DDSRT_ENDIAN == DDSRT_LITTLE_ENDIAN
+
+#define DDSI_RTPS_CDR_BE         0x0000u
+#define DDSI_RTPS_CDR_LE         0x0100u
+#define DDSI_RTPS_PL_CDR_BE      0x0200u
+#define DDSI_RTPS_PL_CDR_LE      0x0300u
+#define DDSI_RTPS_CDR2_BE        0x0600u
+#define DDSI_RTPS_CDR2_LE        0x0700u
+#define DDSI_RTPS_D_CDR2_BE      0x0800u
+#define DDSI_RTPS_D_CDR2_LE      0x0900u
+#define DDSI_RTPS_PL_CDR2_BE     0x0a00u
+#define DDSI_RTPS_PL_CDR2_LE     0x0b00u
+#define DDSI_RTPS_SAMPLE_NATIVE  0x00c0u
+
+#define DDSI_RTPS_CDR_ENC_LE(x) (assert((x) != DDSI_RTPS_SAMPLE_NATIVE), ((x) & 0x0100) == 0x0100)
+
+#else
+
+#define DDSI_RTPS_CDR_BE         0x0000u
+#define DDSI_RTPS_CDR_LE         0x0001u
+#define DDSI_RTPS_PL_CDR_BE      0x0002u
+#define DDSI_RTPS_PL_CDR_LE      0x0003u
+#define DDSI_RTPS_CDR2_BE        0x0006u
+#define DDSI_RTPS_CDR2_LE        0x0007u
+#define DDSI_RTPS_D_CDR2_BE      0x0008u
+#define DDSI_RTPS_D_CDR2_LE      0x0009u
+#define DDSI_RTPS_PL_CDR2_BE     0x000au
+#define DDSI_RTPS_PL_CDR2_LE     0x000bu
+#define DDSI_RTPS_SAMPLE_NATIVE  0xc000u
+
+#define DDSI_RTPS_CDR_ENC_LE(x) (assert((x) != DDSI_RTPS_SAMPLE_NATIVE), ((x) & 0x0001) == 0x0001)
+
+#endif
 
 // macro to check if a pointer is nullptr and return false
 #define CHECK_FOR_NULL(val)  if ((val) == nullptr) return false;
@@ -116,16 +144,10 @@ template<typename T,
 bool write_header(void *buffer)
 {
   CHECK_FOR_NULL(buffer);
-  memset(buffer, 0x0, 4);
-
-  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
-
+  memset(buffer, 0, DDSI_RTPS_HEADER_SIZE);
+  auto hdr = static_cast<uint16_t*>(buffer);
   assert(TopicTraits<T>::getExtensibility() == extensibility::ext_final);
-  *ptr = PLAIN_CDR;
-
-  if (native_endianness() == endianness::little_endian)
-    *ptr |= BO_LITTLE;
-
+  hdr[0] = native_endianness() == endianness::little_endian ? DDSI_RTPS_CDR_LE : DDSI_RTPS_CDR_BE;
   return true;
 }
 
@@ -135,25 +157,20 @@ template<typename T,
 bool write_header(void *buffer)
 {
   CHECK_FOR_NULL(buffer);
-  memset(buffer, 0x0, 4);
-
-  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
-
+  memset(buffer, 0, DDSI_RTPS_HEADER_SIZE);
+  auto hdr = static_cast<uint16_t *>(buffer);
+  auto le = native_endianness() == endianness::little_endian;
   switch (TopicTraits<T>::getExtensibility()) {
     case extensibility::ext_final:
-      *ptr = PLAIN_CDR2;
+      hdr[0] = le ? DDSI_RTPS_CDR2_LE : DDSI_RTPS_CDR2_BE;
       break;
     case extensibility::ext_appendable:
-      *ptr = D_CDR;
+      hdr[0] = le ? DDSI_RTPS_D_CDR2_LE : DDSI_RTPS_D_CDR2_BE;
       break;
     case extensibility::ext_mutable:
-      *ptr = PL_CDR2;
+      hdr[0] = le ? DDSI_RTPS_PL_CDR2_LE : DDSI_RTPS_PL_CDR2_BE;
       break;
   }
-
-  if (native_endianness() == endianness::little_endian)
-    *ptr |= BO_LITTLE;
-
   return true;
 }
 
@@ -163,23 +180,18 @@ template<typename T,
 bool write_header(void *buffer)
 {
   CHECK_FOR_NULL(buffer);
-  memset(buffer, 0x0, 4);
-
-  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 1));
-
+  memset(buffer, 0, DDSI_RTPS_HEADER_SIZE);
+  auto hdr = static_cast<uint16_t *>(buffer);
+  auto le = native_endianness() == endianness::little_endian;
   switch (TopicTraits<T>::getExtensibility()) {
     case extensibility::ext_final:
     case extensibility::ext_appendable:
-      *ptr = PLAIN_CDR;
+      hdr[0] = le ? DDSI_RTPS_CDR_LE : DDSI_RTPS_CDR_BE;
       break;
     case extensibility::ext_mutable:
-      *ptr = PL_CDR;
+      hdr[0] = le ? DDSI_RTPS_PL_CDR_LE : DDSI_RTPS_PL_CDR_BE;
       break;
   }
-
-  if (native_endianness() == endianness::little_endian)
-    *ptr |= BO_LITTLE;
-
   return true;
 }
 
@@ -188,10 +200,8 @@ bool finish_header(void *buffer, size_t bytes_written)
 {
   CHECK_FOR_NULL(buffer);
   auto alignbytes = static_cast<unsigned char>((4 - (bytes_written % 4)) % 4);
-  auto ptr = static_cast<unsigned char*>(calc_offset(buffer, 3));
-
-  *ptr = alignbytes;
-
+  auto hdr = static_cast<unsigned char*>(buffer);
+  hdr[3] = alignbytes;
   return true;
 }
 
@@ -199,18 +209,13 @@ template<typename T>
 bool read_header(const void *buffer, encoding_version &ver, endianness &end)
 {
   CHECK_FOR_NULL(buffer);
-  auto ptr = static_cast<const unsigned char*>(calc_offset(buffer, 1));
-
-  if (*ptr & BO_LITTLE)
-    end = endianness::little_endian;
-  else
-    end = endianness::big_endian;
-
-  auto field = *ptr & ~BO_LITTLE;
+  auto hdr = static_cast<const uint16_t *>(buffer);
+  end = DDSI_RTPS_CDR_ENC_LE(hdr[0]) ? endianness::little_endian : endianness::big_endian;
   switch (TopicTraits<T>::getExtensibility()) {
     case extensibility::ext_final:
-      switch (field) {
-        case PLAIN_CDR:
+      switch (hdr[0]) {
+        case DDSI_RTPS_CDR_LE:
+        case DDSI_RTPS_CDR_BE:
         /** this can either mean:
          *  - legacy cdr encoding
          *  - PLAIN_CDR xcdr_v1 encoding (deprecated)
@@ -227,7 +232,8 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
           else
             ver = encoding_version::xcdr_v1;
           break;
-        case PLAIN_CDR2:
+        case DDSI_RTPS_CDR2_LE:
+        case DDSI_RTPS_CDR2_BE:
           ver = encoding_version::xcdr_v2;
           break;
         default:
@@ -235,11 +241,13 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
       }
       break;
     case extensibility::ext_appendable:
-      switch (field) {
-        case PLAIN_CDR:
+      switch (hdr[0]) {
+        case DDSI_RTPS_CDR_LE:
+        case DDSI_RTPS_CDR_BE:
           ver = encoding_version::xcdr_v1;
           break;
-        case D_CDR:
+        case DDSI_RTPS_D_CDR2_LE:
+        case DDSI_RTPS_D_CDR2_BE:
           ver = encoding_version::xcdr_v2;
           break;
         default:
@@ -247,11 +255,13 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
       }
       break;
     case extensibility::ext_mutable:
-      switch (field) {
-        case PL_CDR:
+      switch (hdr[0]) {
+        case DDSI_RTPS_PL_CDR_LE:
+        case DDSI_RTPS_PL_CDR_BE:
           ver = encoding_version::xcdr_v1;
           break;
-        case PL_CDR2:
+        case DDSI_RTPS_PL_CDR2_LE:
+        case DDSI_RTPS_PL_CDR2_BE:
           ver = encoding_version::xcdr_v2;
           break;
         default:
@@ -327,8 +337,8 @@ bool serialize_into(void *buffer,
                     const T &sample,
                     key_mode mode)
 {
-  assert(buf_sz >= CDR_HEADER_SIZE);
-  void *cdr_start = calc_offset(buffer, CDR_HEADER_SIZE);
+  assert(buf_sz >= DDSI_RTPS_HEADER_SIZE);
+  void *cdr_start = calc_offset(buffer, DDSI_RTPS_HEADER_SIZE);
   return serialize_into_impl<T,S>(buffer,cdr_start,buf_sz, sample, mode);
 }
 
@@ -367,13 +377,13 @@ bool deserialize_sample_from_buffer(void *buffer,
 
   switch (ver) {
     case encoding_version::basic_cdr:
-      return deserialize_sample_from_buffer_impl<T, basic_cdr_stream>(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE, sample, data_kind, end);
+      return deserialize_sample_from_buffer_impl<T, basic_cdr_stream>(calc_offset(buffer, DDSI_RTPS_HEADER_SIZE), buf_sz - DDSI_RTPS_HEADER_SIZE, sample, data_kind, end);
       break;
     case encoding_version::xcdr_v1:
-      return deserialize_sample_from_buffer_impl<T, xcdr_v1_stream>(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE, sample, data_kind, end);
+      return deserialize_sample_from_buffer_impl<T, xcdr_v1_stream>(calc_offset(buffer, DDSI_RTPS_HEADER_SIZE), buf_sz - DDSI_RTPS_HEADER_SIZE, sample, data_kind, end);
       break;
     case encoding_version::xcdr_v2:
-      return deserialize_sample_from_buffer_impl<T, xcdr_v2_stream>(calc_offset(buffer, CDR_HEADER_SIZE), buf_sz-CDR_HEADER_SIZE, sample, data_kind, end);
+      return deserialize_sample_from_buffer_impl<T, xcdr_v2_stream>(calc_offset(buffer, DDSI_RTPS_HEADER_SIZE), buf_sz - DDSI_RTPS_HEADER_SIZE, sample, data_kind, end);
       break;
     default:
       return false;
@@ -485,7 +495,7 @@ ddsi_serdata *serdata_from_sample(
       (!k && !get_serialized_size<T,S,key_mode::not_key>(msg, sz)))
     goto failure;
 
-  sz += CDR_HEADER_SIZE;
+  sz += DDSI_RTPS_HEADER_SIZE;
   d->resize(sz);
 
   if (!serialize_into<T,S>(d->data(), sz, msg, k ? key_mode::unsorted : key_mode::not_key))
@@ -568,7 +578,7 @@ ddsi_serdata *serdata_to_untyped(const ddsi_serdata* dcmn)
   if (t == nullptr || !get_serialized_size<T,S,key_mode::unsorted>(*t, sz))
     goto failure;
 
-  sz += CDR_HEADER_SIZE;
+  sz += DDSI_RTPS_HEADER_SIZE;
   d1->resize(sz);
 
   if (!serialize_into<T,S>(d1->data(), sz, *t, key_mode::unsorted))
@@ -673,7 +683,7 @@ struct ddsi_serdata* serdata_from_loaned_sample (
     const char *hdr = static_cast<const char *>(d->data());
     memcpy (&d->loan->metadata->cdr_identifier, hdr, sizeof (d->loan->metadata->cdr_identifier));
     memcpy (&d->loan->metadata->cdr_options, hdr + 2, sizeof (d->loan->metadata->cdr_options));
-    memcpy (d->loan->sample_ptr, calc_offset(d->data(), CDR_HEADER_SIZE), d->loan->metadata->sample_size);
+    memcpy (d->loan->sample_ptr, calc_offset(d->data(), DDSI_RTPS_HEADER_SIZE), d->loan->metadata->sample_size);
   }
 
   if (!serialize_data)
@@ -710,20 +720,20 @@ struct ddsi_serdata* serdata_from_psmx (
   if (DDS_LOANED_SAMPLE_STATE_RAW_DATA != md->sample_state && DDS_LOANED_SAMPLE_STATE_RAW_KEY != md->sample_state)
   {
     bool deser_result = false;
-    switch ((md->cdr_identifier >> 8) & ~BO_LITTLE)
+    switch (md->cdr_identifier)
     {
-      case PLAIN_CDR:
+      case DDSI_RTPS_CDR_LE: case DDSI_RTPS_CDR_BE:
         if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
           deser_result = deserialize_sample_from_buffer_impl<T,basic_cdr_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         else
           deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
-      case PL_CDR:
+      case DDSI_RTPS_PL_CDR_LE: case DDSI_RTPS_PL_CDR_BE:
         deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
-      case PLAIN_CDR2:
-      case D_CDR:
-      case PL_CDR2:
+      case DDSI_RTPS_CDR2_LE: case DDSI_RTPS_CDR2_BE:
+      case DDSI_RTPS_D_CDR2_LE: case DDSI_RTPS_D_CDR2_BE:
+      case DDSI_RTPS_PL_CDR2_LE: case DDSI_RTPS_PL_CDR2_BE:
         deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v2_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
       default:
@@ -1018,7 +1028,7 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
     return SIZE_MAX;
   }
 
-  return sz + CDR_HEADER_SIZE;  // Include the additional bytes for the CDR header
+  return sz + DDSI_RTPS_HEADER_SIZE;  // Include the additional bytes for the CDR header
 }
 
 template <typename T, class S>
