@@ -670,10 +670,10 @@ struct ddsi_serdata* serdata_from_loaned_sample (
   else
   {
     d->loan->metadata->sample_state = (kind == SDK_KEY ? DDS_LOANED_SAMPLE_STATE_SERIALIZED_KEY : DDS_LOANED_SAMPLE_STATE_SERIALIZED_DATA);
-    const char *hdr = static_cast<const char *>(calc_offset(d->data(), 4));
+    const char *hdr = static_cast<const char *>(d->data());
     memcpy (&d->loan->metadata->cdr_identifier, hdr, sizeof (d->loan->metadata->cdr_identifier));
-    memcpy (&d->loan->metadata->cdr_options, hdr + 2, sizeof (d->loan->metadata->cdr_identifier));
-    memcpy (d->loan->sample_ptr, calc_offset(d->data(), 4), d->loan->metadata->sample_size);
+    memcpy (&d->loan->metadata->cdr_options, hdr + 2, sizeof (d->loan->metadata->cdr_options));
+    memcpy (d->loan->sample_ptr, calc_offset(d->data(), CDR_HEADER_SIZE), d->loan->metadata->sample_size);
   }
 
   if (!serialize_data)
@@ -710,23 +710,24 @@ struct ddsi_serdata* serdata_from_psmx (
   if (DDS_LOANED_SAMPLE_STATE_RAW_DATA != md->sample_state && DDS_LOANED_SAMPLE_STATE_RAW_KEY != md->sample_state)
   {
     bool deser_result = false;
-    const endianness end = (md->cdr_identifier & BO_LITTLE ? endianness::little_endian : endianness::big_endian);
-    switch (md->cdr_identifier & ~BO_LITTLE)
+    switch ((md->cdr_identifier >> 8) & ~BO_LITTLE)
     {
       case PLAIN_CDR:
         if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
-          deser_result = deserialize_sample_from_buffer_impl<T,basic_cdr_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, end);
+          deser_result = deserialize_sample_from_buffer_impl<T,basic_cdr_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         else
-          deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, end);
+          deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
       case PL_CDR:
-        deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, end);
+        deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
       case PLAIN_CDR2:
       case D_CDR:
       case PL_CDR2:
-        deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v2_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, end);
+        deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v2_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
+      default:
+        abort ();
     }
     if (!deser_result)  //deserialization unsuccesful, abort
     {
