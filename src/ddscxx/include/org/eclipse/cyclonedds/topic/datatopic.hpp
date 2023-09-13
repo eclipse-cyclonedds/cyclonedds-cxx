@@ -671,11 +671,15 @@ struct ddsi_serdata* serdata_from_loaned_sample (
   d->loan = loan;
   if (d->loan->sample_ptr == sample || !serialize_data)
   {
+    assert(type->data_type_props & DDS_DATA_TYPE_IS_MEMCPY_SAFE);
     d->loan->metadata->sample_state = (kind == SDK_KEY ? DDS_LOANED_SAMPLE_STATE_RAW_KEY : DDS_LOANED_SAMPLE_STATE_RAW_DATA);
     d->loan->metadata->cdr_identifier = DDSI_RTPS_SAMPLE_NATIVE;
     d->loan->metadata->cdr_options = 0;
-    if (d->loan->sample_ptr != sample)
+    if (d->loan->sample_ptr != sample) {
       memcpy (d->loan->sample_ptr, sample, d->loan->metadata->sample_size);
+    }
+    d->key_md5_hashed() = to_key(*sample_in, d->key());
+    d->populate_hash(*sample_in);
   }
   else
   {
@@ -686,11 +690,6 @@ struct ddsi_serdata* serdata_from_loaned_sample (
     memcpy (d->loan->sample_ptr, calc_offset(d->data(), DDSI_RTPS_HEADER_SIZE), d->loan->metadata->sample_size);
   }
 
-  if (!serialize_data)
-  {
-    d->key_md5_hashed() = to_key(*sample_in, d->key());
-    d->populate_hash();
-  }
   return d;
 }
 
@@ -802,6 +801,7 @@ public:
   const ddsi_keyhash_t& key() const { return m_key; }
   bool& key_md5_hashed() { return m_key_md5_hashed; }
   const bool& key_md5_hashed() const { return m_key_md5_hashed; }
+  void populate_hash(const T & sample);
   void populate_hash();
   T* setT(const T* toset);
   T* getT(bool force_deserialization = true);
@@ -849,12 +849,12 @@ void ddscxx_serdata<T>::resize(size_t requested_size)
 }
 
 template <typename T>
-void ddscxx_serdata<T>::populate_hash()
+void ddscxx_serdata<T>::populate_hash(const T & sample)
 {
   if (hash_populated)
     return;
 
-  key_md5_hashed() = to_key(*getT(), key());
+  key_md5_hashed() = to_key(sample, key());
   if (!key_md5_hashed())
   {
     ddsi_keyhash_t buf;
@@ -871,6 +871,13 @@ void ddscxx_serdata<T>::populate_hash()
 
   hash ^= type->serdata_basehash;
   hash_populated = true;
+}
+
+template <typename T>
+void ddscxx_serdata<T>::populate_hash()
+{
+  if (hash_populated)
+    populate_hash(*getT());
 }
 
 template <typename T>
