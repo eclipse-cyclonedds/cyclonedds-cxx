@@ -1021,14 +1021,13 @@ size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
 {
   const auto& msg = *static_cast<const T*>(sample);
 
-  // get the serialized size of the sample (with out serializing)
+  // get the serialized size of the sample (without serializing)
   size_t sz = 0;
   if (!get_serialized_size<T,S,key_mode::not_key>(msg, sz)) {
     // the max value is treated as an error in the Cyclone core
-    return SIZE_MAX;
+    sz = SIZE_MAX;
   }
-
-  return sz + DDSI_RTPS_HEADER_SIZE;  // Include the additional bytes for the CDR header
+  return sz;
 }
 
 template <typename T, class S>
