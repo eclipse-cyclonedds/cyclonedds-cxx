@@ -229,10 +229,6 @@ if(ENABLE_SHM)
   find_package(iceoryx_posh REQUIRED)
   find_package(iceoryx_posh_testing REQUIRED)
   message(STATUS "Found iceoryx_posh: (found version \"${iceoryx_posh_VERSION}\")")
-
-  find_package(iceoryx_binding_c REQUIRED)
-  message(STATUS "Found iceoryx_binding_c: (found version \"${iceoryx_binding_c_VERSION}\")")
-
   set(ENABLE_SHM ON)
 endif()
 
