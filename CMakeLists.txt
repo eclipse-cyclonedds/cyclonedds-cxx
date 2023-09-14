@@ -172,6 +172,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # By default building the testing tree is enabled by including CTest, but
 # since it is not required to build the project, switch to off by default.
 option(BUILD_TESTING "Build the testing tree." OFF)
+option(ENABLE_ICEORYX "Enable testing PSMX with Iceoryx plugin" OFF)
+
 # Disable building the examples by default until the Idlpp-cxx has been
 # deprecated.
 option(BUILD_EXAMPLES "Build examples." OFF)
@@ -223,14 +225,6 @@ install(
   COMPONENT dev)
 
 find_package(CycloneDDS REQUIRED)
-
-option(ENABLE_SHM "Enable testing PSMX with Iceoryx plugin" OFF)
-if(ENABLE_SHM)
-  find_package(iceoryx_posh REQUIRED)
-  find_package(iceoryx_posh_testing REQUIRED)
-  message(STATUS "Found iceoryx_posh: (found version \"${iceoryx_posh_VERSION}\")")
-  set(ENABLE_SHM ON)
-endif()
 
 get_target_property(cyclonedds_has_typelib CycloneDDS::ddsc TYPELIB_IS_AVAILABLE)
 mark_as_advanced(cyclonedds_has_typelib)

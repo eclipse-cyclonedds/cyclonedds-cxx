@@ -112,7 +112,7 @@ constexpr bool DO_NOT_USE_ICEORYX = false;
  * Fixture for the shared memory tests with RouDi
  */
 template<class T>
-class SharedMemoryTest : public RouDi_GTest
+class IceoryxTest : public RouDi_GTest
 {
 public:
   using TopicType = T;
@@ -136,7 +136,7 @@ public:
 
   static constexpr char TOPIC_NAME[] = "datareader_test_topic";
 
-  SharedMemoryTest()
+  IceoryxTest()
   : participant(dds::core::null),
     subscriber(dds::core::null),
     flt_subscriber(dds::core::null),
@@ -159,7 +159,7 @@ public:
   {
     if (this->participant == dds::core::null) {
       // configuration to enable shared memory communication
-      static const std::string shm_config {
+      static const std::string cdds_config {
         "<CycloneDDS><Domain>"
         "<General>"
         "  <Interfaces>"
@@ -175,7 +175,7 @@ public:
         dds::domain::DomainParticipant::default_participant_qos(),
         nullptr,
         dds::core::status::StatusMask::none(),
-        shm_config);
+        cdds_config);
       ASSERT_NE(this->participant, dds::core::null);
     }
   }
@@ -435,14 +435,14 @@ public:
     EXPECT_EQ(status.current_count(), 0);
   }
 
-  void run_loan_support_api_test(const bool valid_r_shm_qos, const bool valid_w_shm_qos)
+  void run_loan_support_api_test(const bool valid_r_iox_qos, const bool valid_w_iox_qos)
   {
     EXPECT_EQ(this->reader.delegate()->is_loan_supported(),
-      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_r_shm_qos));
+      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_r_iox_qos));
     EXPECT_EQ(this->flt_reader.delegate()->is_loan_supported(),
-      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_r_shm_qos));
+      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_r_iox_qos));
     EXPECT_EQ(this->writer.delegate()->is_loan_supported(),
-      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_w_shm_qos));
+      (org::eclipse::cyclonedds::topic::TopicTraits<T>::isSelfContained() && valid_w_iox_qos));
   }
 
   bool is_keyless()
@@ -468,139 +468,139 @@ public:
 using TestTypes = ::testing::Types<KeylessSpace::Type1, KeylessSpace::Type2, HelloWorldData::Msg,
      Bounded::Msg, UnBounded::Msg>;
 
-TYPED_TEST_SUITE(SharedMemoryTest, TestTypes, );
+TYPED_TEST_SUITE(IceoryxTest, TestTypes, );
 
-TYPED_TEST(SharedMemoryTest, writer_reader_valid_shm_qos)
+TYPED_TEST(IceoryxTest, writer_reader_valid_iox_qos)
 {
-  // valid SHM QoS
+  // valid iox QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::BestEffort();
   r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10U);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
-  // valid SHM QoS
+  // valid iox QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(10U);
-  constexpr bool valid_w_shm_qos = true;
+  constexpr bool valid_w_iox_qos = true;
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, writer_reader_default_qos)
+TYPED_TEST(IceoryxTest, writer_reader_default_qos)
 {
-  // default Qos (is valid SHM qos)
+  // default Qos (is valid IOX qos)
   dds::sub::qos::DataReaderQos r_qos{};
   dds::pub::qos::DataWriterQos w_qos{};
-  constexpr bool valid_shm_qos = true;
+  constexpr bool valid_iox_qos = true;
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 1));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_shm_qos, valid_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_iox_qos, valid_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, writer_valid_shm_qos)
+TYPED_TEST(IceoryxTest, writer_valid_iox_qos)
 {
-  // valid reader shm qos
+  // valid reader iox qos
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
-  // to not enable SHM for the reader, we should use transient local, but volatile writer and
+  // to not enable IOX for the reader, we should use transient local, but volatile writer and
   // transient local reader is not a valid QoS
   r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10U);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
-  // valid writer shm qos
+  // valid writer iox qos
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(10U);
-  constexpr bool valid_w_shm_qos = true;
+  constexpr bool valid_w_iox_qos = true;
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, reader_valid_shm_qos)
+TYPED_TEST(IceoryxTest, reader_valid_iox_qos)
 {
-  // valid reader shm qos
+  // valid reader iox qos
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
-  // valid writer shm qos
+  // valid writer iox qos
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::TransientLocal();
   w_qos << dds::core::policy::History::KeepLast(10);
 
-  bool valid_w_shm_qos;
+  bool valid_w_iox_qos;
   bool use_iox;
   if (this->is_keyless()) {
-    valid_w_shm_qos = true;
+    valid_w_iox_qos = true;
     use_iox = MUST_USE_ICEORYX;
   } else {
-    valid_w_shm_qos = false;
+    valid_w_iox_qos = false;
     use_iox = DO_NOT_USE_ICEORYX;
   }
 
   EXPECT_NO_THROW(this->run_communication_test(use_iox, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, invalid_shm_qos)
+TYPED_TEST(IceoryxTest, invalid_iox_qos)
 {
-  // invalid reader shm QoS
+  // invalid reader iox QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Transient();
   r_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_r_shm_qos = false;
+  constexpr bool valid_r_iox_qos = false;
 
-  // invalid writer SHM QoS
+  // invalid writer iox QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Transient();
   w_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_w_shm_qos = false;
+  constexpr bool valid_w_iox_qos = false;
 
   EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, writer_invalid_shm_qos)
+TYPED_TEST(IceoryxTest, writer_invalid_iox_qos)
 {
-  // valid reader shm QoS
+  // valid reader iox QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
   r_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
-  // invalid writer SHM QoS
+  // invalid writer iox QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Transient();
   w_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_w_shm_qos = false;
+  constexpr bool valid_w_iox_qos = false;
 
   EXPECT_NO_THROW(this->run_communication_test(DO_NOT_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, reader_invalid_shm_qos)
+TYPED_TEST(IceoryxTest, reader_invalid_iox_qos)
 {
-  // invalid reader shm QoS
+  // invalid reader iox QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::BestEffort();
   r_qos << dds::core::policy::Durability::Transient();
   r_qos << dds::core::policy::History::KeepLast(10);
 
-  // valid writer SHM QoS
+  // valid writer iox QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::BestEffort();
   w_qos << dds::core::policy::Durability::TransientLocal();
@@ -609,15 +609,15 @@ TYPED_TEST(SharedMemoryTest, reader_invalid_shm_qos)
   EXPECT_NO_THROW(this->expect_no_communication(r_qos, w_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, reliable_reader_does_not_match_best_effort_writer)
+TYPED_TEST(IceoryxTest, reliable_reader_does_not_match_best_effort_writer)
 {
-  // valid reader shm QoS
+  // valid reader iox QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
   r_qos << dds::core::policy::History::KeepLast(10);
 
-  // valid writer SHM QoS
+  // valid writer iox QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::BestEffort();
   w_qos << dds::core::policy::Durability::TransientLocal();
@@ -626,75 +626,75 @@ TYPED_TEST(SharedMemoryTest, reliable_reader_does_not_match_best_effort_writer)
   this->expect_no_communication(r_qos, w_qos);
 }
 
-TYPED_TEST(SharedMemoryTest, best_effort_reader_receives_data_from_reliable_writer_via_shm)
+TYPED_TEST(IceoryxTest, best_effort_reader_receives_data_from_reliable_writer_via_iox)
 {
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::BestEffort();
   r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_w_shm_qos = true;
+  constexpr bool valid_w_iox_qos = true;
 
   this->SetDurabilityServiceHistory(10);
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, tl_reader_with_lower_history_depth_receives_data_via_shm)
+TYPED_TEST(IceoryxTest, tl_reader_with_lower_history_depth_receives_data_via_iox)
 {
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10U);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(11);
-  constexpr bool valid_w_shm_qos = true;
+  constexpr bool valid_w_iox_qos = true;
 
   this->SetDurabilityServiceHistory(11);
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, tl_reader_with_larger_history_depth_receives_data_via_shm)
+TYPED_TEST(IceoryxTest, tl_reader_with_larger_history_depth_receives_data_via_iox)
 {
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::Volatile();
   r_qos << dds::core::policy::History::KeepLast(10);
-  constexpr bool valid_r_shm_qos = true;
+  constexpr bool valid_r_iox_qos = true;
 
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
   w_qos << dds::core::policy::History::KeepLast(9);
-  constexpr bool valid_w_shm_qos = true;
+  constexpr bool valid_w_iox_qos = true;
 
   this->SetDurabilityServiceHistory(9);
 
   EXPECT_NO_THROW(this->run_communication_test(MUST_USE_ICEORYX, r_qos, w_qos, 10));
-  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_shm_qos, valid_w_shm_qos));
+  EXPECT_NO_THROW(this->run_loan_support_api_test(valid_r_iox_qos, valid_w_iox_qos));
 }
 
-TYPED_TEST(SharedMemoryTest, tl_reader_does_not_match_volatile_writer)
+TYPED_TEST(IceoryxTest, tl_reader_does_not_match_volatile_writer)
 {
-  // valid reader shm QoS
+  // valid reader iox QoS
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
   r_qos << dds::core::policy::Durability::TransientLocal();
   r_qos << dds::core::policy::History::KeepLast(10);
 
-  // valid writer SHM QoS
+  // valid writer iox QoS
   dds::pub::qos::DataWriterQos w_qos;
   w_qos << dds::core::policy::Reliability::Reliable();
   w_qos << dds::core::policy::Durability::Volatile();
@@ -703,7 +703,7 @@ TYPED_TEST(SharedMemoryTest, tl_reader_does_not_match_volatile_writer)
   this->expect_no_communication(r_qos, w_qos);
 }
 
-TYPED_TEST(SharedMemoryTest, loan_sample)
+TYPED_TEST(IceoryxTest, loan_sample)
 {
   dds::sub::qos::DataReaderQos r_qos;
   r_qos << dds::core::policy::Reliability::Reliable();
