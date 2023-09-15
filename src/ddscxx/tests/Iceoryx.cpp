@@ -465,6 +465,37 @@ public:
  * Tests
  */
 
+using IceoryxTestType1 = IceoryxTest<KeylessSpace::Type1>;
+
+TEST_F(IceoryxTestType1, writer_reader_default_qos_write_cdr)
+{
+  // default Qos (is valid IOX qos)
+  dds::sub::qos::DataReaderQos r_qos{};
+  dds::pub::qos::DataWriterQos w_qos{};
+  constexpr bool valid_iox_qos = true;
+
+  KeylessSpace::Type1 testData(0,1,2);
+
+  // Serialized data via PSMX is always in native endianness
+#if DDSRT_ENDIAN == DDSRT_BIG_ENDIAN
+  /* Write one sample (1st 0x00,0x00: CDR_BE, 2nd 0x00,0x00: no options, padding). */
+  const std::array<char, 4> encoding{0x00, 0x00, 0x00, 0x00};
+  const std::vector<uint8_t> payloadcdr{0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x01, 0x00,0x00,0x00,0x02};
+#else
+  /* Write one sample (1st 0x00,0x10: CDR_LE, 2nd 0x00,0x00: no options, padding). */
+  const std::array<char, 4> encoding{0x00, 0x01, 0x00, 0x00};
+  const std::vector<uint8_t> payloadcdr{0x00,0x00,0x00,0x00, 0x01,0x00,0x00,0x00, 0x02,0x00,0x00,0x00};
+#endif
+  org::eclipse::cyclonedds::topic::CDRBlob cdrblob{
+      encoding, org::eclipse::cyclonedds::topic::BlobKind::Data, payloadcdr};
+
+  this->SetupCommunication(r_qos, w_qos);
+  this->writer->write_cdr(cdrblob);
+  this->WaitForData();
+  auto sample = this->reader.take();
+  this->CheckData(valid_iox_qos, sample, testData);
+}
+
 using TestTypes = ::testing::Types<KeylessSpace::Type1, KeylessSpace::Type2, HelloWorldData::Msg,
      Bounded::Msg, UnBounded::Msg>;
 

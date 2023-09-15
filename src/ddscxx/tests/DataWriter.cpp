@@ -571,6 +571,26 @@ TEST_F(DataWriter, write_iter_with_timestamp)
     ReadAndCheckSampleType1(samplesC[1], viewedState,    true);
 }
 
+TEST_F(DataWriter, write_cdr)
+{
+    Space::Type1 testData(0,1,2);
+    this->SetupCommunication(false);
+
+    /* Write one sample (1st 0x00,0x00: CDR_BE, 2nd 0x00,0x00: no options, padding). */
+    const std::array<char, 4> encoding{0x00, 0x00, 0x00, 0x00};
+    const std::vector<uint8_t> payloadcdr{0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x01, 0x00,0x00,0x00,0x02};
+    org::eclipse::cyclonedds::topic::CDRBlob cdrblob{
+        encoding, org::eclipse::cyclonedds::topic::BlobKind::Data, payloadcdr};
+
+    this->writer->write_cdr(cdrblob);
+
+    /* Check result. */
+    dds::sub::status::DataState notReadState(dds::sub::status::SampleState::not_read(),
+                                             dds::sub::status::ViewState::new_view(),
+                                             dds::sub::status::InstanceState::alive());
+    ReadAndCheckSampleType1(testData, notReadState, true);
+}
+
 TEST_F(DataWriter, writedispose)
 {
     Space::Type1 testData0(0,0,0);

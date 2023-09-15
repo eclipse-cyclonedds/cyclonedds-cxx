@@ -408,3 +408,4 @@ bool max(xcdr_v2_stream& str, const T& max_sz, size_t N = 1) {
 }
 }  /* namespace org / eclipse / cyclonedds / core / cdr */
 #endif
+
