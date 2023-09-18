@@ -1937,7 +1937,7 @@ const dds::core::StringSeq PSMXInstancesDelegate::instances() const
 void PSMXInstancesDelegate::check() const
 {
     if (instances_.size() > DDS_MAX_PSMX_INSTANCES)
-    ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid size of PSMXInstances::instances value (%ld > %d).", instances_.size(), DDS_MAX_PSMX_INSTANCES);
+      ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid size of PSMXInstances::instances value (%ld > %d).", instances_.size(), DDS_MAX_PSMX_INSTANCES);
 }
 
 bool PSMXInstancesDelegate::operator == (const PSMXInstancesDelegate &other) const

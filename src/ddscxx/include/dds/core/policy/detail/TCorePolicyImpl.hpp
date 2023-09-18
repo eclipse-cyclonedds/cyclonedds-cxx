@@ -1162,9 +1162,10 @@ TPSMXInstances<D>::TPSMXInstances(const dds::core::StringSeq &instances): dds::c
 }
 
 template <typename D>
-void TPSMXInstances<D>::instances(const dds::core::StringSeq &instances)
+TPSMXInstances<D>& TPSMXInstances<D>::instances(const dds::core::StringSeq &instances)
 {
     this->delegate().instances(instances);
+    return *this;
 }
 
 template <typename D>

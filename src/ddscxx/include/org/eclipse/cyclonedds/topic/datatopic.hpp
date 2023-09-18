@@ -20,6 +20,7 @@
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsc/dds_loaned_sample.h"
 #include "dds/ddsc/dds_psmx.h"
+#include "org/eclipse/cyclonedds/core/ReportUtils.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v1_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/extended_cdr_v2_ser.hpp"
@@ -936,9 +937,7 @@ void ddscxx_serdata<T>::setLoan(dds_loaned_sample_t *newloan)
     dds_loaned_sample_unref(loan);
 
   if (!m_t.compare_exchange_strong(t, static_cast<T*>(newloan->sample_ptr), std::memory_order_seq_cst))
-  {
-    //something went wrong
-  }
+    ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR,"Could not store loaned sample.");
 
   dds_loaned_sample_ref(newloan);
   loan = newloan;
