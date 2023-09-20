@@ -104,52 +104,12 @@ private:
                                  org::eclipse::cyclonedds::topic::CDRBlob & cdr_blob) const
     {
         // update the CDR header
-        memcpy(cdr_blob.encoding().data(), buffer, CDR_HEADER_SIZE);
+        memcpy(cdr_blob.encoding().data(), buffer, DDSI_RTPS_HEADER_SIZE);
         // if the data kind is not empty
         if (data_kind != org::eclipse::cyclonedds::topic::BlobKind::Empty) {
             // get the actual data from the buffer
-            cdr_blob.payload().assign(buffer + CDR_HEADER_SIZE, buffer + size);
+            cdr_blob.payload().assign(buffer + DDSI_RTPS_HEADER_SIZE, buffer + size);
         }
-    }
-
-  bool update_cdrblob_from_iox_chunk (ddsi_serdata & current_blob,
-                                      org::eclipse::cyclonedds::topic::CDRBlob &sample_data) {
-#ifdef DDSCXX_HAS_SHM
-        // if the data is available on SHM
-        if (current_blob.iox_chunk && current_blob.iox_subscriber) {
-            // get the user iox header
-            auto iox_header = iceoryx_header_from_chunk(current_blob.iox_chunk);
-            // if the iox chunk has the data in serialized form
-            if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_SERIALIZED_DATA) {
-              copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(current_blob.iox_chunk),
-                                      iox_header->data_size, sample_data.kind(), sample_data);
-            } else if (iox_header->shm_data_state == IOX_CHUNK_CONTAINS_RAW_DATA) {
-              // serialize the data
-              auto serialized_size = ddsi_sertype_get_serialized_size(current_blob.type,
-                                                                      current_blob.iox_chunk);
-              // create a buffer to serialize
-              std::vector<uint8_t> buffer(serialized_size);
-              // serialize into the buffer
-              ddsi_sertype_serialize_into(current_blob.type, current_blob.iox_chunk, buffer.data(),
-                                          serialized_size);
-              // update the CDR blob with the serialized data
-              copy_buffer_to_cdr_blob(buffer.data(), serialized_size, sample_data.kind(), sample_data);
-            } else {
-              // this shouldn't never happen
-              ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR,
-                                     "The received sample over SHM is not initialized");
-            }
-            // release the chunk
-            free_iox_chunk(static_cast<iox_sub_t *>(current_blob.iox_subscriber), &current_blob.iox_chunk);
-            return true;
-        } else {
-          return false;
-        }
-#else
-        (void) current_blob;
-        (void) sample_data;
-        return false;
-#endif  // DDSCXX_HAS_SHM
     }
 };
 

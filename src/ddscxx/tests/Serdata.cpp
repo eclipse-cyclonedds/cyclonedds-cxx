@@ -37,7 +37,7 @@ public:
 
         sd->resize(12);
         ptr = static_cast<unsigned char*>(sd->data());
-
+        memset(ptr, 0, DDSI_RTPS_HEADER_SIZE);
         ptr[4] = 0x10;
         ptr[5] = 0x19;
         ptr[6] = 0x24;

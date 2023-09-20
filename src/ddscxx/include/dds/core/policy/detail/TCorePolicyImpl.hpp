@@ -1151,6 +1151,29 @@ bool TTypeConsistencyEnforcement<D>::force_type_validation() const
 
 #endif  // defined(OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT)
 
+template <typename D>
+TPSMXInstances<D>::TPSMXInstances(const TPSMXInstances<D>& other): dds::core::Value<D>(other)
+{
+}
+
+template <typename D>
+TPSMXInstances<D>::TPSMXInstances(const dds::core::StringSeq &instances): dds::core::Value<D>(instances)
+{
+}
+
+template <typename D>
+TPSMXInstances<D>& TPSMXInstances<D>::instances(const dds::core::StringSeq &instances)
+{
+    this->delegate().instances(instances);
+    return *this;
+}
+
+template <typename D>
+const dds::core::StringSeq TPSMXInstances<D>::instances() const
+{
+    return this->delegate().instances();
+}
+
 }
 }
 }

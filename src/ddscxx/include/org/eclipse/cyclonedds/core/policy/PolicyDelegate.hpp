@@ -991,6 +991,25 @@ private:
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+class OMG_DDS_API PSMXInstancesDelegate {
+public:
+    PSMXInstancesDelegate(const PSMXInstancesDelegate& other);
+    explicit PSMXInstancesDelegate(const dds::core::StringSeq &instances);
+    PSMXInstancesDelegate& operator=(const PSMXInstancesDelegate& other) = default;
+
+    void instances(const dds::core::StringSeq &instances);
+    const dds::core::StringSeq instances() const;
+
+    void check() const;
+
+    bool operator == (const PSMXInstancesDelegate &other) const;
+
+    void set_iso_policy(const dds_qos_t* qos);
+    void set_c_policy(dds_qos_t* qos) const;
+private:
+    dds::core::StringSeq instances_;
+};
+
 }
 }
 }

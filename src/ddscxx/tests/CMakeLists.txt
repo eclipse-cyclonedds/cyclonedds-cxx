@@ -13,6 +13,7 @@ find_package(GTest REQUIRED)
 
 idlcxx_generate(TARGET ddscxx_test_types FILES
   data/Space.idl
+  data/KeylessSpace.idl
   data/HelloWorldData.idl
   data/Serialization.idl
   data/CdrDataModels.idl
@@ -30,8 +31,8 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
-if(ENABLE_SHM)
-  # Packages required packages for SHM tests
+if(ENABLE_ICEORYX)
+  # Packages required packages for Iceoryx tests
   find_package(iceoryx_posh REQUIRED)
   find_package(iceoryx_posh_testing REQUIRED)
 endif()
@@ -78,9 +79,8 @@ if (ENABLE_TYPELIB AND ENABLE_TOPIC_DISCOVERY)
     TopicTypeDiscovery.cpp)
 endif()
 
-if(ENABLE_SHM)
-  # Add shared memory tests
-  list(APPEND sources SharedMemory.cpp)
+if(ENABLE_ICEORYX)
+  list(APPEND sources Iceoryx.cpp)
 endif()
 
 add_executable(ddscxx_tests ${sources})
@@ -101,7 +101,7 @@ target_link_libraries(
     GTest::Main
     ddscxx_test_types)
 
-if(ENABLE_SHM)
+if(ENABLE_ICEORYX)
   target_link_libraries(
     ddscxx_tests PRIVATE
       iceoryx_posh::iceoryx_posh_roudi
@@ -131,7 +131,7 @@ endif()
 get_target_property(cyclonedds_lib CycloneDDS::ddsc LOCATION)
 get_target_property(gtest_lib GTest::GTest IMPORTED_LOCATION)
 get_target_property(gtest_main_lib GTest::Main IMPORTED_LOCATION)
-if(ENABLE_SHM)
+if(ENABLE_ICEORYX)
   get_target_property(gmock_lib GTest::GMock IMPORTED_LOCATION)
   get_target_property(gmock_main_lib GTest::GMockMain IMPORTED_LOCATION)
 endif()

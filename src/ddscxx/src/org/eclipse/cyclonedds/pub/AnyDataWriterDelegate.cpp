@@ -19,14 +19,9 @@
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
 #include <org/eclipse/cyclonedds/topic/BuiltinTopicCopy.hpp>
 #include <dds/dds.h>
-#include <dds/ddsc/dds_loan_api.h>
 
 #include "dds/ddsi/ddsi_protocol.h"
 #include "dds/features.hpp"
-
-#ifdef DDSCXX_HAS_SHM
-#include <dds/ddsi/ddsi_shm_transport.h>
-#endif
 
 
 namespace org
@@ -118,28 +113,6 @@ AnyDataWriterDelegate::write_cdr(
 
     ser_data->statusinfo = statusinfo;
 
-    // if shared memory is supported by the writer
-    if(dds_is_shared_memory_available(writer)) {
-#ifdef DDSCXX_HAS_SHM
-        void *iox_chunk ;
-        // request a loan from the shared memory buffer
-        ret = dds_loan_shared_memory_buffer(writer,
-                                            data->payload().size() + data->encoding().size(),  // include the size for the encoding (CDR header)
-                                            &iox_chunk);
-        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr - Loaning of chunk failed");
-        ISOCPP_BOOL_CHECK_AND_THROW(iox_chunk, ISOCPP_NULL_REFERENCE_ERROR, "write_cdr - Loaning of chunk failed");
-        // copy the header
-        memcpy(iox_chunk, data->encoding().data(), data->encoding().size());
-        // copy the actual data
-        memcpy(static_cast<unsigned char *>(iox_chunk) + data->encoding().size(),
-               data->payload().data(), data->payload().size());
-        // update SHM data state to serialized, since this API is used only to publish the serialized data
-        shm_set_data_state(iox_chunk, IOX_CHUNK_CONTAINS_SERIALIZED_DATA);
-        // update the loaned iox chunk in serdata
-        ser_data->iox_chunk = iox_chunk;
-#endif
-    }
-
     if (timestamp != dds::core::Time::invalid()) {
         dds_time_t ddsc_time = org::eclipse::cyclonedds::core::convertTime(timestamp);
         ser_data->timestamp.v = ddsc_time;
@@ -148,18 +121,7 @@ AnyDataWriterDelegate::write_cdr(
         ret = dds_writecdr(writer, ser_data);
     }
 
-#ifdef DDSCXX_HAS_SHM
-    if (ret != DDS_RETCODE_OK) {
-        if (ser_data->iox_chunk != nullptr) {
-            // write cdr failed, so free the chunk
-            ret = dds_return_loan(writer, &ser_data->iox_chunk, 1);
-            ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr, freeing loan failed");
-        }
-        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
-    }
-#else
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "write_cdr failed.");
-#endif
 }
 
 void
@@ -195,7 +157,9 @@ AnyDataWriterDelegate::unregister_instance_cdr(
 bool
 AnyDataWriterDelegate::is_loan_supported(const dds_entity_t writer)
 {
-  return dds_is_loan_available(writer);
+    DDSRT_WARNING_DEPRECATED_OFF
+    return dds_is_loan_available(writer);
+    DDSRT_WARNING_DEPRECATED_ON
 }
 
 void
@@ -205,7 +169,7 @@ AnyDataWriterDelegate::loan_sample(
 {
     dds_return_t ret;
 
-    ret = dds_loan_sample(writer, sample);
+    ret = dds_request_loan(writer, sample);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "sample loan failed.");
 }
 

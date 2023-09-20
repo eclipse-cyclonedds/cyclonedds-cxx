@@ -157,6 +157,14 @@ DataReaderQosDelegate::policy(const dds::core::policy::TypeConsistencyEnforcemen
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
+void
+DataReaderQosDelegate::policy(const dds::core::policy::PSMXInstances& psmxinstances)
+{
+    psmxinstances.delegate().check();
+    present_ |= DDSI_QP_PSMX;
+    psmxinstances_ = psmxinstances;
+}
+
 dds_qos_t*
 DataReaderQosDelegate::ddsc_qos() const
 {
@@ -194,6 +202,8 @@ DataReaderQosDelegate::ddsc_qos() const
     if (present_ & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
         typeconsistencyenforcement_.delegate().set_c_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    if (present_ & DDSI_QP_PSMX)
+        psmxinstances_.delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -232,6 +242,8 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos)
     if (present_ & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
         typeconsistencyenforcement_.delegate().set_iso_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    if (present_ & DDSI_QP_PSMX)
+        psmxinstances_.delegate().set_iso_policy(qos);
 }
 
 void
@@ -260,6 +272,7 @@ DataReaderQosDelegate::named_qos(const struct _DDS_NamedDataReaderQos &qos)
     datarepresentation_.delegate().v_policy((v_dataRepresentationPolicy&)(q->datarepresentation));
     typeconsistencyenforcement_.delegate().v_policy((v_typeConsistencyEnforcementPolicy&)(q->typeconsistencyenforcement));
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    psmxinstances_.delegate().v_policy((v_psmxinstancesPolicy&)(q->psmxinstances)     );
 #endif
 }
 
@@ -292,6 +305,7 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
         && other.datarepresentation_ == datarepresentation_
         && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+        && other.psmxinstances_ == psmxinstances_
            ;
 }
 
@@ -436,6 +450,13 @@ DataReaderQosDelegate::policy<dds::core::policy::TypeConsistencyEnforcement>()
     return typeconsistencyenforcement_;
 }
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
+template<> dds::core::policy::PSMXInstances&
+DataReaderQosDelegate::policy<dds::core::policy::PSMXInstances>()
+{
+    present_ |= DDSI_QP_PSMX;
+    return psmxinstances_;
+}
 
 }
 }

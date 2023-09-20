@@ -56,7 +56,7 @@ There are some configuration options specified using CMake defines in addition t
 * `-DBUILD_TESTING=ON`: to build the testing tree
 * `-DBUILD_EXAMPLES=ON`: to build examples
 * `-DENABLE_LEGACY=YES`: to enable legacy c++11 mode, adds boost as dependency (otherwise it uses c++17)
-* `-DENABLE_SHM=YES`: to enable shared memory support
+* `-DENABLE_ICEORYX=YES`: to enable Iceoryx tests
 * `-DENABLE_TYPELIB=YES`: to enable type library support
 * `-DENABLE_TOPIC_DISCOVERY=YES`: to enable topic discovery support
 * `-DENABLE_COVERAGE=YES`: to enable coverage build

@@ -172,6 +172,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 # By default building the testing tree is enabled by including CTest, but
 # since it is not required to build the project, switch to off by default.
 option(BUILD_TESTING "Build the testing tree." OFF)
+option(ENABLE_ICEORYX "Enable testing PSMX with Iceoryx plugin" OFF)
+
 # Disable building the examples by default until the Idlpp-cxx has been
 # deprecated.
 option(BUILD_EXAMPLES "Build examples." OFF)
@@ -223,26 +225,6 @@ install(
   COMPONENT dev)
 
 find_package(CycloneDDS REQUIRED)
-# Support for shared memory in Cyclone DDS C++ depends on support for shared
-# memory being compiled into Cyclone DDS and iceoryx_binding_c being available
-# If Cyclone DDS is compiled with support for shared memory, Cyclone DDS C++
-# must be compiled with shared memory too and vice versa.
-get_target_property(cyclonedds_has_shm CycloneDDS::ddsc SHM_SUPPORT_IS_AVAILABLE)
-mark_as_advanced(cyclonedds_has_shm)
-
-option(ENABLE_SHM "Enable shared memory support" ${cyclonedds_has_shm})
-if(ENABLE_SHM)
-  if(NOT cyclonedds_has_shm)
-    message(FATAL_ERROR "Cyclone DDS is NOT compiled with support for shared memory")
-  else()
-    find_package(iceoryx_binding_c REQUIRED)
-  endif()
-  message(STATUS "Found iceoryx_binding_c: (found version \"${iceoryx_binding_c_VERSION}\")")
-  set(ENABLE_SHM ON)
-  set(DDSCXX_HAS_SHM "1")
-elseif(cyclonedds_has_shm)
-  message(FATAL_ERROR "Cyclone DDS is compiled with support for shared memory")
-endif()
 
 get_target_property(cyclonedds_has_typelib CycloneDDS::ddsc TYPELIB_IS_AVAILABLE)
 mark_as_advanced(cyclonedds_has_typelib)

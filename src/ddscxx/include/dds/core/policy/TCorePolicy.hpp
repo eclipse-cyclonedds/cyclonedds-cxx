@@ -1887,6 +1887,58 @@ public:
 //==============================================================================
 
 
+
+/**
+ * @brief QoSPolicy indicating which PSMX instances to use (if present).
+ *
+ * Restricts the PSMX instances used for data exchange to the ones in this QoSPolicy, if populated by the user.
+ * Populating this QoSPolicy with an empty list means no PSMX exchange will be used.
+ * Will be default constructed, but not set as populated in the default constructed DataWriter and DataReader QoSes.
+ * In this manner default constructed QoSes will allow all PSMX forms of exchange available to CycloneDDS.
+ */
+template <typename D>
+class TPSMXInstances : public dds::core::Value<D>
+{
+public:
+
+    /**
+     * Constructs a copy of a TPSMXInstances QoS instance
+     *
+     * @param other The instance to copy.
+     */
+    TPSMXInstances(const TPSMXInstances& other);
+
+    /**
+     * Constructs an initialized TPSMXInstances QoS instance
+     *
+     * @param instances the PSMX instances to support
+     */
+    explicit TPSMXInstances(const dds::core::StringSeq &instances = {});
+
+    /**
+     * Copies a TPSMXInstances QoS instance
+     *
+     * @param other the instance to copy
+     */
+    TPSMXInstances& operator=(const TPSMXInstances& other) = default;
+
+    /**
+     * Sets which PSMX instances are supported
+     *
+     * @param instances which instances to support
+     *
+     * @return the psmx instances QoSPolicy that was changed
+     */
+    TPSMXInstances& instances(const dds::core::StringSeq &instances);
+
+    /**
+     * Get which PSMX instances are supported.
+     *
+     * @return sequence of strings of supported PSMX instances
+     */
+    const dds::core::StringSeq instances() const;
+};
+
 }
 }
 }

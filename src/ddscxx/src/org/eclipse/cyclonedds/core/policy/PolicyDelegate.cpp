@@ -19,6 +19,7 @@
 #include <org/eclipse/cyclonedds/core/MiscUtils.hpp>
 #include "dds/dds.h"
 #include "dds/ddsc/dds_public_qos.h"
+#include "dds/ddsc/dds_psmx.h"
 
 namespace org
 {
@@ -1913,6 +1914,63 @@ void TypeConsistencyEnforcementDelegate::set_c_policy(dds_qos_t* qos) const
 
 
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+
+PSMXInstancesDelegate::PSMXInstancesDelegate(const PSMXInstancesDelegate& other): instances_(other.instances_)
+{
+}
+
+PSMXInstancesDelegate::PSMXInstancesDelegate(const dds::core::StringSeq &instances): instances_(instances)
+{
+  this->check();
+}
+
+void PSMXInstancesDelegate::instances(const dds::core::StringSeq &instances)
+{
+  instances_ = instances;
+}
+
+const dds::core::StringSeq PSMXInstancesDelegate::instances() const
+{
+  return instances_;
+}
+
+void PSMXInstancesDelegate::check() const
+{
+    if (instances_.size() > DDS_MAX_PSMX_INSTANCES)
+      ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR, "Invalid size of PSMXInstances::instances value (%ld > %d).", instances_.size(), DDS_MAX_PSMX_INSTANCES);
+}
+
+bool PSMXInstancesDelegate::operator == (const PSMXInstancesDelegate &other) const
+{
+  return other.instances_ == instances_;
+}
+
+void PSMXInstancesDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    uint32_t n_out = 0;
+    char **values = NULL;
+
+    if (dds_qget_psmx_instances(qos,
+                                &n_out,
+                                &values)) {
+      instances_.clear();
+      for (uint32_t n = 0; n < n_out; n++) {
+        ISOCPP_BOOL_CHECK_AND_THROW(NULL != values[n],
+                                ISOCPP_NULL_REFERENCE_ERROR,
+                                "Invalid PSMX value returned.");
+        instances_.push_back(values[n]);
+        dds_string_free(values[n]);
+      }
+    }
+}
+
+void PSMXInstancesDelegate::set_c_policy(dds_qos_t* qos) const
+{
+  std::vector<const char*> values;
+  for (const auto &str:instances_)
+    values.push_back(str.c_str());
+  dds_qset_psmx_instances (qos, static_cast<uint32_t>(values.size()), values.data());
+}
 
 }
 }

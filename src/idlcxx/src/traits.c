@@ -132,13 +132,13 @@ emit_traits(
     "template<> constexpr unsigned int TopicTraits<%1$s>::type_map_blob_sz() { return %2$u; }\n"
     "template<> constexpr unsigned int TopicTraits<%1$s>::type_info_blob_sz() { return %3$u; }\n"
     "template<> inline const uint8_t * TopicTraits<%1$s>::type_map_blob() {\n"
-    "  static const uint8_t blob[] = {\n";
+    "  alignas(4) static const uint8_t blob[] = {\n";
   static const char *type_info_decl2 =
     "};\n"
     "  return blob;\n"
     "}\n"
     "template<> inline const uint8_t * TopicTraits<%1$s>::type_info_blob() {\n"
-    "  static const uint8_t blob[] = {\n";
+    "  alignas(4) static const uint8_t blob[] = {\n";
   static const char *type_info_decl3 =
     "};\n"
     "  return blob;\n"

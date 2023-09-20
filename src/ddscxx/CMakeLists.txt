@@ -99,12 +99,6 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/ddscxx>)
 
-if(ENABLE_SHM)
-  # TODO: Ideally the C++ language binding shouldn't depend directly on
-  #       Iceoryx, but should get it from Cyclone DDS
-  target_link_libraries(ddscxx PUBLIC iceoryx_binding_c::iceoryx_binding_c)
-endif()
-
 generate_export_header(
   ddscxx
   BASE_NAME OMG_DDS_API_DETAIL

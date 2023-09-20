@@ -71,6 +71,7 @@ DataRepresentation     nonDefaultRepresentation({dds::core::policy::DataRepresen
 TypeConsistencyEnforcement nonDefaultTypeConsistencyEnforcement(dds::core::policy::TypeConsistencyKind::ALLOW_TYPE_COERCION, true, true, true, true, true);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 WriterBatching         nonDefaultWriterBatching(true);
+PSMXInstances          nonDefaultPSMXInstances({"some_psmx_name"});
 
 
 
@@ -108,6 +109,7 @@ DataRepresentation  tmpRepresentation;
 TypeConsistencyEnforcement  tmpEnforcement;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 WriterBatching      tmpWriterBatching;
+PSMXInstances       tmpPSMXInstances;
 
 TEST(Qos, DomainParticipant)
 {
@@ -359,6 +361,7 @@ TEST(Qos, DataWriter)
                  << nonDefaultTypeConsistencyEnforcement
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
                 << nonDefaultWriterBatching
+                << nonDefaultPSMXInstances
                   ;
     DataWriterQos dwQosWConstructed(dwQosShifted);
     DataWriterQos dwQosWAssigned1 = dwQosShifted; /* Actually calls copy constructor. */
@@ -407,6 +410,7 @@ TEST(Qos, DataWriter)
     dwQosShifted >> tmpEnforcement;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     dwQosShifted >> tmpWriterBatching;
+    dwQosShifted >> tmpPSMXInstances;
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
@@ -428,6 +432,7 @@ TEST(Qos, DataWriter)
     ASSERT_EQ(nonDefaultTypeConsistencyEnforcement, tmpEnforcement);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultWriterBatching, tmpWriterBatching);
+    ASSERT_EQ(nonDefaultPSMXInstances, tmpPSMXInstances);
 
     ASSERT_EQ(nonDefaultUserData,    dwQosWConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  dwQosWConstructed.policy<Durability>());
@@ -450,6 +455,7 @@ TEST(Qos, DataWriter)
     ASSERT_EQ(nonDefaultTypeConsistencyEnforcement, dwQosWConstructed.policy<TypeConsistencyEnforcement>());
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(nonDefaultWriterBatching, dwQosWConstructed.policy<WriterBatching>());
+    ASSERT_EQ(nonDefaultPSMXInstances, dwQosWConstructed.policy<PSMXInstances>());
 
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
     dwQosShifted >> tmpStrength;
@@ -502,6 +508,7 @@ TEST(Qos, DataReader)
                  << nonDefaultRepresentation
                  << nonDefaultTypeConsistencyEnforcement
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+                << nonDefaultPSMXInstances
                   ;
     DataReaderQos drQosRConstructed(drQosShifted);
     DataReaderQos drQosRAssigned1 = drQosShifted; /* Actually calls copy constructor. */
@@ -542,6 +549,7 @@ TEST(Qos, DataReader)
     drQosShifted >> tmpRepresentation;
     drQosShifted >> tmpEnforcement;
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    drQosShifted >> tmpPSMXInstances;
     ASSERT_EQ(nonDefaultUserData,    tmpUserData);
     ASSERT_EQ(nonDefaultDurability,  tmpDurability);
     ASSERT_EQ(nonDefaultDeadline,    tmpDeadline);
@@ -558,6 +566,7 @@ TEST(Qos, DataReader)
     ASSERT_EQ(nonDefaultRepresentation, tmpRepresentation);
     ASSERT_EQ(nonDefaultTypeConsistencyEnforcement, tmpEnforcement);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    ASSERT_EQ(nonDefaultPSMXInstances, tmpPSMXInstances);
 
     ASSERT_EQ(nonDefaultUserData,    drQosRConstructed.policy<UserData>());
     ASSERT_EQ(nonDefaultDurability,  drQosRConstructed.policy<Durability>());
@@ -575,12 +584,14 @@ TEST(Qos, DataReader)
     ASSERT_EQ(nonDefaultRepresentation, drQosRConstructed.policy<DataRepresentation>());
     ASSERT_EQ(nonDefaultTypeConsistencyEnforcement, drQosRConstructed.policy<TypeConsistencyEnforcement>());
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+    ASSERT_EQ(nonDefaultPSMXInstances, drQosRConstructed.policy<PSMXInstances>());
 }
 
 TEST(Qos, invalid_values)
 {
     History        invalidHistory;
     ResourceLimits invalidResources;
+    PSMXInstances  invalidPSMXInstances;
 
     ASSERT_THROW({
         invalidHistory = History(dds::core::policy::HistoryKind::KEEP_LAST,
@@ -591,6 +602,10 @@ TEST(Qos, invalid_values)
         invalidResources = ResourceLimits(0, /* max_samples */
                                           0,  /* max_instances */
                                           0   /* max_samples_per_instance */);
+    }, dds::core::InvalidArgumentError);
+
+    ASSERT_THROW({
+        invalidPSMXInstances = PSMXInstances({"instance_1", "instance_2"});
     }, dds::core::InvalidArgumentError);
 }
 
@@ -667,4 +682,5 @@ TEST(Qos, policy_name)
     ASSERT_EQ(dds::core::policy::policy_name<TypeConsistencyEnforcement>::name(),  "TypeConsistencyEnforcement");
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     ASSERT_EQ(dds::core::policy::policy_name<WriterBatching>::name(),      "WriterBatching");
+    ASSERT_EQ(dds::core::policy::policy_name<PSMXInstances>::name(),       "PSMXInstances");
 }
