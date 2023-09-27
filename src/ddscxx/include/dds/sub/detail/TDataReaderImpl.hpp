@@ -911,7 +911,7 @@ dds::sub::detail::DataReader<T>::Selector::get_mode() const
 
 template <typename T>
 dds::sub::detail::DataReader<T>::ManipulatorSelector::ManipulatorSelector(typename DataReader<T>::ref_type dr) :
-      Selector(dr), read_mode_(true)
+      Selector(std::move(dr)), read_mode_(true)
 {
 }
 

@@ -861,7 +861,8 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   }
 
   { int len = 0;
-    const char *incs[10];
+    const char *incs[11];
+    incs[len++] = "<utility>";
 
     if (generator->uses_integers)
       incs[len++] = "<cstdint>";

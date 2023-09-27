@@ -51,7 +51,7 @@ public:
 protected:
 
     void check () const;
-    void set_weak_ref (ObjectDelegate::weak_ref_type weak_ref);
+    void set_weak_ref (const ObjectDelegate::weak_ref_type &weak_ref);
 
     Mutex mutex;
     bool closed;
