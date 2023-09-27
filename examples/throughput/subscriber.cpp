@@ -249,48 +249,58 @@ class ThroughputListener: public dds::sub::NoOpDataReaderListener<ThroughputModu
 
 int main (int argc, char **argv)
 {
+  try {
+    if (parse_args(argc, argv) == EXIT_FAILURE)
+    {
+      return EXIT_FAILURE;
+    }
 
-  if (parse_args(argc, argv) == EXIT_FAILURE)
-  {
+    std::cout << subprefix << "Cycles: " << maxCycles << " | PollingDelay: " << pollingDelay.count() << " ms | Partition: " << partitionName << "\n"
+              << subprefix << "Using a " << (pollingDelay.count() > 0 ? "polling" : pollingDelay.count() < 0 ? "listener" : "waitset") << " approach.\n" << std::flush;
+
+    dds::domain::DomainParticipant participant(domain::default_id());
+
+    dds::topic::qos::TopicQos tqos;
+    tqos << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(10))
+         << dds::core::policy::History::KeepAll()
+         << dds::core::policy::ResourceLimits(MAX_SAMPLES);
+
+    dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
+
+    dds::sub::qos::SubscriberQos sqos;
+    sqos << dds::core::policy::Partition(partitionName);
+
+    dds::sub::Subscriber subscriber(participant, sqos);
+
+    ThroughputListener listener;
+
+    dds::sub::DataReader<ThroughputModule::DataType>
+      reader(
+        subscriber,
+        topic,
+        dds::sub::qos::DataReaderQos(tqos),
+        pollingDelay.count() < 0 ? &listener : NULL,
+        pollingDelay.count() < 0 ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
+
+    /* Process samples until Ctrl-C is pressed or until maxCycles */
+    /* has been reached (0 = infinite) */
+    signal (SIGINT, sigint);
+
+    if (wait_for_writer (reader))
+    {
+      std::cout << subprefix << "Waiting for samples...\n" << std::flush;
+
+      process_samples(reader, maxCycles);
+    }
+  } catch (const dds::core::Exception& e) {
+    std::cerr << "DDS exception: " << e.what() << std::endl;
     return EXIT_FAILURE;
-  }
-
-  std::cout << subprefix << "Cycles: " << maxCycles << " | PollingDelay: " << pollingDelay.count() << " ms | Partition: " << partitionName << "\n"
-            << subprefix << "Using a " << (pollingDelay.count() > 0 ? "polling" : pollingDelay.count() < 0 ? "listener" : "waitset") << " approach.\n" << std::flush;
-
-  dds::domain::DomainParticipant participant(domain::default_id());
-
-  dds::topic::qos::TopicQos tqos;
-  tqos << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(10))
-       << dds::core::policy::History::KeepAll()
-       << dds::core::policy::ResourceLimits(MAX_SAMPLES);
-
-  dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
-
-  dds::sub::qos::SubscriberQos sqos;
-  sqos << dds::core::policy::Partition(partitionName);
-
-  dds::sub::Subscriber subscriber(participant, sqos);
-
-  ThroughputListener listener;
-
-  dds::sub::DataReader<ThroughputModule::DataType>
-    reader(
-      subscriber,
-      topic,
-      dds::sub::qos::DataReaderQos(tqos),
-      pollingDelay.count() < 0 ? &listener : NULL,
-      pollingDelay.count() < 0 ? dds::core::status::StatusMask::data_available() : dds::core::status::StatusMask::none());
-
-  /* Process samples until Ctrl-C is pressed or until maxCycles */
-  /* has been reached (0 = infinite) */
-  signal (SIGINT, sigint);
-
-  if (wait_for_writer (reader))
-  {
-    std::cout << subprefix << "Waiting for samples...\n" << std::flush;
-
-    process_samples(reader, maxCycles);
+  } catch (const std::exception& e) {
+    std::cerr << "C++ exception: " << e.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch (...) {
+    std::cerr << "Generic exception" << std::endl;
+    return EXIT_FAILURE;
   }
 
   return EXIT_SUCCESS;

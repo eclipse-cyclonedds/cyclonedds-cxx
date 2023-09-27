@@ -170,45 +170,56 @@ void start_writing(
 
 int main (int argc, char **argv)
 {
-  ThroughputModule::DataType sample;
+  try {
+    ThroughputModule::DataType sample;
 
-  if (parse_args(argc, argv) == EXIT_FAILURE) {
+    if (parse_args(argc, argv) == EXIT_FAILURE) {
+      return EXIT_FAILURE;
+    }
+
+    dds::domain::DomainParticipant participant(domain::default_id());
+
+    dds::topic::qos::TopicQos tqos;
+    tqos << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(10))
+         << dds::core::policy::History::KeepAll()
+         << dds::core::policy::ResourceLimits(MAX_SAMPLES);
+
+    dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
+
+    dds::pub::qos::PublisherQos pqos;
+    pqos << dds::core::policy::Partition(partitionName);
+
+    dds::pub::Publisher publisher(participant, pqos);
+
+    dds::pub::qos::DataWriterQos wqos(tqos);
+    wqos << dds::core::policy::WriterBatching::BatchUpdates();
+
+    dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
+
+    if (!wait_for_reader(writer))
+      return EXIT_FAILURE;
+
+    /* Fill the sample payload with data */
+    sample.payload(std::vector<uint8_t>(payloadSize, 'a'));
+
+    /* Register handler for Ctrl-C */
+    signal (SIGINT, sigint);
+
+    /* Register the sample instance and write samples repeatedly or until time out */
+    start_writing(writer, sample);
+
+    /* Cleanup */
+    writer.dispose_instance(sample);
+  } catch (const dds::core::Exception& e) {
+    std::cerr << "DDS exception: " << e.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch (const std::exception& e) {
+    std::cerr << "C++ exception: " << e.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch (...) {
+    std::cerr << "Generic exception" << std::endl;
     return EXIT_FAILURE;
   }
-
-  dds::domain::DomainParticipant participant(domain::default_id());
-
-  dds::topic::qos::TopicQos tqos;
-  tqos << dds::core::policy::Reliability::Reliable(dds::core::Duration::from_secs(10))
-       << dds::core::policy::History::KeepAll()
-       << dds::core::policy::ResourceLimits(MAX_SAMPLES);
-
-  dds::topic::Topic<ThroughputModule::DataType> topic(participant, "Throughput", tqos);
-
-  dds::pub::qos::PublisherQos pqos;
-  pqos << dds::core::policy::Partition(partitionName);
-
-  dds::pub::Publisher publisher(participant, pqos);
-
-  dds::pub::qos::DataWriterQos wqos(tqos);
-  wqos << dds::core::policy::WriterBatching::BatchUpdates();
-
-  dds::pub::DataWriter<ThroughputModule::DataType> writer(publisher, topic, wqos);
-
-  if (!wait_for_reader(writer))
-    return EXIT_FAILURE;
-
-  /* Fill the sample payload with data */
-  sample.payload(std::vector<uint8_t>(payloadSize, 'a'));
-
-  /* Register handler for Ctrl-C */
-  signal (SIGINT, sigint);
-
-  /* Register the sample instance and write samples repeatedly or until time out */
-  start_writing(writer, sample);
-
-  /* Cleanup */
-  writer.dispose_instance(sample);
 
   return EXIT_SUCCESS;
 }
