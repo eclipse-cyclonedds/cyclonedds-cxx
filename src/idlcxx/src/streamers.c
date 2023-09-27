@@ -448,13 +448,15 @@ sequence_writes(const idl_pstate_t* pstate,
     const char* sfmt = "      if (se_%2$u > 0 &&\n"
                        "          !{T}(streamer, %1$s[0], se_%2$u))\n"
                        "        return false;\n";
-    const char* mfmt = "      if (se_%2$u > 0 &&\n"
+    const char* mfmt = "      %3$s\n"
+                       "      if (se_%2$u > 0 &&\n"
                        "          !{T}(streamer, %1$s(), se_%2$u))\n"
                        "        return false;\n";
     char* type = NULL;
 
     if (IDL_PRINTA(&type, get_cpp11_type, type_spec, streams->generator) < 0
-      || multi_putf(streams, MOVE | MAX, mfmt, type, depth)
+      || multi_putf(streams, MOVE, mfmt, type, depth, "")
+      || multi_putf(streams, MAX, mfmt, type, depth, "// coverity[dead_error_line]")
       || multi_putf(streams, WRITE, sfmt, accessor, depth)
       || multi_putf(streams, READ, sfmt, read_accessor, depth))
         return IDL_RETCODE_NO_MEMORY;
