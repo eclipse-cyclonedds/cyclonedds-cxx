@@ -55,7 +55,7 @@ void org::eclipse::cyclonedds::core::ObjectDelegate::close ()
   this->closed = true;
 }
 
-void org::eclipse::cyclonedds::core::ObjectDelegate::set_weak_ref (ObjectDelegate::weak_ref_type weak_ref)
+void org::eclipse::cyclonedds::core::ObjectDelegate::set_weak_ref (const ObjectDelegate::weak_ref_type &weak_ref)
 {
   this->myself = weak_ref;
 }

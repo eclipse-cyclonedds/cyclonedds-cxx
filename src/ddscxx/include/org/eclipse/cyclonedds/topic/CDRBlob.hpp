@@ -49,14 +49,14 @@ public:
   const std::array<char, 4>& encoding() const { return this->encoding_; }
   std::array<char, 4>& encoding() { return this->encoding_; }
   void encoding(const std::array<char, 4>& _val_) { this->encoding_ = _val_; }
-  void encoding(std::array<char, 4>&& _val_) { this->encoding_ = _val_; }
+  void encoding(std::array<char, 4>&& _val_) { this->encoding_ = std::move(_val_); }
   BlobKind kind() const { return this->kind_; }
   BlobKind& kind() { return this->kind_; }
   void kind(BlobKind _val_) { this->kind_ = _val_; }
   const std::vector<uint8_t>& payload() const { return this->payload_; }
   std::vector<uint8_t>& payload() { return this->payload_; }
   void payload(const std::vector<uint8_t>& _val_) { this->payload_ = _val_; }
-  void payload(std::vector<uint8_t>&& _val_) { this->payload_ = _val_; }
+  void payload(std::vector<uint8_t>&& _val_) { this->payload_ = std::move(_val_); }
 };
 
 }
