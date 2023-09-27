@@ -160,7 +160,7 @@ bool write_header(void *buffer)
   CHECK_FOR_NULL(buffer);
   memset(buffer, 0, DDSI_RTPS_HEADER_SIZE);
   auto hdr = static_cast<uint16_t *>(buffer);
-  auto le = native_endianness() == endianness::little_endian;
+  const auto le = (native_endianness() == endianness::little_endian);
   switch (TopicTraits<T>::getExtensibility()) {
     case extensibility::ext_final:
       hdr[0] = le ? DDSI_RTPS_CDR2_LE : DDSI_RTPS_CDR2_BE;
