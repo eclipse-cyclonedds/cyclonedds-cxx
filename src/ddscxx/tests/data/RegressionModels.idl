@@ -188,4 +188,24 @@ struct s_unaligned_access {
   long long ll;
 };
 
+enum regression_enum {
+    case_1,
+    case_2,
+    case_3
+};
+
+union union_without_default switch (regression_enum) {
+    case case_1:
+    case case_2:
+        string s;
+};
+
+union union_with_default switch (regression_enum) {
+    case case_1:
+    case case_2:
+        string s;
+    default:
+        long i;
+};
+
 };
