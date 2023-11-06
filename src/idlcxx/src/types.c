@@ -926,6 +926,8 @@ emit_union(
   memset(&visitor, 0, sizeof(visitor));
 
   _union = node;
+  /* check whether default label is associated with a union case */
+  const bool gen_default = (idl_parent(_union->default_case) == _union);
   type_spec = _union->switch_type_spec->type_spec;
 
   name = get_cpp11_name(_union);
@@ -1016,6 +1018,13 @@ cleanup:
   if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
 
+  if (gen_default) {
+    fmt = "      default:\n"
+          "        break;\n";
+    if (idl_fprintf(gen->header.handle, fmt, type) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
   fmt = "    }\n"
         "    return _default_discriminator;\n"
         "  }\n\n"
@@ -1073,8 +1082,15 @@ cleanup:
   if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
 
+  if (gen_default) {
+    fmt =  "      default:\n"
+           "        return true;\n";
+    if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
   fmt = "    }\n"
-        "    return false;\n"
+        "    return true;\n"
         "  }\n\n"
         "  bool operator!=(const %s& _other) const\n"
         "  {\n"

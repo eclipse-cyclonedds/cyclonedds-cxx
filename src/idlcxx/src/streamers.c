@@ -964,11 +964,12 @@ process_case(
     if (idl_next(_case)) {
       return IDL_RETCODE_OK;
     } else {
-      //if last entry, and no default case was present for this union
-      const idl_case_label_t *def = _union->default_case;
-      if (idl_is_union(def->node.parent) &&
-          multi_putf(streams, READ, "    default:\n      instance._d(d);\n"))
-        return IDL_RETCODE_NO_MEMORY;
+      //if last entry, and the default case is an implicit default
+      if (_union == idl_parent(_union->default_case)) {
+        if (multi_putf(streams, READ, "    default:\n      instance._d(d);\n") ||
+            multi_putf(streams, WRITE | MOVE, "    default:\n      break;\n"))
+          return IDL_RETCODE_NO_MEMORY;
+      }
     }
 
     if (multi_putf(streams, NOMAX, "  }\n"))

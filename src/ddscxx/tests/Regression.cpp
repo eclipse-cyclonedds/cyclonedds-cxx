@@ -404,4 +404,63 @@ TEST_F(Regression, unaligned_access)
   ASSERT_EQ(s.ll(), int64_t(0x08090A0B0C0D0E0F));  //size 4 reads should be done at 4 byte offsets in stream
 }
 
+TEST_F(Regression, union_comparisons)
+{
+  regression_models::union_without_default u_1, u_2, u_3, u_4;
+  u_1.s("abcdef", regression_enum::case_1);
+  u_2.s("fedcba", regression_enum::case_1);
+  u_3.s("abcdef", regression_enum::case_2);
+  u_4._d(regression_enum::case_3);
+
+  regression_models::union_with_default w_1, w_2, w_3, w_4, w_5;
+  w_1.s("abcdef", regression_enum::case_1);
+  w_2.s("fedcba", regression_enum::case_1);
+  w_3.s("abcdef", regression_enum::case_2);
+  w_4.i(123);
+  w_5.i(456);
+
+  EXPECT_EQ(u_1, u_1);
+  EXPECT_NE(u_1, u_2);
+  EXPECT_NE(u_1, u_3);
+  EXPECT_NE(u_1, u_4);
+  EXPECT_NE(u_2, u_1);
+  EXPECT_EQ(u_2, u_2);
+  EXPECT_NE(u_2, u_3);
+  EXPECT_NE(u_2, u_4);
+  EXPECT_NE(u_3, u_1);
+  EXPECT_NE(u_3, u_2);
+  EXPECT_EQ(u_3, u_3);
+  EXPECT_NE(u_3, u_4);
+  EXPECT_NE(u_4, u_1);
+  EXPECT_NE(u_4, u_2);
+  EXPECT_NE(u_4, u_3);
+  EXPECT_EQ(u_4, u_4);
+
+  EXPECT_EQ(w_1, w_1);
+  EXPECT_NE(w_1, w_2);
+  EXPECT_NE(w_1, w_3);
+  EXPECT_NE(w_1, w_4);
+  EXPECT_NE(w_1, w_5);
+  EXPECT_NE(w_2, w_1);
+  EXPECT_EQ(w_2, w_2);
+  EXPECT_NE(w_2, w_3);
+  EXPECT_NE(w_2, w_4);
+  EXPECT_NE(w_2, w_5);
+  EXPECT_NE(w_3, w_1);
+  EXPECT_NE(w_3, w_2);
+  EXPECT_EQ(w_3, w_3);
+  EXPECT_NE(w_3, w_4);
+  EXPECT_NE(w_3, w_5);
+  EXPECT_NE(w_4, w_1);
+  EXPECT_NE(w_4, w_2);
+  EXPECT_NE(w_4, w_3);
+  EXPECT_EQ(w_4, w_4);
+  EXPECT_NE(w_4, w_5);
+  EXPECT_NE(w_5, w_1);
+  EXPECT_NE(w_5, w_2);
+  EXPECT_NE(w_5, w_3);
+  EXPECT_NE(w_5, w_4);
+  EXPECT_EQ(w_5, w_5);
+}
+
 DDSRT_WARNING_GNUC_ON(maybe-uninitialized)
