@@ -51,39 +51,39 @@ strategy:
       sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
-    'Ubuntu 22.04 LTS with CLang 12 (Debug, x86_64)':
+    'Ubuntu 22.04 LTS with CLang 13 (Debug, x86_64)':
       image: ubuntu-22.04
       analyzer: on
       sanitizer: address
-      cc: clang-12
-      cxx: clang++-12
-    'Ubuntu 22.04 LTS with CLang 12 (Debug, x86_64, Iceoryx)':
+      cc: clang-13
+      cxx: clang++-13
+    'Ubuntu 22.04 LTS with CLang 13 (Debug, x86_64, Iceoryx)':
       image: ubuntu-22.04
       iceoryx: on
       analyzer: on
       sanitizer: address,undefined
-      cc: clang-12
-      cxx: clang++-12
-    'Ubuntu 22.04 LTS with CLang 12 (Release, x86_64)':
+      cc: clang-13
+      cxx: clang++-13
+    'Ubuntu 22.04 LTS with CLang 13 (Release, x86_64)':
       image: ubuntu-22.04
       build_type: Release
       sanitizer: address,undefined
-      cc: clang-12
-      cxx: clang++-12
-    'Ubuntu 22.04 LTS with CLang 12 (Release, x86_64, Iceoryx)':
+      cc: clang-13
+      cxx: clang++-13
+    'Ubuntu 22.04 LTS with CLang 13 (Release, x86_64, Iceoryx)':
       image: ubuntu-22.04
       build_type: Release
       iceoryx: on
       sanitizer: address,undefined
-      cc: clang-12
-      cxx: clang++-12
+      cc: clang-13
+      cxx: clang++-13
     # C++11 requires boost, installing boost on Windows takes forever, so use Linux
     # Google test requires C++14 at minimum, so we can't build tests ...
-    'Ubuntu 22.04 LTS with CLang 12 (Debug, x86_64, C++11)':
+    'Ubuntu 22.04 LTS with CLang 13 (Debug, x86_64, C++11)':
       image: ubuntu-22.04
       build_type: Debug
-      cc: clang-12
-      cxx: clang++-12
+      cc: clang-13
+      cxx: clang++-13
       legacy: on
     'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type lib)':
       image: ubuntu-22.04
