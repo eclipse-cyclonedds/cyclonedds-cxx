@@ -129,6 +129,13 @@ emit_parameter(
     return IDL_RETCODE_NO_MEMORY;
   if (idl_fprintf(gen->header.handle, fmt, sep, type, name, eofmt) < 0)
     return IDL_RETCODE_NO_MEMORY;
+
+  // ostream - cpp
+  fmt = "  os << \"%1$s%3$s: \" << rhs.%3$s();\n";
+  sep = is_first(node) ? "" : ", ";
+  if (idl_fprintf(gen->impl.handle, fmt, sep, type, name, eofmt) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
   return IDL_RETCODE_OK;
 }
 
@@ -263,6 +270,11 @@ emit_struct(
       return IDL_RETCODE_NO_MEMORY;
   }
 
+  // ostream - cpp
+  fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n  os << \"[\";\n";
+  if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
   if (fputs("{\nprivate:\n", gen->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -326,6 +338,11 @@ emit_struct(
     fmt = "%2$s static_cast<const %1$s&>(*this) == static_cast<const %1$s&>(_other)";
     if (idl_fprintf(gen->header.handle, fmt, base, _struct->members ? " &&\n      " : "") < 0)
       return IDL_RETCODE_NO_MEMORY;
+    
+    // ostream cpp
+    fmt = "  os << \"%2$s%1$s: \" << static_cast<const %1$s&>(rhs);\n";
+    if (idl_fprintf(gen->impl.handle, fmt, base, _struct->members ? ", " : "") < 0)
+      return IDL_RETCODE_NO_MEMORY;
   }
 
   if (!_struct->members &&
@@ -343,6 +360,15 @@ emit_struct(
     return IDL_RETCODE_NO_MEMORY;
 
   if (fputs("\n};\n\n", gen->header.handle) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  // ostream - hpp
+  fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n\n";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  // ostream - cpp
+  if (fputs("  os << \"]\";\n  return os;\n};\n\n", gen->impl.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -370,17 +396,40 @@ emit_enum(
   if (idl_fprintf(gen->header.handle, "enum class %s\n{\n", name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  // ostream cpp
+  fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n"
+        "  switch (rhs)\n  {\n";
+  if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  const char* struct_name = get_cpp11_name(node);
+
   IDL_FOREACH(enumerator, _enum->enumerators) {
     name = get_cpp11_name(enumerator);
     value = enumerator->value.value;
     fmt = (value == skip) ? "%s%s" : "%s%s = %" PRIu32 "\n";
     if (idl_fprintf(gen->header.handle, fmt, sep, name, value) < 0)
       return IDL_RETCODE_NO_MEMORY;
+
+    // ostream cpp
+    fmt = "    case %3$s::%2$s:\n"
+          "      os << \"%3$s::%2$s\"; break;\n";
+    if (idl_fprintf(gen->impl.handle, fmt, sep, name, struct_name, value) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+
     skip = value + 1;
     sep = ",\n  ";
   }
 
   if (fputs("};\n\n", gen->header.handle) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  // ostream cpp
+  if (fputs("    default: break;\n  }\n  return os;\n};\n\n", gen->impl.handle) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  // ostream hpp
+  if (idl_fprintf(gen->header.handle, "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n\n", struct_name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_VISIT_DONT_RECURSE;
@@ -447,13 +496,22 @@ emit_module(
   (void)pstate;
   (void)path;
 
+  name = get_cpp11_name(node);
   if (revisit) {
-    if (fputs("}\n\n", gen->header.handle) < 0)
+    if (idl_fprintf(gen->header.handle, "} //namespace %s\n\n", name) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+    
+    // ostream cpp
+    if (idl_fprintf(gen->impl.handle, "} //namespace %s\n\n", name) < 0)
       return IDL_RETCODE_NO_MEMORY;
   } else  {
-    name = get_cpp11_name(node);
     if (idl_fprintf(gen->header.handle, "namespace %s\n{\n", name) < 0)
       return IDL_RETCODE_NO_MEMORY;
+
+    // ostream cpp
+    if (idl_fprintf(gen->impl.handle, "namespace %s\n{\n", name) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+
     return IDL_VISIT_REVISIT;
   }
 

@@ -819,6 +819,41 @@ register_bitmask(
   return IDL_RETCODE_OK;
 }
 
+const char *seq_tmpl = "std::vector<{TYPE}>";
+const char *seq_inc = "<vector>";
+const char *arr_tmpl = "std::array<{TYPE}, {DIMENSION}>";
+const char *arr_inc = "<array>";
+const char *bnd_seq_tmpl = "std::vector<{TYPE}>";
+const char *bnd_seq_inc = "<vector>";
+const char *str_tmpl = "std::string";
+const char *str_inc = "<string>";
+const char *bnd_str_tmpl = "std::string";
+const char *bnd_str_inc = "<string>";
+#if IDLCXX_USE_BOOST
+const char *opt_tmpl = "boost::optional";
+const char *opt_inc = "\"boost/optional.hpp\"";
+const char *uni_tmpl = "boost::variant";
+const char *uni_get_tmpl = "boost::get";
+const char *uni_inc = "\"boost/variant.hpp\"";
+#else
+const char *opt_tmpl = "std::optional";
+const char *opt_inc = "<optional>";
+const char *uni_tmpl = "std::variant";
+const char *uni_get_tmpl = "std::get";
+const char *uni_inc = "<variant>";
+#endif
+const char *ext_tmpl = "dds::core::external";
+const char *ext_inc = "<dds/core/External.hpp>";
+
+static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
+static const char *arr_flags[] = { "s", PRIu32, NULL };
+static const char *seq_toks[] = { "TYPE", NULL };
+static const char *seq_flags[] = { "s", NULL };
+static const char *bnd_seq_toks[] = { "TYPE", "BOUND", NULL };
+static const char *bnd_seq_flags[] = { "s", PRIu32, NULL };
+static const char *bnd_str_toks[] = { "BOUND", NULL };
+static const char *bnd_str_flags[] = { PRIu32, NULL };
+
 static idl_retcode_t
 generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 {
@@ -861,8 +896,9 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   }
 
   { int len = 0;
-    const char *incs[11];
+    const char *incs[12];
     incs[len++] = "<utility>";
+    incs[len++] = "<ostream>";
 
     if (generator->uses_integers)
       incs[len++] = "<cstdint>";
@@ -896,6 +932,47 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   }
 
   if (fputs("\n", generator->header.handle) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  // ostream hpp
+  // streaming goperators for the used std types
+  // this could also be in a cyclone utils header instead
+  // generating in every file 
+  const char *fmt;
+  fmt = "namespace std\n{\n";
+  if (fputs(fmt, generator->header.handle) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (generator->uses_sequence || generator->uses_bounded_sequence || generator->uses_array)
+  {
+    fmt = "template<typename T>\n"
+        "std::ostream& operator<<(std::ostream& os, std::vector<T> const& rhs)\n{\n"
+        "  os << \"[\";\n"
+        "  for(size_t i=0; i<rhs.size(); i++)\n  {\n"
+        "    if (i != 0)\n"
+        "    {\n"
+        "      os << \", \";\n"
+        "    }\n"
+        "    os << rhs[i];\n"
+        "  }\n"
+        "  os << \"]\";\n"
+        "  return os;\n"
+        "}\n\n";
+    if (fputs(fmt, generator->header.handle) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
+  if (generator->uses_optional)
+  {
+    fmt = "template<typename T>\n"
+              "std::ostream& operator<<(std::ostream& os, %s<T> const& rhs)\n{\n"
+              "  return rhs ? os << rhs.value() : os;\n"
+              "}\n\n";
+    if (idl_fprintf(generator->header.handle, fmt, opt_tmpl) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
+  fmt = "} //namespace std\n\n";
+  if (fputs(fmt, generator->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -933,41 +1010,6 @@ err_print:
   free(guard);
   return ret;
 }
-
-const char *seq_tmpl = "std::vector<{TYPE}>";
-const char *seq_inc = "<vector>";
-const char *arr_tmpl = "std::array<{TYPE}, {DIMENSION}>";
-const char *arr_inc = "<array>";
-const char *bnd_seq_tmpl = "std::vector<{TYPE}>";
-const char *bnd_seq_inc = "<vector>";
-const char *str_tmpl = "std::string";
-const char *str_inc = "<string>";
-const char *bnd_str_tmpl = "std::string";
-const char *bnd_str_inc = "<string>";
-#if IDLCXX_USE_BOOST
-const char *opt_tmpl = "boost::optional";
-const char *opt_inc = "\"boost/optional.hpp\"";
-const char *uni_tmpl = "boost::variant";
-const char *uni_get_tmpl = "boost::get";
-const char *uni_inc = "\"boost/variant.hpp\"";
-#else
-const char *opt_tmpl = "std::optional";
-const char *opt_inc = "<optional>";
-const char *uni_tmpl = "std::variant";
-const char *uni_get_tmpl = "std::get";
-const char *uni_inc = "<variant>";
-#endif
-const char *ext_tmpl = "dds::core::external";
-const char *ext_inc = "<dds/core/External.hpp>";
-
-static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
-static const char *arr_flags[] = { "s", PRIu32, NULL };
-static const char *seq_toks[] = { "TYPE", NULL };
-static const char *seq_flags[] = { "s", NULL };
-static const char *bnd_seq_toks[] = { "TYPE", "BOUND", NULL };
-static const char *bnd_seq_flags[] = { "s", PRIu32, NULL };
-static const char *bnd_str_toks[] = { "BOUND", NULL };
-static const char *bnd_str_flags[] = { PRIu32, NULL };
 
 #if _WIN32
 __declspec(dllexport)

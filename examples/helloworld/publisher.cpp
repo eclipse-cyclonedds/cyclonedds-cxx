@@ -54,7 +54,7 @@ int main() {
         HelloWorldData::Msg msg(1, "Hello World");
 
         /* Write the message. */
-        std::cout << "=== [Publisher] Write sample." << std::endl;
+        std::cout << "=== [Publisher] Write sample: " << msg << std::endl;
         writer.write(msg);
 
         /* With a normal configuration (see dds::pub::qos::DataWriterQos
