@@ -72,9 +72,7 @@ int main() {
                      * is set. The other data parts are not.
                      * Check if this sample has valid data. */
                     if (info.valid()) {
-                        std::cout << "=== [Subscriber] Message received:" << std::endl;
-                        std::cout << "    userID  : " << msg.userID() << std::endl;
-                        std::cout << "    Message : \"" << msg.message() << "\"" << std::endl;
+                        std::cout << "=== [Subscriber] Message received: " << msg << std::endl;
 
                         /* Only 1 message is expected in this example. */
                         poll = false;
