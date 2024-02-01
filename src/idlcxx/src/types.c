@@ -628,6 +628,8 @@ emit_case(
   return IDL_RETCODE_OK;
 }
 
+static bool gen_ostream_case = false;
+
 static idl_retcode_t
 emit_case_label(
   const idl_pstate_t *pstate,
@@ -651,9 +653,16 @@ emit_case_label(
   {
     if (idl_fprintf(gen->header.handle, "      default:\n") < 0)
       return IDL_RETCODE_NO_MEMORY;
-  } else if (idl_fprintf(gen->header.handle, "      case %s:\n", value) < 0)
-    return IDL_RETCODE_NO_MEMORY;
+  } else {
+    if (idl_fprintf(gen->header.handle, "      case %s:\n", value) < 0)
+      return IDL_RETCODE_NO_MEMORY;
 
+    // ostream cpp
+    if (gen_ostream_case) {
+      if (idl_fprintf(gen->impl.handle, "    case %s:\n", value) < 0)
+        return IDL_RETCODE_NO_MEMORY;
+    }
+  }
   return IDL_RETCODE_OK;
 }
 
@@ -677,6 +686,11 @@ emit_case_comparison(
   const char* branch_name = get_cpp11_name(branch->declarator);
   static const char* fmt = "        return %1$s() == _other.%1$s();\n";
   if (idl_fprintf(gen->header.handle, fmt, branch_name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  // ostream cpp
+  static const char* fmt2 = "      os << \"%1$s: \" << rhs.%1$s(); break;\n";
+  if (idl_fprintf(gen->impl.handle, fmt2, branch_name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -1070,6 +1084,13 @@ cleanup:
   if (idl_fprintf(gen->header.handle, fmt, type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  // ostream cpp
+  fmt = "std::ostream& operator<<(std::ostream& os, %3$s const& rhs)\n"
+        "{\n"
+        "  switch (rhs._d()) {\n";
+  if (idl_fprintf(gen->impl.handle, fmt, type, value, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
   visitor.visit = IDL_CASE | IDL_CASE_LABEL;
   visitor.accept[IDL_ACCEPT_CASE] = emit_case;
   visitor.accept[IDL_ACCEPT_CASE_LABEL] = emit_case_label;
@@ -1134,6 +1155,7 @@ cleanup:
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  gen_ostream_case = true;
   visitor.visit = IDL_CASE | IDL_CASE_LABEL;
   visitor.accept[IDL_ACCEPT_CASE] = emit_case_comparison;
   visitor.accept[IDL_ACCEPT_CASE_LABEL] = emit_case_label;
@@ -1157,6 +1179,14 @@ cleanup:
   if (idl_fprintf(gen->header.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
+  // ostream cpp
+  fmt = "    default:\n    {\n"
+        "      // Prevent compiler warnings\n    }\n"
+        "  }\n"
+        "  return os;\n};\n\n";
+  if (idl_fprintf(gen->impl.handle, fmt, type) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
 
   /* implicit default setter */
   if (idl_mask(_union->default_case) == IDL_IMPLICIT_DEFAULT_CASE_LABEL) {
@@ -1173,6 +1203,12 @@ cleanup:
 
   if (fputs("};\n\n", gen->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
+
+  // ostream hpp
+  fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n";
+  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
 
   return IDL_RETCODE_OK;
 }
