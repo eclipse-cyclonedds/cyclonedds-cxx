@@ -943,7 +943,28 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   if (fputs(fmt, generator->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (generator->uses_sequence || generator->uses_bounded_sequence || generator->uses_array)
+  if (generator->uses_array)
+  {
+    fmt = "template <typename T, size_t N>\n"
+          "std::ostream& operator<<(std::ostream& os, std::array<T, N> const& rhs)\n"
+          "{\n"
+          "  os << \"[\";\n"
+          "  for (std::size_t i = 0; i < N; i++)\n"
+          "  {\n"
+          "    os << rhs[i];\n"
+          "    if (i < N - 1)\n"
+          "    {\n"
+          "      os << \", \";\n"
+          "    }\n"
+          "  }\n"
+          "  os << \"]\";\n"
+          "return os;\n"
+          "}\n\n";
+    if (fputs(fmt, generator->header.handle) < 0)
+      return IDL_RETCODE_NO_MEMORY;
+  }
+
+  if (generator->uses_sequence || generator->uses_bounded_sequence)
   {
     fmt = "template<typename T>\n"
         "std::ostream& operator<<(std::ostream& os, std::vector<T> const& rhs)\n{\n"
