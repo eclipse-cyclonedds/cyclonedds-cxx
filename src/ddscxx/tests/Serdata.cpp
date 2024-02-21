@@ -245,6 +245,7 @@ static void test_keyhash(const T& sample, const kh_t& expected, const kh_t& expe
 {
     auto st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR1);
     auto sd = serdata_from_sample<T, org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>(st, SDK_DATA, &sample);
+    ASSERT_GT(sd->hash, static_cast<uint32_t>(0));
     struct ddsi_keyhash khraw, khraw_md5;
     serdata_get_keyhash<T>(sd, &khraw, false);
     serdata_get_keyhash<T>(sd, &khraw_md5, true);

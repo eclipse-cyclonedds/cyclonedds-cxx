@@ -878,7 +878,10 @@ template <typename T>
 void ddscxx_serdata<T>::populate_hash()
 {
   if (hash_populated)
-    populate_hash(*getT());
+    return;
+
+  populate_hash(*getT());
+  assert(hash_populated);
 }
 
 template <typename T>
