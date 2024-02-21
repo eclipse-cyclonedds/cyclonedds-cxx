@@ -390,6 +390,19 @@ TEST_F(DataReader, read)
     this->CheckData(samples, test_samples);
 }
 
+TEST_F(DataReader, read_instance_count_exceeds_bucket_size)
+{
+    /* validate that read/write is functional with instance count > hopscotch bucket size; ref issue #470 */
+    static const int32_t N_INSTANCES = 33;  // bucket size==32 + 1
+
+    /* Create and write data. */
+    const auto test_samples = this->WriteData(N_INSTANCES);
+
+    /* Check result by reading. */
+    const auto samples = this->reader.read();
+    this->CheckData(samples, test_samples);
+}
+
 
 TEST_F(DataReader, read_no_data)
 {
