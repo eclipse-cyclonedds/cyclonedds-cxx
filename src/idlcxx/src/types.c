@@ -1169,6 +1169,8 @@ cleanup:
   if ((ret = idl_visit(pstate, _union->cases, &visitor, user_data)))
     return ret;
 
+  gen_ostream_case = false;
+
   if (gen_default) {
     fmt =  "      default:\n"
            "        return true;\n";
