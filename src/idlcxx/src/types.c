@@ -370,7 +370,7 @@ emit_struct(
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream - cpp
-  if (fputs("  os << \"]\";\n  return os;\n};\n\n", gen->impl.handle) < 0)
+  if (fputs("  os << \"]\";\n  return os;\n}\n\n", gen->impl.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -428,7 +428,7 @@ emit_enum(
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream cpp
-  if (fputs("    default: break;\n  }\n  return os;\n};\n\n", gen->impl.handle) < 0)
+  if (fputs("    default: break;\n  }\n  return os;\n}\n\n", gen->impl.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream hpp
@@ -1198,7 +1198,7 @@ cleanup:
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream cpp
-  if (idl_fprintf(gen->impl.handle, "  }\n  return os;\n};\n\n") < 0)
+  if (idl_fprintf(gen->impl.handle, "  }\n  return os;\n}\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
 
