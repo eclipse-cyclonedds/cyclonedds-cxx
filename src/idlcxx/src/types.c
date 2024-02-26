@@ -653,6 +653,13 @@ emit_case_label(
   {
     if (idl_fprintf(gen->header.handle, "      default:\n") < 0)
       return IDL_RETCODE_NO_MEMORY;
+
+    // ostream cpp
+    if (gen_ostream_case) {
+      if (idl_fprintf(gen->impl.handle, "    default:\n") < 0)
+        return IDL_RETCODE_NO_MEMORY;
+    }
+
   } else {
     if (idl_fprintf(gen->header.handle, "      case %s:\n", value) < 0)
       return IDL_RETCODE_NO_MEMORY;
@@ -1167,6 +1174,11 @@ cleanup:
            "        return true;\n";
     if (idl_fprintf(gen->header.handle, fmt, name) < 0)
       return IDL_RETCODE_NO_MEMORY;
+
+    fmt =  "    default:\n    {\n"
+           "      // Prevent compiler warnings\n    }\n";
+    if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
+      return IDL_RETCODE_NO_MEMORY;
   }
 
   fmt = "    }\n"
@@ -1180,9 +1192,7 @@ cleanup:
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream cpp
-  fmt = "    default:\n    {\n"
-        "      // Prevent compiler warnings\n    }\n"
-        "  }\n"
+  fmt = "  }\n"
         "  return os;\n};\n\n";
   if (idl_fprintf(gen->impl.handle, fmt, type) < 0)
     return IDL_RETCODE_NO_MEMORY;
