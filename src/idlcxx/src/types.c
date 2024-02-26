@@ -131,9 +131,9 @@ emit_parameter(
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream - cpp
-  fmt = "  os << \"%1$s%3$s: \" << rhs.%3$s();\n";
+  fmt = "  os << \"%1$s%2$s: \" << rhs.%2$s();\n";
   sep = is_first(node) ? "" : ", ";
-  if (idl_fprintf(gen->impl.handle, fmt, sep, type, name, eofmt) < 0)
+  if (idl_fprintf(gen->impl.handle, fmt, sep, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
@@ -415,9 +415,9 @@ emit_enum(
       return IDL_RETCODE_NO_MEMORY;
 
     // ostream cpp
-    fmt = "    case %3$s::%2$s:\n"
-          "      os << \"%3$s::%2$s\"; break;\n";
-    if (idl_fprintf(gen->impl.handle, fmt, sep, name, struct_name, value) < 0)
+    fmt = "    case %2$s::%1$s:\n"
+          "      os << \"%2$s::%1$s\"; break;\n";
+    if (idl_fprintf(gen->impl.handle, fmt, name, struct_name) < 0)
       return IDL_RETCODE_NO_MEMORY;
 
     skip = value + 1;
@@ -1095,11 +1095,11 @@ cleanup:
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream cpp
-  fmt = "std::ostream& operator<<(std::ostream& os, %3$s const& rhs)\n"
+  fmt = "std::ostream& operator<<(std::ostream& os, %1$s const& rhs)\n"
         "{\n"
         "  (void) rhs;\n"
         "  switch (rhs._d()) {\n";
-  if (idl_fprintf(gen->impl.handle, fmt, type, value, name) < 0)
+  if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   visitor.visit = IDL_CASE | IDL_CASE_LABEL;
@@ -1198,9 +1198,7 @@ cleanup:
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream cpp
-  fmt = "  }\n"
-        "  return os;\n};\n\n";
-  if (idl_fprintf(gen->impl.handle, fmt, type) < 0)
+  if (idl_fprintf(gen->impl.handle, "  }\n  return os;\n};\n\n") < 0)
     return IDL_RETCODE_NO_MEMORY;
 
 
