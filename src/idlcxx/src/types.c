@@ -271,7 +271,9 @@ emit_struct(
   }
 
   // ostream - cpp
-  fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n  os << \"[\";\n";
+  fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n"
+        "  (void) rhs;\n"
+        "  os << \"[\";\n";
   if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -398,6 +400,7 @@ emit_enum(
 
   // ostream cpp
   fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n"
+        "  (void) rhs;\n"
         "  switch (rhs)\n  {\n";
   if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -1094,6 +1097,7 @@ cleanup:
   // ostream cpp
   fmt = "std::ostream& operator<<(std::ostream& os, %3$s const& rhs)\n"
         "{\n"
+        "  (void) rhs;\n"
         "  switch (rhs._d()) {\n";
   if (idl_fprintf(gen->impl.handle, fmt, type, value, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
