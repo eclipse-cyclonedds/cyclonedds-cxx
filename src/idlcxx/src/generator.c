@@ -934,66 +934,11 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   if (fputs("\n", generator->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  // ostream hpp
+  // ostream cpp
   // streaming goperators for the used std types
-  // this could also be in a cyclone utils header instead
-  // generating in every file 
   const char *fmt;
-  fmt = "namespace std\n{\n";
-  if (fputs(fmt, generator->header.handle) < 0)
-    return IDL_RETCODE_NO_MEMORY;
-
-  if (generator->uses_array)
-  {
-    fmt = "template <typename T, size_t N>\n"
-          "std::ostream& operator<<(std::ostream& os, std::array<T, N> const& rhs)\n"
-          "{\n"
-          "  os << \"[\";\n"
-          "  for (std::size_t i = 0; i < N; i++)\n"
-          "  {\n"
-          "    os << rhs[i];\n"
-          "    if (i < N - 1)\n"
-          "    {\n"
-          "      os << \", \";\n"
-          "    }\n"
-          "  }\n"
-          "  os << \"]\";\n"
-          "return os;\n"
-          "}\n\n";
-    if (fputs(fmt, generator->header.handle) < 0)
-      return IDL_RETCODE_NO_MEMORY;
-  }
-
-  if (generator->uses_sequence || generator->uses_bounded_sequence)
-  {
-    fmt = "template<typename T>\n"
-        "std::ostream& operator<<(std::ostream& os, std::vector<T> const& rhs)\n{\n"
-        "  os << \"[\";\n"
-        "  for(size_t i=0; i<rhs.size(); i++)\n  {\n"
-        "    if (i != 0)\n"
-        "    {\n"
-        "      os << \", \";\n"
-        "    }\n"
-        "    os << rhs[i];\n"
-        "  }\n"
-        "  os << \"]\";\n"
-        "  return os;\n"
-        "}\n\n";
-    if (fputs(fmt, generator->header.handle) < 0)
-      return IDL_RETCODE_NO_MEMORY;
-  }
-  if (generator->uses_optional)
-  {
-    fmt = "template<typename T>\n"
-              "std::ostream& operator<<(std::ostream& os, %s<T> const& rhs)\n{\n"
-              "  return rhs ? os << rhs.value() : os;\n"
-              "}\n\n";
-    if (idl_fprintf(generator->header.handle, fmt, opt_tmpl) < 0)
-      return IDL_RETCODE_NO_MEMORY;
-  }
-
-  fmt = "} //namespace std\n\n";
-  if (fputs(fmt, generator->header.handle) < 0)
+  fmt = "#include <org/eclipse/cyclonedds/util/ostream_operators.hpp>\n\n";
+  if (fputs(fmt, generator->impl.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_RETCODE_OK;
