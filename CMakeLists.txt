@@ -189,7 +189,7 @@ if(ENABLE_LEGACY)
   set(cyclonedds_cpp_std_to_use 11)
   set(DDSCXX_USE_BOOST "1")
   find_package(Boost)
-  include_directories(${Boost_INCLUDE_DIR})
+  include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 endif()
 
 include(CMakePackageConfigHelpers)
