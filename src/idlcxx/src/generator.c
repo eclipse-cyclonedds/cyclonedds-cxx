@@ -819,41 +819,6 @@ register_bitmask(
   return IDL_RETCODE_OK;
 }
 
-const char *seq_tmpl = "std::vector<{TYPE}>";
-const char *seq_inc = "<vector>";
-const char *arr_tmpl = "std::array<{TYPE}, {DIMENSION}>";
-const char *arr_inc = "<array>";
-const char *bnd_seq_tmpl = "std::vector<{TYPE}>";
-const char *bnd_seq_inc = "<vector>";
-const char *str_tmpl = "std::string";
-const char *str_inc = "<string>";
-const char *bnd_str_tmpl = "std::string";
-const char *bnd_str_inc = "<string>";
-#if IDLCXX_USE_BOOST
-const char *opt_tmpl = "boost::optional";
-const char *opt_inc = "\"boost/optional.hpp\"";
-const char *uni_tmpl = "boost::variant";
-const char *uni_get_tmpl = "boost::get";
-const char *uni_inc = "\"boost/variant.hpp\"";
-#else
-const char *opt_tmpl = "std::optional";
-const char *opt_inc = "<optional>";
-const char *uni_tmpl = "std::variant";
-const char *uni_get_tmpl = "std::get";
-const char *uni_inc = "<variant>";
-#endif
-const char *ext_tmpl = "dds::core::external";
-const char *ext_inc = "<dds/core/External.hpp>";
-
-static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
-static const char *arr_flags[] = { "s", PRIu32, NULL };
-static const char *seq_toks[] = { "TYPE", NULL };
-static const char *seq_flags[] = { "s", NULL };
-static const char *bnd_seq_toks[] = { "TYPE", "BOUND", NULL };
-static const char *bnd_seq_flags[] = { "s", PRIu32, NULL };
-static const char *bnd_str_toks[] = { "BOUND", NULL };
-static const char *bnd_str_flags[] = { PRIu32, NULL };
-
 static idl_retcode_t
 generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 {
@@ -976,6 +941,41 @@ err_print:
   free(guard);
   return ret;
 }
+
+const char *seq_tmpl = "std::vector<{TYPE}>";
+const char *seq_inc = "<vector>";
+const char *arr_tmpl = "std::array<{TYPE}, {DIMENSION}>";
+const char *arr_inc = "<array>";
+const char *bnd_seq_tmpl = "std::vector<{TYPE}>";
+const char *bnd_seq_inc = "<vector>";
+const char *str_tmpl = "std::string";
+const char *str_inc = "<string>";
+const char *bnd_str_tmpl = "std::string";
+const char *bnd_str_inc = "<string>";
+#if IDLCXX_USE_BOOST
+const char *opt_tmpl = "boost::optional";
+const char *opt_inc = "\"boost/optional.hpp\"";
+const char *uni_tmpl = "boost::variant";
+const char *uni_get_tmpl = "boost::get";
+const char *uni_inc = "\"boost/variant.hpp\"";
+#else
+const char *opt_tmpl = "std::optional";
+const char *opt_inc = "<optional>";
+const char *uni_tmpl = "std::variant";
+const char *uni_get_tmpl = "std::get";
+const char *uni_inc = "<variant>";
+#endif
+const char *ext_tmpl = "dds::core::external";
+const char *ext_inc = "<dds/core/External.hpp>";
+
+static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
+static const char *arr_flags[] = { "s", PRIu32, NULL };
+static const char *seq_toks[] = { "TYPE", NULL };
+static const char *seq_flags[] = { "s", NULL };
+static const char *bnd_seq_toks[] = { "TYPE", "BOUND", NULL };
+static const char *bnd_seq_flags[] = { "s", PRIu32, NULL };
+static const char *bnd_str_toks[] = { "BOUND", NULL };
+static const char *bnd_str_flags[] = { PRIu32, NULL };
 
 #if _WIN32
 __declspec(dllexport)
