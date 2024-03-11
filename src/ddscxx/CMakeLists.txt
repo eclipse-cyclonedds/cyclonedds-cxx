@@ -70,6 +70,11 @@ set(sources
     src/org/eclipse/cyclonedds/topic/TopicDescriptionDelegate.cpp
     src/org/eclipse/cyclonedds/topic/qos/TopicQosDelegate.cpp)
 
+if (ENABLE_QOS_PROVIDER)
+  list(APPEND sources
+    src/org/eclipse/cyclonedds/core/QosProviderDelegate.cpp)
+endif()
+
 if(BUILD_SHARED_LIBS OR NOT DEFINED BUILD_SHARED_LIBS)
   add_library(ddscxx SHARED ${sources})
 else()
@@ -91,6 +96,7 @@ add_library(${PROJECT_NAME}::ddscxx ALIAS ddscxx)
 add_coverage(ddscxx)
 
 set_property(TARGET ddscxx PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
+
 target_link_libraries(ddscxx PUBLIC CycloneDDS::ddsc)
 target_include_directories(
   ddscxx

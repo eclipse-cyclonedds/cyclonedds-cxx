@@ -514,6 +514,7 @@ void GroupDataDelegate::set_c_policy(dds_qos_t* qos) const
         void* data = NULL;
         org::eclipse::cyclonedds::core::convertByteSeq(value_, data, static_cast<int32_t>(value_.size()));
         dds_qset_groupdata(qos, data, value_.size());
+        dds_free(data);
     }
 }
 
@@ -1465,6 +1466,7 @@ void TopicDataDelegate::set_c_policy(dds_qos_t* qos) const
         void* data = NULL;
         org::eclipse::cyclonedds::core::convertByteSeq(value_, data, static_cast<int32_t>(value_.size()));
         dds_qset_topicdata(qos, data, value_.size());
+        dds_free(data);
     }
 }
 

@@ -32,7 +32,7 @@ namespace qos
 
 DomainParticipantQosDelegate::DomainParticipantQosDelegate()
 {
-    ddsc_qos(&ddsi_default_qos_participant);
+    ddsc_qos(&ddsi_default_qos_participant, true);
     check();
 }
 
@@ -67,13 +67,14 @@ DomainParticipantQosDelegate::ddsc_qos() const
 }
 
 void
-DomainParticipantQosDelegate::ddsc_qos(const dds_qos_t* qos)
+DomainParticipantQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
 {
     assert(qos);
-    present_ = qos->present;
-    if (present_ & DDSI_QP_USER_DATA)
+    if (copy_flags)
+        present_ = qos->present;
+    if (qos->present & DDSI_QP_USER_DATA)
         user_data_.delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
+    if (qos->present & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_iso_policy(qos);
 }
 
@@ -103,7 +104,7 @@ DomainParticipantQosDelegate::check() const
 bool
 DomainParticipantQosDelegate::operator ==(const DomainParticipantQosDelegate& other) const
 {
-    return other.present_             == present_ &&
+    return other.present_             == present_   &&
            other.user_data_           == user_data_ &&
            other.entity_factory_      == entity_factory_;
 

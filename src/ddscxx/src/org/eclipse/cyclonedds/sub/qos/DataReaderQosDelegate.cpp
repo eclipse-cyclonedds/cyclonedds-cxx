@@ -32,7 +32,7 @@ namespace qos
 
 DataReaderQosDelegate::DataReaderQosDelegate()
 {
-    ddsc_qos(&ddsi_default_qos_reader);
+    ddsc_qos(&ddsi_default_qos_reader, true);
     present() &= ~DDSI_QP_DATA_REPRESENTATION;
     check();
 }
@@ -208,41 +208,42 @@ DataReaderQosDelegate::ddsc_qos() const
 }
 
 void
-DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos)
+DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
 {
     assert(qos);
-    present_ = qos->present;
-    if (present_ & DDSI_QP_DEADLINE)
+    if (copy_flags)
+        present_ = qos->present;
+    if (qos->present & DDSI_QP_DEADLINE)
         deadline_    .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_DURABILITY)
+    if (qos->present & DDSI_QP_DURABILITY)
         durability_  .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_HISTORY)
+    if (qos->present & DDSI_QP_HISTORY)
         history_     .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_LATENCY_BUDGET)
+    if (qos->present & DDSI_QP_LATENCY_BUDGET)
         budget_      .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_ADLINK_READER_DATA_LIFECYCLE)
+    if (qos->present & DDSI_QP_ADLINK_READER_DATA_LIFECYCLE)
         lifecycle_   .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_LIVELINESS)
+    if (qos->present & DDSI_QP_LIVELINESS)
         liveliness_  .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_DESTINATION_ORDER)
+    if (qos->present & DDSI_QP_DESTINATION_ORDER)
         order_       .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_OWNERSHIP)
+    if (qos->present & DDSI_QP_OWNERSHIP)
         ownership_   .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_TIME_BASED_FILTER)
+    if (qos->present & DDSI_QP_TIME_BASED_FILTER)
         tfilter_     .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_RELIABILITY)
+    if (qos->present & DDSI_QP_RELIABILITY)
         reliability_ .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_RESOURCE_LIMITS)
+    if (qos->present & DDSI_QP_RESOURCE_LIMITS)
         resources_   .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_USER_DATA)
+    if (qos->present & DDSI_QP_USER_DATA)
         user_data_   .delegate().set_iso_policy(qos);
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (present_ & DDSI_QP_DATA_REPRESENTATION)
+    if (qos->present & DDSI_QP_DATA_REPRESENTATION)
         datarepresentation_.delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
+    if (qos->present & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
         typeconsistencyenforcement_.delegate().set_iso_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (present_ & DDSI_QP_PSMX)
+    if (qos->present & DDSI_QP_PSMX)
         psmxinstances_.delegate().set_iso_policy(qos);
 }
 
@@ -300,12 +301,12 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
            other.resources_   == resources_   &&
            other.ownership_   == ownership_   &&
            other.tfilter_     == tfilter_     &&
-           other.lifecycle_   == lifecycle_
+           other.lifecycle_   == lifecycle_   &&
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-        && other.datarepresentation_ == datarepresentation_
-        && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
+           other.datarepresentation_ == datarepresentation_ &&
+           other.typeconsistencyenforcement_ == typeconsistencyenforcement_ &&
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-        && other.psmxinstances_ == psmxinstances_
+           other.psmxinstances_ == psmxinstances_
            ;
 }
 

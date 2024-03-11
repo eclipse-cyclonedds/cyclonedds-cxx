@@ -22,11 +22,6 @@
 #include <dds/pub/qos/PublisherQos.hpp>
 #include <dds/pub/qos/DataWriterQos.hpp>
 
-#if 0
-C_CLASS(cmn_qosProvider);
-C_CLASS(cmn_qosProviderInputAttr);
-#endif
-
 namespace org
 {
 namespace eclipse
@@ -41,6 +36,8 @@ class QosProviderDelegate;
 }
 }
 
+struct dds_qos_provider;
+
 class OMG_DDS_API org::eclipse::cyclonedds::core::QosProviderDelegate
 {
 public:
@@ -49,30 +46,25 @@ public:
     ~QosProviderDelegate();
 
     dds::domain::qos::DomainParticipantQos
-    participant_qos(const char* id);
+    participant_qos(const std::string& id = "");
 
     dds::topic::qos::TopicQos
-    topic_qos(const char* id);
+    topic_qos(const std::string& id = "");
 
     dds::sub::qos::SubscriberQos
-    subscriber_qos(const char* id);
+    subscriber_qos(const std::string& id = "");
 
     dds::sub::qos::DataReaderQos
-    datareader_qos(const char* id);
+    datareader_qos(const std::string& id = "");
 
     dds::pub::qos::PublisherQos
-    publisher_qos(const char* id);
+    publisher_qos(const std::string& id = "");
 
     dds::pub::qos::DataWriterQos
-    datawriter_qos(const char* id);
+    datawriter_qos(const std::string& id = "");
 
 private:
-    template <typename FROM, typename TO>
-    static void named_qos__copyOut(void *from, void *to);
-#if 0
-    cmn_qosProvider qosProvider;
-    static const C_STRUCT(cmn_qosProviderInputAttr) qosProviderAttr;
-#endif
+    dds_qos_provider *qosProvider;
 };
 
 #endif /* CYCLONEDDS_CORE_QOSPROVIDERDELEGATE_HPP_ */

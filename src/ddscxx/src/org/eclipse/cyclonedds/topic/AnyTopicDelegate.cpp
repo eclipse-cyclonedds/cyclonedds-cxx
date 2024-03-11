@@ -163,7 +163,7 @@ AnyTopicDelegate::discover_topic(
     ret = dds_get_qos(ddsc_topic, ddsc_qos);
     dds::topic::qos::TopicQos qos;
     if (ret == DDS_RETCODE_OK) {
-        qos.delegate().ddsc_qos(ddsc_qos);
+        qos.delegate().ddsc_qos(ddsc_qos, false);
     }
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Failed to get the qos from discovered topic");

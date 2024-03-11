@@ -10,4 +10,7 @@
 /* Whether to use boost for c++11 compatibility or not */
 #cmakedefine DDSCXX_USE_BOOST @DDSCXX_USE_BOOST@
 
+/* Whether or not support for qos provider is included */
+#cmakedefine DDSCXX_HAS_QOS_PROVIDER @DDSCXX_HAS_QOS_PROVIDER@
+
 #endif /* __OMG_DDS_DDSCXX_FEATURES_HPP__ */

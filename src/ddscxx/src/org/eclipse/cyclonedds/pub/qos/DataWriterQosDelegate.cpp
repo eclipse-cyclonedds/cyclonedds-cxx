@@ -32,7 +32,7 @@ namespace qos
 
 DataWriterQosDelegate::DataWriterQosDelegate()
 {
-    ddsc_qos(&ddsi_default_qos_writer);
+    ddsc_qos(&ddsi_default_qos_writer, true);
     present() &= ~DDSI_QP_DATA_REPRESENTATION;
     check();
 }
@@ -256,53 +256,54 @@ DataWriterQosDelegate::ddsc_qos() const
 }
 
 void
-DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos)
+DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
 {
     assert(qos);
-    present_ = qos->present;
-    if (present_ & DDSI_QP_USER_DATA)
+    if (copy_flags)
+        present_ = qos->present;
+    if (qos->present & DDSI_QP_USER_DATA)
         user_data_   .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_DURABILITY)
+    if (qos->present & DDSI_QP_DURABILITY)
         durability_  .delegate().set_iso_policy(qos);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
-    if (present_ & DDSI_QP_DURABILITY_SERVICE)
+    if (qos->present & DDSI_QP_DURABILITY_SERVICE)
         durability_service_.delegate().set_iso_policy(qos);
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
-    if (present_ & DDSI_QP_DEADLINE)
+    if (qos->present & DDSI_QP_DEADLINE)
         deadline_    .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_LATENCY_BUDGET)
+    if (qos->present & DDSI_QP_LATENCY_BUDGET)
         budget_      .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_LIVELINESS)
+    if (qos->present & DDSI_QP_LIVELINESS)
         liveliness_  .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_RELIABILITY)
+    if (qos->present & DDSI_QP_RELIABILITY)
         reliability_ .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_DESTINATION_ORDER)
+    if (qos->present & DDSI_QP_DESTINATION_ORDER)
         order_       .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_HISTORY)
+    if (qos->present & DDSI_QP_HISTORY)
         history_     .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_RESOURCE_LIMITS)
+    if (qos->present & DDSI_QP_RESOURCE_LIMITS)
         resources_   .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_TRANSPORT_PRIORITY)
+    if (qos->present & DDSI_QP_TRANSPORT_PRIORITY)
         priority_    .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_LIFESPAN)
+    if (qos->present & DDSI_QP_LIFESPAN)
         lifespan_    .delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_OWNERSHIP)
+    if (qos->present & DDSI_QP_OWNERSHIP)
         ownership_   .delegate().set_iso_policy(qos);
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
-    if (present_ & DDSI_QP_OWNERSHIP_STRENGTH)
+    if (qos->present & DDSI_QP_OWNERSHIP_STRENGTH)
         strength_    .delegate().set_iso_policy(qos);
 #endif  // OMG_DDS_OWNERSHIP_SUPPORT
-    if (present_ & DDSI_QP_ADLINK_WRITER_DATA_LIFECYCLE)
+    if (qos->present & DDSI_QP_ADLINK_WRITER_DATA_LIFECYCLE)
         lifecycle_   .delegate().set_iso_policy(qos);
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (present_ & DDSI_QP_DATA_REPRESENTATION)
+    if (qos->present & DDSI_QP_DATA_REPRESENTATION)
         datarepresentation_.delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
+    if (qos->present & DDSI_QP_TYPE_CONSISTENCY_ENFORCEMENT)
         typeconsistencyenforcement_.delegate().set_iso_policy(qos);
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-    if (present_ & DDSI_QP_CYCLONE_WRITER_BATCHING)
+    if (qos->present & DDSI_QP_CYCLONE_WRITER_BATCHING)
         writerbatching_.delegate().set_iso_policy(qos);
-    if (present_ & DDSI_QP_PSMX)
+    if (qos->present & DDSI_QP_PSMX)
         psmxinstances_.delegate().set_iso_policy(qos);
 }
 
@@ -373,13 +374,13 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
 #ifdef  OMG_DDS_OWNERSHIP_SUPPORT
            other.strength_    == strength_    &&
 #endif
-           other.lifecycle_   == lifecycle_
+           other.lifecycle_   == lifecycle_   &&
 #ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-        && other.datarepresentation_ == datarepresentation_
-        && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
+           other.datarepresentation_ == datarepresentation_ &&
+           other.typeconsistencyenforcement_ == typeconsistencyenforcement_ &&
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
-        && other.writerbatching_ == writerbatching_
-        && other.psmxinstances_ == psmxinstances_
+           other.writerbatching_ == writerbatching_ &&
+           other.psmxinstances_ == psmxinstances_
            ;
 }
 
