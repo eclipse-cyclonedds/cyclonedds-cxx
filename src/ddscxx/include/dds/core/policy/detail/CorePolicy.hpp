@@ -101,6 +101,9 @@ namespace dds { namespace core { namespace policy { namespace detail {
     typedef dds::core::policy::TPSMXInstances<org::eclipse::cyclonedds::core::policy::PSMXInstancesDelegate>
     PSMXInstances;
 
+    typedef dds::core::policy::TIgnoreLocal<org::eclipse::cyclonedds::core::policy::IgnoreLocalDelegate>
+    IgnoreLocal;
+
     typedef dds::core::policy::TUserData<org::eclipse::cyclonedds::core::policy::UserDataDelegate>
     UserData;
 
