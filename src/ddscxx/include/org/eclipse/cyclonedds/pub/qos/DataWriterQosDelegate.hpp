@@ -62,6 +62,7 @@ public:
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     void policy(const dds::core::policy::WriterBatching&    writerbatching);
     void policy(const dds::core::policy::PSMXInstances&     psmxinstances);
+    void policy(const dds::core::policy::IgnoreLocal &      ignore);
 
     template <typename POLICY> const POLICY& policy() const;
     template <typename POLICY> POLICY& policy();
@@ -106,6 +107,7 @@ private:
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     dds::core::policy::WriterBatching          writerbatching_;
     dds::core::policy::PSMXInstances           psmxinstances_;
+    dds::core::policy::IgnoreLocal             ignore_;
 };
 
 
@@ -292,6 +294,16 @@ inline const dds::core::policy::PSMXInstances&
 DataWriterQosDelegate::policy<dds::core::policy::PSMXInstances>() const
 {
     return psmxinstances_;
+}
+
+template<>
+inline dds::core::policy::IgnoreLocal&
+DataWriterQosDelegate::policy<dds::core::policy::IgnoreLocal>();
+
+template<> inline const dds::core::policy::IgnoreLocal &
+DataWriterQosDelegate::policy<dds::core::policy::IgnoreLocal>() const
+{
+    return ignore_;
 }
 
 }

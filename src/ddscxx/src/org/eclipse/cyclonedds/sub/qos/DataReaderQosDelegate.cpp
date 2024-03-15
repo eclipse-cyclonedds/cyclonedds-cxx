@@ -165,6 +165,14 @@ DataReaderQosDelegate::policy(const dds::core::policy::PSMXInstances& psmxinstan
     psmxinstances_ = psmxinstances;
 }
 
+void
+DataReaderQosDelegate::policy(const dds::core::policy::IgnoreLocal & ignore)
+{
+    ignore.delegate().check();
+    present_ |= DDSI_QP_CYCLONE_IGNORELOCAL;
+    ignore_ = ignore;
+}
+
 dds_qos_t*
 DataReaderQosDelegate::ddsc_qos() const
 {
@@ -204,6 +212,8 @@ DataReaderQosDelegate::ddsc_qos() const
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     if (present_ & DDSI_QP_PSMX)
         psmxinstances_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
+        ignore_       .delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -244,6 +254,8 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     if (present_ & DDSI_QP_PSMX)
         psmxinstances_.delegate().set_iso_policy(qos);
+    if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
+        ignore_       .delegate().set_iso_policy(qos);
 }
 
 void
@@ -273,6 +285,7 @@ DataReaderQosDelegate::named_qos(const struct _DDS_NamedDataReaderQos &qos)
     typeconsistencyenforcement_.delegate().v_policy((v_typeConsistencyEnforcementPolicy&)(q->typeconsistencyenforcement));
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     psmxinstances_.delegate().v_policy((v_psmxinstancesPolicy&)(q->psmxinstances)     );
+    ignore_.delegate().v_policy((v_ignorelocalPolicy&)(q->ignorelocal)     );
 #endif
 }
 
@@ -306,6 +319,7 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
         && other.typeconsistencyenforcement_ == typeconsistencyenforcement_
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
         && other.psmxinstances_ == psmxinstances_
+        && other.ignore_        == ignore_
            ;
 }
 
