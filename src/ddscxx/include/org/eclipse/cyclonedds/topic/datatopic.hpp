@@ -624,6 +624,7 @@ size_t serdata_print(
   (void)tpcmn;
   (void)dcmn;
 
+  size_t copy_len = 0;
   auto d = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
   auto t_ptr = d->getT();
 
@@ -634,16 +635,16 @@ size_t serdata_print(
     const std::string data = ss.str();
     const size_t len = data.size();
 
+    copy_len = bufsize - 1;
     if (len < bufsize) {
-      strncpy(buf, data.c_str(), len);
-      buf[len] = '\0'; // Null-terminate the string
-      return len;
+      copy_len = len;
     }
+
+    strncpy(buf, data.c_str(), copy_len);
+    buf[copy_len] = '\0'; // Null-terminate the string
   }
 
-  if (bufsize > 0)
-    buf[0] = 0x0;
-  return 0;
+  return copy_len;
 }
 
 template <typename T>
