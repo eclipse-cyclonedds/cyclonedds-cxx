@@ -11,6 +11,7 @@
 #ifndef DDSCXXDATATOPIC_HPP_
 #define DDSCXXDATATOPIC_HPP_
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <cstring>
