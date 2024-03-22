@@ -634,14 +634,10 @@ size_t serdata_print(
 
     const std::string data = ss.str();
     const size_t len = data.size();
+    copy_len = len < bufsize ? len : bufsize;
 
-    copy_len = bufsize - 1;
-    if (len < bufsize) {
-      copy_len = len;
-    }
-
-    strncpy(buf, data.c_str(), copy_len);
-    buf[copy_len] = '\0'; // Null-terminate the string
+    std::copy_n(data.c_str(), copy_len, buf);
+    buf[len < bufsize ? copy_len : copy_len - 1] = '\0';
   }
 
   return copy_len;
