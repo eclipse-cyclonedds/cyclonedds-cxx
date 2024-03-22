@@ -623,7 +623,24 @@ size_t serdata_print(
 {
   (void)tpcmn;
   (void)dcmn;
-  //implementation to follow!!!
+
+  auto d = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(dcmn));
+  auto t_ptr = d->getT();
+
+  if (t_ptr) {
+    std::stringstream ss;
+    ss << *t_ptr;
+
+    const std::string data = ss.str();
+    const size_t len = data.size();
+
+    if (len < bufsize) {
+      strncpy(buf, data.c_str(), len);
+      buf[len] = '\0'; // Null-terminate the string
+      return len;
+    }
+  }
+
   if (bufsize > 0)
     buf[0] = 0x0;
   return 0;
