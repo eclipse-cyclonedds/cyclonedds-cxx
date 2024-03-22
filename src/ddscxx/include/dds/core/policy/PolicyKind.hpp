@@ -253,6 +253,20 @@ struct TypeConsistencyKind_def
 
 typedef dds::core::safe_enum<TypeConsistencyKind_def> TypeConsistencyKind;
 
+struct IgnoreLocalKind_def{
+    enum Type{
+        NONE,       /**< Use this the Data Distribution Service will never ignore local endpoints.
+             */
+        PARTICIPANT,/**< The Data Distribution Service will attempt to ignore all endpoint(DataReader/DataWriter) from
+             * the same participant.
+             */
+        PROCESS     /**< The Data Distribution Service will attempt to ignore all endpoint(DataReader/DataWriter) from
+             * the same process.
+             */
+    };
+};
+typedef dds::core::safe_enum<IgnoreLocalKind_def> IgnoreLocalKind;
+
 }
 }
 }

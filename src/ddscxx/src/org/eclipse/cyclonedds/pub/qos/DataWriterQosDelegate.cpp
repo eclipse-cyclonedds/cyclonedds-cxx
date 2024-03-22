@@ -201,6 +201,14 @@ DataWriterQosDelegate::policy(const dds::core::policy::PSMXInstances& psmxinstan
     psmxinstances_ = psmxinstances;
 }
 
+void
+DataWriterQosDelegate::policy(const dds::core::policy::IgnoreLocal & ignore)
+{
+    ignore.delegate().check();
+    present_ |= DDSI_QP_CYCLONE_IGNORELOCAL;
+    ignore_ = ignore;
+}
+
 dds_qos_t*
 DataWriterQosDelegate::ddsc_qos() const
 {
@@ -252,6 +260,8 @@ DataWriterQosDelegate::ddsc_qos() const
         writerbatching_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_PSMX)
         psmxinstances_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
+        ignore_       .delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -304,6 +314,8 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos)
         writerbatching_.delegate().set_iso_policy(qos);
     if (present_ & DDSI_QP_PSMX)
         psmxinstances_.delegate().set_iso_policy(qos);
+    if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
+        ignore_       .delegate().set_iso_policy(qos);
 }
 
 void
@@ -340,6 +352,7 @@ DataWriterQosDelegate::named_qos(const struct _DDS_NamedDataWriterQos &qos)
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
     writerbatching_.delegate().v_policy((v_writerbatchingPolicy&)(q->writer_batching)     );
     psmxinstances_.delegate().v_policy((v_psmxinstancesPolicy&)(q->psmxinstances)     );
+    ignore_.delegate().v_policy((v_ignorelocalPolicy&)(q->ignorelocal)     );
 #endif
 }
 
@@ -380,6 +393,7 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
         && other.writerbatching_ == writerbatching_
         && other.psmxinstances_ == psmxinstances_
+        && other.ignore_        == ignore_
            ;
 }
 
@@ -558,6 +572,13 @@ DataWriterQosDelegate::policy<dds::core::policy::PSMXInstances>()
 {
     present_ |= DDSI_QP_PSMX;
     return psmxinstances_;
+}
+
+template<> dds::core::policy::IgnoreLocal&
+DataWriterQosDelegate::policy<dds::core::policy::IgnoreLocal>()
+{
+    present_ |= DDSI_QP_CYCLONE_IGNORELOCAL;
+    return ignore_;
 }
 
 }
