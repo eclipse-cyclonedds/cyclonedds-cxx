@@ -942,6 +942,41 @@ TEST_F(DataReader, readtake2)
 }
 
 
+TEST_F(DataReader, readcdr)
+{
+#if DDSRT_ENDIAN == DDSRT_LITTLE_ENDIAN
+    const std::array<char, 4> encoding{0x00, 0x01, 0x00, 0x00};
+    const std::vector<uint8_t> payloadcdr{0x00,0x00,0x00,0x00, 0x01,0x00,0x00,0x00, 0x02,0x00,0x00,0x00};
+#else
+    const std::array<char, 4> encoding{0x00, 0x00, 0x00, 0x00};
+    const std::vector<uint8_t> payloadcdr{0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x01, 0x00,0x00,0x00,0x02};
+#endif
+    dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> read_samples;
+    dds::sub::LoanedSamples<org::eclipse::cyclonedds::topic::CDRBlob> take_samples;
+
+    /* Create and write data. */
+    std::vector<Space::Type1> testDataList = this->WriteData(1);
+
+    /* Check result by reading. */
+    read_samples = this->reader->read_cdr();
+    dds::sub::status::DataState notReadState(dds::sub::status::SampleState::not_read(),
+                                             dds::sub::status::ViewState::new_view(),
+                                             dds::sub::status::InstanceState::alive());
+    ASSERT_EQ(read_samples.begin()->data().kind(), org::eclipse::cyclonedds::topic::BlobKind::Data);
+    ASSERT_EQ(read_samples.begin()->data().encoding(), encoding);
+    ASSERT_EQ(read_samples.begin()->data().payload(), payloadcdr);
+
+    /* Check result. */
+    take_samples = this->reader->take_cdr();
+    dds::sub::status::DataState readState(dds::sub::status::SampleState::read(),
+                                          dds::sub::status::ViewState::not_new_view(),
+                                          dds::sub::status::InstanceState::alive());
+    ASSERT_EQ(take_samples.begin()->data().kind(), org::eclipse::cyclonedds::topic::BlobKind::Data);
+    ASSERT_EQ(take_samples.begin()->data().encoding(), encoding);
+    ASSERT_EQ(take_samples.begin()->data().payload(), payloadcdr);
+}
+
+
 TEST_F(DataReader, lookup_instance)
 {
     static const uint32_t MAX_INSTANCES = 7;
