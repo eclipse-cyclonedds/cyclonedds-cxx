@@ -77,21 +77,31 @@ public:
 
     void append_sample(void *sample, const dds_sample_info_t *si)
     {
-        ddsrt_iovec_t blob_content;
         ddscxx_serdata<org::eclipse::cyclonedds::topic::CDRBlob> *sd;
-        org::eclipse::cyclonedds::topic::CDRBlob emptyBlob;
-        dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> *buffer;
-
         sd = static_cast<ddscxx_serdata<org::eclipse::cyclonedds::topic::CDRBlob> *>(sample);
-        dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> blob_ssmple(
-            emptyBlob, sample_info_from_c(si));
-        samples_.delegate()->append_sample(blob_ssmple);
-        ddsi_serdata_to_ser_ref(sd, 0, ddsi_serdata_size(sd), &blob_content);
-        buffer = samples_.delegate()->get_buffer();
-        org::eclipse::cyclonedds::topic::CDRBlob &sample_data = buffer[samples_.length() - 1].delegate().data();
-        copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(blob_content.iov_base),
-                                blob_content.iov_len, sample_data.kind(), sample_data);
-        ddsi_serdata_to_ser_unref(sd, &blob_content);
+        ddsrt_iovec_t blob_content;
+        if (ddsi_serdata_to_ser_ref(sd, 0, ddsi_serdata_size(sd), &blob_content)) {
+            org::eclipse::cyclonedds::topic::CDRBlob emptyBlob;
+            switch (sd->kind) {
+            case SDK_EMPTY:
+                break;
+            case SDK_KEY:
+                emptyBlob.kind(org::eclipse::cyclonedds::topic::BlobKind::KeyOnly);
+                break;
+            case SDK_DATA:
+                emptyBlob.kind(org::eclipse::cyclonedds::topic::BlobKind::Data);
+                break;
+            }
+            dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> blob_sample(
+                emptyBlob, sample_info_from_c(si));
+            samples_.delegate()->append_sample(blob_sample);
+            dds::sub::Sample<org::eclipse::cyclonedds::topic::CDRBlob, dds::sub::detail::Sample> *buffer;
+            buffer = samples_.delegate()->get_buffer();
+            org::eclipse::cyclonedds::topic::CDRBlob &sample_data = buffer[samples_.length() - 1].delegate().data();
+            copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(blob_content.iov_base),
+                                    blob_content.iov_len, sample_data.kind(), sample_data);
+            ddsi_serdata_to_ser_unref(sd, &blob_content);
+        }
     }
 
 private:
