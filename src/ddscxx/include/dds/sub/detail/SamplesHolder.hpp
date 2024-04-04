@@ -92,7 +92,6 @@ public:
         copy_buffer_to_cdr_blob(reinterpret_cast<uint8_t *>(blob_content.iov_base),
                                 blob_content.iov_len, sample_data.kind(), sample_data);
         ddsi_serdata_to_ser_unref(sd, &blob_content);
-        ddsi_serdata_unref(sd);
     }
 
 private:
