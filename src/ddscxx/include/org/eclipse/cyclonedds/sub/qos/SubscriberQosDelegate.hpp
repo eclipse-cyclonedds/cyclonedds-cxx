@@ -46,7 +46,7 @@ public:
 
     /* The returned ddsc QoS has to be freed. */
     dds_qos_t* ddsc_qos() const;
-    void ddsc_qos(const dds_qos_t* qos);
+    void ddsc_qos(const dds_qos_t* qos, bool copy_flags);
 
     void named_qos(const struct _DDS_NamedSubscriberQos &qos);
 

@@ -79,6 +79,11 @@ if (ENABLE_TYPELIB AND ENABLE_TOPIC_DISCOVERY)
     TopicTypeDiscovery.cpp)
 endif()
 
+if (ENABLE_QOS_PROVIDER)
+  list(APPEND sources
+    QosProvider.cpp)
+endif()
+
 if(ENABLE_ICEORYX)
   list(APPEND sources Iceoryx.cpp)
 endif()
@@ -92,6 +97,12 @@ if(DEFINED ENV{SYSTEM_TEAMFOUNDATIONSERVERURI})
     target_compile_options(ddscxx_tests PRIVATE -fno-analyzer)
   endif()
 endif()
+
+target_include_directories(
+  ddscxx_tests
+  PRIVATE
+    "$<BUILD_INTERFACE:${CYCLONE_SOURCE_DIR}/src/core/ddsc/src>")
+
 
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(

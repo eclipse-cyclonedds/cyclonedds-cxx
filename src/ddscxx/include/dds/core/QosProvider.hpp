@@ -18,6 +18,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef DDS_HAS_QOS_PROVIDER
+
 #include <dds/core/detail/QosProvider.hpp>
 
 
@@ -28,5 +30,7 @@ namespace core
 typedef dds::core::detail::QosProvider QosProvider;
 }
 }
+
+#endif /* DDS_HAS_QOS_PROVIDER */
 
 #endif /* OMG_DDS_CORE_QOS_PROVIDER_HPP_ */

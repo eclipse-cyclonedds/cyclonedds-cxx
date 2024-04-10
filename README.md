@@ -60,6 +60,7 @@ There are some configuration options specified using CMake defines in addition t
 * `-DENABLE_TYPELIB=YES`: to enable type library support
 * `-DENABLE_TOPIC_DISCOVERY=YES`: to enable topic discovery support
 * `-DENABLE_COVERAGE=YES`: to enable coverage build
+* `-DENABLE_QOS_PROVIDER=YES`: to enable qos provider support
 
 ### For application developers
 
