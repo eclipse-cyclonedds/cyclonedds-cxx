@@ -115,6 +115,7 @@ bool xcdr_v2_stream::move_empty_optional(bit_bound bit)
     case bb_64_bits:
       return move(*this, uint64_t(0));
   }
+  return false;
 }
 
 const entity_properties_t* xcdr_v2_stream::next_entity(const entity_properties_t *prop)
