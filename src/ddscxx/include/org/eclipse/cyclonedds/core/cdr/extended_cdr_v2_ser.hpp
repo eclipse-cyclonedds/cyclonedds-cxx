@@ -225,6 +225,15 @@ private:
 
   /**
    * @brief
+   * Moves the stream cursor if the type is optional and doesn't has value.
+   *
+   * If don't move the this, topic will cause an error if isSelfContain() == true and first time serialize is empty.
+   *
+   * @return Whether the read was succesful.
+   */
+  bool move_empty_optional(bit_bound bit);
+  /**
+   * @brief
    * Writes an EM-header to the stream.
    *
    * @param[in] prop The entity to write the EM-header for.
