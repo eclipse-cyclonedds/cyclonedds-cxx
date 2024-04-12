@@ -45,7 +45,7 @@ bool xcdr_v2_stream::start_member(const entity_properties_t &prop, bool is_set)
       if (em_header_necessary(prop)) {
         if (is_set && !move_em_header())
           return false;
-      } else if (prop.is_optional && !move_optional_tag()) {
+      } else if (prop.is_optional && !(move_optional_tag() && move_empty_optional(prop.e_bb))) {
         return false;
       }
       break;
@@ -99,6 +99,22 @@ bool xcdr_v2_stream::write_optional_tag(bool present)
 bool xcdr_v2_stream::move_optional_tag()
 {
   return move(*this, uint8_t(0));
+}
+
+bool xcdr_v2_stream::move_empty_optional(bit_bound bit)
+{
+  switch (bit) {
+    case bb_unset:
+      return false;
+    case bb_8_bits:
+      return move(*this, uint8_t(0));
+    case bb_16_bits:
+      return move(*this, uint16_t(0));
+    case bb_32_bits:
+      return move(*this, uint32_t(0));
+    case bb_64_bits:
+      return move(*this, uint64_t(0));
+  }
 }
 
 const entity_properties_t* xcdr_v2_stream::next_entity(const entity_properties_t *prop)
