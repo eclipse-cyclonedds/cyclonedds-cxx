@@ -900,11 +900,11 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 
   if (generator->uses_array || generator->uses_sequence || generator->uses_bounded_sequence || generator->uses_optional)
   {
-    // ostream cpp
+    // ostream hpp
     // streaming operators for the used std types
     const char *fmt;
     fmt = "#include <org/eclipse/cyclonedds/util/ostream_operators.hpp>\n\n";
-    if (fputs(fmt, generator->impl.handle) < 0)
+    if (fputs(fmt, generator->header.handle) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
 
