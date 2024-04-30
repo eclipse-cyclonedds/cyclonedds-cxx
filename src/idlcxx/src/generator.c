@@ -23,18 +23,16 @@
 
 #include "generator.h"
 
-static size_t istok(const char *str, size_t len, const char **toks)
-{
+static size_t istok(const char *str, size_t len, const char **toks) {
   for (size_t num = 0; toks && toks[num]; num++) {
     if (strncmp(toks[num], str, len) == 0)
-      return num+1;
+      return num + 1;
   }
   return 0;
 }
 
 static int makefmtp(
-  char **fmtp, const char *str, const char **toks, const char **flags)
-{
+  char **fmtp, const char *str, const char **toks, const char **flags) {
   char buf[64], *fmt;
   size_t len = 0;
   size_t num, src, tok, dest;
@@ -44,13 +42,13 @@ static int makefmtp(
   src = tok = 0;
   do {
     if (tok) {
-      if (str[src] == '}' && (num = istok(str+tok, src-tok, toks))) {
+      if (str[src] == '}' && (num = istok(str + tok, src - tok, toks))) {
         const char *flag;
         assert(toks && flags);
         if (!flags)
           return -1;
-        flag = flags[num-1];
-        len += (size_t)snprintf(buf, sizeof(buf), FMT, num, flag);
+        flag = flags[num - 1];
+        len += (size_t) snprintf(buf, sizeof(buf), FMT, num, flag);
         tok = 0;
       } else if (str[src] == '}' || str[src] == '\0') {
         /* unknown token, rewind */
@@ -71,16 +69,16 @@ static int makefmtp(
   src = tok = dest = 0;
   do {
     if (tok) {
-      if (str[src] == '}' && (num = istok(str+tok, src-tok, toks))) {
+      if (str[src] == '}' && (num = istok(str + tok, src - tok, toks))) {
         const char *flag;
         assert(toks && flags);
-        flag = flags[num-1];
-        dest += (size_t)snprintf(&fmt[dest], (len-dest)+1, FMT, num, flag);
+        flag = flags[num - 1];
+        dest += (size_t) snprintf(&fmt[dest], (len - dest) + 1, FMT, num, flag);
         tok = 0;
       } else if (str[src] == '}' || str[src] == '\0') {
         fmt[dest++] = '{';
-        src = tok - 1;
-        tok = 0;
+        src         = tok - 1;
+        tok         = 0;
       }
     } else if (str[src] == '{') {
       tok = src + 1;
@@ -97,7 +95,7 @@ static int makefmtp(
 #undef FMT
 
   *fmtp = fmt;
-  return (int)len;
+  return (int) len;
 }
 
 /* If a keyword matches the specified identifier, prepend _cxx_ */
@@ -129,13 +127,12 @@ static const char *cpp11_keywords[] = {
 #undef _cxx_
 };
 
-const char *get_cpp11_name(const void *node)
-{
-  const char *name = idl_identifier(node);
-  static const size_t n = sizeof(cpp11_keywords)/sizeof(cpp11_keywords[0]);
+const char *get_cpp11_name(const void *node) {
+  const char *name      = idl_identifier(node);
+  static const size_t n = sizeof(cpp11_keywords) / sizeof(cpp11_keywords[0]);
 
   /* search through the C++ keyword list */
-  for (size_t i=0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     if (strcmp(cpp11_keywords[i] + 5, name) == 0)
       return cpp11_keywords[i];
   }
@@ -144,34 +141,47 @@ const char *get_cpp11_name(const void *node)
 }
 
 static int get_cpp11_base_type(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   const char *type;
 
-  (void)user_data;
+  (void) user_data;
 
   switch (idl_type(node)) {
-    case IDL_CHAR:    type = "char";        break;
-    case IDL_WCHAR:   type = "wchar";       break;
-    case IDL_BOOL:    type = "bool";        break;
-    case IDL_INT8:    type = "int8_t";      break;
+    case IDL_CHAR: type = "char";
+      break;
+    case IDL_WCHAR: type = "wchar";
+      break;
+    case IDL_BOOL: type = "bool";
+      break;
+    case IDL_INT8: type = "int8_t";
+      break;
     case IDL_UINT8:
-    case IDL_OCTET:   type = "uint8_t";     break;
+    case IDL_OCTET: type = "uint8_t";
+      break;
     case IDL_SHORT:
-    case IDL_INT16:   type = "int16_t";     break;
+    case IDL_INT16: type = "int16_t";
+      break;
     case IDL_USHORT:
-    case IDL_UINT16:  type = "uint16_t";    break;
+    case IDL_UINT16: type = "uint16_t";
+      break;
     case IDL_LONG:
-    case IDL_INT32:   type = "int32_t";     break;
+    case IDL_INT32: type = "int32_t";
+      break;
     case IDL_ULONG:
-    case IDL_UINT32:  type = "uint32_t";    break;
+    case IDL_UINT32: type = "uint32_t";
+      break;
     case IDL_LLONG:
-    case IDL_INT64:   type = "int64_t";     break;
+    case IDL_INT64: type = "int64_t";
+      break;
     case IDL_ULLONG:
-    case IDL_UINT64:  type = "uint64_t";    break;
-    case IDL_FLOAT:   type = "float";       break;
-    case IDL_DOUBLE:  type = "double";      break;
-    case IDL_LDOUBLE: type = "long double"; break;
+    case IDL_UINT64: type = "uint64_t";
+      break;
+    case IDL_FLOAT: type = "float";
+      break;
+    case IDL_DOUBLE: type = "double";
+      break;
+    case IDL_LDOUBLE: type = "long double";
+      break;
     default:
       abort();
   }
@@ -180,8 +190,7 @@ static int get_cpp11_base_type(
 }
 
 static int get_cpp11_templ_type(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   struct generator *gen = user_data;
   const char *fmt;
 
@@ -190,7 +199,7 @@ static int get_cpp11_templ_type(
   switch (idl_type(node)) {
     case IDL_SEQUENCE: {
       int cnt;
-      char buf[128], *type = buf;
+      char buf[128], *type           = buf;
       const idl_sequence_t *sequence = node;
 
       if (sequence->maximum)
@@ -199,11 +208,11 @@ static int get_cpp11_templ_type(
         fmt = gen->sequence_format;
       if ((cnt = get_cpp11_type(type, sizeof(buf), sequence->type_spec, gen)) < 0)
         return -1;
-      if ((size_t)cnt < sizeof(buf))
+      if ((size_t) cnt < sizeof(buf))
         return idl_snprintf(str, size, fmt, type, sequence->maximum);
-      if (!(type = malloc((size_t)cnt+1)))
+      if (!(type = malloc((size_t) cnt + 1)))
         return -1;
-      if ((cnt = get_cpp11_type(type, (size_t)cnt+1, sequence->type_spec, gen)) >= 0)
+      if ((cnt = get_cpp11_type(type, (size_t) cnt + 1, sequence->type_spec, gen)) >= 0)
         cnt = idl_snprintf(str, size, fmt, type, sequence->maximum);
       free(type);
       return cnt;
@@ -225,9 +234,8 @@ static int get_cpp11_templ_type(
 }
 
 static int get_cpp11_array_type(
-  char *str, size_t size, const void *node, void *user_data)
-{
-  struct generator *gen = user_data;
+  char *str, size_t size, const void *node, void *user_data) {
+  struct generator *gen            = user_data;
   const idl_type_spec_t *type_spec = idl_type_spec(node);
   const idl_const_expr_t *const_expr;
   int cnt;
@@ -237,21 +245,21 @@ static int get_cpp11_array_type(
 
   if ((cnt = get_cpp11_type(buf, sizeof(buf), type_spec, gen)) < 0)
     return -1;
-  if (!(type = malloc((size_t)cnt + 1)))
+  if (!(type = malloc((size_t) cnt + 1)))
     return -1;
-  cnt = get_cpp11_type(type, (size_t)cnt + 1, type_spec, gen);
+  cnt = get_cpp11_type(type, (size_t) cnt + 1, type_spec, gen);
   if (cnt < 0)
     goto err_type;
 
-  const_expr = ((const idl_declarator_t *)node)->const_expr;
+  const_expr = ((const idl_declarator_t *) node)->const_expr;
   /* iterate backwards through the list so that the last entries in the list
      are the innermost arrays */
   for (const idl_const_expr_t *ce = const_expr; ce; ce = idl_next(ce))
-    const_expr = ce;
+    const_expr                    = ce;
   assert(const_expr);
   for (const idl_const_expr_t *ce = const_expr; ce; ce = idl_previous(ce)) {
-    char *ptr = NULL;
-    uint32_t dim = ((const idl_literal_t *)ce)->value.uint32;
+    char *ptr    = NULL;
+    uint32_t dim = ((const idl_literal_t *) ce)->value.uint32;
 
     cnt = idl_asprintf(&ptr, gen->array_format, type, dim);
     if (cnt < 0)
@@ -267,25 +275,23 @@ err_type:
 }
 
 static void copy(
-  char *dest, size_t off, size_t size, const char *src, size_t len)
-{
+  char *dest, size_t off, size_t size, const char *src, size_t len) {
   size_t cnt;
 
   if (off >= size)
     return;
   cnt = size - off;
   cnt = cnt > len ? len : cnt;
-  memmove(dest+off, src, cnt);
+  memmove(dest + off, src, cnt);
 }
 
 static int get_cpp11_fully_scoped_name_seps(
-  char *str, size_t size, const void *node, const char *sep)
-{
+  char *str, size_t size, const void *node, const char *sep) {
   const char *name;
-  size_t cnt, off, len = 0;
+  size_t cnt, off, len         = 0;
   static const idl_mask_t mask =
-    IDL_MODULE | IDL_STRUCT | IDL_UNION | IDL_ENUM |
-    IDL_ENUMERATOR | IDL_DECLARATOR | IDL_BITMASK;
+      IDL_MODULE | IDL_STRUCT | IDL_UNION | IDL_ENUM |
+      IDL_ENUMERATOR | IDL_DECLARATOR | IDL_BITMASK;
 
   assert(str && size);
 
@@ -312,28 +318,25 @@ static int get_cpp11_fully_scoped_name_seps(
     copy(str, off, size, sep, cnt);
   }
   assert(off == 0);
-  str[ (len < size ? len : size - 1) ] = '\0';
+  str[(len < size ? len : size - 1)] = '\0';
 
-  return (int)len;
+  return (int) len;
 }
 
 int get_cpp11_fully_scoped_name(
-  char *str, size_t size, const void *node, void *user_data)
-{
-  (void)user_data;
+  char *str, size_t size, const void *node, void *user_data) {
+  (void) user_data;
   return get_cpp11_fully_scoped_name_seps(str, size, node, "::");
 }
 
 int get_cpp11_name_typedef(
-  char *str, size_t size, const void *node, void *user_data)
-{
-  (void)user_data;
+  char *str, size_t size, const void *node, void *user_data) {
+  (void) user_data;
   return get_cpp11_fully_scoped_name_seps(str, size, node, "_");
 }
 
 int get_cpp11_type(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   if (idl_is_case(node)) {
     const idl_case_t *_case = node;
     if (idl_is_array(_case->declarator))
@@ -351,20 +354,19 @@ int get_cpp11_type(
 }
 
 int get_cpp11_default_value(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   struct generator *gen = user_data;
   const idl_enumerator_t *enumerator;
   const idl_enum_t *e;
   const idl_type_spec_t *unaliased = idl_strip(node, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
-  const char *value = NULL;
+  const char *value                = NULL;
 
   if (idl_is_array(unaliased))
     return idl_snprintf(str, size, "{ }");
 
   switch (idl_type(unaliased)) {
     case IDL_ENUM:
-      e = ((const idl_enum_t *)unaliased);
+      e = ((const idl_enum_t *) unaliased);
       enumerator = e->default_enumerator ? e->default_enumerator : e->enumerators;
       return get_cpp11_fully_scoped_name(str, size, enumerator, gen);
     case IDL_BOOL:
@@ -407,11 +409,10 @@ int get_cpp11_default_value(
 }
 
 int get_cpp11_base_type_const_value(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   const idl_literal_t *literal = node;
 
-  (void)user_data;
+  (void) user_data;
   switch (idl_type(literal)) {
     case IDL_BOOL:
       return idl_snprintf(str, size, "%s", literal->value.bln ? "true" : "false");
@@ -459,11 +460,10 @@ int get_cpp11_base_type_const_value(
 }
 
 static int get_cpp11_templ_type_const_value(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   const idl_literal_t *literal = node;
 
-  (void)user_data;
+  (void) user_data;
   if (!idl_is_string(literal))
     return -1;
   assert(literal->value.str);
@@ -471,8 +471,7 @@ static int get_cpp11_templ_type_const_value(
 }
 
 int get_cpp11_value(
-  char *str, size_t size, const void *node, void *user_data)
-{
+  char *str, size_t size, const void *node, void *user_data) {
   if (idl_type(node) & (IDL_BASE_TYPE | IDL_BITMASK))
     return get_cpp11_base_type_const_value(str, size, node, user_data);
   if (idl_type(node) & IDL_TEMPL_TYPE)
@@ -483,12 +482,11 @@ int get_cpp11_value(
 }
 
 bool is_optional(
-  const void *node)
-{
+  const void *node) {
   if (idl_is_member(node)) {
-    return ((const idl_member_t *)node)->optional.value;
+    return ((const idl_member_t *) node)->optional.value;
   } else if (idl_is_declarator(node)
-          || idl_is_type_spec(node)) {
+             || idl_is_type_spec(node)) {
     return is_optional(idl_parent(node));
   }
 
@@ -496,12 +494,11 @@ bool is_optional(
 }
 
 bool is_external(
-  const void *node)
-{
+  const void *node) {
   if (idl_is_member(node) || idl_is_case(node)) {
     return idl_is_external(node);
   } else if (idl_is_declarator(node)
-          || idl_is_type_spec(node)) {
+             || idl_is_type_spec(node)) {
     return is_external(idl_parent(node));
   }
 
@@ -509,30 +506,27 @@ bool is_external(
 }
 
 bool must_understand(
-  const void *node)
-{
+  const void *node) {
   if (idl_is_member(node)) {
-    return ((const idl_member_t *)node)->must_understand.value;
+    return ((const idl_member_t *) node)->must_understand.value;
   } else if (idl_is_declarator(node)
-          || idl_is_type_spec(node)) {
+             || idl_is_type_spec(node)) {
     return must_understand(idl_parent(node));
   }
 
   return false;
 }
 
-bool is_nested(const void *node)
-{
+bool is_nested(const void *node) {
   if (idl_is_struct(node)) {
-    return ((const idl_struct_t *)node)->nested.value;
+    return ((const idl_struct_t *) node)->nested.value;
   } else {
     assert(idl_is_union(node));
-    return ((const idl_union_t *)node)->nested.value;
+    return ((const idl_union_t *) node)->nested.value;
   }
 }
 
-static bool sc_union(const idl_union_t *_union)
-{
+static bool sc_union(const idl_union_t *_union) {
   if (!is_selfcontained(_union->switch_type_spec->type_spec))
     return false;
 
@@ -545,8 +539,7 @@ static bool sc_union(const idl_union_t *_union)
   return true;
 }
 
-static bool sc_struct(const idl_struct_t *str)
-{
+static bool sc_struct(const idl_struct_t *str) {
   const idl_member_t *mem = NULL;
   IDL_FOREACH(mem, str->members) {
     if (!is_selfcontained(mem->type_spec))
@@ -559,24 +552,20 @@ static bool sc_struct(const idl_struct_t *str)
   return true;
 }
 
-bool is_selfcontained(const void *node)
-{
+bool is_selfcontained(const void *node) {
   if (idl_is_sequence(node)
-   || idl_is_string(node)
-   || idl_is_optional(node)) {
+      || idl_is_string(node)
+      || is_optional(node)) {
     return false;
   } else if (idl_is_typedef(node)) {
-    return is_selfcontained(((const idl_typedef_t*)node)->type_spec);
+    return is_selfcontained(((const idl_typedef_t *) node)->type_spec);
   } else if (idl_is_struct(node)) {
-    return sc_struct((const idl_struct_t*)node);
+    return sc_struct((const idl_struct_t *) node);
   } else if (idl_is_union(node)) {
-    return sc_union((const idl_union_t*)node);
+    return sc_union((const idl_union_t *) node);
   } else if (idl_is_declarator(node)) {
-    const idl_node_t *parent = ((const idl_node_t*)node)->parent;
-    assert (idl_is_typedef(parent));
-    return is_selfcontained(parent);
-  } else if (idl_is_type_spec(node)) {
-    const idl_node_t *parent = ((const idl_node_t*)node)->parent;
+    const idl_node_t *parent = ((const idl_node_t *) node)->parent;
+    assert(idl_is_typedef(parent));
     return is_selfcontained(parent);
   } else {
     return !is_external(node);
@@ -584,8 +573,7 @@ bool is_selfcontained(const void *node)
 }
 
 idl_extensibility_t
-get_extensibility(const void *node)
-{
+get_extensibility(const void *node) {
   if (idl_is_enum(node)) {
     const idl_enum_t *ptr = node;
     return ptr->extensibility.value;
@@ -599,11 +587,10 @@ get_extensibility(const void *node)
   return IDL_FINAL;
 }
 
-idl_type_t unalias_bitmask(const idl_node_t *node)
-{
+idl_type_t unalias_bitmask(const idl_node_t *node) {
   assert(idl_is_bitmask(node));
 
-  uint16_t width = ((const idl_bitmask_t*)node)->bit_bound.value;
+  uint16_t width = ((const idl_bitmask_t *) node)->bit_bound.value;
 
   if (width > 32)
     return IDL_UINT64;
@@ -616,21 +603,20 @@ idl_type_t unalias_bitmask(const idl_node_t *node)
 }
 
 static char *
-figure_guard(const char *file, const idl_md5_byte_t digest[16])
-{
+figure_guard(const char *file, const idl_md5_byte_t digest[16]) {
   char *inc = NULL;
 
   if (idl_asprintf(&inc, "DDSCXX_%s_%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
                    file, digest[0], digest[1], digest[2], digest[3], digest[4], digest[5],
                    digest[6], digest[7], digest[8], digest[9], digest[10], digest[11],
-                   digest[12], digest[13], digest[14], digest[15]) == -1 )
+                   digest[12], digest[13], digest[14], digest[15]) == -1)
     return NULL;
 
   /* replace any non-alphanumeric characters */
   for (char *ptr = inc; *ptr; ptr++) {
-    if (idl_islower((unsigned char)*ptr))
-      *ptr = (char)idl_toupper((unsigned char)*ptr);
-    else if (!idl_isalnum((unsigned char)*ptr))
+    if (idl_islower((unsigned char) *ptr))
+      *ptr = (char) idl_toupper((unsigned char) *ptr);
+    else if (!idl_isalnum((unsigned char) *ptr))
       *ptr = '_';
   }
 
@@ -638,17 +624,16 @@ figure_guard(const char *file, const idl_md5_byte_t digest[16])
 }
 
 static idl_retcode_t
-print_header(FILE *fh, const char *in, const char *out)
-{
+print_header(FILE *fh, const char *in, const char *out) {
   static const char fmt[] =
-    "/****************************************************************\n"
-    "\n"
-    "  Generated by Eclipse Cyclone DDS IDL to CXX Translator\n"
-    "  File name: %s\n"
-    "  Source: %s\n"
-    "  Cyclone DDS: v%s\n"
-    "\n"
-    "*****************************************************************/\n";
+      "/****************************************************************\n"
+      "\n"
+      "  Generated by Eclipse Cyclone DDS IDL to CXX Translator\n"
+      "  File name: %s\n"
+      "  Source: %s\n"
+      "  Cyclone DDS: v%s\n"
+      "\n"
+      "*****************************************************************/\n";
 
   if (idl_fprintf(fh, fmt, in, out, IDL_VERSION) < 0)
     return IDL_RETCODE_NO_MEMORY;
@@ -656,29 +641,26 @@ print_header(FILE *fh, const char *in, const char *out)
 }
 
 static idl_retcode_t
-print_impl_header(FILE *fh, const char *in, const char *out, const char *hdr)
-{
+print_impl_header(FILE *fh, const char *in, const char *out, const char *hdr) {
   const char *fmt = "#include \"%s\"\n\n";
   if (print_header(fh, in, out)
-   || idl_fprintf(fh, fmt, hdr) < 0)
+      || idl_fprintf(fh, fmt, hdr) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
 
-static idl_retcode_t print_guard_if(FILE* fh, const char *guard)
-{
+static idl_retcode_t print_guard_if(FILE *fh, const char *guard) {
   static const char *fmt =
-    "#ifndef %1$s\n"
-    "#define %1$s\n\n";
+      "#ifndef %1$s\n"
+      "#define %1$s\n\n";
   if (idl_fprintf(fh, fmt, guard) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
 
-static idl_retcode_t print_guard_endif(FILE *fh, const char *guard)
-{
+static idl_retcode_t print_guard_endif(FILE *fh, const char *guard) {
   static const char fmt[] =
-    "#endif // %s\n";
+      "#endif // %s\n";
   if (idl_fprintf(fh, fmt, guard) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
@@ -690,14 +672,13 @@ register_union(
   bool revisit,
   const idl_path_t *path,
   const void *node,
-  void *user_data)
-{
+  void *user_data) {
   struct generator *gen = user_data;
   const idl_location_t *loc;
   const char *src = NULL;
 
-  (void)revisit;
-  (void)path;
+  (void) revisit;
+  (void) path;
   loc = idl_location(node);
   assert(loc);
   if (pstate->sources)
@@ -714,11 +695,10 @@ register_optional_or_external(
   bool revisit,
   const idl_path_t *path,
   const void *node,
-  void *user_data)
-{
-  (void)pstate;
-  (void)revisit;
-  (void)path;
+  void *user_data) {
+  (void) pstate;
+  (void) revisit;
+  (void) path;
 
   struct generator *gen = user_data;
 
@@ -737,19 +717,17 @@ register_types(
   bool revisit,
   const idl_path_t *path,
   const void *node,
-  void *user_data)
-{
+  void *user_data) {
   struct generator *gen = user_data;
   const idl_type_spec_t *type_spec;
   const idl_location_t *loc;
   const char *src = NULL;
 
-  (void)pstate;
-  (void)revisit;
-  (void)path;
+  (void) pstate;
+  (void) revisit;
+  (void) path;
 
-  if (idl_is_typedef(node))
-  {
+  if (idl_is_typedef(node)) {
     const idl_typedef_t *td = node;
     if (idl_is_array(td->declarators))
       gen->uses_array = true;
@@ -759,7 +737,7 @@ register_types(
     gen->uses_array = true;
 
   type_spec = idl_strip(idl_type_spec(node), IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
-  loc = idl_location(type_spec);
+  loc       = idl_location(type_spec);
   assert(type_spec && loc);
   if (pstate->sources)
     src = pstate->sources->path->name;
@@ -771,7 +749,7 @@ register_types(
     gen->uses_array = true;
 
   type_spec = idl_strip(idl_type_spec(node), IDL_STRIP_ALIASES | IDL_STRIP_ALIASES_ARRAY | IDL_STRIP_FORWARD);
-  loc = idl_location(type_spec);
+  loc       = idl_location(type_spec);
   assert(type_spec && loc);
   /* do not include headers if required by types in includes */
   if (src && strcmp(loc->first.source->path->name, src) != 0)
@@ -805,12 +783,11 @@ register_bitmask(
   bool revisit,
   const idl_path_t *path,
   const void *node,
-  void *user_data)
-{
-  (void)pstate;
-  (void)revisit;
-  (void)path;
-  (void)node;
+  void *user_data) {
+  (void) pstate;
+  (void) revisit;
+  (void) path;
+  (void) node;
 
   struct generator *gen = user_data;
 
@@ -823,26 +800,26 @@ register_bitmask(
 }
 
 static idl_retcode_t
-generate_includes(const idl_pstate_t *pstate, struct generator *generator)
-{
+generate_includes(const idl_pstate_t *pstate, struct generator *generator) {
   idl_retcode_t ret;
   idl_visitor_t visitor;
-  const char *sources[] = { NULL, NULL };
+  const char *sources[]                = {NULL, NULL};
   const idl_source_t *include, *source = pstate->sources;
 
   /* determine which "system" headers to include */
   memset(&visitor, 0, sizeof(visitor));
-  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_MEMBER | IDL_CONST | IDL_TYPEDEF | IDL_CASE | IDL_BITMASK;
+  visitor.visit = IDL_DECLARATOR | IDL_SEQUENCE | IDL_UNION | IDL_MEMBER | IDL_CONST | IDL_TYPEDEF | IDL_CASE |
+                  IDL_BITMASK;
   visitor.accept[IDL_ACCEPT_DECLARATOR] = &register_types;
-  visitor.accept[IDL_ACCEPT_TYPEDEF] = &register_types;
-  visitor.accept[IDL_ACCEPT_MEMBER] = &register_optional_or_external;
-  visitor.accept[IDL_ACCEPT_CASE] = &register_optional_or_external;
-  visitor.accept[IDL_ACCEPT_SEQUENCE] = &register_types;
-  visitor.accept[IDL_ACCEPT_CONST] = &register_types;
-  visitor.accept[IDL_ACCEPT_UNION] = &register_union;
-  visitor.accept[IDL_ACCEPT_BITMASK] = &register_bitmask;
+  visitor.accept[IDL_ACCEPT_TYPEDEF]    = &register_types;
+  visitor.accept[IDL_ACCEPT_MEMBER]     = &register_optional_or_external;
+  visitor.accept[IDL_ACCEPT_CASE]       = &register_optional_or_external;
+  visitor.accept[IDL_ACCEPT_SEQUENCE]   = &register_types;
+  visitor.accept[IDL_ACCEPT_CONST]      = &register_types;
+  visitor.accept[IDL_ACCEPT_UNION]      = &register_union;
+  visitor.accept[IDL_ACCEPT_BITMASK]    = &register_bitmask;
   assert(pstate->sources);
-  sources[0] = pstate->sources->path->name;
+  sources[0]      = pstate->sources->path->name;
   visitor.sources = sources;
   if ((ret = idl_visit(pstate, pstate->root, &visitor, generator)))
     return ret;
@@ -850,20 +827,19 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   for (include = source->includes; include; include = include->next) {
     int cnt;
     const char *file = include->file->name;
-    const char *ext = strrchr(file, '.');
+    const char *ext  = strrchr(file, '.');
     if (ext && idl_strcasecmp(ext, ".idl") == 0) {
       const char *fmt = "#include \"%.*s.hpp\"\n";
-      int len = (int)(ext - file);
-      cnt = idl_fprintf(generator->header.handle, fmt, len, file);
+      int len         = (int) (ext - file);
+      cnt             = idl_fprintf(generator->header.handle, fmt, len, file);
     } else {
       const char *fmt = "#include \"%s\"\n";
-      cnt = idl_fprintf(generator->header.handle, fmt, file);
+      cnt             = idl_fprintf(generator->header.handle, fmt, file);
     }
     if (cnt < 0 || fputs("\n", generator->header.handle) < 0)
       return IDL_RETCODE_NO_MEMORY;
-  }
-
-  { int len = 0;
+  } {
+    int len = 0;
     const char *incs[12];
     incs[len++] = "<utility>";
     incs[len++] = "<ostream>";
@@ -889,8 +865,8 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
     if (generator->uses_external)
       incs[len++] = generator->external_include;
 
-    for (int i=0, j; i < len; i++) {
-      for (j=0; j < i && strcmp(incs[i], incs[j]) != 0; j++) ;
+    for (int i = 0, j; i < len; i++) {
+      for (j = 0; j < i && strcmp(incs[i], incs[j]) != 0; j++);
       if (j < i)
         continue;
       const char *fmt = "#include %s\n";
@@ -902,8 +878,8 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
   if (fputs("\n", generator->header.handle) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  if (generator->uses_array || generator->uses_sequence || generator->uses_bounded_sequence || generator->uses_optional)
-  {
+  if (generator->uses_array || generator->uses_sequence || generator->uses_bounded_sequence || generator->
+      uses_optional) {
     // ostream cpp
     // streaming operators for the used std types
     const char *fmt;
@@ -918,8 +894,7 @@ generate_includes(const idl_pstate_t *pstate, struct generator *generator)
 #if _WIN32
 __declspec(dllexport)
 #endif
-idl_retcode_t generate_nosetup(const idl_pstate_t *pstate, struct generator *gen)
-{
+idl_retcode_t generate_nosetup(const idl_pstate_t *pstate, struct generator *gen) {
   idl_retcode_t ret;
   char *guard;
 
@@ -948,16 +923,16 @@ err_print:
   return ret;
 }
 
-const char *seq_tmpl = "std::vector<{TYPE}>";
-const char *seq_inc = "<vector>";
-const char *arr_tmpl = "std::array<{TYPE}, {DIMENSION}>";
-const char *arr_inc = "<array>";
+const char *seq_tmpl     = "std::vector<{TYPE}>";
+const char *seq_inc      = "<vector>";
+const char *arr_tmpl     = "std::array<{TYPE}, {DIMENSION}>";
+const char *arr_inc      = "<array>";
 const char *bnd_seq_tmpl = "std::vector<{TYPE}>";
-const char *bnd_seq_inc = "<vector>";
-const char *str_tmpl = "std::string";
-const char *str_inc = "<string>";
+const char *bnd_seq_inc  = "<vector>";
+const char *str_tmpl     = "std::string";
+const char *str_inc      = "<string>";
 const char *bnd_str_tmpl = "std::string";
-const char *bnd_str_inc = "<string>";
+const char *bnd_str_inc  = "<string>";
 #if IDLCXX_USE_BOOST
 const char *opt_tmpl = "boost::optional";
 const char *opt_inc = "\"boost/optional.hpp\"";
@@ -965,29 +940,28 @@ const char *uni_tmpl = "boost::variant";
 const char *uni_get_tmpl = "boost::get";
 const char *uni_inc = "\"boost/variant.hpp\"";
 #else
-const char *opt_tmpl = "std::optional";
-const char *opt_inc = "<optional>";
-const char *uni_tmpl = "std::variant";
+const char *opt_tmpl     = "std::optional";
+const char *opt_inc      = "<optional>";
+const char *uni_tmpl     = "std::variant";
 const char *uni_get_tmpl = "std::get";
-const char *uni_inc = "<variant>";
+const char *uni_inc      = "<variant>";
 #endif
 const char *ext_tmpl = "dds::core::external";
-const char *ext_inc = "<dds/core/External.hpp>";
+const char *ext_inc  = "<dds/core/External.hpp>";
 
-static const char *arr_toks[] = { "TYPE", "DIMENSION", NULL };
-static const char *arr_flags[] = { "s", PRIu32, NULL };
-static const char *seq_toks[] = { "TYPE", NULL };
-static const char *seq_flags[] = { "s", NULL };
-static const char *bnd_seq_toks[] = { "TYPE", "BOUND", NULL };
-static const char *bnd_seq_flags[] = { "s", PRIu32, NULL };
-static const char *bnd_str_toks[] = { "BOUND", NULL };
-static const char *bnd_str_flags[] = { PRIu32, NULL };
+static const char *arr_toks[]      = {"TYPE", "DIMENSION", NULL};
+static const char *arr_flags[]     = {"s", PRIu32, NULL};
+static const char *seq_toks[]      = {"TYPE", NULL};
+static const char *seq_flags[]     = {"s", NULL};
+static const char *bnd_seq_toks[]  = {"TYPE", "BOUND", NULL};
+static const char *bnd_seq_flags[] = {"s", PRIu32, NULL};
+static const char *bnd_str_toks[]  = {"BOUND", NULL};
+static const char *bnd_str_flags[] = {PRIu32, NULL};
 
 #if _WIN32
 __declspec(dllexport)
 #endif
-idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t *config)
-{
+idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t *config) {
   idl_retcode_t ret = IDL_RETCODE_NO_MEMORY;
   struct generator gen;
 
@@ -996,14 +970,14 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
   assert(config);
 
   memset(&gen, 0, sizeof(gen));
-  gen.path = pstate->sources->path->name;
+  gen.path   = pstate->sources->path->name;
   gen.config = config;
 
   /* generate output filenames and open output files */
   if (idl_generate_out_file(gen.path, config->output_dir, config->base_dir, "hpp", &gen.header.path, false) < 0 ||
       idl_generate_out_file(gen.path, config->output_dir, config->base_dir, "cpp", &gen.impl.path, false) < 0 ||
       !(gen.header.handle = idl_fopen(gen.header.path, "wb")) ||
-      !(gen.impl.handle = idl_fopen(gen.impl.path, "wb")))
+      !(gen.impl.handle   = idl_fopen(gen.impl.path, "wb")))
     goto err;
 
   /* generate format strings from templates */
@@ -1019,14 +993,14 @@ idl_retcode_t generate(const idl_pstate_t *pstate, const idlc_generator_config_t
     goto err;
 
   /* copy include directives verbatim */
-  gen.array_include = arr_inc;
-  gen.sequence_include = seq_inc;
+  gen.array_include            = arr_inc;
+  gen.sequence_include         = seq_inc;
   gen.bounded_sequence_include = bnd_seq_inc;
-  gen.string_include = str_inc;
-  gen.bounded_string_include = bnd_str_inc;
-  gen.optional_include = opt_inc;
-  gen.union_include = uni_inc;
-  gen.external_include = ext_inc;
+  gen.string_include           = str_inc;
+  gen.bounded_string_include   = bnd_str_inc;
+  gen.optional_include         = opt_inc;
+  gen.union_include            = uni_inc;
+  gen.external_include         = ext_inc;
 
   /* invoke code generation */
   ret = generate_nosetup(pstate, &gen);
@@ -1063,88 +1037,88 @@ err:
 }
 
 static const idlc_option_t *opts[] = {
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &seq_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &seq_tmpl},
     'f', "sequence-template", "ns_name::vector<{TYPE} ...>",
     "Template used for sequences instead of std::vector. \"{TYPE}\" tags are "
     "replaced by the respective type specifier, other text is copied "
     "verbatim. (default: std::vector<TYPE>)."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &seq_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &seq_inc},
     'f', "sequence-include", "<header>",
     "Header to include if template for sequence-template is used."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &bnd_seq_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &bnd_seq_tmpl},
     'f', "bounded-sequence-template", "ns_name::vector<{TYPE}, {BOUND} ...>",
     "Template used for bounded sequences instead of std::vector. \"{TYPE}\" "
     "and \"{BOUND}\" tags are replaced by the type specifier and the "
     "maximum size respectively, other text is copied verbatim."
     "(default: std::vector<TYPE>)."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &bnd_seq_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &bnd_seq_inc},
     'f', "bounded-sequence-include", "<header>",
     "Header to include if template for bounded-sequence-template is used."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &str_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &str_tmpl},
     'f', "string-template", "ns_name::string<...>",
     "Template to use for strings instead of std::string. "
     "(default: std:string)."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &str_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &str_inc},
     'f', "string-include", "<header>",
     "Header to include if template for string-template is used.",
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &bnd_str_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &bnd_str_tmpl},
     'f', "bounded-string-template", "ns_name::string<{BOUND} ...>",
     "Template to use for strings instead of std::string. \"{BOUND}\" "
     "tags are replaced by the repective maximum value, other text is copied "
     "verbatim. (default: std::string)"
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &bnd_str_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &bnd_str_inc},
     'f', "bounded-string-include", "<header>",
     "Header to include if template for bounded-string-template is used."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &opt_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &opt_tmpl},
     'f', "optional-template", "ns_name::optional<...>",
     "Template to use for optionals instead of std::optional."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &opt_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &opt_inc},
     'f', "optional-include", "<header>",
     "Header to include if template for optional-template is used."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &arr_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &arr_tmpl},
     'f', "array-template", "ns_name::array<{TYPE}, {DIMENSION} ...>",
     "Template to use for arrays instead of std::array<{TYPE}, {DIMENSION}>. "
     "{TYPE} and {DIMENSION} tags are replaced by the respective type and "
     "dimension, other text is copied verbatim."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &arr_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &arr_inc},
     'f', "array-include", "<header>",
     "Header to include if template for array-template is used."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &uni_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &uni_tmpl},
     'f', "union-template", "ns_name::variant",
     "Template to use for unions instead of std::variant. Copied verbatim."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &uni_get_tmpl },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &uni_get_tmpl},
     'f', "union-getter-template", "ns_name::get",
     "Template to use for reading the value of a variant. Copied verbatim."
   },
-  &(idlc_option_t) {
-    IDLC_STRING, { .string = &uni_inc },
+  &(idlc_option_t){
+    IDLC_STRING, {.string = &uni_inc},
     'f', "union-include", "<header>",
     "Header to include if template for union-template is used."
   },
@@ -1154,7 +1128,6 @@ static const idlc_option_t *opts[] = {
 #if _WIN32
 __declspec(dllexport)
 #endif
-const idlc_option_t** generator_options(void)
-{
+const idlc_option_t **generator_options(void) {
   return opts;
 }
