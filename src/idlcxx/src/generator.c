@@ -575,6 +575,9 @@ bool is_selfcontained(const void *node)
     const idl_node_t *parent = ((const idl_node_t*)node)->parent;
     assert (idl_is_typedef(parent));
     return is_selfcontained(parent);
+  } else if (idl_is_type_spec(node)) {
+    const idl_node_t *parent = ((const idl_node_t*)node)->parent;
+    return is_selfcontained(parent);
   } else {
     return !is_external(node);
   }
