@@ -165,6 +165,34 @@ public:
       enum duration_unit reader_data_lifecycle_disposed_unit;
     } sysdef_qos_conf_t;
 
+constexpr static const unsigned char base64_etable[64] = {
+  'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U',
+  'V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p',
+  'q','r','s','t','u','v','w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/'
+};
+
+static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsigned char **buff)
+{
+  uint32_t act_len = (sz * 4U/3U); 
+  uint32_t buff_len = (act_len % 4U) != 0u? ((act_len / 4U + 1U)*4U): act_len;
+  *buff =  static_cast<unsigned char *>(ddsrt_malloc(buff_len));
+  (void) memset (*buff, '=', buff_len);
+
+  for (size_t i = 0, j = 0; i < buff_len && j < sz; i+=4, j+=3)
+  {
+    unsigned char chunk[4] = {0x00, 0x00, 0x00, 0x00};
+    size_t cp_sz = (sz - j);
+    unsigned char tmp[3] = {text[j], static_cast<unsigned char>(((cp_sz > 1)? text[j+1]: 0x00)), static_cast<unsigned char>((cp_sz > 2)? text[j+2]: 0x00)};
+    chunk[3] = base64_etable[tmp[2] & 0x3FU];
+    chunk[2] = base64_etable[((tmp[1] & 0x0FU) << 0x02U) | (tmp[2] & 0xC0U) >> 0x06U];
+    chunk[1] = base64_etable[((tmp[0] & 0x03U) << 0x04U) | (tmp[1] >> 0x04U)];
+    chunk[0] = base64_etable[(tmp[0] >> 0x02U)];
+    (void) memcpy(*(buff)+i, chunk, cp_sz < 3? cp_sz + 1: 4U);
+  }
+
+  return buff_len;
+}
+
 #define QOS_FORMAT "     "
 #define CHECK_RET_OK(ret) \
   if (ret < 0) goto fail;
@@ -300,15 +328,20 @@ public:
       {
         if (qos->group_data.length > 0)
         {
+          unsigned char *data_buff;
+          size_t len = b64_encode(qos->group_data.value, qos->group_data.length, &data_buff);
+
           char *data = ddsrt_strdup("");
-          for (uint32_t i = 0; i < qos->group_data.length; i++) {
+          for (uint32_t i = 0; i < len; i++) {
             char *tmp = data;
-            ret = ddsrt_asprintf(&data, "%s%c", data, qos->group_data.value[i]);
+            ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
             ddsrt_free(tmp);
             CHECK_RET_OK(ret);
           }
+
           char *group_data;
           ret = ddsrt_asprintf(&group_data, QOS_POLICY_GOUPDATA_FMT, data);
+          ddsrt_free(data_buff);
           ddsrt_free(data);
           CHECK_RET_OK(ret);
           char *tmp = sysdef_qos;
@@ -604,15 +637,19 @@ public:
       {
         if (qos->topic_data.length > 0)
         {
+          unsigned char *data_buff;
+          size_t len = b64_encode(qos->topic_data.value, qos->topic_data.length, &data_buff);
+
           char *data = ddsrt_strdup("");
-          for (uint32_t i = 0; i < qos->topic_data.length; i++) {
+          for (uint32_t i = 0; i < len; i++) {
             char *tmp = data;
-            ret = ddsrt_asprintf(&data, "%s%c", data, qos->topic_data.value[i]);
+            ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
             ddsrt_free(tmp);
             CHECK_RET_OK(ret);
           }
           char *topic_data;
           ret = ddsrt_asprintf(&topic_data, QOS_POLICY_TOPICDATA_FMT, data);
+          ddsrt_free(data_buff);
           ddsrt_free(data);
           CHECK_RET_OK(ret);
           char *tmp = sysdef_qos;
@@ -639,15 +676,19 @@ public:
       {
         if (qos->user_data.length > 0)
         {
+          unsigned char *data_buff;
+          size_t len = b64_encode(qos->user_data.value, qos->user_data.length, &data_buff);
+
           char *data = ddsrt_strdup("");
-          for (uint32_t i = 0; i < qos->user_data.length; i++) {
+          for (uint32_t i = 0; i < len; i++) {
             char *tmp = data;
-            ret = ddsrt_asprintf(&data, "%s%c", data, qos->user_data.value[i]);
+            ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
             ddsrt_free(tmp);
             CHECK_RET_OK(ret);
           }
           char *user_data;
           ret = ddsrt_asprintf(&user_data, QOS_POLICY_USERDATA_FMT, data);
+          ddsrt_free(data_buff);
           ddsrt_free(data);
           CHECK_RET_OK(ret);
           char *tmp = sysdef_qos;
