@@ -533,7 +533,9 @@ bool is_nested(const void *node)
 
 static bool sc_union(const idl_union_t *_union)
 {
-  if (!is_selfcontained(_union->switch_type_spec->type_spec))
+  return false;
+  
+/*  if (!is_selfcontained(_union->switch_type_spec->type_spec))
     return false;
 
   const idl_case_t *_case = NULL;
@@ -542,7 +544,7 @@ static bool sc_union(const idl_union_t *_union)
       return false;
   }
 
-  return true;
+  return true;*/
 }
 
 static bool sc_struct(const idl_struct_t *str)
