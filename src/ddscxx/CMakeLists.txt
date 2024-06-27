@@ -31,6 +31,7 @@ set(sources
     src/org/eclipse/cyclonedds/core/EntityDelegate.cpp
     src/org/eclipse/cyclonedds/core/ReportUtils.cpp
     src/org/eclipse/cyclonedds/core/ListenerDispatcher.cpp
+    src/org/eclipse/cyclonedds/core/NoopListener.cpp
     src/org/eclipse/cyclonedds/core/InstanceHandleDelegate.cpp
     src/org/eclipse/cyclonedds/core/EntitySet.cpp
     src/org/eclipse/cyclonedds/core/MiscUtils.cpp

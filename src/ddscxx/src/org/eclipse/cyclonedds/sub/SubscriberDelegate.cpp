@@ -22,6 +22,7 @@
 #include <org/eclipse/cyclonedds/sub/SubscriberDelegate.hpp>
 #include <org/eclipse/cyclonedds/sub/AnyDataReaderDelegate.hpp>
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
+#include <org/eclipse/cyclonedds/core/NoopListener.hpp>
 
 namespace org
 {
@@ -55,7 +56,7 @@ SubscriberDelegate::SubscriberDelegate(
     }
 
     this->listener(listener, event_mask);
-    ddsc_sub = dds_create_subscriber(ddsc_par, ddsc_qos, this->listener_callbacks);
+    ddsc_sub = dds_create_subscriber(ddsc_par, ddsc_qos, org::eclipse::cyclonedds::core::make_noop_listener().get());
 
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_sub, "Could not create subscriber.");

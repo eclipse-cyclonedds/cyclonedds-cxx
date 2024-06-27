@@ -23,6 +23,7 @@
 #include <dds/sub/detail/SamplesHolder.hpp>
 #include <dds/domain/DomainParticipantListener.hpp>
 #include "dds/core/macros.hpp"
+#include <org/eclipse/cyclonedds/core/NoopListener.hpp>
 
 
 
@@ -498,8 +499,7 @@ dds::sub::detail::DataReader<T>::common_constructor()
     c_value *params = this->AnyDataReaderDelegate::td_.delegate()->reader_parameters();
 #endif
 
-    this->listener_set(nullptr, dds::core::status::StatusMask::all(), false);
-    dds_entity_t ddsc_reader = dds_create_reader(ddsc_sub, ddsc_top, ddsc_qos, this->listener_callbacks);
+    dds_entity_t ddsc_reader = dds_create_reader(ddsc_sub, ddsc_top, ddsc_qos, org::eclipse::cyclonedds::core::make_noop_listener().get());
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_reader, "Could not create DataReader.");
 
