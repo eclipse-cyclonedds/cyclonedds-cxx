@@ -9,8 +9,8 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 #
-project(helloworld LANGUAGES C CXX)
 cmake_minimum_required(VERSION 3.16)
+project(helloworld LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
