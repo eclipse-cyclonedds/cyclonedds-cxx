@@ -15,6 +15,7 @@
 #ifndef CYCLONEDDS_CORE_OBJECT_DELEGATE_HPP_
 #define CYCLONEDDS_CORE_OBJECT_DELEGATE_HPP_
 
+#include <atomic>
 #include "dds/core/macros.hpp"
 #include "dds/core/refmacros.hpp"
 #include "org/eclipse/cyclonedds/core/Mutex.hpp"
@@ -43,6 +44,7 @@ public:
     virtual void close ();
     void lock() const;
     void unlock() const;
+    virtual bool is_valid() const;
 
     virtual void init (ObjectDelegate::weak_ref_type weak_ref) = 0;
     ObjectDelegate::weak_ref_type get_weak_ref () const;
@@ -54,7 +56,7 @@ protected:
     void set_weak_ref (const ObjectDelegate::weak_ref_type &weak_ref);
 
     Mutex mutex;
-    bool closed;
+    std::atomic_bool closed {false};
     ObjectDelegate::weak_ref_type myself;
 };
 
