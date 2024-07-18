@@ -49,3 +49,4 @@ OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::DurabilityService,   DurabilityS
 #endif  // OMG_DDS_PERSISTENCE_SUPPORT
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::WriterBatching,      WriterBatching)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::PSMXInstances,       PSMXInstances)
+OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::IgnoreLocal,         IgnoreLocal)

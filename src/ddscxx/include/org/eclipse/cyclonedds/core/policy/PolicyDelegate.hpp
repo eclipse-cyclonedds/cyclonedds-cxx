@@ -916,6 +916,31 @@ private:
     bool batch_updates_;
 };
 
+//==============================================================================
+
+class OMG_DDS_API IgnoreLocalDelegate
+{
+public:
+    IgnoreLocalDelegate(const IgnoreLocalDelegate& other);
+    explicit IgnoreLocalDelegate(dds::core::policy::IgnoreLocalKind::Type kind);
+
+    IgnoreLocalDelegate& operator=(const IgnoreLocalDelegate& other) = default;
+
+    void kind(dds::core::policy::IgnoreLocalKind::Type kind);
+    dds::core::policy::IgnoreLocalKind::Type kind() const;
+
+    bool operator ==(const IgnoreLocalDelegate& other) const;
+
+    void check() const;
+
+    void set_iso_policy(const dds_qos_t* qos);
+    void set_c_policy(dds_qos_t* qos) const;
+
+public:
+    dds::core::policy::IgnoreLocalKind::Type kind_;
+};
+
+//==============================================================================
 
 #ifdef  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 
