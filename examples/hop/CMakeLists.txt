@@ -20,5 +20,10 @@ if(NOT TARGET CycloneDDS-CXX::ddscxx)
 endif()
 
 idlcxx_generate(TARGET hop_type FILES hop_type.idl)
+idlcxx_generate(TARGET mop_type FILES mop_type.idl)
+
 add_executable(hop hop.cpp)
 target_link_libraries(hop CycloneDDS-CXX::ddscxx hop_type)
+
+add_executable(mop mop.cpp)
+target_link_libraries(mop CycloneDDS-CXX::ddscxx mop_type)
