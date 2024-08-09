@@ -11,6 +11,12 @@
  */
 
 @final @topic
+struct MopSync {
+  @key uint32 k;
+  int64 tstart;
+};
+
+@final @topic
 struct Mop8 {
   @key uint32 k;
   uint32 seq;
