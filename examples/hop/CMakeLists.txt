@@ -27,3 +27,6 @@ target_link_libraries(hop CycloneDDS-CXX::ddscxx hop_type)
 
 add_executable(mop mop.cpp)
 target_link_libraries(mop CycloneDDS-CXX::ddscxx mop_type)
+
+add_executable(cwpl cwpl.cpp)
+target_link_libraries(cwpl CycloneDDS-CXX::ddscxx mop_type)
