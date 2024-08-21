@@ -30,6 +30,13 @@ org::eclipse::cyclonedds::core::DDScObjectDelegate::DDScObjectDelegate () :
 
 org::eclipse::cyclonedds::core::DDScObjectDelegate::~DDScObjectDelegate ()
 {
+    if (!this->closed) {
+        try {
+            this->close();
+        } catch (...) {
+
+        }
+    }
 }
 
 void
