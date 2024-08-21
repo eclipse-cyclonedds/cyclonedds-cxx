@@ -30,17 +30,25 @@ org::eclipse::cyclonedds::core::DDScObjectDelegate::DDScObjectDelegate () :
 
 org::eclipse::cyclonedds::core::DDScObjectDelegate::~DDScObjectDelegate ()
 {
-    delete_from_entity_map();
+    if (!this->closed) {
+        try {
+            this->close();
+        } catch (...) {
 
-    if (this->ddsc_entity > 0) {
-        dds_delete(this->ddsc_entity);
-        this->ddsc_entity = 0;
+        }
     }
 }
 
 void
 org::eclipse::cyclonedds::core::DDScObjectDelegate::close ()
 {
+    delete_from_entity_map();
+
+    if (this->ddsc_entity > 0) {
+        dds_delete(this->ddsc_entity);
+        this->ddsc_entity = 0;
+    }
+
     org::eclipse::cyclonedds::core::ObjectDelegate::close();
 }
 
