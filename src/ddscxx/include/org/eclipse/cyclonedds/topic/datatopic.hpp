@@ -316,6 +316,7 @@ bool get_serialized_size(const T& sample, size_t &sz)
 
   return true;
 }
+
 template<typename T, class S>
 bool serialize_into_impl(void *hdr,
                          void *buffer,
@@ -1041,17 +1042,21 @@ uint32_t sertype_hash(const ddsi_sertype* tpcmn)
 }
 
 template <typename T, class S>
-size_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample)
+dds_return_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample, size_t *size, uint16_t *enc_identifier)
 {
   const auto& msg = *static_cast<const T*>(sample);
 
   // get the serialized size of the sample (without serializing)
   size_t sz = 0;
   if (!get_serialized_size<T,S,key_mode::not_key>(msg, sz)) {
-    // the max value is treated as an error in the Cyclone core
-    sz = SIZE_MAX;
+    return DDS_RETCODE_BAD_PARAMETER;
   }
-  return sz;
+
+  uint16_t header[2];
+  static_cast<void>(write_header<T, S>(header));
+  *size = sz;
+  *enc_identifier = header[0];
+  return DDS_RETCODE_OK;
 }
 
 template <typename T, class S>
@@ -1062,8 +1067,9 @@ bool sertype_serialize_into(const ddsi_sertype*,
 {
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
-
-  return serialize_into<T,S>(dst_buffer, sz, msg, key_mode::not_key);
+  S str;
+  str.set_buffer(dst_buffer, sz);
+  return write(str, msg, key_mode::not_key);
 }
 
 template<typename T,
