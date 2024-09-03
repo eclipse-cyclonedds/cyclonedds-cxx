@@ -538,7 +538,7 @@ static bool sc_union(const idl_union_t *_union)
 
   const idl_case_t *_case = NULL;
   IDL_FOREACH(_case, _union->cases) {
-    if (!is_selfcontained(_case->type_spec))
+    if (is_external(_case) || !is_selfcontained(_case->type_spec))
       return false;
   }
 
@@ -549,7 +549,7 @@ static bool sc_struct(const idl_struct_t *str)
 {
   const idl_member_t *mem = NULL;
   IDL_FOREACH(mem, str->members) {
-    if (!is_selfcontained(mem->type_spec))
+    if (is_external(mem) || !is_selfcontained(mem->type_spec))
       return false;
   }
 
@@ -575,9 +575,8 @@ bool is_selfcontained(const void *node)
     const idl_node_t *parent = ((const idl_node_t*)node)->parent;
     assert (idl_is_typedef(parent));
     return is_selfcontained(parent);
-  } else {
-    return !is_external(node);
   }
+  return true;
 }
 
 idl_extensibility_t
