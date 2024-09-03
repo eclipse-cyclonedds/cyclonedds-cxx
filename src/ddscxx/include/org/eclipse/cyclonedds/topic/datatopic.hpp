@@ -1042,14 +1042,20 @@ uint32_t sertype_hash(const ddsi_sertype* tpcmn)
 }
 
 template <typename T, class S>
-dds_return_t sertype_get_serialized_size(const ddsi_sertype*, const void * sample, size_t *size, uint16_t *enc_identifier)
+dds_return_t sertype_get_serialized_size(const ddsi_sertype*, enum ddsi_serdata_kind sdkind, const void * sample, size_t *size, uint16_t *enc_identifier)
 {
   const auto& msg = *static_cast<const T*>(sample);
 
   // get the serialized size of the sample (without serializing)
   size_t sz = 0;
-  if (!get_serialized_size<T,S,key_mode::not_key>(msg, sz)) {
-    return DDS_RETCODE_BAD_PARAMETER;
+  if (sdkind == SDK_KEY) {
+    if (!get_serialized_size<T,S,key_mode::unsorted>(msg, sz)) {
+      return DDS_RETCODE_BAD_PARAMETER;
+    }
+  } else {
+    if (!get_serialized_size<T,S,key_mode::not_key>(msg, sz)) {
+      return DDS_RETCODE_BAD_PARAMETER;
+    }
   }
 
   uint16_t header[2];
@@ -1060,16 +1066,13 @@ dds_return_t sertype_get_serialized_size(const ddsi_sertype*, const void * sampl
 }
 
 template <typename T, class S>
-bool sertype_serialize_into(const ddsi_sertype*,
-                            const void * sample,
-                            void * dst_buffer,
-                            size_t sz)
+bool sertype_serialize_into(const ddsi_sertype*, enum ddsi_serdata_kind sdkind, const void * sample, void * dst_buffer, size_t sz)
 {
   // cast to the type
   const auto& msg = *static_cast<const T*>(sample);
   S str;
   str.set_buffer(dst_buffer, sz);
-  return write(str, msg, key_mode::not_key);
+  return write(str, msg, (sdkind == SDK_KEY) ? key_mode::unsorted : key_mode::not_key);
 }
 
 template<typename T,
