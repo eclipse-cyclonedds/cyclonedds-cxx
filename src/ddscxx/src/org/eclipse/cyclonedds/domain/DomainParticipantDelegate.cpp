@@ -32,6 +32,7 @@
 #include <org/eclipse/cyclonedds/sub/SubscriberDelegate.hpp>
 #include <org/eclipse/cyclonedds/topic/AnyTopicDelegate.hpp>
 #include <org/eclipse/cyclonedds/sub/BuiltinSubscriberDelegate.hpp>
+#include <org/eclipse/cyclonedds/core/NoopListener.hpp>
 
 org::eclipse::cyclonedds::core::Mutex org::eclipse::cyclonedds::domain::DomainParticipantDelegate::global_participants_lock_;
 dds::domain::qos::DomainParticipantQos org::eclipse::cyclonedds::domain::DomainParticipantDelegate::default_participant_qos_;
@@ -79,7 +80,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::DomainParticipantDe
 
     ddsc_qos = qos.delegate().ddsc_qos();
     this->listener(listener, event_mask);
-    ddsc_par = dds_create_participant(static_cast<dds_domainid_t>(domain_id_), ddsc_qos, this->listener_callbacks);
+    ddsc_par = dds_create_participant(static_cast<dds_domainid_t>(domain_id_), ddsc_qos, org::eclipse::cyclonedds::core::make_noop_listener().get());
 
     dds_delete_qos (ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_par, "Could not create DomainParticipant.");

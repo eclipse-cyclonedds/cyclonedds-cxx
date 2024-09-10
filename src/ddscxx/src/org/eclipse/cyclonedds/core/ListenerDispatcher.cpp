@@ -36,7 +36,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::InconsistentTopicStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -52,7 +52,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::OfferedDeadlineMissedStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -67,7 +67,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::OfferedIncompatibleQosStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -82,7 +82,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::LivelinessLostStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -97,7 +97,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::PublicationMatchedStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -113,7 +113,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::RequestedDeadlineMissedStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -128,7 +128,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::RequestedIncompatibleQosStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -143,7 +143,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::SampleRejectedStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -158,7 +158,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::LivelinessChangedStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -172,7 +172,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       la->cpp_ref->on_data_available(reader);
       la->cpp_ref->release_callback_lock();
@@ -185,7 +185,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::SubscriptionMatchedStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -200,7 +200,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       org::eclipse::cyclonedds::core::SampleLostStatusDelegate sd;
       sd.ddsc_status(&status);
@@ -215,7 +215,7 @@ extern "C"
     org::eclipse::cyclonedds::core::ListenerArg *la =
       reinterpret_cast<org::eclipse::cyclonedds::core::ListenerArg *>(arg);
 
-    if (la->reset_on_invoke && la->cpp_ref->obtain_callback_lock())
+    if (la->cpp_ref->obtain_callback_lock())
     {
       la->cpp_ref->on_data_readers(subscriber);
       la->cpp_ref->release_callback_lock();

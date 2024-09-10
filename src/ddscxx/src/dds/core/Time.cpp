@@ -50,13 +50,7 @@ int64_t dds::core::Time::sec() const
 
 void dds::core::Time::sec(int64_t s)
 {
-    if(s < 0 && s != -1) {
-        ISOCPP_THROW_EXCEPTION(ISOCPP_ERROR, "dds::core::Time::sec out of bounds");
-    } else {
-        /// @internal @bug OSPL-2308 RTF Time-ish coercion issue
-        /// @see http://jira.prismtech.com:8080/browse/OSPL-2308
-        sec_ =  s;
-    }
+    sec_ = s;
 }
 
 uint32_t dds::core::Time::nanosec() const

@@ -21,6 +21,7 @@
 #include <org/eclipse/cyclonedds/pub/PublisherDelegate.hpp>
 #include <org/eclipse/cyclonedds/pub/AnyDataWriterDelegate.hpp>
 #include <org/eclipse/cyclonedds/core/ScopedLock.hpp>
+#include <org/eclipse/cyclonedds/core/NoopListener.hpp>
 
 
 namespace org
@@ -56,7 +57,7 @@ PublisherDelegate::PublisherDelegate(const dds::domain::DomainParticipant& dp,
     }
 
     this->listener(listener, event_mask);
-    ddsc_pub = dds_create_publisher(ddsc_par, ddsc_qos, this->listener_callbacks);
+    ddsc_pub = dds_create_publisher(ddsc_par, ddsc_qos, org::eclipse::cyclonedds::core::make_noop_listener().get());
     dds_delete_qos(ddsc_qos);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_pub, "Could not create publisher.");
     this->set_ddsc_entity(ddsc_pub);

@@ -166,11 +166,6 @@ TEST(Time, sec)
     t = dds::core::Time::from_secs(secs);
     ASSERT_EQ(t.sec(), 10);
     ASSERT_EQ(t.nanosec(), 500000000);
-
-    ASSERT_THROW({
-        /* Negative secs. */
-        t.sec(-2);
-    }, dds::core::Error);
 }
 
 TEST(Time, greater)
