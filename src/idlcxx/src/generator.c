@@ -654,9 +654,13 @@ print_header(FILE *fh, const char *in, const char *out)
 static idl_retcode_t
 print_impl_header(FILE *fh, const char *in, const char *out, const char *hdr)
 {
+  const char *sep = hdr;
+  for (const char *ptr = sep; *ptr; ptr++)
+    if (idl_isseparator((unsigned char)*ptr))
+      sep = ptr+1;
   const char *fmt = "#include \"%s\"\n\n";
   if (print_header(fh, in, out)
-   || idl_fprintf(fh, fmt, hdr) < 0)
+   || idl_fprintf(fh, fmt, sep) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
