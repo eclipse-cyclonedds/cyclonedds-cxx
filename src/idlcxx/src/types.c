@@ -22,6 +22,8 @@
 
 #include "generator.h"
 
+#define VARIANT_ACCESS_BY_TYPE IDLCXX_USE_BOOST
+
 static idl_retcode_t
 emit_member(
   const idl_pstate_t *pstate,
@@ -754,6 +756,11 @@ emit_case_methods(
 {
   struct generator *gen = user_data;
   bool simple;
+#if VARIANT_ACCESS_BY_TYPE
+  char *accessor;
+#else
+  int accessor = -1;
+#endif
   char *type, *value, *discr_type;
   const idl_case_t *branch = node;
   const char *name, *fmt;
@@ -768,7 +775,11 @@ emit_case_methods(
     "      throw dds::core::InvalidArgumentError(\n"
     "        \"Requested branch does not match current discriminator\");\n"
     "    }\n"
+#if VARIANT_ACCESS_BY_TYPE
     "    return %2$s<%3$s>(m__u);\n"
+#else
+    "    return %2$s<%3$d>(m__u);\n"
+#endif
     "  }\n\n";
 
   static const char *setter =
@@ -777,12 +788,29 @@ emit_case_methods(
     "        \"Discriminator does not match current discriminator\");\n"
     "    }\n"
     "    m__d = d;\n"
+#if VARIANT_ACCESS_BY_TYPE
     "    m__u = u;\n"
+#else
+    "    m__u.emplace<%2$d>(u);\n"
+#endif
     "  }\n\n";
 
   name = get_cpp11_name(branch->declarator);
   if (IDL_PRINTA(&type, get_cpp11_type, branch, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
+#if VARIANT_ACCESS_BY_TYPE
+  accessor = type;
+#else
+  int i = 0;
+  const idl_case_t *_case = NULL;
+  IDL_FOREACH(_case, _union->cases) {
+    if (_case == node) {
+      accessor = i;
+      break;
+    }
+    i++;
+  }
+#endif
   if (IDL_PRINTA(&discr_type, get_cpp11_type, _union->switch_type_spec->type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
   if (IDL_PRINTA(&value, get_cpp11_value, branch->labels->const_expr, gen) < 0)
@@ -795,14 +823,14 @@ emit_case_methods(
                : "  const %1$s &%2$s() const\n  {\n";
   if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, getter, value, gen->union_getter_format, type) < 0)
+  if (idl_fprintf(gen->header.handle, getter, value, gen->union_getter_format, accessor) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* ref-getter */
   fmt = "  %1$s& %2$s()\n  {\n";
   if (idl_fprintf(gen->header.handle, fmt, type, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, getter, value, gen->union_getter_format, type) < 0)
+  if (idl_fprintf(gen->header.handle, getter, value, gen->union_getter_format, accessor) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   /* setter */
@@ -812,7 +840,7 @@ emit_case_methods(
                  "  {\n";
   if (idl_fprintf(gen->header.handle, fmt, name, type, discr_type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, setter, value) < 0)
+  if (idl_fprintf(gen->header.handle, setter, value, accessor) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   if (simple)
@@ -823,11 +851,12 @@ emit_case_methods(
         "  {\n";
   if (idl_fprintf(gen->header.handle, fmt, name, type, discr_type, value) < 0)
     return IDL_RETCODE_NO_MEMORY;
-  if (idl_fprintf(gen->header.handle, setter, value) < 0)
+  if (idl_fprintf(gen->header.handle, setter, value, accessor) < 0)
     return IDL_RETCODE_NO_MEMORY;
   return IDL_RETCODE_OK;
 }
 
+#if VARIANT_ACCESS_BY_TYPE
 static idl_retcode_t is_same_type(
   const idl_pstate_t *pstate,
   const idl_type_spec_t *type_a,
@@ -986,6 +1015,7 @@ static idl_retcode_t is_same_type(
 
   return IDL_RETCODE_OK;
 }
+#endif
 
 static idl_retcode_t
 emit_union(
@@ -1002,6 +1032,7 @@ emit_union(
   const idl_union_t *_union;
   const idl_type_spec_t *type_spec;
   idl_visitor_t visitor;
+  size_t default_case_index = 0;
 
   (void)revisit;
   (void)path;
@@ -1043,8 +1074,11 @@ emit_union(
   }
 
   size_t i = 0;
-  /*deduplicate types in cases*/
+  /*deduplicate types in cases
+    variant access is by type for Boost, so there can only be one of each
+    type in the variant*/
   IDL_FOREACH(_case, _union->cases) {
+#if VARIANT_ACCESS_BY_TYPE
     bool type_already_present = false;
     for (size_t j = 0; j < i && !type_already_present; j++) {
       assert(cases[j]);
@@ -1058,6 +1092,11 @@ emit_union(
 
     if (!type_already_present)
       cases[i++] = _case;
+#else
+    if (_case == idl_parent(_union->default_case))
+      default_case_index = i;
+    cases[i++] = _case;
+#endif
   }
 
   /*print deduplicated types in variant holder*/
@@ -1078,7 +1117,9 @@ emit_union(
     if (idl_fprintf(gen->header.handle, "%s%s", sep, variant_type) < 0)
       ret = IDL_RETCODE_NO_MEMORY;
   }
+#if VARIANT_ACCESS_BY_TYPE
 cleanup:
+#endif
   free((void*)cases);
   if (ret)
     return ret;
@@ -1140,8 +1181,12 @@ cleanup:
       return IDL_RETCODE_NO_MEMORY;
 
     /* add default constructor for type of default branch */
+#if VARIANT_ACCESS_BY_TYPE
     fmt = "%1$s()";
-    if (idl_fprintf(gen->header.handle, fmt, default_type) < 0)
+#else
+    fmt = "std::in_place_index<%2$ld>, %1$s()";
+#endif
+    if (idl_fprintf(gen->header.handle, fmt, default_type, default_case_index) < 0)
       return IDL_RETCODE_NO_MEMORY;
   }
   if (fputs(")\n { }\n\n", gen->header.handle) < 0)

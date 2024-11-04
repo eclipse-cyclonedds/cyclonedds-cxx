@@ -119,12 +119,29 @@ union duplicate_types_union_2 switch(long) {
 typedef unsigned long ulong_arr[4];
 typedef sequence<ulong_arr> seq_ulong_arr;
 typedef sequence<unsigned long> seq_ulong;
+typedef string string_typedef;
+typedef string_typedef string_typedef_2;
+
 
 union duplicate_sequences_union switch (unsigned long) {
   case 0:
     seq_ulong_arr c_0;
   case 1:
     seq_ulong c_1;
+};
+
+union duplicate_string_types_union switch(long) {
+  case 1:
+    string<20> s_1;
+  case 2:
+  case 3:
+    string<40> s_2;
+  case 4:
+    string_typedef s_3;
+  case 5:
+    string_typedef_2 s_4;
+  default:
+    string d_1;
 };
 
 @bit_bound(16) bitmask bm1 {
