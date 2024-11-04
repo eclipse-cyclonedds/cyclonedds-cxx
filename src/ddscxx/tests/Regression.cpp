@@ -218,6 +218,11 @@ TEST_F(Regression, union_duplicate_types)
   d_s.c_1({1,2,3,4,5,6});
 }
 
+TEST_F(Regression, union_duplicate_string_types)
+{
+  duplicate_string_types_union d_t;
+}
+
 TEST_F(Regression, delimiters_bitmask)
 {
   bytes s_bm1_bytes =

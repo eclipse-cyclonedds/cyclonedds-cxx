@@ -1041,6 +1041,13 @@ emit_union(
       return IDL_RETCODE_NO_MEMORY;
     memset(((void*)cases),0x0,sizeof(const idl_case_t *)*ncases);
   }
+  const char **cases_cpp11_types = NULL;
+  if (ncases) {
+    cases_cpp11_types = malloc(sizeof(const char *)*ncases);
+    if (!cases_cpp11_types)
+      return IDL_RETCODE_NO_MEMORY;
+    memset(((void*)cases_cpp11_types),0x0,sizeof(const char *)*ncases);
+  }
 
   size_t i = 0;
   /*deduplicate types in cases*/
@@ -1056,8 +1063,35 @@ emit_union(
         goto cleanup;
     }
 
-    if (!type_already_present)
-      cases[i++] = _case;
+    if (!type_already_present) {
+      /*check type once formatted to cpp11 is still not a dupe
+        it might be distinct, but the type template makes it not so,
+        as with default strings, which are std::string whether bounded
+        or unbounded.*/
+      char *variant_type = NULL;
+      /*suppress error C6263 (using _alloca in a loop, danger of stack overflow)
+        other solutions will be more complex and error sensitive*/
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable : 6263 )
+#endif
+      if (IDL_PRINTA(&variant_type, get_cpp11_type, _case, gen) < 0)
+        ret = IDL_RETCODE_NO_MEMORY;
+#ifdef _WIN32
+#pragma warning ( pop )
+#endif
+      for (size_t k = 0; k < i; k++) {
+        if (strcmp(variant_type, cases_cpp11_types[k]) == 0) {
+          type_already_present = true;
+          break;
+        }
+      }
+      if (!type_already_present) {
+        cases[i] = _case;
+        cases_cpp11_types[i] = variant_type;
+        i++;
+      }
+    }
   }
 
   /*print deduplicated types in variant holder*/
@@ -1079,6 +1113,7 @@ emit_union(
       ret = IDL_RETCODE_NO_MEMORY;
   }
 cleanup:
+  free((void*)cases_cpp11_types);
   free((void*)cases);
   if (ret)
     return ret;

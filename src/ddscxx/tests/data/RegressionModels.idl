@@ -127,6 +127,15 @@ union duplicate_sequences_union switch (unsigned long) {
     seq_ulong c_1;
 };
 
+union duplicate_string_types_union switch(long) {
+  case 1:
+    string<20> s_1;
+  case 2:
+    string<40> s_2;
+  default:
+    string d_1;
+};
+
 @bit_bound(16) bitmask bm1 {
 b_0, b_1, b_2
 };
