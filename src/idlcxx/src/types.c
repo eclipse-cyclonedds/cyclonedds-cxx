@@ -857,8 +857,144 @@ emit_case_methods(
 }
 
 #if VARIANT_ACCESS_BY_TYPE
+/* to make sure no overlap exists with the IDL parser's type fields */
+#define ARRAY_SZ_FIELD (0x1ull << 63)
+#define BOUND_FIELD (ARRAY_SZ_FIELD >> 1)
+/* this should be plenty for all practical applications */
+#define SZ_MAX 1024
+#define PUSH(field) if (tc->idx >= SZ_MAX) { return IDL_RETCODE_NO_MEMORY; } else { tc->info[tc->idx++] = field; }
+
+typedef struct {
+  uint64_t info[SZ_MAX];
+  size_t idx;
+  bool bstr_unique, bseq_unique;
+} same_type_checker_t;
+
+static idl_retcode_t push_array(const idl_declarator_t *decl, same_type_checker_t *tc)
+{
+  const idl_literal_t *literal = decl ? decl->const_expr : NULL;
+
+  for (; literal; literal = idl_next(literal)) {
+    if (literal->value.uint64 > 0) {
+      PUSH(literal->value.uint64 | ARRAY_SZ_FIELD);
+    }
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t push_type(const idl_type_spec_t *type, const idl_declarator_t *decl, same_type_checker_t *tc);
+
+static idl_retcode_t push_sequence(const idl_sequence_t *seq, same_type_checker_t *tc)
+{
+  PUSH(IDL_SEQUENCE);
+
+  /* if bounded sequence type is not unique, this must be skipped, since it is the same as unbounded*/
+  if (tc->bseq_unique) {
+    PUSH(idl_bound(seq) | BOUND_FIELD);
+  }
+
+  return push_type(seq->type_spec, NULL, tc);
+}
+
+static idl_retcode_t push_string(const idl_type_spec_t *type, same_type_checker_t *tc)
+{
+  PUSH(IDL_STRING);
+
+  /* if bounded string type is not unique, this must be skipped, since it is the same as unbounded*/
+  if (tc->bstr_unique) {
+    PUSH(idl_bound(type) | BOUND_FIELD);
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t push_simple_type(const idl_type_spec_t *spec, same_type_checker_t *tc)
+{
+  idl_mask_t mask = idl_mask(spec) & ((IDL_BASE_TYPE << 1) - 1);
+  switch (mask) { /* because C++ always translates integers to fixed width types */
+    case IDL_OCTET:
+      mask = IDL_UINT8;
+      break;
+    case IDL_SHORT:
+    case IDL_USHORT:
+      mask = IDL_INT16 | (mask & IDL_UNSIGNED);
+      break;
+    case IDL_LONG:
+    case IDL_ULONG:
+      mask = IDL_INT32 | (mask & IDL_UNSIGNED);
+      break;
+    case IDL_LLONG:
+    case IDL_ULLONG:
+      mask = IDL_INT64 | (mask & IDL_UNSIGNED);
+      break;
+  }
+
+  PUSH(mask);
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t push_bitmask(const idl_type_spec_t *type, same_type_checker_t *tc)
+{
+  const uint32_t bit_bound = idl_bound(type);
+
+  /* bitmasks larger than 64 bits are caught by the parser */
+  if (bit_bound >= 32) {
+    PUSH(IDL_UINT64);
+  } else if (bit_bound >= 16) {
+    PUSH(IDL_UINT32);
+  } else if (bit_bound >= 8) {
+    PUSH(IDL_UINT16);
+  } else {
+    PUSH(IDL_UINT8);
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t push_constr_type(const idl_type_spec_t *spec, same_type_checker_t *tc)
+{
+  PUSH(idl_mask(spec) & IDL_TYPE_MASK);
+  PUSH((uint64_t)spec);
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t push_typedef(const idl_typedef_t *td, same_type_checker_t *tc)
+{
+  return push_type(td->type_spec, td->declarators, tc);
+}
+
+/* to unclutter the namespace */
+#undef SZ_MAX
+#undef ARRAY_SZ_FIELD
+#undef BOUND_FIELD
+#undef PUSH
+
+idl_retcode_t push_type(const idl_type_spec_t *type, const idl_declarator_t *decl, same_type_checker_t *tc)
+{
+  idl_retcode_t ret = push_array(decl, tc);
+  if (ret != IDL_RETCODE_OK) {
+    return ret;
+  } else if (idl_is_alias(type)) {
+    return push_typedef((const idl_typedef_t *)idl_parent(type), tc);
+  } else if (idl_is_sequence(type)) {
+    return push_sequence((const idl_sequence_t *)type, tc);
+  } else if (idl_is_string(type)) {
+    return push_string(type, tc);
+  } else if (idl_is_bitmask(type)) {
+    return push_bitmask(type, tc);
+  } else if (idl_is_constr_type(type)) {
+    return push_constr_type(type, tc);
+  } else if (idl_is_base_type(type)) {
+    return push_simple_type(type, tc);
+  } else {
+    return IDL_RETCODE_BAD_PARAMETER;
+  }
+}
+
 static idl_retcode_t is_same_type(
   const idl_pstate_t *pstate,
+  const struct generator *gen,
   const idl_type_spec_t *type_a,
   const idl_declarator_t *decl_a,
   const idl_type_spec_t *type_b,
@@ -870,148 +1006,20 @@ static idl_retcode_t is_same_type(
   assert(type_b);
   assert(outval);
 
-  /* container for array sizes in nested arrays
-     255 should be more than enough nested arrays*/
-  uint32_t a_sz[255] = {0};
-  size_t i = 0;
-  const idl_const_expr_t *ce = NULL;
-  if (decl_a) {
-    IDL_FOREACH(ce, decl_a->const_expr) {
-      a_sz[i++] = ((const idl_literal_t*)ce)->value.uint32;
-      if (i >= 255) {
-        idl_error(pstate, idl_location(decl_a),
-          "@maximum array depth exceeded in type comparison");
-        return IDL_RETCODE_NO_MEMORY;
-      }
-    }
-  }
+  const bool bstr_unique = (strcmp(gen->bounded_string_format, gen->string_format) != 0),
+             bseq_unique = (strcmp(gen->bounded_sequence_format, gen->sequence_format) != 0);
+  same_type_checker_t tc_a = {.bstr_unique = bstr_unique, .bseq_unique = bseq_unique},
+                      tc_b = {.bstr_unique = bstr_unique, .bseq_unique = bseq_unique};
+  idl_retcode_t ret = push_type(type_a, decl_a, &tc_a);
+  if (ret != IDL_RETCODE_OK)
+    return ret;
+  else
+    ret = push_type(type_b, decl_b, &tc_b);
 
-  while (idl_is_alias(type_a) || idl_is_forward(type_a)) {
-    if (idl_is_forward(type_a)) {
-      type_a = ((const idl_forward_t *)type_a)->type_spec;
-    } else if (idl_is_alias(type_a)) {
-      const idl_typedef_t *td = idl_parent(type_a);
-      type_a = td->type_spec;
-      decl_a = td->declarators;
-      IDL_FOREACH(ce, decl_a->const_expr) {
-        a_sz[i++] = ((const idl_literal_t*)ce)->value.uint32;
-        if (i >= 255) {
-          idl_error(pstate, idl_location(decl_a),
-            "@maximum array depth exceeded in type comparison");
-          return IDL_RETCODE_NO_MEMORY;
-        }
-      }
-    }
-  }
-
-  size_t j = 0;
-  *outval = false;
-  /* check that the array sizes in the declarators match up */
-  if (decl_b) {
-    IDL_FOREACH(ce, decl_b->const_expr) {
-      if (j >= i || a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
-        return IDL_RETCODE_OK;
-    }
-  }
-
-  while (idl_is_alias(type_b) || idl_is_forward(type_b)) {
-    if (idl_is_forward(type_b)) {
-      type_b = ((const idl_forward_t *)type_b)->type_spec;
-    } else if (idl_is_alias(type_b)) {
-      const idl_typedef_t *td = idl_parent(type_b);
-      type_b = td->type_spec;
-      decl_b = td->declarators;
-      IDL_FOREACH(ce, decl_b->const_expr) {
-        if (j >= i || a_sz[j++] != ((const idl_literal_t*)ce)->value.uint32)
-          return IDL_RETCODE_OK;
-      }
-    }
-  }
-
-  /* check that we compared the same number of array sizes */
-  if (i != j)
-    return IDL_RETCODE_OK;
-
-  /* unalias bitmasks to underlying integer types */
-  idl_type_t t_a = idl_is_bitmask(type_a) ? unalias_bitmask(type_a) : idl_type(type_a),
-             t_b = idl_is_bitmask(type_b) ? unalias_bitmask(type_b) : idl_type(type_b);
-
-  switch (t_a) {
-    case IDL_SEQUENCE:
-      if (t_b == IDL_SEQUENCE) {
-        const idl_sequence_t *seq_a = type_a,
-                             *seq_b = type_b;
-        type_a = seq_a->type_spec;
-        type_b = seq_b->type_spec;
-        decl_a = NULL;
-        decl_b = NULL;
-        if (idl_is_alias(type_a)) {
-          const idl_typedef_t *td_a = idl_parent(type_a);
-          decl_a = td_a->declarators;
-          type_a = td_a->type_spec;
-        } else if (idl_is_forward(type_a)) {
-          type_a = ((const idl_forward_t *)type_a)->type_spec;
-        }
-        if (idl_is_alias(type_b)) {
-          const idl_typedef_t *td_b = idl_parent(type_b);
-          decl_b = td_b->declarators;
-          type_b = td_b->type_spec;
-        } else if (idl_is_forward(type_b)) {
-          type_b = ((const idl_forward_t *)type_b)->type_spec;
-        }
-        return is_same_type(pstate, type_a, decl_a, type_b, decl_b, outval);
-      }
-      break;
-    case IDL_STRING:
-      if (t_b == IDL_STRING)
-        *outval = ((const idl_string_t *)type_a)->maximum == ((const idl_string_t *)type_b)->maximum;
-      break;
-    case IDL_STRUCT:
-    case IDL_UNION:
-    case IDL_ENUM:
-      *outval = (type_a == type_b);
-      break;
-    /* in the IDL - C++ binding integer types (long, short, etc.) are aliases of fixed width integers
-       and their comparison should treat them interchangeably */
-    case IDL_OCTET:
-    case IDL_UINT8:
-      *outval = (t_b == IDL_OCTET || t_b == IDL_UINT8);
-      break;
-    case IDL_INT16:
-    case IDL_SHORT:
-        *outval = (t_b == IDL_SHORT || t_b == IDL_INT16);
-        break;
-    case IDL_UINT16:
-    case IDL_USHORT:
-        *outval = (t_b == IDL_USHORT || t_b == IDL_UINT16);
-        break;
-    case IDL_INT32:
-    case IDL_LONG:
-        *outval = (t_b == IDL_LONG || t_b == IDL_INT32);
-        break;
-    case IDL_UINT32:
-    case IDL_ULONG:
-        *outval = (t_b == IDL_ULONG || t_b == IDL_UINT32);
-        break;
-    case IDL_INT64:
-    case IDL_LLONG:
-        *outval = (t_b == IDL_LLONG || t_b == IDL_INT64);
-        break;
-    case IDL_UINT64:
-    case IDL_ULLONG:
-        *outval = (t_b == IDL_ULLONG || t_b == IDL_UINT64);
-        break;
-    case IDL_WSTRING:
-    case IDL_FIXED_PT:
-      return IDL_RETCODE_UNSUPPORTED;
-    case IDL_NULL:
-    case IDL_TYPEDEF:
-    case IDL_BITMASK:
-      /*should be unaliased in previous steps*/
-      assert(0);
-    default:
-      *outval = (t_a == t_b);
-  }
+  if (ret != IDL_RETCODE_OK)
+    return ret;
+  else
+    *outval = (tc_a.idx == tc_b.idx && memcmp(tc_a.info, tc_b.info, tc_a.idx*sizeof(uint64_t)) == 0);
 
   return IDL_RETCODE_OK;
 }
@@ -1085,7 +1093,7 @@ emit_union(
       if (!cases[j])
         ret = IDL_RETCODE_BAD_PARAMETER;
       else
-        ret = is_same_type(pstate, cases[j]->type_spec, cases[j]->declarator, _case->type_spec, _case->declarator, &type_already_present);
+        ret = is_same_type(pstate, gen, cases[j]->type_spec, cases[j]->declarator, _case->type_spec, _case->declarator, &type_already_present);
       if (ret != IDL_RETCODE_OK)
         goto cleanup;
     }

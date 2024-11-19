@@ -119,9 +119,6 @@ union duplicate_types_union_2 switch(long) {
 typedef unsigned long ulong_arr[4];
 typedef sequence<ulong_arr> seq_ulong_arr;
 typedef sequence<unsigned long> seq_ulong;
-typedef string string_typedef;
-typedef string_typedef string_typedef_2;
-
 
 union duplicate_sequences_union switch (unsigned long) {
   case 0:
@@ -130,6 +127,11 @@ union duplicate_sequences_union switch (unsigned long) {
     seq_ulong c_1;
 };
 
+/* the following typedefs are used in duplicate_string_types_union */
+typedef string string_typedef;
+typedef string_typedef string_typedef_2;
+
+/* all cases resolve to string */
 union duplicate_string_types_union switch(long) {
   case 1:
     string<20> s_1;
@@ -142,6 +144,58 @@ union duplicate_string_types_union switch(long) {
     string_typedef_2 s_4;
   default:
     string d_1;
+};
+
+/* the following typedefs are used in duplicate_array_types_union */
+typedef long arr234[2][3][4];
+typedef long arr34[3][4];
+typedef arr34 arr34_2[2];
+typedef long arr4[4];
+typedef arr4 arr4_23[2][3];
+typedef arr4 arr4_3[3];
+typedef arr4_3 arr4_3_2[2];
+
+/* all cases resolve to long[2][3][4] */
+union duplicate_array_types_union switch(long) {
+case 1:
+    long a[2][3][4];
+case 2:
+    arr34 b[2];
+case 3:
+    arr4 c[2][3];
+case 4:
+    arr234 d;
+case 5:
+    arr34_2 e;
+case 6:
+    arr4_23 f;
+case 7:
+    arr4_3_2 g;
+};
+
+/* the following bitmasks are used in duplicate_bitmask_types_union */
+@bit_bound(15) bitmask bma {
+  @position(2) bma_2,
+  bma_3,
+  @position(5) bma_5,
+  bma_6
+};
+
+@bit_bound(15) bitmask bmb {
+  @position(0) bmb_0,
+  bmb_1,
+  @position(7) bmb_7,
+  bmb_8
+};
+
+/* all cases resolve to uint16_t */
+union duplicate_bitmask_types_union switch(@key long) {
+  case 1:
+      bma c;
+  case 2:
+      bmb d;
+  case 3:
+      unsigned short e;
 };
 
 @bit_bound(16) bitmask bm1 {

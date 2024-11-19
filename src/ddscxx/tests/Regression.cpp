@@ -223,6 +223,16 @@ TEST_F(Regression, union_duplicate_string_types)
   duplicate_string_types_union d_t;
 }
 
+TEST_F(Regression, union_duplicate_array_types)
+{
+  duplicate_array_types_union d_t;
+}
+
+TEST_F(Regression, union_duplicate_bitmask_types)
+{
+  duplicate_bitmask_types_union d_t;
+}
+
 TEST_F(Regression, delimiters_bitmask)
 {
   bytes s_bm1_bytes =
