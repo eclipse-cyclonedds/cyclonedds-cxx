@@ -272,6 +272,12 @@ endif()
 
 configure_file(features.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/src/ddscxx/include/dds/features.hpp")
 
+install(
+  FILES "${CycloneDDS-CXX_SOURCE_DIR}/src/idlcxx/Generate.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/idlcxx"
+  COMPONENT dev)
+
+
 add_subdirectory(src)
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
