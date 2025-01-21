@@ -20,9 +20,7 @@ if(@ENABLE_LEGACY@)
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/idlcxx/Generate.cmake")
 
-if(TARGET CycloneDDS-CXX::idlcxx)
-    include("${CMAKE_CURRENT_LIST_DIR}/idlcxx/Generate.cmake")
-endif()
 
 check_required_components("@PROJECT_NAME@")
