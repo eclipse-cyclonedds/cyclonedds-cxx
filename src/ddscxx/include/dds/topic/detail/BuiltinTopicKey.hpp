@@ -25,4 +25,6 @@ namespace dds { namespace topic { namespace detail {
       typedef dds::topic::TBuiltinTopicKey<org::eclipse::cyclonedds::topic::BuiltinTopicKeyDelegate> BuiltinTopicKey;
 } } }
 
+inline std::ostream& operator << (std::ostream& os, const dds::topic::detail::BuiltinTopicKey& h);
+
 #endif /* OMG_DDS_TOPIC_DETAIL_BUILTIN_TOPIC_KEY_HPP_ */

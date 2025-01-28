@@ -28,18 +28,24 @@ namespace topic
 {
 
 template <typename D>
-const int32_t* TBuiltinTopicKey<D>::value() const
+const uint8_t* TBuiltinTopicKey<D>::value() const
 {
     return this->delegate().value();
 }
 
 template <typename D>
-void TBuiltinTopicKey<D>::value(int32_t v[])
+void TBuiltinTopicKey<D>::value(uint8_t v[])
 {
     return this->delegate().value(v);
 }
 
 }
+}
+
+inline std::ostream& operator << (std::ostream& os, const dds::topic::TBuiltinTopicKey<org::eclipse::cyclonedds::topic::BuiltinTopicKeyDelegate>& h)
+{
+     os << h.delegate();
+     return os;
 }
 
 // End of implementation
