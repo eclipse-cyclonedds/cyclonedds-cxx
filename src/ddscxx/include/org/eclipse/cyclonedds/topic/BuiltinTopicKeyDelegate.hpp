@@ -15,6 +15,8 @@
 #ifndef CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 #define CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 
+#include <iomanip>
+
 namespace org
 {
 namespace eclipse
@@ -27,37 +29,44 @@ namespace topic
 class BuiltinTopicKeyDelegate
 {
 public:
-    typedef uint32_t VALUE_T;
+    typedef uint8_t VALUE_T;
 public:
     BuiltinTopicKeyDelegate() { }
-    BuiltinTopicKeyDelegate(int32_t v[])
+    BuiltinTopicKeyDelegate(uint8_t v[16])
     {
-        key_[0] = v[0];
-        key_[1] = v[1];
-        key_[2] = v[2];
+        std::copy(v, v + 16, key_.begin());
     }
 public:
-    const int32_t* value() const
+    const uint8_t* value() const
     {
-        return key_;
+        return &key_[0];
     }
 
-    void value(int32_t v[])
+    void value(uint8_t v[16])
     {
-        key_[0] = v[0];
-        key_[1] = v[1];
-        key_[2] = v[2];
+        std::copy(v, v + 16, key_.begin());
     }
 
     bool operator ==(const BuiltinTopicKeyDelegate& other) const
     {
-        return other.key_[0] == key_[0]
-                 && other.key_[1] == key_[1]
-                 && other.key_[2] == key_[2];
+        return other.key_ == key_;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const BuiltinTopicKeyDelegate& key)
+    {
+        for (size_t i = 0; i < key.key_.size(); ++i)
+        {
+            if (i == 4 || i == 6 || i == 8 || i == 10)
+            {
+                os << '-';
+            }
+            os << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(key.key_[i]);
+        }
+        return os;
     }
 
 private:
-    int32_t key_[3];
+    std::array<uint8_t, 16> key_;
 };
 
 }

@@ -43,14 +43,14 @@ public:
      *
      * @return the BuiltinTopicKey
      */
-    const int32_t* value() const;
+    const uint8_t* value() const;
 
     /**
      * Sets the BuiltinTopicKey.
      *
      * @param v the value to set
      */
-    void value(int32_t v[]);
+    void value(uint8_t v[]);
 };
 
 #endif /* OMG_DDS_TOPIC_TBUILTIN_TOPIC_KEY_HPP_ */
