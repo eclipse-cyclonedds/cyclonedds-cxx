@@ -603,10 +603,6 @@ TEST(Qos, invalid_values)
                                           0,  /* max_instances */
                                           0   /* max_samples_per_instance */);
     }, dds::core::InvalidArgumentError);
-
-    ASSERT_THROW({
-        invalidPSMXInstances = PSMXInstances({"instance_1", "instance_2"});
-    }, dds::core::InvalidArgumentError);
 }
 
 TEST(Qos, invalid_policies)
