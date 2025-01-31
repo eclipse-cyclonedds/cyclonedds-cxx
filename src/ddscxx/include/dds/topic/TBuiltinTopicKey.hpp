@@ -43,14 +43,14 @@ public:
      *
      * @return the BuiltinTopicKey
      */
-    const uint8_t* value() const;
+    const std::array<uint8_t, 16>& value() const;
 
     /**
      * Sets the BuiltinTopicKey.
      *
-     * @param v the value to set
+     * @param key the value to set
      */
-    void value(uint8_t v[]);
+    void value(const std::array<uint8_t, 16>& key);
 };
 
 #endif /* OMG_DDS_TOPIC_TBUILTIN_TOPIC_KEY_HPP_ */
