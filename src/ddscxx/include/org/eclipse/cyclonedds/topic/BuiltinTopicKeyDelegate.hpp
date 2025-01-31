@@ -29,22 +29,22 @@ namespace topic
 class BuiltinTopicKeyDelegate
 {
 public:
-    typedef uint8_t VALUE_T;
+    typedef std::array<uint8_t, 16> VALUE_T;
 public:
     BuiltinTopicKeyDelegate() { }
-    BuiltinTopicKeyDelegate(uint8_t v[16])
+    BuiltinTopicKeyDelegate(const std::array<uint8_t, 16>& key)
     {
-        std::copy(v, v + 16, key_.begin());
+        key_ = key;
     }
 public:
-    const uint8_t* value() const
+    const std::array<uint8_t, 16>& value() const
     {
-        return &key_[0];
+        return key_;
     }
 
-    void value(uint8_t v[16])
+    void value(const std::array<uint8_t, 16>& key)
     {
-        std::copy(v, v + 16, key_.begin());
+        key_ = key;
     }
 
     bool operator ==(const BuiltinTopicKeyDelegate& other) const
@@ -63,6 +63,11 @@ public:
             os << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(key.key_[i]);
         }
         return os;
+    }
+
+    void set_ddsc_value(uint8_t v[16])
+    {
+        std::copy(v, v + 16, key_.begin());
     }
 
 private:
