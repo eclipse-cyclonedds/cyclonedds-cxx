@@ -15,6 +15,7 @@
 #ifndef CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 #define CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 
+#include <array>
 #include <iomanip>
 
 namespace org
