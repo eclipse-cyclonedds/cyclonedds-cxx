@@ -53,9 +53,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const ::dds::core::policy::UserData& user_data() const
@@ -86,9 +86,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const std::string&                  name() const
@@ -301,14 +301,22 @@ class org::eclipse::cyclonedds::topic::PublicationBuiltinTopicDataDelegate
 public:
     PublicationBuiltinTopicDataDelegate() : ownership_strength_(0) { }
 
+    ~PublicationBuiltinTopicDataDelegate()
+    {
+        if (ddsc_endpoint_)
+        {
+            dds_builtintopic_free_endpoint(ddsc_endpoint_);
+        }
+    }
+
     const dds::topic::BuiltinTopicKey& key() const
     {
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const dds::topic::BuiltinTopicKey& participant_key() const
@@ -316,9 +324,9 @@ public:
         return participant_key_;
     }
 
-    void participant_key(const int32_t* key)
+    void participant_key(const std::array<uint8_t, 16>& key)
     {
-        participant_key_.delegate().value(const_cast<int32_t*>(key));
+        participant_key_.delegate().value(key);
     }
 
     const std::string&                  topic_name() const
@@ -496,6 +504,36 @@ public:
         group_data_.delegate().set_iso_policy(policy);
     }
 
+    void set_ddsc_endpoint(dds_builtintopic_endpoint_t* endpoint)
+    {
+        assert(endpoint);
+
+        ddsc_endpoint_ = endpoint;
+
+        key_.delegate().set_ddsc_value(endpoint->key.v);
+        participant_key_.delegate().set_ddsc_value(endpoint->participant_key.v);
+        topic_name(endpoint->topic_name);
+        type_name(endpoint->type_name);
+        durability(endpoint->qos);
+#ifdef  OMG_DDS_PERSISTENCE_SUPPORT
+        // durability_service(endpoint->qos); // currently not supported in ddsc
+#endif
+        deadline(endpoint->qos);
+        latency_budget(endpoint->qos);
+        liveliness(endpoint->qos);
+        reliability(endpoint->qos);
+        lifespan(endpoint->qos);
+        user_data(endpoint->qos);
+        ownership(endpoint->qos);
+#ifdef  OMG_DDS_OWNERSHIP_SUPPORT
+        ownership_strength(endpoint->qos);
+#endif
+        destination_order(endpoint->qos);
+        partition(endpoint->qos);
+        presentation(endpoint->qos);
+        topic_data(endpoint->qos);
+        group_data(endpoint->qos);
+    }
 
     bool operator ==(const PublicationBuiltinTopicDataDelegate& other) const
     {
@@ -550,6 +588,8 @@ public:
     ::dds::core::policy::Partition          partition_;
     ::dds::core::policy::TopicData          topic_data_;
     ::dds::core::policy::GroupData          group_data_;
+
+    dds_builtintopic_endpoint_t* ddsc_endpoint_;
 };
 
 //==============================================================================
@@ -564,9 +604,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const dds::topic::BuiltinTopicKey& participant_key() const
@@ -574,9 +614,9 @@ public:
         return participant_key_;
     }
 
-    void participant_key(const int32_t* key)
+    void participant_key(const std::array<uint8_t, 16>& key)
     {
-        participant_key_.delegate().value(const_cast<int32_t*>(key));
+        participant_key_.delegate().value(key);
     }
 
     const std::string&                  topic_name() const
@@ -782,9 +822,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     bool operator ==(const CMParticipantBuiltinTopicDataDelegate& other) const
@@ -808,9 +848,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const dds::topic::BuiltinTopicKey&        participant_key() const
@@ -818,9 +858,9 @@ public:
         return participant_key_;
     }
 
-    void participant_key(const int32_t* key)
+    void participant_key(const std::array<uint8_t, 16>& key)
     {
-        participant_key_.delegate().value(const_cast<int32_t*>(key));
+        participant_key_.delegate().value(key);
     }
 
     const std::string&                        name() const
@@ -882,9 +922,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const dds::topic::BuiltinTopicKey&        participant_key() const
@@ -892,9 +932,9 @@ public:
         return participant_key_;
     }
 
-    void participant_key(const int32_t* key)
+    void participant_key(const std::array<uint8_t, 16>& key)
     {
-        participant_key_.delegate().value(const_cast<int32_t*>(key));
+        participant_key_.delegate().value(key);
     }
 
     const std::string&                        name() const
@@ -956,9 +996,9 @@ public:
         return key_;
     }
 
-    void key(const dds_qos_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(reinterpret_cast<const int32_t*>(key)));
+        key_.delegate().value(key);
     }
 
     const dds::topic::BuiltinTopicKey&              publisher_key() const
@@ -966,9 +1006,9 @@ public:
         return publisher_key_;
     }
 
-    void publisher_key(const dds_qos_t* key)
+    void publisher_key(const std::array<uint8_t, 16>& key)
     {
-        publisher_key_.delegate().value(const_cast<int32_t*>(reinterpret_cast<const int32_t*>(key)));
+        publisher_key_.delegate().value(key);
     }
 
     const std::string&                              name() const
@@ -1042,9 +1082,9 @@ public:
         return key_;
     }
 
-    void key(const int32_t* key)
+    void key(const std::array<uint8_t, 16>& key)
     {
-        key_.delegate().value(const_cast<int32_t*>(key));
+        key_.delegate().value(key);
     }
 
     const dds::topic::BuiltinTopicKey&              subscriber_key() const
@@ -1052,9 +1092,9 @@ public:
         return subscriber_key_;
     }
 
-    void subscriber_key(const int32_t* key)
+    void subscriber_key(const std::array<uint8_t, 16>& key)
     {
-        subscriber_key_.delegate().value(const_cast<int32_t*>(key));
+        subscriber_key_.delegate().value(key);
     }
 
     const std::string&                              name() const

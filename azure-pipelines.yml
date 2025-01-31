@@ -92,13 +92,13 @@ strategy:
       cxx: g++-12
       type_lib: off
       topic_discovery: off
-    'macOS 11 with Clang 12 (Debug, x86_64)':
-      image: macOS-11
+    'macOS 14 with Clang 15 (Debug, x86_64)':
+      image: macOS-14
       sanitizer: address
       cc: clang
       cxx: clang++
-    'macOS 11 with Clang 12 (Release, x86_64)':
-      image: macOS-11
+    'macOS 14 with Clang 15 (Release, x86_64)':
+      image: macOS-14
       build_type: Release
       sanitizer: address,undefined
       cc: clang
