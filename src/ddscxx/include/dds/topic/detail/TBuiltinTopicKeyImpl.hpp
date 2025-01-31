@@ -28,15 +28,15 @@ namespace topic
 {
 
 template <typename D>
-const uint8_t* TBuiltinTopicKey<D>::value() const
+const std::array<uint8_t, 16>& TBuiltinTopicKey<D>::value() const
 {
     return this->delegate().value();
 }
 
 template <typename D>
-void TBuiltinTopicKey<D>::value(uint8_t v[])
+void TBuiltinTopicKey<D>::value(const std::array<uint8_t, 16>& key)
 {
-    return this->delegate().value(v);
+    return this->delegate().value(key);
 }
 
 }
