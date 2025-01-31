@@ -16,7 +16,9 @@
 #define CYCLONEDDS_TOPIC_BUILTIN_TOPIC_KEY_DELEGATE_HPP_
 
 #include <array>
+#include <algorithm>
 #include <iomanip>
+
 
 namespace org
 {
