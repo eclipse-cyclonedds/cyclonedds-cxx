@@ -599,6 +599,14 @@ public:
 class org::eclipse::cyclonedds::topic::SubscriptionBuiltinTopicDataDelegate
 {
 public:
+    ~SubscriptionBuiltinTopicDataDelegate()
+    {
+        if (ddsc_endpoint_)
+        {
+            dds_builtintopic_free_endpoint(ddsc_endpoint_);
+        }
+    }
+
     const dds::topic::BuiltinTopicKey& key() const
     {
         return key_;
@@ -769,6 +777,31 @@ public:
         group_data_.delegate().set_iso_policy(policy);
     }
 
+    void set_ddsc_endpoint(dds_builtintopic_endpoint_t* endpoint)
+    {
+        assert(endpoint);
+
+        ddsc_endpoint_ = endpoint;
+
+        key_.delegate().set_ddsc_value(endpoint->key.v);
+        participant_key_.delegate().set_ddsc_value(endpoint->participant_key.v);
+        topic_name(endpoint->topic_name);
+        type_name(endpoint->type_name);
+        durability(endpoint->qos);
+        deadline(endpoint->qos);
+        latency_budget(endpoint->qos);
+        liveliness(endpoint->qos);
+        reliability(endpoint->qos);
+        ownership(endpoint->qos);
+        destination_order(endpoint->qos);
+        user_data(endpoint->qos);
+        time_based_filter(endpoint->qos);
+        presentation(endpoint->qos);
+        partition(endpoint->qos);
+        topic_data(endpoint->qos);
+        group_data(endpoint->qos);
+    }
+
     bool operator ==(const SubscriptionBuiltinTopicDataDelegate& other) const
     {
         return other.key_ == key_
@@ -808,6 +841,8 @@ public:
     ::dds::core::policy::Partition          partition_;
     ::dds::core::policy::TopicData          topic_data_;
     ::dds::core::policy::GroupData          group_data_;
+
+    dds_builtintopic_endpoint_t* ddsc_endpoint_;
 };
 
 //==============================================================================

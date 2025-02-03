@@ -423,9 +423,19 @@ AnyDataWriterDelegate::matched_subscriptions()
 const dds::topic::SubscriptionBuiltinTopicData
 AnyDataWriterDelegate::matched_subscription_data(const ::dds::core::InstanceHandle& h)
 {
-    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
     dds::topic::SubscriptionBuiltinTopicData dataSample;
-    (void)h;
+
+    dds_builtintopic_endpoint_t* endpoint = dds_get_matched_subscription_data(ddsc_entity, h->handle());
+    if (endpoint)
+    {
+        dataSample.delegate().set_ddsc_endpoint(endpoint);
+    }
+    else
+    {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_INVALID_ARGUMENT_ERROR,
+            "Failed to get matched subscription data. The writer is not valid or ih is not an instance handle of a matched reader.");
+    }
+
     return dataSample;
 }
 
