@@ -414,9 +414,25 @@ AnyDataWriterDelegate::publication_matched_status()
 ::dds::core::InstanceHandleSeq
 AnyDataWriterDelegate::matched_subscriptions()
 {
-    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
-
     ::dds::core::InstanceHandleSeq handleSeq;
+    dds_return_t rc;
+
+    dds_publication_matched_status_t status;
+    rc = dds_get_publication_matched_status (ddsc_entity, &status);
+    ISOCPP_DDSC_RESULT_CHECK_AND_THROW(rc, "dds_get_publication_matched_status failed.");
+
+    if (status.current_count > 0) {
+        std::vector<dds_instance_handle_t> ddsc_instance_handles;
+        ddsc_instance_handles.resize(status.current_count);
+
+        rc = dds_get_matched_subscriptions(ddsc_entity, ddsc_instance_handles.data(), ddsc_instance_handles.size());
+        ISOCPP_DDSC_RESULT_CHECK_AND_THROW(rc, "dds_get_matched_subscriptions failed.");
+
+        for (const auto& handle : ddsc_instance_handles) {
+            handleSeq.push_back(::dds::core::InstanceHandle(handle));
+        }
+    }
+
     return handleSeq;
 }
 

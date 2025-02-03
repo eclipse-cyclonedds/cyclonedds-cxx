@@ -748,24 +748,16 @@ TEST_F(DataWriter, matched_subscriptions_sequence)
 {
     this->SetupCommunication(false);
 
-    /* TODO: Check returned instance handle against the reader instance.
-     * Instance handles are not yet supported. So, this isn't either. */
-    ASSERT_THROW({
-        ::dds::core::InstanceHandleSeq handleSeq;
-        handleSeq = dds::pub::matched_subscriptions(this->writer);
-    }, dds::core::UnsupportedError);
+    ::dds::core::InstanceHandleSeq handleSeq;
+    handleSeq = dds::pub::matched_subscriptions(this->writer);
 }
 
 TEST_F(DataWriter, matched_subscriptions_array)
 {
     this->SetupCommunication(false);
 
-    /* TODO: Check returned instance handle against the reader instance.
-     * Instance handles are not yet supported. So, this isn't either. */
-    ASSERT_THROW({
-        ::dds::core::InstanceHandle handleArr[2]; /* Make sure we have more than enough. */
-        (void)dds::pub::matched_subscriptions(this->writer, handleArr, 2);
-    }, dds::core::UnsupportedError);
+    ::dds::core::InstanceHandle handleArr[2]; /* Make sure we have more than enough. */
+    (void)dds::pub::matched_subscriptions(this->writer, handleArr, 2);
 }
 
 TEST_F(DataWriter, shift_sample)
