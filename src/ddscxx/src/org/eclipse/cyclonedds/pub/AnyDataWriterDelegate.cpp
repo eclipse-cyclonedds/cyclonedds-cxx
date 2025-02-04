@@ -428,8 +428,8 @@ AnyDataWriterDelegate::matched_subscriptions()
         rc = dds_get_matched_subscriptions(ddsc_entity, ddsc_instance_handles.data(), ddsc_instance_handles.size());
         ISOCPP_DDSC_RESULT_CHECK_AND_THROW(rc, "dds_get_matched_subscriptions failed.");
 
-        for (const auto& handle : ddsc_instance_handles) {
-            handleSeq.push_back(::dds::core::InstanceHandle(handle));
+        for (size_t i = 0; i < static_cast<size_t>(rc); i++) {
+            handleSeq.push_back(::dds::core::InstanceHandle(ddsc_instance_handles[i]));
         }
     }
 
