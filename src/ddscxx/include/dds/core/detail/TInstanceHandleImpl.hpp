@@ -108,13 +108,6 @@ inline std::ostream& operator << (std::ostream& os, const dds::core::TInstanceHa
     return os;
 }
 
-//Overloaded operator << (workaround issues 252 and 162)
-inline std::ostream& operator << (std::ostream& os, const dds::core::TInstanceHandle<org::eclipse::cyclonedds::core::InstanceHandleDelegate> h)
-{
-     os << h.delegate();
-     return os;
-}
-
 // End of implementation
 
 #endif /* CYCLONEDDS_DDS_CORE_TINSTANCEHANDLE_IMPL_HPP_ */
