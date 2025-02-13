@@ -11,10 +11,21 @@
 #ifndef _TEST_UTIL_H
 #define _TEST_UTIL_H
 
+#include "dds/dds.hpp"
+
 #include <stdint.h>
 #include <stddef.h>
 
 /* Get unique g_topic name on each invocation. */
 char *create_unique_topic_name (const char *prefix, char *name, size_t size);
+
+/* I have no idea why gcc-10 and gcc-11 fail if this overload isn't available in the tests */
+#if defined __GNUC__ && __GNUC__ < 12
+inline std::ostream& operator << (std::ostream& os, const dds::core::TInstanceHandle<org::eclipse::cyclonedds::core::InstanceHandleDelegate> h)
+{
+  os << h.delegate();
+  return os;
+}
+#endif
 
 #endif /* _TEST_UTIL_H */
