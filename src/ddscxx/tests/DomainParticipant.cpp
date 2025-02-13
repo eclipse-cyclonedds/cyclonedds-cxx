@@ -7,6 +7,7 @@
 // http://www.eclipse.org/org/documents/edl-v10.php.
 //
 // SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
 #include "Util.hpp"
 #include "dds/dds.hpp"
 #include <gtest/gtest.h>
