@@ -11,6 +11,8 @@
 #include <chrono>
 #include <thread>
 
+#include "Util.hpp"
+
 #include "dds/dds.hpp"
 #include "dds/ddsrt/sync.h"
 #include "dds/ddsrt/threads.h"

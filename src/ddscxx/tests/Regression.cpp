@@ -8,6 +8,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
 
+#include "Util.hpp"
 #include "dds/ddsrt/misc.h"
 
 DDSRT_WARNING_GNUC_OFF(maybe-uninitialized)
