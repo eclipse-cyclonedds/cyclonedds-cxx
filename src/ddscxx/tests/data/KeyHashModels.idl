@@ -90,11 +90,10 @@ struct SerdataKeyArr {
     @key uint8 a[12];
 };
 
-// TODO: currently not supported
-// @final
-// struct SerdataKeyArrStrBounded {
-//     @key string<2> a[2];
-// };
+@final
+struct SerdataKeyArrStrBounded {
+    @key string<2> a[2];
+};
 
 
 // Nested aggregated types

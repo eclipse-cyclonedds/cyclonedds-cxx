@@ -52,6 +52,13 @@ module CDR_testing {
     sequence<long> l;
   };
 
+  @nested struct sequence_struct_n { @key long c; long l; };
+  struct sequence_struct_nested {
+    @key sequence<sequence_struct_n, 5> c;
+    @key sequence<sequence<long> > b;
+    sequence<long> l;
+  };
+
   @mutable struct sequence_struct_mutable {
     @key sequence<char> c;
     sequence<long> l;
@@ -60,6 +67,12 @@ module CDR_testing {
   //array
   struct array_struct {
     @key char c[5];
+    long l[5];
+  };
+
+  @nested struct array_struct_n { octet c[3]; uint16 l; };
+  struct array_struct_nested {
+    @key array_struct_n c[2];
     long l[5];
   };
 
