@@ -50,6 +50,7 @@
  * dds::core::policy::ReaderDataLifecycle         | Instance state changes and notifications (@ref DCPS_QoS_ReaderDataLifecycle "info") | ReaderDataLifecycle::NoAutoPurgeDisposedSamples()
  * dds::core::policy::DataRepresentation          | Supported data representation kinds (@ref DCPS_QoS_DataRepresentation "info")  | DataRepresentation::DataRepresentation(dds::core::policy::DataRepresentationId::XCDR1)
  * dds::core::policy::TypeConsistencyEnforcement | Type consistency enforcement policies (@ref DCPS_QoS_TypeConsistencyEnforcement "info") | dds::core::policy::TypeConsistencyKind::DISALLOW_TYPE_COERCION
+ * dds::core::policy::IgnoreLocal                 | Ignore local readers                                                                | dds::core::policy::IgnoreLocal::None()
  *
  * A QosPolicy can be set when the DataReader is created or modified with the set
  * qos operation.

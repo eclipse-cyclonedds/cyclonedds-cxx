@@ -39,6 +39,33 @@
         static const std::string& name(); \
     };
 
+namespace org
+{
+namespace eclipse
+{
+namespace cyclonedds
+{
+namespace core
+{
+namespace policy
+{
+template <typename Policy>
+class policy_id;
+template <typename Policy>
+class policy_name;
+
+/*
+ * Proprietary policies values
+ */
+typedef dds::core::policy::TIgnoreLocal<org::eclipse::cyclonedds::core::policy::IgnoreLocalDelegate> IgnoreLocal;
+
+}
+}
+}
+}
+}
+
+
 namespace dds
 {
 namespace core
@@ -49,6 +76,7 @@ template <typename Policy>
 class policy_id;
 template <typename Policy>
 class policy_name;
+
 }
 }
 }
