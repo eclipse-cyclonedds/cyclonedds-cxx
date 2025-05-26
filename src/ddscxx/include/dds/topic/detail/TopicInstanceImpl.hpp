@@ -31,27 +31,27 @@ template <typename T>
 TopicInstance<T>::TopicInstance() : h_(dds::core::null) {}
 
 template <typename T>
-TopicInstance<T>::TopicInstance(const ::dds::core::InstanceHandle& h)
+TopicInstance<T>::TopicInstance(const dds::core::InstanceHandle& h)
     : h_(h), sample_() {}
 
 template <typename T>
-TopicInstance<T>::TopicInstance(const ::dds::core::InstanceHandle& h, const T& sample)
+TopicInstance<T>::TopicInstance(const dds::core::InstanceHandle& h, const T& sample)
     : h_(h), sample_(sample) { }
 
 template <typename T>
-TopicInstance<T>::operator const ::dds::core::InstanceHandle() const
+TopicInstance<T>::operator const dds::core::InstanceHandle() const
 {
     return h_;
 }
 
 template <typename T>
-const ::dds::core::InstanceHandle TopicInstance<T>::handle() const
+const dds::core::InstanceHandle TopicInstance<T>::handle() const
 {
     return h_;
 }
 
 template <typename T>
-void TopicInstance<T>::handle(const ::dds::core::InstanceHandle& h)
+void TopicInstance<T>::handle(const dds::core::InstanceHandle& h)
 {
     h_ = h;
 }
