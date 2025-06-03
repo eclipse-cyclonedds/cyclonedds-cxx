@@ -41,8 +41,8 @@ class custom_stack {
   custom_stack(const T &in) {data[0] = in; sz = 1;}
   T &top() {return data[sz-1];}
   const T& top() const {return data[sz-1];}
-  void pop() {sz--;}
-  void push(const T &in) {data[sz++] = in;}
+  const T pop() {assert(sz > 0); return data[--sz];}
+  void push(const T &in) {assert(sz < N); data[sz++] = in;}
   void reset() {sz = 0;}
   size_t size() const {return sz;}
 };
