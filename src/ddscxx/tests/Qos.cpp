@@ -10,6 +10,7 @@
 
 #include "Util.hpp"
 #include "dds/dds.hpp"
+#include "dds/ddsc/dds_psmx.h"  //to get DDS_MAX_PSMX_INSTANCES
 #include <gtest/gtest.h>
 
 using namespace dds::pub::qos;
@@ -603,6 +604,14 @@ TEST(Qos, invalid_values)
         invalidResources = ResourceLimits(0, /* max_samples */
                                           0,  /* max_instances */
                                           0   /* max_samples_per_instance */);
+    }, dds::core::InvalidArgumentError);
+
+    std::vector<std::string> instances;
+    for (size_t i = 0; i <= DDS_MAX_PSMX_INSTANCES; i++)
+      instances.push_back("instance_" + std::to_string(i));
+
+    ASSERT_THROW({
+        invalidPSMXInstances = PSMXInstances(instances);
     }, dds::core::InvalidArgumentError);
 }
 
