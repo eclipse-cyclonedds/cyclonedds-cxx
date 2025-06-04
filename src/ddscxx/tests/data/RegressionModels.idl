@@ -279,4 +279,98 @@ union union_with_default switch (regression_enum) {
         long i;
 };
 
+@appendable
+struct appendable_base {
+  long a;
+  long b;
+};
+
+struct appendable_base_seq {
+  appendable_base m[4];
+};
+
+@appendable
+struct appendable_extended {
+  long a;
+  long b;
+  long c;
+};
+
+struct appendable_extended_seq {
+  appendable_extended m[4];
+};
+
+@appendable
+struct appendable_extended_k {
+  long a;
+  long b;
+  @key long c;
+};
+
+struct appendable_extended_k_seq {
+  appendable_extended_k m[4];
+};
+
+@appendable
+struct appendable_extended_optional {
+  long a;
+  long b;
+  @optional long c;
+};
+
+struct appendable_extended_optional_seq {
+  appendable_extended_optional m[4];
+};
+
+@mutable
+struct mutable_base {
+  @id(1) long a;
+  @id(2) long b;
+};
+
+struct mutable_base_seq {
+  mutable_base m[4];
+};
+
+@mutable
+struct mutable_extended {
+  @id(1) long a;
+  @id(2) long b;
+  @id(3) long c;
+};
+
+struct mutable_extended_seq {
+  mutable_extended m[4];
+};
+
+@mutable
+struct mutable_extended_mu {
+  @id(2) long b;
+  @must_understand @id(3) long c;
+};
+
+struct mutable_extended_mu_seq {
+  mutable_extended_mu m[4];
+};
+
+@mutable
+struct mutable_truncated {
+  @id(2) long b;
+};
+
+struct mutable_truncated_seq {
+  mutable_truncated m[4];
+};
+
+@mutable
+struct mutable_extended_optional {
+  @id(1) long a;
+  @id(2) long b;
+  @optional @id(3) long c;
+};
+
+struct mutable_extended_optional_seq {
+  mutable_extended_optional m[4];
+};
+
 };

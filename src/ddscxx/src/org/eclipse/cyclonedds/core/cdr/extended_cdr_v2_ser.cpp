@@ -73,7 +73,7 @@ bool xcdr_v2_stream::finish_member(const entity_properties_t &prop, member_id_se
       break;
     case stream_mode::read:
       if (em_header_necessary(prop))
-        m_buffer_end.pop();
+        position(m_buffer_end.pop());
       break;
     default:
       break;
@@ -311,7 +311,7 @@ bool xcdr_v2_stream::finish_struct(const entity_properties_t &props, const membe
       if (!check_struct_completeness(props, member_ids))
         return false;
       else if (d_header_necessary(props))
-        m_buffer_end.pop();
+        position(m_buffer_end.pop());
       break;
     default:
       break;
@@ -371,7 +371,7 @@ bool xcdr_v2_stream::finish_consecutive()
       case stream_mode::max:
         break;
       case stream_mode::read:
-        m_buffer_end.pop();
+        position(m_buffer_end.pop());
         break;
       default:
         assert(0);

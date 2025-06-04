@@ -63,7 +63,7 @@ bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_se
           return false;
         break;
       case stream_mode::read:
-        m_buffer_end.pop();
+        position(m_buffer_end.pop());
         break;
       default:
         break;
