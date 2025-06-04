@@ -519,34 +519,22 @@ struct Has_c : public T, Has_c_helper
 
 //functions to populate the member (if it exists) with random data
 
-template<typename T, std::enable_if_t<Has_a<T>::value, bool> = true > void populate_a(T &in) { in.a(rand()); }
-template<typename T, std::enable_if_t<!Has_a<T>::value, bool> = true > void populate_a(T &) { ; }
+template<typename T, std::enable_if_t<Has_a<T>::value, bool> = true > void populate_a(T &in, const int val) { in.a(val); }
+template<typename T, std::enable_if_t<!Has_a<T>::value, bool> = true > void populate_a(T &, const int) { ; }
 
-template<typename T, std::enable_if_t<Has_b<T>::value, bool> = true > void populate_b(T &in) { in.b(rand()); }
-template<typename T, std::enable_if_t<!Has_b<T>::value, bool> = true > void populate_b(T &) { ; }
+template<typename T, std::enable_if_t<Has_b<T>::value, bool> = true > void populate_b(T &in, const int val) { in.b(val); }
+template<typename T, std::enable_if_t<!Has_b<T>::value, bool> = true > void populate_b(T &, const int) { ; }
 
-template<typename T, std::enable_if_t<Has_c<T>::value, bool> = true > void populate_c(T &in) { in.c(rand()); }
-template<typename T, std::enable_if_t<!Has_c<T>::value, bool> = true > void populate_c(T &) { ; }
+template<typename T, std::enable_if_t<Has_c<T>::value, bool> = true > void populate_c(T &in, const int val) { in.c(val); }
+template<typename T, std::enable_if_t<!Has_c<T>::value, bool> = true > void populate_c(T &, const int) { ; }
 
 //functions to check whether both types have a specific member
 
-template <typename T, typename U> constexpr bool BothHave_a()
-{
-  auto tval = Has_a<T>::value, uval = Has_a<U>::value;
-  return tval && uval;
-}
+template <typename T, typename U> constexpr bool BothHave_a() { return Has_a<T>::value && Has_a<U>::value; }
 
-template <typename T, typename U> constexpr bool BothHave_b()
-{
-  auto tval = Has_b<T>::value, uval = Has_b<U>::value;
-  return tval && uval;
-}
+template <typename T, typename U> constexpr bool BothHave_b() { return Has_b<T>::value && Has_b<U>::value; }
 
-template <typename T, typename U> constexpr bool BothHave_c()
-{
-  auto tval = Has_c<T>::value, uval = Has_c<U>::value;
-  return tval && uval;
-}
+template <typename T, typename U> constexpr bool BothHave_c() { return Has_c<T>::value && Has_c<U>::value; }
 
 //functions to compare the contents of the member on both types (if it exists)
 
@@ -572,9 +560,9 @@ bool test_appendable_mutable()
   bytes buffer;
   T towrite;
 
-  populate_a(towrite);
-  populate_b(towrite);
-  populate_c(towrite);
+  populate_a(towrite, int(0x12345678));
+  populate_b(towrite, int(0x55555555));
+  populate_c(towrite, int(0x87654321));
 
   S serializer;
   if (!move(serializer, towrite, key_mode::not_key))
@@ -687,10 +675,13 @@ bool test_sequential()
   bytes buffer;
   T towrite;
 
+  int i = int(0x12345678),
+      j = int(0x55555555),
+      k = int(0x87654321);
   for (auto & e:towrite.m()) {
-    populate_a(e);
-    populate_b(e);
-    populate_c(e);
+    populate_a(e, i++);
+    populate_b(e, j++);
+    populate_c(e, k++);
   }
 
   S serializer;
