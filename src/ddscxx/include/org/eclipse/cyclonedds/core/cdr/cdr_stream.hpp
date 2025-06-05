@@ -601,7 +601,7 @@ bool read(S &str, T& toread, size_t N = 1)
   T* to = &toread;
   assert(from);
   if (N > 1 || sizeof(T) > 4)
-    memcpy(to,from,sizeof(T)*N);
+    memcpy(reinterpret_cast<void*>(to),reinterpret_cast<const void*>(from),sizeof(T)*N);
   else
     *to = *from;
 
@@ -676,7 +676,7 @@ bool write(S& str, const T& towrite, size_t N = 1)
   T* to = reinterpret_cast<T*>(str.get_cursor());
   assert(to);
   if (N > 1 || sizeof(T) > 4)
-    memcpy(to,from,sizeof(T)*N);
+    memcpy(reinterpret_cast<void*>(to),reinterpret_cast<const void*>(from),sizeof(T)*N);
   else
     *to = *from;
 
