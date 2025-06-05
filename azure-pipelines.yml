@@ -109,14 +109,14 @@ strategy:
     #  image: windows-2019
     #  generator: 'Visual Studio 16 2019'
     #  toolkit: v141
-    'Windows 2019 with Visual Studio 2019 (Debug, x86_64)':
-      image: windows-2019
+    'Windows 2022 with Visual Studio 2019 (Debug, x86_64)':
+      image: windows-2022
       analyzer: on
-      generator: 'Visual Studio 16 2019'
-    'Windows 2019 with Visual Studio 2019 (Release, x86_64)':
-      image: windows-2019
+      generator: 'Visual Studio 17 2022'
+    'Windows 2022 with Visual Studio 2019 (Release, x86_64)':
+      image: windows-2022
       build_type: Release
-      generator: 'Visual Studio 16 2019'
+      generator: 'Visual Studio 17 2022'
     #C++11 needs boost, installing boost takes forever on Windows
     #'Windows 2019 with Visual Studio 2019 (Release, x86_64, c++11)':
     #  image: windows-2019
