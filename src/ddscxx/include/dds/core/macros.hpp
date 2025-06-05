@@ -58,15 +58,15 @@ public:\
     virtual ~TYPE() = default;\
     TYPE(const TYPE& tocopy) = default;\
     TYPE(TYPE&& tomove) = default;\
-    virtual TYPE& operator=(const TYPE& tocopy) = default;\
-    virtual TYPE& operator=(TYPE&& tomove) { if (this != &tomove) *this = tomove; return *this;}
+    TYPE& operator=(const TYPE& tocopy) = default;\
+    TYPE& operator=(TYPE&& tomove) { if (this != &tomove) *this = tomove; return *this;}
 
 #define OMG_DDS_COMPLETE_RULE_OF_FIVE_VIRTUAL_EXPLICIT(TYPE) \
 public:\
     virtual ~TYPE() {}\
     TYPE(const TYPE& tocopy): dds::core::Reference<DELEGATE>(dynamic_cast<const dds::core::Reference<DELEGATE>& >(tocopy)) {}\
     TYPE(TYPE&& tomove): dds::core::Reference<DELEGATE>(dynamic_cast<dds::core::Reference<DELEGATE>&& >(tomove)) {}\
-    virtual TYPE& operator=(const TYPE& tocopy) {this->dds::core::Reference<DELEGATE>::operator=(dynamic_cast<const dds::core::Reference<DELEGATE>& >(tocopy)); return *this;}\
-    virtual TYPE& operator=(TYPE&& tomove) { if (this != &tomove) this->dds::core::Reference<DELEGATE>::operator=(dynamic_cast<dds::core::Reference<DELEGATE>&& >(tomove)); return *this;}
+    TYPE& operator=(const TYPE& tocopy) { this->dds::core::Reference<DELEGATE>::operator=(dynamic_cast<const dds::core::Reference<DELEGATE>& >(tocopy)); return *this;}\
+    TYPE& operator=(TYPE&& tomove) { if (this != &tomove) this->dds::core::Reference<DELEGATE>::operator=(dynamic_cast<dds::core::Reference<DELEGATE>&& >(tomove)); return *this;}
 
 #endif /* OMG_DDS_CORE_MACROS_HPP_*/

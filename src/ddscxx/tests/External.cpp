@@ -11,6 +11,7 @@
 #include "dds/dds.hpp"
 #include <dds/core/External.hpp>
 #include <thread>
+#include <chrono>
 #include "ExternalModels.hpp"
 
 #include <gtest/gtest.h>
