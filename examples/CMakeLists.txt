@@ -49,3 +49,14 @@ install(
   COMPONENT dev)
 
 add_subdirectory(roundtrip)
+
+install(
+  FILES atc/publisher.cpp
+        atc/subscriber.cpp
+        atc/ATCDataModel.idl
+        atc/CMakeLists.txt
+        atc/readme.rst
+  DESTINATION "${CMAKE_INSTALL_EXAMPLESDIR}/atc"
+  COMPONENT dev)
+
+add_subdirectory(atc)
