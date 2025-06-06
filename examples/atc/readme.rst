@@ -67,4 +67,3 @@ It is recommended to run one Publishing program (pubATC) and several Subscribing
 `./pubATC`
 
 `./subATC /Europe/Netherlands/Zeeland`
- 
