@@ -21,6 +21,10 @@
 #include "dds/ddsc/dds_public_qos.h"
 #include "dds/ddsc/dds_psmx.h"
 
+/*
+ * Proprietary policies traits.
+ */
+
 namespace org
 {
 namespace eclipse
@@ -1624,6 +1628,80 @@ void WriterDataLifecycleDelegate::set_c_policy(dds_qos_t* qos) const
     dds_qset_writer_data_lifecycle(qos, autodispose_);
 }
 
+//==============================================================================
+
+IgnoreLocalDelegate::IgnoreLocalDelegate(const IgnoreLocalDelegate& other)
+    : kind_(other.kind_)
+{
+}
+
+IgnoreLocalDelegate::IgnoreLocalDelegate(dds::core::policy::IgnoreLocalKind::Type kind)
+    : kind_(kind)
+{
+    this->check();
+}
+
+void IgnoreLocalDelegate::kind(dds::core::policy::IgnoreLocalKind::Type kind)
+{
+    kind_ = kind;
+}
+
+dds::core::policy::IgnoreLocalKind::Type IgnoreLocalDelegate::kind() const
+{
+    return kind_;
+}
+
+bool IgnoreLocalDelegate::operator ==(const IgnoreLocalDelegate& other) const
+{
+    return other.kind() == kind_;
+}
+
+void IgnoreLocalDelegate::check() const
+{
+    /* The kind correctness is enforced by the compiler: nothing to check. */
+}
+
+void IgnoreLocalDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    dds_ignorelocal_kind_t kind;
+    if (dds_qget_ignorelocal(qos, &kind)) {
+        switch (kind) {
+            case DDS_IGNORELOCAL_NONE:
+                kind_ = dds::core::policy::IgnoreLocalKind::NONE;
+                break;
+            case DDS_IGNORELOCAL_PARTICIPANT:
+                kind_ = dds::core::policy::IgnoreLocalKind::PARTICIPANT;
+                break;
+            case DDS_IGNORELOCAL_PROCESS:
+                kind_ = dds::core::policy::IgnoreLocalKind::PROCESS;
+                break;
+            default:
+                assert(0);
+                break;
+        }
+    }
+}
+
+void IgnoreLocalDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    switch(kind_)
+    {
+    case dds::core::policy::IgnoreLocalKind::NONE:
+        dds_qset_ignorelocal(qos, DDS_IGNORELOCAL_NONE);
+        break;
+    case dds::core::policy::IgnoreLocalKind::PARTICIPANT:
+        dds_qset_ignorelocal(qos, DDS_IGNORELOCAL_PARTICIPANT);
+        break;
+    case dds::core::policy::IgnoreLocalKind::PROCESS:
+        dds_qset_ignorelocal(qos, DDS_IGNORELOCAL_PROCESS);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+//==============================================================================
 
 //==============================================================================
 
