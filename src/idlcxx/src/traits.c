@@ -203,7 +203,7 @@ emit_register_topic_type(
 {
   struct generator *gen = user_data;
   char *name = NULL;
-  static const char *fmt = "REGISTER_TOPIC_TYPE(%s)\n";
+  static const char *fmt = "REGISTER_TOPIC_TYPE(%s);\n";
 
   (void)pstate;
   (void)revisit;
