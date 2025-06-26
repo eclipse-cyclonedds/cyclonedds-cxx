@@ -28,7 +28,8 @@ org::eclipse::cyclonedds::sub::cond::ReadConditionDelegate::ReadConditionDelegat
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ddsc_dr, "Could not get reader entity");
 
     // Create the mask corresponding to the sample, view and instance state
-    ddsc_mask = dr.delegate()->get_ddsc_state_mask(state_filter);
+    auto del = dr.delegate();
+    ddsc_mask = del->get_ddsc_state_mask(state_filter);
 
     // Create ddsc read condition
     ddsc_read_cond = dds_create_readcondition(ddsc_dr, ddsc_mask);
