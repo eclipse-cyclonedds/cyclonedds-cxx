@@ -221,7 +221,7 @@ public:
 /// is enabled, and it is disposed when that DataWriter is deleted. An updated
 /// PublicationBuiltinTopicData sample is written each time the DataWriter (or
 /// the Publisher to which it belongs) modifies a QosPolicy that applies to the
-/// entities connected to it. Also will it be updated when the writer looses or
+/// entities connected to it. Also will it be updated when the writer loses or
 /// regains its liveliness.
 ///
 /// @code{.cpp}

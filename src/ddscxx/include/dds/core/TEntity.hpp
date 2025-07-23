@@ -105,7 +105,7 @@ public:
      * is not enabled are inactive; that is, they have a trigger_value==false
      * (dds::core::cond::Condition and dds::core::cond::WaitSet).
      *
-     * eg.
+     * e.g.
      * @code{.cpp}
      * dds::domain::qos::DomainParticipantQos dpq;
      * dpq << dds::core::policy::EntityFactory::ManuallyEnable();
