@@ -15,6 +15,7 @@ DDSRT_WARNING_GNUC_OFF(maybe-uninitialized)
 
 #include "dds/dds.hpp"
 #include <gtest/gtest.h>
+#include <type_traits>
 #include "RegressionModels.hpp"
 #include "RegressionModels_pragma.hpp"
 
@@ -477,6 +478,326 @@ TEST_F(Regression, union_comparisons)
   EXPECT_NE(w_5, w_3);
   EXPECT_NE(w_5, w_4);
   EXPECT_EQ(w_5, w_5);
+}
+
+//functions to check whether a member of a type exists
+struct Has_a_helper { int a_; };
+
+template <typename T>
+struct Has_a : public T, Has_a_helper
+ {
+   template <typename U = Has_a, typename = decltype(U::a_)>
+   static constexpr std::false_type check (int);
+   static constexpr std::true_type check (long);
+   using type = decltype(check(0));
+   static constexpr auto value = type::value;
+ };
+
+struct Has_b_helper { int b_; };
+
+template <typename T>
+struct Has_b : public T, Has_b_helper
+ {
+   template <typename U = Has_b, typename = decltype(U::b_)>
+   static constexpr std::false_type check (int);
+   static constexpr std::true_type check (long);
+   using type = decltype(check(0));
+   static constexpr auto value = type::value;
+ };
+
+struct Has_c_helper { int c_; };
+
+template <typename T>
+struct Has_c : public T, Has_c_helper
+ {
+   template <typename U = Has_c, typename = decltype(U::c_)>
+   static constexpr std::false_type check (int);
+   static constexpr std::true_type check (long);
+   using type = decltype(check(0));
+   static constexpr auto value = type::value;
+ };
+
+//functions to populate the member (if it exists) with random data
+
+template<typename T, std::enable_if_t<Has_a<T>::value, bool> = true > void populate_a(T &in, const int val) { in.a(val); }
+template<typename T, std::enable_if_t<!Has_a<T>::value, bool> = true > void populate_a(T &, const int) { ; }
+
+template<typename T, std::enable_if_t<Has_b<T>::value, bool> = true > void populate_b(T &in, const int val) { in.b(val); }
+template<typename T, std::enable_if_t<!Has_b<T>::value, bool> = true > void populate_b(T &, const int) { ; }
+
+template<typename T, std::enable_if_t<Has_c<T>::value, bool> = true > void populate_c(T &in, const int val) { in.c(val); }
+template<typename T, std::enable_if_t<!Has_c<T>::value, bool> = true > void populate_c(T &, const int) { ; }
+
+//functions to check whether both types have a specific member
+
+template <typename T, typename U> constexpr bool BothHave_a() { return Has_a<T>::value && Has_a<U>::value; }
+
+template <typename T, typename U> constexpr bool BothHave_b() { return Has_b<T>::value && Has_b<U>::value; }
+
+template <typename T, typename U> constexpr bool BothHave_c() { return Has_c<T>::value && Has_c<U>::value; }
+
+//functions to compare the contents of the member on both types (if it exists)
+
+template<typename T, typename U, std::enable_if_t<BothHave_a<T,U>(), bool> = true >
+bool compare_a(const T &left, const U &right) { return left.a() == right.a(); }
+template<typename T, typename U, std::enable_if_t<!BothHave_a<T,U>(), bool> = true >
+bool compare_a(const T &, const U &) { return true; }
+
+template<typename T, typename U, std::enable_if_t<BothHave_b<T,U>(), bool> = true >
+bool compare_b(const T &left, const U &right) { return left.b() == right.b(); }
+template<typename T, typename U, std::enable_if_t<!BothHave_b<T,U>(), bool> = true >
+bool compare_b(const T &, const U &) { return true; }
+
+template<typename T, typename U, std::enable_if_t<BothHave_c<T,U>(), bool> = true >
+bool compare_c(const T &left, const U &right) { return left.c() == right.c(); }
+template<typename T, typename U, std::enable_if_t<!BothHave_c<T,U>(), bool> = true >
+bool compare_c(const T &, const U &) { return true; }
+
+//function to test writing one struct and attempting to read it back as another
+template<typename S, typename T, typename U>
+bool test_appendable_mutable()
+{
+  bytes buffer;
+  T towrite;
+
+  populate_a(towrite, int(0x12345678));
+  populate_b(towrite, int(0x55555555));
+  populate_c(towrite, int(0x87654321));
+
+  S serializer;
+  if (!move(serializer, towrite, key_mode::not_key))
+    return false;
+
+  buffer.resize(serializer.position());
+  serializer.reset();
+  serializer.set_buffer(buffer.data(), buffer.size());
+
+  if (!write(serializer, towrite, key_mode::not_key))
+    return false;
+
+  serializer.reset();
+  serializer.set_buffer(buffer.data(), buffer.size());
+
+  U toread;
+  if (!read(serializer, toread, key_mode::not_key))
+    return false;
+
+  //compare fields
+  return compare_a(towrite, toread) &&
+         compare_b(towrite, toread) &&
+         compare_c(towrite, toread);
+}
+
+//test naked appendable structs
+template<typename S>
+void appendable_tests ()
+{
+  //appendable can skip/truncate members that have not been serialized...
+  auto result = test_appendable_mutable<S, appendable_extended, appendable_base>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, appendable_extended_k, appendable_base>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, appendable_extended_optional, appendable_base>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, appendable_base, appendable_extended>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, appendable_extended_k, appendable_extended>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, appendable_extended, appendable_extended_k>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, appendable_base, appendable_extended_optional>();
+  EXPECT_TRUE(result);
+
+  // ... except for key fields
+  result = test_appendable_mutable<S, appendable_base, appendable_extended_k>();
+  EXPECT_FALSE(result);
+}
+
+//test naked mutable structs
+template<typename S>
+void mutable_tests ()
+{
+  //mutable types can always be extended/truncated when no must understand fields are dropped
+  auto result = test_appendable_mutable<S, mutable_base, mutable_extended>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, mutable_extended, mutable_base>();
+  EXPECT_TRUE(result);
+
+  //must_understand fields must be deserialized in the sending and receiving stream
+  result = test_appendable_mutable<S, mutable_base, mutable_extended_mu>();
+  EXPECT_FALSE(result);
+
+  result = test_appendable_mutable<S, mutable_extended_mu, mutable_base>();
+  EXPECT_FALSE(result);
+
+  //the field "c" is present and we understand it, so no problem here
+  result = test_appendable_mutable<S, mutable_extended, mutable_extended_mu>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, mutable_extended_mu, mutable_extended>();
+  EXPECT_TRUE(result);
+
+  //truncated mutables can be received as everything...
+  result = test_appendable_mutable<S, mutable_truncated, mutable_base>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, mutable_truncated, mutable_extended>();
+  EXPECT_TRUE(result);
+
+  result = test_appendable_mutable<S, mutable_truncated, mutable_extended_optional>();
+  EXPECT_TRUE(result);
+
+  //... except for types with a must_understand field
+  result = test_appendable_mutable<S, mutable_truncated, mutable_extended_mu>();
+  EXPECT_FALSE(result);
+}
+
+//testing truncation of appendable/mutable types
+TEST_F(Regression, truncation)
+{
+  appendable_tests<xcdr_v1_stream>();
+  appendable_tests<xcdr_v2_stream>();
+  mutable_tests<xcdr_v1_stream>();
+  mutable_tests<xcdr_v2_stream>();
+}
+
+//function to test writing one struct containing sequential structs and attempting to read it back as another
+template<typename S, typename T, typename U>
+bool test_sequential()
+{
+  bytes buffer;
+  T towrite;
+
+  int i = int(0x12345678),
+      j = int(0x55555555),
+      k = int(0x87654321);
+  for (auto & e:towrite.m()) {
+    populate_a(e, i++);
+    populate_b(e, j++);
+    populate_c(e, k++);
+  }
+
+  S serializer;
+  if (!move(serializer, towrite, key_mode::not_key))
+    return false;
+
+  buffer.resize(serializer.position());
+  serializer.reset();
+  serializer.set_buffer(buffer.data(), buffer.size());
+
+  if (!write(serializer, towrite, key_mode::not_key))
+    return false;
+
+  serializer.reset();
+  serializer.set_buffer(buffer.data(), buffer.size());
+
+  U toread;
+  if (!read(serializer, toread, key_mode::not_key))
+    return false;
+
+  auto it1 = towrite.m().begin();
+  auto it2 = toread.m().begin();
+  while (it1 != towrite.m().end() &&
+         it2 != toread.m().end()) {
+    if (compare_a(*it1, *it2) &&
+        compare_b(*it1, *it2) &&
+        compare_c(*it1, *it2)) {
+      it1++;
+      it2++;
+    } else {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//test sequential appendable structs
+template <typename S>
+void sequential_appendable_tests()
+{
+  //appendable can skip/truncate members that have not been serialized ...
+  auto result = test_sequential<S, appendable_extended_seq, appendable_base_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, appendable_extended_k_seq, appendable_base_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, appendable_extended_optional_seq, appendable_base_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, appendable_base_seq, appendable_extended_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, appendable_extended_k_seq, appendable_extended_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, appendable_extended_seq, appendable_extended_k_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, appendable_base_seq, appendable_extended_optional_seq>();
+  EXPECT_TRUE(result);
+
+  // ... except for key fields
+  result = test_sequential<S, appendable_base_seq, appendable_extended_k_seq>();
+  EXPECT_FALSE(result);
+}
+
+//test sequential mutable structs
+template <typename S>
+void sequential_mutable_tests()
+{
+  //mutable types can always be extended/truncated when no must understand fields are dropped
+  auto result = test_sequential<S, mutable_base_seq, mutable_extended_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, mutable_extended_seq, mutable_base_seq>();
+  EXPECT_TRUE(result);
+
+  //must_understand fields must be deserialized in the sending and receiving stream
+  result = test_sequential<S, mutable_base_seq, mutable_extended_mu_seq>();
+  EXPECT_FALSE(result);
+
+  result = test_sequential<S, mutable_extended_mu_seq, mutable_base_seq>();
+  EXPECT_FALSE(result);
+
+  //the field "c" is present and we understand it, so no problem here
+  result = test_sequential<S, mutable_extended_seq, mutable_extended_mu_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, mutable_extended_mu_seq, mutable_extended_seq>();
+  EXPECT_TRUE(result);
+
+  //truncated mutables can be received as everything...
+  result = test_sequential<S, mutable_truncated_seq, mutable_base_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, mutable_truncated_seq, mutable_extended_seq>();
+  EXPECT_TRUE(result);
+
+  result = test_sequential<S, mutable_truncated_seq, mutable_extended_optional_seq>();
+  EXPECT_TRUE(result);
+
+  //... except for types with a must_understand field
+  result = test_sequential<S, mutable_truncated_seq, mutable_extended_mu_seq>();
+  EXPECT_FALSE(result);
+
+}
+
+//testing truncation of sequences of appendable/mutable types
+TEST_F(Regression, sequential_truncation)
+{
+  //appendable is only for outer level structs in xcdrv1
+  sequential_mutable_tests<xcdr_v1_stream>();
+  sequential_appendable_tests<xcdr_v2_stream>();
+  sequential_mutable_tests<xcdr_v2_stream>();
 }
 
 DDSRT_WARNING_GNUC_ON(maybe-uninitialized)

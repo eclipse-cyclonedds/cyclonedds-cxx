@@ -1939,6 +1939,73 @@ public:
     const dds::core::StringSeq instances() const;
 };
 
+//==============================================================================
+
+/**
+ * \copydoc DCPS_QoS_Durability
+ */
+template <typename D>
+class TIgnoreLocal : public dds::core::Value<D>
+{
+public:
+    /**
+     * Creates a IgnoreLocal QoS instance
+     *
+     * @param kind the kind
+     */
+    explicit TIgnoreLocal(
+        dds::core::policy::IgnoreLocalKind::Type kind = dds::core::policy::IgnoreLocalKind::NONE);
+
+    /**
+     * Copies a IgnoreLocal QoS instance
+     *
+     * @param other the IgnoreLocal QoS instance to copy
+     */
+    TIgnoreLocal(const TIgnoreLocal& other);
+
+    /**
+     * Copies a IgnoreLocal QoS instance
+     *
+     * @param other the IgnoreLocal QoS instance to copy
+     *
+     * @return reference to the IgnoreLocal QoS that was copied to
+     */
+    TIgnoreLocal& operator=(const TIgnoreLocal& other) = default;
+
+public:
+    /**
+    * Set the kind
+     *
+     * @param kind the kind to set
+     *
+     * @return the kind that was set
+    */
+    TIgnoreLocal& kind(dds::core::policy::IgnoreLocalKind::Type kind);
+
+    /**
+     * Get the kind
+     *
+     * @return the kind
+     */
+    dds::core::policy::IgnoreLocalKind::Type  kind() const;
+
+public:
+    /**
+     * @return a IgnoreLocal QoS instance with the kind set to NONE
+     */
+    static TIgnoreLocal None();
+
+    /**
+     * @return a IgnoreLocal QoS instance with the kind set to PARTICIPANT
+     */
+    static TIgnoreLocal Participant();
+
+    /**
+     * @return a IgnoreLocal QoS instance with the kind set to PROCESS
+     */
+    static TIgnoreLocal Process();
+};
+
 }
 }
 }

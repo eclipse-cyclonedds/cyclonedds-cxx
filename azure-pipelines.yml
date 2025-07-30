@@ -15,83 +15,83 @@ pr: [ '*' ]
 
 strategy:
   matrix:
-    'Ubuntu 20.04 LTS with Clang 10 (Release, x86_64)':
-      image: ubuntu-20.04
-      build_type: Release
-      cc: clang-10
-      cxx: clang++-10
-    'Ubuntu 20.04 LTS with GCC 10 (Release, x86_64)':
-      image: ubuntu-20.04
-      build_type: Release
-      cc: gcc-10
-      cxx: g++-10
-    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64)':
+    'Ubuntu 22.04 LTS with Clang 13 (Release, x86_64)':
       image: ubuntu-22.04
-      #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
-      sanitizer: address,undefined
-      cc: gcc-12
-      cxx: g++-12
-    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, Iceoryx)':
-      image: ubuntu-22.04
-      iceoryx: on
-      #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
-      sanitizer: address,undefined
-      cc: gcc-12
-      cxx: g++-12
+      build_type: Release
+      cc: clang-13
+      cxx: clang++-13
     'Ubuntu 22.04 LTS with GCC 12 (Release, x86_64)':
       image: ubuntu-22.04
       build_type: Release
+      cc: gcc-12
+      cxx: g++-12
+    'Ubuntu 24.04 LTS with GCC 12 (Debug, x86_64)':
+      image: ubuntu-24.04
+      #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
       sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
-    'Ubuntu 22.04 LTS with GCC 12 (Release, x86_64, Iceoryx)':
-      image: ubuntu-22.04
-      build_type: Release
+    'Ubuntu 24.04 LTS with GCC 12 (Debug, x86_64, Iceoryx)':
+      image: ubuntu-24.04
       iceoryx: on
+      #analyzer: on #analyzer is disabled here, due to the sheer number of false positives
       sanitizer: address,undefined
       cc: gcc-12
       cxx: g++-12
-    'Ubuntu 22.04 LTS with CLang 13 (Debug, x86_64)':
-      image: ubuntu-22.04
-      analyzer: on
-      sanitizer: address
-      cc: clang-13
-      cxx: clang++-13
-    'Ubuntu 22.04 LTS with CLang 13 (Debug, x86_64, Iceoryx)':
-      image: ubuntu-22.04
-      iceoryx: on
-      analyzer: on
-      sanitizer: address,undefined
-      cc: clang-13
-      cxx: clang++-13
-    'Ubuntu 22.04 LTS with CLang 13 (Release, x86_64)':
-      image: ubuntu-22.04
-      build_type: Release
-      sanitizer: address,undefined
-      cc: clang-13
-      cxx: clang++-13
-    'Ubuntu 22.04 LTS with CLang 13 (Release, x86_64, Iceoryx)':
-      image: ubuntu-22.04
-      build_type: Release
-      iceoryx: on
-      sanitizer: address,undefined
-      cc: clang-13
-      cxx: clang++-13
-    # C++11 requires boost, installing boost on Windows takes forever, so use Linux
-    # Google test requires C++14 at minimum, so we can't build tests ...
-    'Ubuntu 22.04 LTS with CLang 13 (Debug, x86_64, C++11)':
-      image: ubuntu-22.04
-      build_type: Debug
-      cc: clang-13
-      cxx: clang++-13
-      legacy: on
-    'Ubuntu 22.04 LTS with GCC 12 (Debug, x86_64, no type lib)':
-      image: ubuntu-22.04
+    'Ubuntu 24.04 LTS with GCC 12 (Debug, x86_64, no type lib)':
+      image: ubuntu-24.04
       sanitizer: address
       cc: gcc-12
       cxx: g++-12
       type_lib: off
       topic_discovery: off
+    'Ubuntu 24.04 LTS with GCC 14 (Release, x86_64)':
+      image: ubuntu-24.04
+      build_type: Release
+      sanitizer: address,undefined
+      cc: gcc-14
+      cxx: g++-14
+    'Ubuntu 24.04 LTS with GCC 14 (Release, x86_64, Iceoryx)':
+      image: ubuntu-24.04
+      build_type: Release
+      iceoryx: on
+      sanitizer: address,undefined
+      cc: gcc-14
+      cxx: g++-14
+    'Ubuntu 24.04 LTS with CLang 16 (Debug, x86_64)':
+      image: ubuntu-24.04
+      analyzer: on
+      sanitizer: address
+      cc: clang-16
+      cxx: clang++-16
+    'Ubuntu 24.04 LTS with CLang 16 (Debug, x86_64, Iceoryx)':
+      image: ubuntu-24.04
+      iceoryx: on
+      analyzer: on
+      sanitizer: address,undefined
+      cc: clang-16
+      cxx: clang++-16
+    'Ubuntu 24.04 LTS with CLang 18 (Release, x86_64)':
+      image: ubuntu-24.04
+      build_type: Release
+      sanitizer: address,undefined
+      cc: clang-18
+      cxx: clang++-18
+    'Ubuntu 24.04 LTS with CLang 18 (Release, x86_64, Iceoryx)':
+      image: ubuntu-24.04
+      build_type: Release
+      iceoryx: on
+      sanitizer: address,undefined
+      cc: clang-18
+      cxx: clang++-18
+    # C++11 requires boost, installing boost on Windows takes forever, so use Linux
+    # Google test requires C++14 at minimum, so we can't build tests ...
+    'Ubuntu 24.04 LTS with CLang 18 (Debug, x86_64, C++11)':
+      image: ubuntu-24.04
+      build_type: Debug
+      cc: clang-18
+      cxx: clang++-18
+      legacy: on
     'macOS 14 with Clang 15 (Debug, x86_64)':
       image: macOS-14
       sanitizer: address
@@ -109,14 +109,14 @@ strategy:
     #  image: windows-2019
     #  generator: 'Visual Studio 16 2019'
     #  toolkit: v141
-    'Windows 2019 with Visual Studio 2019 (Debug, x86_64)':
-      image: windows-2019
+    'Windows 2022 with Visual Studio 2019 (Debug, x86_64)':
+      image: windows-2022
       analyzer: on
-      generator: 'Visual Studio 16 2019'
-    'Windows 2019 with Visual Studio 2019 (Release, x86_64)':
-      image: windows-2019
+      generator: 'Visual Studio 17 2022'
+    'Windows 2022 with Visual Studio 2019 (Release, x86_64)':
+      image: windows-2022
       build_type: Release
-      generator: 'Visual Studio 16 2019'
+      generator: 'Visual Studio 17 2022'
     #C++11 needs boost, installing boost takes forever on Windows
     #'Windows 2019 with Visual Studio 2019 (Release, x86_64, c++11)':
     #  image: windows-2019
