@@ -22,7 +22,7 @@
 
 static uint32_t cb_called = 0;
 static ddsrt_mutex_t g_mutex;
-static ddsrt_cond_t g_cond;
+static ddsrt_cond_mtime_t g_cond;
 
 class DomainParticipantListener : public virtual dds::domain::NoOpDomainParticipantListener
 {
@@ -43,7 +43,7 @@ protected:
         ddsrt_mutex_lock(&g_mutex);
         cb_called |= DDS_DATA_ON_READERS_STATUS;
         this->data_on_readers_subscriber = subs;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -52,7 +52,7 @@ protected:
         ddsrt_mutex_lock(&g_mutex);
         cb_called |= DDS_DATA_AVAILABLE_STATUS;
         this->data_available_reader = reader;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -63,7 +63,7 @@ protected:
         cb_called |= DDS_PUBLICATION_MATCHED_STATUS;
         this->publication_matched_writer = writer;
         this->publication_matched_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -89,7 +89,7 @@ protected:
         cb_called |= DDS_PUBLICATION_MATCHED_STATUS;
         this->publication_matched_writer = writer;
         this->publication_matched_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 };
@@ -117,7 +117,7 @@ protected:
         cb_called |= DDS_SUBSCRIPTION_MATCHED_STATUS;
         this->subscription_matched_reader = reader;
         this->subscription_matched_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -126,7 +126,7 @@ protected:
         ddsrt_mutex_lock(&g_mutex);
         cb_called |= DDS_DATA_ON_READERS_STATUS;
         this->data_on_readers_subscriber = subs;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -135,7 +135,7 @@ protected:
         ddsrt_mutex_lock(&g_mutex);
         cb_called |= DDS_DATA_AVAILABLE_STATUS;
         this->data_available_reader = reader;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 };
@@ -162,7 +162,7 @@ protected:
         cb_called |= DDS_OFFERED_INCOMPATIBLE_QOS_STATUS;
         this->offered_incompatible_qos_writer = writer;
         this->offered_incompatible_qos_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -173,7 +173,7 @@ protected:
         cb_called |= DDS_PUBLICATION_MATCHED_STATUS;
         this->publication_matched_writer = writer;
         this->publication_matched_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 };
@@ -214,7 +214,7 @@ protected:
         cb_called |= DDS_REQUESTED_INCOMPATIBLE_QOS_STATUS;
         this->requested_incompatible_qos_reader = reader;
         this->requested_incompatible_qos_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -225,7 +225,7 @@ protected:
         cb_called |= DDS_SUBSCRIPTION_MATCHED_STATUS;
         this->subscription_matched_reader = reader;
         this->subscription_matched_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -234,7 +234,7 @@ protected:
         ddsrt_mutex_lock(&g_mutex);
         cb_called |= DDS_DATA_AVAILABLE_STATUS;
         this->data_available_reader = reader;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -245,7 +245,7 @@ protected:
         cb_called |= DDS_SAMPLE_LOST_STATUS;
         this->sample_lost_reader = reader;
         this->sample_lost_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -256,7 +256,7 @@ protected:
         cb_called |= DDS_SAMPLE_REJECTED_STATUS;
         this->sample_rejected_reader = reader;
         this->sample_rejected_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 
@@ -267,18 +267,19 @@ protected:
         cb_called |= DDS_LIVELINESS_CHANGED_STATUS;
         this->liveliness_changed_reader = reader;
         this->liveliness_changed_status = status;
-        ddsrt_cond_broadcast(&g_cond);
+        ddsrt_cond_mtime_broadcast(&g_cond);
         ddsrt_mutex_unlock(&g_mutex);
     }
 };
 
 
-static uint32_t waitfor_cb(uint32_t expected, dds_time_t timeout)
+static uint32_t waitfor_cb(uint32_t expected, dds_duration_t timeout)
 {
+    const ddsrt_mtime_t abstimeout = ddsrt_mtime_add_duration(ddsrt_time_monotonic (), timeout);
     bool signalled = true;
     ddsrt_mutex_lock(&g_mutex);
     while (((cb_called & expected) != expected) && (signalled)) {
-        signalled = ddsrt_cond_waitfor(&g_cond, &g_mutex, timeout);
+        signalled = ddsrt_cond_mtime_waituntil(&g_cond, &g_mutex, abstimeout);
     }
     ddsrt_mutex_unlock(&g_mutex);
     return cb_called;
@@ -321,7 +322,7 @@ public:
         char name[32];
 
         ddsrt_mutex_init(&g_mutex);
-        ddsrt_cond_init(&g_cond);
+        ddsrt_cond_mtime_init(&g_cond);
 
         // Create participant
         participant = dds::domain::DomainParticipant(org::eclipse::cyclonedds::domain::default_id());
@@ -349,7 +350,7 @@ public:
         topic = dds::core::null;
         participant = dds::core::null;
 
-        ddsrt_cond_destroy(&g_cond);
+        ddsrt_cond_mtime_destroy(&g_cond);
         ddsrt_mutex_destroy(&g_mutex);
     }
 };

@@ -87,15 +87,15 @@ private:
 };
 
 struct test_semaphore {
-    ddsrt_cond_t cond;
+    ddsrt_cond_mtime_t cond;
     ddsrt_mutex_t mutex;
     int value;
     test_semaphore() : cond(), mutex(), value(0) {
-      ddsrt_cond_init(&cond);
+      ddsrt_cond_mtime_init(&cond);
       ddsrt_mutex_init(&mutex);
     }
     ~test_semaphore() {
-      ddsrt_cond_destroy(&cond);
+      ddsrt_cond_mtime_destroy(&cond);
       ddsrt_mutex_destroy(&mutex);
     }
 };
@@ -148,7 +148,8 @@ bool test_sem_wait(test_semaphore *sem, const dds_duration_t timeout)
     bool result = false;
     sem->value -= 1;
 
-    result = ddsrt_cond_waitfor(&sem->cond, &sem->mutex, timeout);
+    const ddsrt_mtime_t abstimeout = ddsrt_mtime_add_duration(ddsrt_time_monotonic (), timeout);
+    result = ddsrt_cond_mtime_waituntil(&sem->cond, &sem->mutex, abstimeout);
 
     ddsrt_mutex_unlock(&sem->mutex);
 
@@ -160,7 +161,7 @@ void test_sem_post(test_semaphore *sem)
     ddsrt_mutex_lock(&sem->mutex);
     sem->value += 1;
     if (sem->value >= 0) {
-        ddsrt_cond_broadcast(&sem->cond);
+        ddsrt_cond_mtime_broadcast(&sem->cond);
     }
     ddsrt_mutex_unlock(&sem->mutex);
 }
