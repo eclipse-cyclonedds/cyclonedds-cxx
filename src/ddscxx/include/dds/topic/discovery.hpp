@@ -26,7 +26,7 @@ namespace topic
 {
 
 /**
- * This operation gives access to an specific existing (or ready to exist) enabled
+ * This operation gives access to a specific, existing or ready to exist, enabled
  * Topic, ContentFilteredTopic, MultiTopic, AnyTopic or TopicDescription based
  * on its topic_name.
  *

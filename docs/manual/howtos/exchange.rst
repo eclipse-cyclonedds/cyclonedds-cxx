@@ -34,12 +34,13 @@ or, to have more control over the process, select your own ID:
 	dds::domain::DomainParticipant participant(123456);
 
 The main point is that you must have the same ID on both the reading side and the writing side, otherwise, they can not see each other.
-???Explain more about setting QoSes???
+For more information about valid QoS combinations, please refer to the DDS Specification. For more information about using the API to
+set the QoS, refer to the API documentation.
 
 Topic
 -----
 
-A Topic is a subsection of a DDS Domain that enables exchange of data of a specific type, and that complies with certain restrictions on the exchange before exchange can occur. 
+A Topic is a subsection of a DDS Domain that enables exchange of data of a specific type, and that complies with certain restrictions on the exchange before exchange can occur.
 A Topic is identifiable by:
 
 - Name
