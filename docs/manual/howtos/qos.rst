@@ -12,7 +12,7 @@
 Quality of Service
 ==================
 
-Quality of Service is the collection of restrictions and expectations (called QoSPolicies) that appy to the different components of CycloneDDS.
+Quality of Service is the collection of restrictions and expectations (called QoSPolicies) that apply to the different components of CycloneDDS.
 Some QoSPolicies only affect a single type of DDS entity, whereas others affect multiple DDS entities. QoSPolicies on a DDS entity can not be modified after creating the entity as they affect matching/discovery of entities.
 The QoS used is linked to the type of DDS entity the QoS is used for, for example, a SubscriberQoS is not accepted when creating a DataReader.
 The entity-specific QoSes are found in the `qos` sub-namespace of the same namespace the entity is defined in, whereas the different QoSPolicies are located in the `dds::core::policy` namespace.
@@ -130,7 +130,7 @@ For a detailed explanation of the different QoSPolicies and their effects on the
 Default and Inherited QoSes
 ---------------------------
 
-QoSes have a number of default settings that are falled-back to when none are provided on creation.
+QoSes have a number of default settings that are fallen back to when none are provided on creation.
 These defaults are either defined in the DDS standard, or propagated from "superior" entities.
 The default inherited QoS for entities is set through the following functions:
 
