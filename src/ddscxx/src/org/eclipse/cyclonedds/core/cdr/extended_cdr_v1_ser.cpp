@@ -47,6 +47,7 @@ bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
       default:
         break;
     }
+    push_align_offset();
   }
 
   push_member_start();
@@ -56,6 +57,8 @@ bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
 bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set)
 {
   if (header_necessary(prop)) {
+    if (prop.p_ext != extensibility::ext_mutable || is_set)
+      pop_align_offset();
     switch (m_mode) {
       case stream_mode::write:
         if ((prop.p_ext != extensibility::ext_mutable || is_set) &&
@@ -64,6 +67,9 @@ bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_se
         break;
       case stream_mode::read:
         position(m_buffer_end.pop());
+        break;
+    case stream_mode::move:
+    case stream_mode::max:
         break;
       default:
         break;
