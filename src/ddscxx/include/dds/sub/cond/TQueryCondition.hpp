@@ -89,7 +89,7 @@ public:
      * @param query   The query to filter on the locally available data.
      * @param status  A mask, which selects only those samples with the desired
      *                sample/view/instance states.
-     * @throw dds::core::Exception
+     * @throw dds::core::Exception x
      */
     TQueryCondition(const dds::sub::Query& query,
                     const dds::sub::status::DataState& status);
@@ -112,7 +112,7 @@ public:
      * @param status  A mask, which selects only those samples with the desired
      *                sample/view/instance states.
      * @param  functor The functor to be called when the QueryCondition triggers.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     template <typename FUN>
     TQueryCondition(const dds::sub::Query& query,
@@ -132,7 +132,7 @@ public:
      * @param params     for more information: @ref anchor_dds_sub_query_expression "Query expression parameters"
      * @param status     A mask, which selects only those samples with the desired
      *                   sample/view/instance states.
-     * @throw dds::core::Exception
+     * @throw dds::core::Exception x
      */
     TQueryCondition(const dds::sub::AnyDataReader& dr,
                     const std::string& expression,
@@ -151,7 +151,7 @@ public:
      * @param dr         Query associated DataReader.
      * @param status     A mask, which selects only those samples with the desired
      *                   sample/view/instance states.
-     * @throw dds::core::Exception
+     * @throw dds::core::Exception x
      */
     TQueryCondition(const dds::sub::AnyDataReader& dr,
                     const dds::sub::status::DataState& status);
@@ -174,7 +174,7 @@ public:
      * @param params     for more information: @ref anchor_dds_sub_query_expression "Query expression parameters"
      * @param status     A mask, which selects only those samples with the desired
      *                   sample/view/instance states.
-     * @throw dds::core::Exception
+     * @throw dds::core::Exception x
      */
     template <typename FUN>
     TQueryCondition(const dds::sub::AnyDataReader& dr,
@@ -188,7 +188,7 @@ public:
      * Set the Query expression.
      *
      * @param expr for more information: @ref anchor_dds_sub_query_expression "SQL expression"
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     void expression(const std::string& expr);
 
@@ -198,7 +198,7 @@ public:
      * See @ref anchor_dds_sub_query_expression "SQL expression info"
      *
      * @return std::string The query expression
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const std::string& expression();
 
@@ -209,7 +209,7 @@ public:
      *
      * @return dds::sub::cond::TQueryCondition::const_iterator
      *              The beginning iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const_iterator begin() const;
 
@@ -220,7 +220,7 @@ public:
      *
      * @return dds::sub::cond::TQueryCondition::const_iterator
      *              The end iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const_iterator end() const;
 
@@ -231,7 +231,7 @@ public:
      *
      * @return dds::sub::cond::TQueryCondition::iterator
      *              The beginning iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     iterator begin();
 
@@ -242,7 +242,7 @@ public:
      *
      * @return dds::sub::cond::TQueryCondition::iterator
      *              The end iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     iterator end();
 
@@ -253,7 +253,7 @@ public:
      *
      * @param  begin Iterator pointing to the beginning of the parameters to set
      * @param  end   Iterator pointing to the end of the parameters to set
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     template<typename FWIterator>
     void parameters(const FWIterator& begin, const FWIterator end);
@@ -264,7 +264,7 @@ public:
      * See @ref anchor_dds_sub_query_expression "SQL expression info"
      *
      * @param param The parameter to add
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     void add_parameter(const std::string& param);
 
@@ -274,7 +274,7 @@ public:
      * See @ref anchor_dds_sub_query_expression "SQL expression info"
      *
      * @return uint32_t The number of parameters in the query
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     uint32_t parameters_length() const;
 
@@ -290,7 +290,7 @@ public:
      * @endcond
      *
      * @return dds::sub::AnyDataReader The associated DataReader
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const dds::sub::AnyDataReader& data_reader() const;
 };

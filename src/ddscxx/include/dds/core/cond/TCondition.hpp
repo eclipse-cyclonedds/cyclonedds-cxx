@@ -74,7 +74,7 @@ public:
      * Condition is attached to.
      *
      * @param func The functor to be called when the StatusCondition triggers.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     template <typename Functor>
     void handler(Functor func);
@@ -85,7 +85,7 @@ public:
      * After the invocation of this function no handler will be registered with
      * this Condition.
      *
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     void reset_handler();
 
@@ -95,7 +95,7 @@ public:
      * The Condition has to have been triggered for the functor will be called
      * by this function.
      *
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     void dispatch();
 
@@ -107,7 +107,7 @@ public:
      * trigger_value of the Condition.
      *
      * @return bool The boolean value to which the Condition is set.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     bool trigger_value() const;
 

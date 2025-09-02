@@ -91,7 +91,7 @@ public:
      * application can wait for specific status changes that affect the Entity.
      *
      * @param  e The Entity to associate with the StatusCondition.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     TStatusCondition(const dds::core::Entity& e);
 
@@ -108,7 +108,7 @@ public:
      *
      * @param  e       The Entity to associate with the StatusCondition.
      * @param functor The functor to be called when the StatusCondition triggers.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     template <typename FUN>
     TStatusCondition(const dds::core::Entity& e, FUN functor);
@@ -155,8 +155,8 @@ public:
      *
      * @param  status A bit mask in which each bit sets the status which is taken
      *                into account for the StatusCondition.the enabled statuses.
-     * @throw  dds::core::AlreadyClosedError
-     * @throw  dds::core::Error
+     * @throw  dds::core::AlreadyClosedError x
+     * @throw  dds::core::Error x
      */
     void
     enabled_statuses(const ::dds::core::status::StatusMask& status) const;
@@ -199,7 +199,7 @@ public:
      * @return dds::core::status::StatusMask
      *              A bit mask in which each bit shows which status is taken into
      *              account for the StatusCondition.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const ::dds::core::status::StatusMask enabled_statuses() const;
 
@@ -209,7 +209,7 @@ public:
      * Note that there is exactly one Entity associated with each StatusCondition.
      *
      * @return dds::core::Entity The Entity associated with the StatusCondition.
-     * @throw  dds::core::AlreadyClosedError
+     * @throw  dds::core::AlreadyClosedError x
      */
     const dds::core::Entity& entity() const;
 };

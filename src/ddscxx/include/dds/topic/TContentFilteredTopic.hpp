@@ -97,7 +97,7 @@ public:
      * @param topic  the related Topic
      * @param name   the name of the ContentFilteredTopic
      * @param filter the filter expression
-     * @throw dds::core::Exception
+     * @throw dds::core::Exception x
      */
     ContentFilteredTopic(const Topic<T>& topic, const std::string& name, const dds::topic::Filter& filter);
 
