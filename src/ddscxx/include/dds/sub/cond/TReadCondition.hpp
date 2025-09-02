@@ -88,7 +88,7 @@ public:
      * @param  dr       The DataReader to associate with the ReadCondition.
      * @param  status   A mask, which selects only those samples with the desired
      *                  sample/view/instance states.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status);
 
@@ -109,7 +109,7 @@ public:
      * @param  status   A mask, which selects only those samples with the desired
      *                  sample/view/instance states.
      * @param  functor The functor to be called when the ReadCondition triggers.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     template <typename FUN>
     TReadCondition(const dds::sub::AnyDataReader& dr, const dds::sub::status::DataState& status, FUN functor);
@@ -122,7 +122,7 @@ public:
      * These are data-states specified when the ReadCondition was created.
      *
      * @return dds::sub::status::DataState The data state.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const dds::sub::status::DataState state_filter() const;
 
@@ -132,7 +132,7 @@ public:
      * Note that there is exactly one DataReader associated with each ReadCondition.
      *
      * @return dds::sub::AnyDataReader The associated DataReader
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const dds::sub::AnyDataReader& data_reader() const;
 

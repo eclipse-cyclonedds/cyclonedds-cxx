@@ -71,7 +71,7 @@ public:
      * Create a Filter based on a query expression.
      *
      * @param  query_expression an @ref anchor_dds_topic_filter_expression "SQL expression"
-     * @throw                   dds::core::Exception
+     * @throw                   dds::core::Exception x
      */
     TFilter(const std::string& query_expression);
 
@@ -81,7 +81,7 @@ public:
      * @param  query_expression an @ref anchor_dds_topic_filter_expression "SQL expression"
      * @param params_begin     Iterator pointing to the beginning of the parameters to set
      * @param params_end       Iterator pointing to the end of the parameters to set
-     * @throw                   dds::core::Exception
+     * @throw                   dds::core::Exception x
      */
     template <typename FWIterator>
     TFilter(const std::string& query_expression, const FWIterator& params_begin,
@@ -92,7 +92,7 @@ public:
      *
      * @param  query_expression an @ref anchor_dds_topic_filter_expression "SQL expression"
      * @param params           Vector containing SQL expression parameters
-     * @throw                   dds::core::Exception
+     * @throw                   dds::core::Exception x
      */
     TFilter(const std::string& query_expression,
             const std::vector<std::string>& params);
@@ -101,7 +101,7 @@ public:
      * Get the query expression.
      *
      * @return std::string The @ref anchor_dds_topic_filter_expression "SQL expression".
-     * @throw              dds::core::Exception
+     * @throw              dds::core::Exception x
      */
     const std::string& expression() const;
 
@@ -112,7 +112,7 @@ public:
      *
      * @return dds::topic::Filter::const_iterator
      *              The begin iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const_iterator begin() const;
 
@@ -123,7 +123,7 @@ public:
      *
      * @return dds::topic::Filter::const_iterator
      *              The end iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     const_iterator end() const;
 
@@ -134,7 +134,7 @@ public:
      *
      * @return dds::topic::Filter::iterator
      *              The begin iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     iterator begin();
 
@@ -145,7 +145,7 @@ public:
      *
      * @return dds::topic::Filter::iterator
      *              The end iterator
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     iterator end();
 
@@ -156,7 +156,7 @@ public:
      *
      * @param begin Iterator pointing to the beginning of the parameters to set
      * @param end   Iterator pointing to the end of the parameters to set
-     * @throw        dds::core::Exception
+     * @throw        dds::core::Exception x
      */
     template <typename FWIterator>
     void parameters(const FWIterator& begin, const FWIterator end);
@@ -167,7 +167,7 @@ public:
      * See @ref anchor_dds_topic_filter_expression "SQL expression info"
      *
      * @param param The parameter to add
-     * @throw       dds::core::Exception
+     * @throw       dds::core::Exception x
      */
     void add_parameter(const std::string& param);
 
@@ -177,7 +177,7 @@ public:
      * See @ref anchor_dds_topic_filter_expression "SQL expression info"
      *
      * @return uint32_t The number of parameters in the query
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     uint32_t parameters_length() const;
 };

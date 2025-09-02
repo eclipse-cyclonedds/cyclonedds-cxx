@@ -74,7 +74,7 @@ public:
      * The GuardCondition can then be added to a dds::core::cond::WaitSet so that the
      * application can manually wake up a thread that is blocked on that WaitSet.
      *
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     TGuardCondition();
 
@@ -90,7 +90,7 @@ public:
      * attached to.
      *
      * @param functor The functor to be called when the GuardCondition triggers.
-     * @throw  dds::core::Exception
+     * @throw  dds::core::Exception x
      */
     template <typename FUN>
     TGuardCondition(FUN functor);
@@ -108,7 +108,7 @@ public:
      * When a GuardCondition is initially created, the trigger_value is FALSE.
      *
      * @param value The boolean value to which the GuardCondition is set.
-     * @throw dds::core::Exception
+     * @throw dds::core::Exception x
      */
     void trigger_value(bool value);
 

@@ -114,7 +114,7 @@ public:
      * dr.enable();
      * @endcode
      *
-     * @throw  dds::core::PreconditionNotMetError
+     * @throw  dds::core::PreconditionNotMetError x
      *              Entities' factory is not enabled.
      */
     void enable();
