@@ -171,4 +171,3 @@ TEST_F(KeyHash, nested_types_implicit)
   hash_test(n_f_i_2, n_f_i_2_h);
   hash_test(n_m_i, n_m_i_h);
 }
-

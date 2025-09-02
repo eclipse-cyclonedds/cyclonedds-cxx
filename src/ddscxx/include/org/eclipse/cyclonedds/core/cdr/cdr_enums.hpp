@@ -7,7 +7,7 @@
 // http://www.eclipse.org/org/documents/edl-v10.php.
 //
 // SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
- 
+
 #ifndef CDR_ENUMS_HPP_
 #define CDR_ENUMS_HPP_
 
@@ -47,7 +47,6 @@ enum class extensibility {
  * @var encoding_version::xcdr_v2 Version 2 XTypes CDR encoding.
  */
 enum class encoding_version {
-  basic_cdr,
   xml,
   xcdr_v1,
   xcdr_v2

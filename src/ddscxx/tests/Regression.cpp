@@ -299,7 +299,7 @@ TEST_F(Regression, direct_typedef_of_primitive)
     {0x05, 0x00, 0x00, 0x00, /*c.length(5)*/
      0x01, 0x00, 0x01, 0x00, 0x01, /*c.data*/
     };
-  readwrite_test(s, s_td_bool_seq_arr_bytes, basic_cdr_stream);
+  readwrite_test(s, s_td_bool_seq_arr_bytes, xcdr_v1_stream);
 }
 
 TEST_F(Regression, union_array_case)
@@ -320,7 +320,7 @@ TEST_F(Regression, direct_typedef_of_struct)
      'b',  /*u.c[0]*/
      'c',  /*u.c[1]*/
     };
-  readwrite_test(u, u_s_inner_bytes, basic_cdr_stream);
+  readwrite_test(u, u_s_inner_bytes, xcdr_v1_stream);
 }
 
 TEST_F(Regression, typedef_of_sequence_of_enums)
@@ -385,7 +385,7 @@ TEST_F(Regression, unaligned_access)
 
   s_unaligned_access s;
 
-  basic_cdr_stream b(swap_end);
+  xcdr_v1_stream b(swap_end);
   b.set_buffer(correct, 16);
   ASSERT_TRUE(org::eclipse::cyclonedds::core::cdr::read(b, s, key_mode::not_key));
   ASSERT_EQ(s.l(), int32_t(0x00010203));  //size 4 reads should be done at 4 byte offsets in stream

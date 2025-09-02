@@ -17,6 +17,7 @@
 
 #include "dds/ddsrt/heap.h"
 #include "dds/ddsi/ddsi_serdata.h"
+#include "org/eclipse/cyclonedds/core/cdr/basic_cdr_ser.hpp"
 #include "org/eclipse/cyclonedds/core/cdr/cdr_enums.hpp"
 #include "dds/features.hpp"
 
@@ -51,7 +52,6 @@ namespace topic
 using core::cdr::extensibility;
 using core::cdr::encoding_version;
 using core::cdr::allowable_encodings_t;
-using core::cdr::basic_cdr_stream;
 using core::cdr::xcdr_v1_stream;
 using core::cdr::xcdr_v2_stream;
 
@@ -96,7 +96,7 @@ public:
     static ddsi_sertype *getSerType(allowable_encodings_t kinds = allowableEncodings())
     {
         if (kinds & allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
-            return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,basic_cdr_stream>());
+            return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,xcdr_v1_stream>());
         else if (kinds & allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR2)
             return static_cast<ddsi_sertype*>(new ddscxx_sertype<TOPIC,xcdr_v2_stream>());
         else
