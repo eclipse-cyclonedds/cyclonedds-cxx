@@ -74,7 +74,7 @@ private:
 
     template<typename T>
     void validate_impl(const T &msg, const std::vector<uint8_t> &exp, endianness end) {
-        basic_cdr_stream str(end);
+        xcdr_v1_stream str(end);
 
         move(str, msg, key_mode::not_key);
 
@@ -99,7 +99,7 @@ TEST_F(Serdata, alignment)
 {
     Endianness::Msg msg({16,25,36},65535);
 
-    basic_cdr_stream str(endianness::little_endian);
+    xcdr_v1_stream str(endianness::little_endian);
     std::vector<unsigned char> vec(8,0x0);
     str.set_buffer(vec.data(), vec.size());
 
@@ -144,7 +144,7 @@ TEST_F(Serdata, serialization_big_endianness)
     Endianness::Msg msg({0x4,0x5,0x6},
                      4278255360); //(0xFF00FF00 LE)
 
-    auto d = static_cast<const ddscxx_serdata<Endianness::Msg>*>(serdata_from_sample<Endianness::Msg, basic_cdr_stream>(
+    auto d = static_cast<const ddscxx_serdata<Endianness::Msg>*>(serdata_from_sample<Endianness::Msg, xcdr_v1_stream>(
         m_st,
         SDK_DATA,
         static_cast<const void*>(&msg)));
@@ -244,7 +244,7 @@ template<typename T>
 static void test_keyhash(const T& sample, const kh_t& expected, const kh_t& expected_md5)
 {
     auto st = org::eclipse::cyclonedds::topic::TopicTraits<T>::getSerType(DDS_DATA_REPRESENTATION_FLAG_XCDR1);
-    auto sd = serdata_from_sample<T, org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>(st, SDK_DATA, &sample);
+    auto sd = serdata_from_sample<T, org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream>(st, SDK_DATA, &sample);
     ASSERT_GT(sd->hash, static_cast<uint32_t>(0));
     struct ddsi_keyhash khraw, khraw_md5;
     serdata_get_keyhash<T>(sd, &khraw, false);
@@ -257,7 +257,7 @@ static void test_keyhash(const T& sample, const kh_t& expected, const kh_t& expe
     delete static_cast<ddscxx_serdata<T> *>(sd);
     //hacky and ugly, but we cannot call the sertype_free function, as the C type is referenced nowhere
     dds_free(st->type_name);
-    delete static_cast<ddscxx_sertype<T,org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>*>(st);
+    delete static_cast<ddscxx_sertype<T,org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream>*>(st);
 }
 
 TEST_F(Serdata, keyhash_nokey)

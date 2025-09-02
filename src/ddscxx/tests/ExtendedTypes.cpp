@@ -116,13 +116,11 @@ TEST_F(ExtendedTypes, final)
 
   /* write smaller, read larger, read should fail,
      as there are not enough bytes to populate larger*/
-  validate<finalstruct_smaller, finalstruct_larger, basic_cdr_stream>(smaller, true, false);
   validate<finalstruct_smaller, finalstruct_larger, xcdr_v1_stream>(smaller, true, false);
   validate<finalstruct_smaller, finalstruct_larger, xcdr_v2_stream>(smaller, true, false);
 
   /* write smaller, read larger, this should be okay,
      as the excess bytes containing 'd' will be ignored*/
-  validate<finalstruct_larger, finalstruct_smaller, basic_cdr_stream>(larger);
   validate<finalstruct_larger, finalstruct_smaller, xcdr_v1_stream>(larger);
   validate<finalstruct_larger, finalstruct_smaller, xcdr_v2_stream>(larger);
 }
@@ -131,11 +129,6 @@ TEST_F(ExtendedTypes, appendable)
 {
   appendablestruct_smaller smaller('c');
   appendablestruct_larger larger('c', 'd');
-
-  /* read and write will fail for both smaller to larger and reverse,
-     as basic cdr serialization does not support appendable structs*/
-  validate<appendablestruct_smaller, appendablestruct_larger, basic_cdr_stream>(smaller, false, false);
-  validate<appendablestruct_larger, appendablestruct_smaller, basic_cdr_stream>(larger, false, false);
 
   /* write smaller, read larger, this should be okay,
      as the read should see that there are not enough
@@ -154,11 +147,6 @@ TEST_F(ExtendedTypes, mutable)
   mutablestruct_a a('a', 'c', 'e');
   mutablestruct_b b('b', 'c', 'd');
 
-  /* read and write will fail for both smaller to larger and reverse,
-     as basic cdr serialization does not support appendable structs*/
-  validate<mutablestruct_a, mutablestruct_b, basic_cdr_stream>(a, false, false);
-  validate<mutablestruct_b, mutablestruct_a, basic_cdr_stream>(b, false, false);
-
   /* write a, read b, should be okay, as member
      c is present in both representations*/
   validate<mutablestruct_a, mutablestruct_b, xcdr_v1_stream>(a);
@@ -174,11 +162,6 @@ TEST_F(ExtendedTypes, sequences_final)
 {
   sequences_of_final_smaller smaller({finalstruct_smaller('a'), finalstruct_smaller('b')});
   sequences_of_final_larger larger({finalstruct_larger('a', 'z'), finalstruct_larger('b', 'y')});
-
-  //this should read and write correctly, but the end result is corrupt
-  validate_deeper<sequences_of_final_larger, sequences_of_final_smaller, basic_cdr_stream>(larger, true, true, false);
-  //this should fail reading
-  validate_deeper<sequences_of_final_smaller, sequences_of_final_larger, basic_cdr_stream>(smaller, true, false, false);
 
   //this should read and write correctly, but the end result is corrupt
   validate_deeper<sequences_of_final_larger, sequences_of_final_smaller, xcdr_v1_stream>(larger, true, true, false);

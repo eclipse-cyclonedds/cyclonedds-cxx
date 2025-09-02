@@ -218,21 +218,7 @@ bool read_header(const void *buffer, encoding_version &ver, endianness &end)
       switch (hdr[0]) {
         case DDSI_RTPS_CDR_LE:
         case DDSI_RTPS_CDR_BE:
-        /** this can either mean:
-         *  - legacy cdr encoding
-         *  - PLAIN_CDR xcdr_v1 encoding (deprecated)
-         *  And this might cause issues, since these support different features, e.g.: if you have a final struct data type,
-         *  but it contains an appendable enumerator, or a member which is an appendable struct, this is encoded as PLAIN_CDR,
-         *  but if you try to deserialize this with a legacy (or basic_cdr_stream) deserializer, this may cause all sorts of
-         *  "interesting" errors. This is why it looks at the allowableEncodings() topic trait: this encodes which types of
-         *  encoding are supported for a datatype. If some properties requiring XTypes functionality are encountered (like
-         *  appendable/mutable types, optional members, etc.) the IDL_DATAREPRESENTATION_FLAG_XCDR1 flag is unset in the trait,
-         *  as the CycloneDDS serialization only wants to write xcdr_v2.
-         */
-          if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
-            ver = encoding_version::basic_cdr;
-          else
-            ver = encoding_version::xcdr_v1;
+          ver = encoding_version::xcdr_v1;
           break;
         case DDSI_RTPS_CDR2_LE:
         case DDSI_RTPS_CDR2_BE:
@@ -379,9 +365,6 @@ bool deserialize_sample_from_buffer(void *buffer,
     return false;
 
   switch (ver) {
-    case encoding_version::basic_cdr:
-      return deserialize_sample_from_buffer_impl<T, basic_cdr_stream>(calc_offset(buffer, DDSI_RTPS_HEADER_SIZE), buf_sz - DDSI_RTPS_HEADER_SIZE, sample, data_kind, end);
-      break;
     case encoding_version::xcdr_v1:
       return deserialize_sample_from_buffer_impl<T, xcdr_v1_stream>(calc_offset(buffer, DDSI_RTPS_HEADER_SIZE), buf_sz - DDSI_RTPS_HEADER_SIZE, sample, data_kind, end);
       break;
@@ -739,10 +722,7 @@ struct ddsi_serdata* serdata_from_psmx (
     switch (md->cdr_identifier)
     {
       case DDSI_RTPS_CDR_LE: case DDSI_RTPS_CDR_BE:
-        if (TopicTraits<T>::allowableEncodings() & DDS_DATA_REPRESENTATION_FLAG_XCDR1)
-          deser_result = deserialize_sample_from_buffer_impl<T,basic_cdr_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
-        else
-          deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
+        deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
         break;
       case DDSI_RTPS_PL_CDR_LE: case DDSI_RTPS_PL_CDR_BE:
         deser_result = deserialize_sample_from_buffer_impl<T,xcdr_v1_stream>(loan->sample_ptr, md->sample_size, *(d->getT(false)), kind, native_endianness());
@@ -1126,7 +1106,7 @@ ddscxx_sertype<T,S>::ddscxx_sertype()
     dtp |= DDS_DATA_TYPE_CONTAINS_KEY;
   if (TopicTraits<T>::isSelfContained())
     dtp |= DDS_DATA_TYPE_IS_MEMCPY_SAFE;
-  
+
   ddsi_sertype_init_props(
       static_cast<ddsi_sertype*>(this),
       TopicTraits<T>::getTypeName(),

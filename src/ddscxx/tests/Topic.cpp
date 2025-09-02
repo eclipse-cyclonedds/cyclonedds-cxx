@@ -440,7 +440,7 @@ void test_representations(extensibility ext, allowable_encodings_t encodings)
   //cleanup
   if (st_basic) {
     dds_free(st_basic->type_name);
-    delete static_cast<ddscxx_sertype<T,org::eclipse::cyclonedds::core::cdr::basic_cdr_stream>*>(st_basic);
+    delete static_cast<ddscxx_sertype<T,org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream>*>(st_basic);
   }
 
   if (st_xcdrv2) {

@@ -353,9 +353,6 @@ public:
         read_header<T>(hdr, ver, end);
 
         switch (ver) {
-          case encoding_version::basic_cdr:
-            deserialize_sample_from_buffer_impl<T, basic_cdr_stream>(buf_ptr, user_header.sample_size, msg, SDK_DATA, end);
-            break;
           case encoding_version::xcdr_v1:
             deserialize_sample_from_buffer_impl<T, xcdr_v1_stream>(buf_ptr, user_header.sample_size, msg, SDK_DATA, end);
             break;

@@ -134,11 +134,9 @@ read_deeper_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)\
 write_test(test_struct, key_struct, normal_bytes, key_bytes, streamer)
 
 #define stream_test(test_struct, cdr_normal_bytes, key_bytes)\
-readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
 readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
 readwrite_test(test_struct, test_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)
 
 #define stream_test_union(test_struct, key_struct, cdr_normal_bytes, key_bytes)\
-readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, basic_cdr_stream)\
 readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v1_stream)\
 readwrite_test(test_struct, key_struct, cdr_normal_bytes, key_bytes, xcdr_v2_stream)

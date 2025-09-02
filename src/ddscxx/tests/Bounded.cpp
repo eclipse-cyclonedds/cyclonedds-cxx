@@ -181,7 +181,7 @@ TEST_F(Bounds, strings)
         TryWriteBoundedString(256);
     }, dds::core::InvalidArgumentError) << "Writing a bounded string with length in excess of its bound did not throw an exception.";
 
-    basic_cdr_stream str;
+    xcdr_v1_stream str;
     char arr[16] = {0};
     str.set_buffer(arr, 16);
 

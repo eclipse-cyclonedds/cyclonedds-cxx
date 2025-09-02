@@ -70,7 +70,7 @@ TEST_F(CDRStreamer, cdr_boundary)
 
   std::vector<char> buffer(32,0x0);
 
-  basic_cdr_stream str;
+  xcdr_v1_stream str;
   str.set_buffer(buffer.data(), 12);
 
   ASSERT_FALSE(write(str, BS, key_mode::not_key)); /*this write should fail, as the buffer limit is too small*/
@@ -97,7 +97,6 @@ TEST_F(CDRStreamer, cdr_basic)
 {
   basicstruct BS(123456, 'g', "abcdef", 654.321);
 
-  readwrite_test(BS, BS, BS_basic_normal, BS_basic_key, basic_cdr_stream);
   readwrite_test(BS, BS, BS_basic_normal, BS_basic_key, xcdr_v1_stream);
   readwrite_test(BS, BS, BS_xcdrv2_normal, BS_basic_key, xcdr_v2_stream);
 }
@@ -108,7 +107,6 @@ TEST_F(CDRStreamer, cdr_appendable)
 {
   appendablestruct AS(123456, 'g', "abcdef", 654.321);
 
-  readwrite_test_fail(AS, AS, basic_cdr_stream);
   readwrite_test(AS, AS, BS_basic_normal, BS_basic_key, xcdr_v1_stream);
   readwrite_test(AS, AS, AS_xcdr_v2_normal, AS_xcdr_v2_key, xcdr_v2_stream);
 }
@@ -189,7 +187,6 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x00, 0x00, 0x00, 0x01 /*mutablestruct.l.emheader.nextint*/,
       'g' /*mutablestruct.c*/};
 
-  readwrite_test_fail(MS, MS, basic_cdr_stream);
   readwrite_test(MS, MS, MS_xcdr_v1_normal, MS_xcdr_v1_key, xcdr_v1_stream);
   readwrite_test(MS, MS, MS_xcdr_v2_normal, MS_xcdr_v2_key, xcdr_v2_stream);
 
@@ -310,7 +307,6 @@ TEST_F(CDRStreamer, cdr_sequence)
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       };
 
-  readwrite_test_fail(SSM, SSM, basic_cdr_stream);
   readwrite_test(SSM, SSM, SSM_xcdr_v1_normal, SSM_xcdr_v1_key, xcdr_v1_stream);
   readwrite_test(SSM, SSM, SSM_xcdr_v2_normal, SSM_xcdr_v2_key, xcdr_v2_stream);
   read_test(SSM, SSM, SSM_xcdr_v2_normal_lc_not_4, SSM_xcdr_v2_key_lc_not_4, xcdr_v2_stream);
@@ -347,7 +343,6 @@ TEST_F(CDRStreamer, cdr_sequence_nested)
         0x00, 0x00, 0x00, 0x02/*sequence_struct.b[1].length*/, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05,
       };
 
-  readwrite_deeper_test(SS, SS, SS_basic_normal, SS_basic_key, basic_cdr_stream);
   readwrite_deeper_test(SS, SS, SS_basic_normal, SS_basic_key, xcdr_v1_stream);
   readwrite_deeper_test(SS, SS, SS_basic_normal_delimited, SS_key_v2, xcdr_v2_stream);
 }
@@ -400,7 +395,6 @@ TEST_F(CDRStreamer, cdr_array_nested)
       0x10, 0x11, 0x12/*array_struct_nested.c[1].c*/, 0x00/*pad*/, 0x00, 0x13/*array_struct_nested.c[1].l*/
       };
 
-  readwrite_deeper_test(ARS, ARS, ARS_normal, ARS_key, basic_cdr_stream);
   readwrite_deeper_test(ARS, ARS, ARS_normal, ARS_key, xcdr_v1_stream);
   readwrite_deeper_test(ARS, ARS, ARS_xcdr2, ARS_key_xcdr2, xcdr_v2_stream);
 }
@@ -492,7 +486,6 @@ TEST_F(CDRStreamer, cdr_typedef)
       'd'/*base.c*/
       };
 
-  readwrite_deeper_test(TCS, TCS, TCS_normal, TCS_key, basic_cdr_stream);
   readwrite_deeper_test(TCS, TCS, TCS_normal, TCS_key, xcdr_v1_stream);
   readwrite_deeper_test(TCS, TCS, TCS_normal_delimited, TCS_key_v2, xcdr_v2_stream);
 }
@@ -549,7 +542,6 @@ TEST_F(CDRStreamer, cdr_pragma)
       0x00, 0x00, 0x03, 0x7A/*pragma_keys.d.s_2.l_2*/
       };
 
-  readwrite_test(PS, PS_key_test, PS_basic_normal, PS_basic_key, basic_cdr_stream);
   readwrite_test(PS, PS_key_test, PS_basic_normal, PS_basic_key, xcdr_v1_stream);
   readwrite_test(PS, PS_key_test, PS_basic_normal, PS_basic_key, xcdr_v2_stream);
 }
@@ -560,15 +552,6 @@ TEST_F(CDRStreamer, cdr_enum)
 {
   enum_struct ES(enum_8::second_8, enum_16::third_16, enum_32::fourth_32);
 
-  /*basic cdr treats all enums as 32 bit integers*/
-  bytes ES_basic_normal {
-      0x00, 0x00, 0x00 ,0x01 /*enum_struct.c*/,
-      0x00, 0x00, 0x00, 0x02 /*enum_struct.b*/,
-      0x00, 0x00, 0x00, 0x03 /*enum_struct.a*/
-      };
-  bytes ES_basic_key {
-      0x00, 0x00, 0x00, 0x01 /*enum_struct.c*/
-      };
   /*xcdr_v1 and xcdr_v2 treat bitbounded enums in the same manner*/
   bytes ES_xcdr_v1_normal {
       0x01 /*enum_struct.c*/,
@@ -580,7 +563,6 @@ TEST_F(CDRStreamer, cdr_enum)
       0x01 /*enum_struct.c*/
       };
 
-  readwrite_test(ES, ES, ES_basic_normal, ES_basic_key, basic_cdr_stream);
   readwrite_test(ES, ES, ES_xcdr_v1_normal, ES_xcdr_v1_key, xcdr_v1_stream);
   readwrite_test(ES, ES, ES_xcdr_v1_normal, ES_xcdr_v1_key, xcdr_v2_stream);
 }
@@ -593,7 +575,6 @@ TEST_F(CDRStreamer, cdr_optional)
   optional_appendable_struct OAS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
   optional_mutable_struct OMS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
 
-  /*no basic cdr, since it does not support optional fields*/
   bytes OFS_xcdr_v1_normal {
       0x00, 0x00, 0x00, 0x00 /*optional_final_struct.a.mheader*/,
       'b'/*optional_final_struct.a*/,
@@ -648,11 +629,6 @@ TEST_F(CDRStreamer, cdr_optional)
       0x00, 0x00, 0x00, 0x01, /*optional_mutable_struct.c.emheader.nextint*/
       'c' /*optional_mutable_struct.c*/
       };
-
-  /* basic cdr does not support optional fields,
-     therefore the streamer should enter error status
-     when the streamer is asked to write them */
-  readwrite_test_fail(OFS, OFS, basic_cdr_stream);
 
   readwrite_test(OFS, OFS, OFS_xcdr_v1_normal, OFS_key,         xcdr_v1_stream);
   readwrite_test(OAS, OAS, OFS_xcdr_v1_normal, OFS_key,         xcdr_v1_stream);
@@ -716,7 +692,6 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
-  readwrite_test_fail(MU, MU, basic_cdr_stream);
   readwrite_test(MU, MU, v1, v1_key, xcdr_v1_stream);
   readwrite_test(MU, MU, v2, v2_key, xcdr_v2_stream);
 
@@ -792,24 +767,6 @@ TEST_F(CDRStreamer, d_header_insertion)
                       {enum_8::second_8, enum_8::second_8, enum_8::second_8},
                       {enum_8::first_8, enum_8::first_8, enum_8::first_8, enum_8::first_8}});
 
-  bytes DS_key {
-    0x00, 0x00, 0x00, 0x03,
-    0x00, 0x00, 0x00, 0x02,
-    0x00, 0x00, 0x00, 0x01,
-    0x00, 0x00, 0x00, 0x00 /*d_hdr_sequences.c*/
-    };
-  bytes DS_basic {
-    0x00, 0x00, 0x00, 0x03,
-    0x00, 0x00, 0x00, 0x02,
-    0x00, 0x00, 0x00, 0x01,
-    0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.c*/
-
-    0x00, 0x00, 0x00, 0x04, /*d_hdr_sequences.l.length*/
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, /*d_hdr_sequences.l[0]*/
-    0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, /*d_hdr_sequences.l[1]*/
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, /*d_hdr_sequences.l[2]*/
-    0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*d_hdr_sequences.l[3]*/
-    };
   bytes DS_v1 {
     0x03, 0x02, 0x01, 0x00, /*d_hdr_sequences.c*/
 
@@ -848,7 +805,6 @@ TEST_F(CDRStreamer, d_header_insertion)
     0x03, 0x02, 0x01, 0x00, /*d_hdr_sequences.c*/
     };
 
-  readwrite_test(DS, DS, DS_basic, DS_key, basic_cdr_stream);
   readwrite_test(DS, DS, DS_v1, DS_v1_key, xcdr_v1_stream);
   readwrite_test(DS, DS, DS_v2, DS_v2_key, xcdr_v2_stream);
 }
