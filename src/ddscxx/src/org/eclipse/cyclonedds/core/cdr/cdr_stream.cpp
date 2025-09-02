@@ -34,7 +34,8 @@ bool cdr_stream::align(size_t newalignment, bool add_zeroes)
 
   auto al = alignment(std::min(newalignment, m_max_alignment));
 
-  size_t tomove = (al - position() % al) % al;
+  size_t refpos = position() - m_alignment_offset;
+  size_t tomove = (al - refpos % al) % al;
 
   if (tomove) {
     if (m_mode ==  stream_mode::read || m_mode == stream_mode::write) {
@@ -103,10 +104,12 @@ void cdr_stream::reset()
 {
   position(0);
   alignment(0);
+  m_alignment_offset = 0;
   m_status = 0;
   m_buffer_end = m_buffer_size;
   m_e_off.reset();
   m_e_sz = 0;
+  m_align_offs.reset();
 }
 
 bool cdr_stream::check_struct_completeness(const entity_properties_t &props, const member_id_set &member_ids)
@@ -170,6 +173,18 @@ void cdr_stream::pop_member_start()
 {
   m_e_sz.pop();
   m_e_off.pop();
+}
+
+void cdr_stream::push_align_offset()
+{
+  m_align_offs.push(m_alignment_offset);
+  m_alignment_offset = static_cast<uint32_t>(position());
+  m_current_alignment = 8;
+}
+
+void cdr_stream::pop_align_offset()
+{
+  m_alignment_offset = m_align_offs.pop();
 }
 
 }

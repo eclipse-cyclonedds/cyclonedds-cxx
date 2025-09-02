@@ -7,7 +7,7 @@
 // http://www.eclipse.org/org/documents/edl-v10.php.
 //
 // SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
- 
+
 #ifndef CDR_STREAM_HPP_
 #define CDR_STREAM_HPP_
 
@@ -519,6 +519,16 @@ protected:
     void pop_member_start();
 
     /**
+     * @brief Function for pushing alignment offset for XCDR1 mutable/optional.
+     */
+    void push_align_offset();
+
+    /**
+     * @brief Function for restoring alignment offset for XCDR1 mutable/optional.
+     */
+    void pop_align_offset();
+
+    /**
      * @brief
      * Checks the struct for completeness.
      *
@@ -548,6 +558,7 @@ protected:
         m_max_alignment,                          /**< the maximum bytes that can be aligned to*/
         m_current_alignment = 1,                  /**< the current alignment*/
         m_buffer_size = 0;                        /**< the size of the current buffer*/
+    uint32_t m_alignment_offset = 0;              /**< offset in alignment calc (XCDR1 members are as-if at position 0) */
     char* m_buffer = nullptr;                     /**< the current buffer in use*/
     uint64_t m_status = 0,                        /**< the current status of streaming*/
              m_fault_mask;                        /**< the mask for statuses that will cause streaming
@@ -559,7 +570,8 @@ protected:
     DDSCXX_WARNING_MSVC_OFF(4251)
     custom_stack<size_t, m_maximum_depth> m_buffer_end; /**< the end of reading at the current level*/
     custom_stack<uint32_t, m_maximum_depth> m_e_off, /**< the offset of the entity at the current level*/
-                                            m_e_sz; /**< the size of the entity at the current level*/
+                                            m_e_sz,  /**< the size of the entity at the current level*/
+                                            m_align_offs;
     DDSCXX_WARNING_MSVC_ON(4251)
 };
 
