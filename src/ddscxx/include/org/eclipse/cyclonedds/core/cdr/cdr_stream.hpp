@@ -597,13 +597,13 @@ bool read(S &str, T& toread, size_t N = 1)
    || !str.bytes_available(sizeof(T)*N))
     return false;
 
-  const T* from = reinterpret_cast<const T*>(str.get_cursor());
   T* to = &toread;
-  assert(from);
-  if (N > 1 || sizeof(T) > 4)
-    memcpy(reinterpret_cast<void*>(to),reinterpret_cast<const void*>(from),sizeof(T)*N);
-  else
+  if (N > 1 || sizeof(T) > 4) {
+    memcpy(reinterpret_cast<void*>(to),reinterpret_cast<const void*>(str.get_cursor()),sizeof(T)*N);
+  } else {
+    const T* from = reinterpret_cast<const T*>(str.get_cursor());
     *to = *from;
+  }
 
   if (sizeof(T) > 1 && str.swap_endianness()) {
     for (size_t i = 0; i < N; i++, to++)
@@ -673,14 +673,15 @@ bool write(S& str, const T& towrite, size_t N = 1)
     return false;
 
   const T* from = &towrite;
-  T* to = reinterpret_cast<T*>(str.get_cursor());
-  assert(to);
-  if (N > 1 || sizeof(T) > 4)
-    memcpy(reinterpret_cast<void*>(to),reinterpret_cast<const void*>(from),sizeof(T)*N);
-  else
+  if (N > 1 || sizeof(T) > 4) {
+    memcpy(reinterpret_cast<void*>(str.get_cursor()),reinterpret_cast<const void*>(from),sizeof(T)*N);
+  } else {
+    T* to = reinterpret_cast<T*>(str.get_cursor());
     *to = *from;
+  }
 
   if (sizeof(T) > 1 && str.swap_endianness()) {
+    T* to = reinterpret_cast<T*>(str.get_cursor());
     for (size_t i = 0; i < N; i++, to++)
       byte_swap(to);
   }
