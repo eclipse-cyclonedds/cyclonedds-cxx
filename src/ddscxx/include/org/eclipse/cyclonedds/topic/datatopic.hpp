@@ -1106,6 +1106,8 @@ ddscxx_sertype<T,S>::ddscxx_sertype()
     dtp |= DDS_DATA_TYPE_CONTAINS_KEY;
   if (TopicTraits<T>::isSelfContained())
     dtp |= DDS_DATA_TYPE_IS_MEMCPY_SAFE;
+  if (TopicTraits<T>::defaultToXCDR2Encoding())
+    dtp |= DDS_DATA_TYPE_DEFAULTS_TO_XCDR2;
 
   ddsi_sertype_init_props(
       static_cast<ddsi_sertype*>(this),

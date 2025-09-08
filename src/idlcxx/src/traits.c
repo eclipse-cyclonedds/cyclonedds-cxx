@@ -122,6 +122,11 @@ emit_traits(
     "{\n"
     "  return 0x%2$Xu;\n"
     "}\n\n";
+  static const char *defaultxcdr2fmt =
+    "template <> constexpr bool TopicTraits<%1$s>::defaultToXCDR2Encoding()\n"
+    "{\n"
+    "  return true;\n"
+    "}\n\n";
   static const char *extensibilityfmt =
     "template <> constexpr extensibility TopicTraits<%1$s>::getExtensibility()\n"
     "{\n"
@@ -163,6 +168,9 @@ emit_traits(
 
   if (emit_isKeyless(pstate, node) &&
       idl_fprintf(gen->header.handle, keylessfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+  if (idl_xcdr2_is_default(node) &&
+      idl_fprintf(gen->header.handle, defaultxcdr2fmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   idl_extensibility_t ext = get_extensibility(node);

@@ -73,6 +73,14 @@ public:
     }
 
     /**
+     * @brief Returns whether TOPIC should use XCDR2 by default.
+     */
+    static constexpr bool defaultToXCDR2Encoding()
+    {
+        return false;
+    }
+
+    /**
      * @brief Returns the name of the type of TOPIC.
      *
      * Used in creating the correct TopicDescription.
