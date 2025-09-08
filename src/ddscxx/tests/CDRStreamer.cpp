@@ -120,7 +120,7 @@ TEST_F(CDRStreamer, cdr_mutable)
   bytes MS_xcdr_v1_normal {
       0x00, 0x07, 0x00, 0x04 /*mutablestruct.l.mheader*/,
       0x00, 0x01, 0xE2, 0x40 /*mutablestruct.l*/,
-      0x40, 0x05, 0x00, 0x04 /*mutablestruct.c.mheader*/,
+      0x00, 0x05, 0x00, 0x04 /*mutablestruct.c.mheader*/,
       'g' /*mutablestruct.c*/,
       0x00, 0x00, 0x00 /*padding bytes (3)*/,
       0x7F, 0x01, 0x00, 0x08 /*mutablestruct.str.mheader (pid_list_extended + length = 8)*/,
@@ -138,7 +138,7 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x0C /*mutablestruct.str.mheader (extended)*/,
       0x00, 0x00, 0x00, 0x07 /*mutablestruct.str.length*/, 'a', 'b', 'c', 'd', 'e', 'f', '\0' /*mutablestruct.str.c_str*/,
       0x00 /*padding bytes (1)*/,
-      0x40, 0x05, 0x00, 0x04 /*mutablestruct.c.mheader*/,
+      0x00, 0x05, 0x00, 0x04 /*mutablestruct.c.mheader*/,
       'g' /*mutablestruct.c*/,
       0x00, 0x00, 0x00 /*padding bytes (3)*/,
       0x00, 0x07, 0x00, 0x04 /*mutablestruct.l.mheader*/,
@@ -146,7 +146,7 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x7F, 0x02, 0x00, 0x00 /*mutablestruct list termination header*/
       };
   bytes MS_xcdr_v1_key {
-      0x40, 0x05, 0x00, 0x04 /*mutablestruct.c.mheader*/,
+      0x00, 0x05, 0x00, 0x04 /*mutablestruct.c.mheader*/,
       'g' /*mutablestruct.c*/,
       0x00, 0x00, 0x00 /*padding bytes (3)*/,
       0x7F, 0x02, 0x00, 0x00 /*mutablestruct list termination header*/
@@ -257,7 +257,7 @@ TEST_F(CDRStreamer, cdr_sequence)
 
   bytes SSM_xcdr_v1_normal {
       0x7F, 0x01, 0x00, 0x08 /*sequence_struct.c.mheader (pid_list_extended + length = 8)*/,
-      0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08 /*sequence_struct.c.mheader (extended)*/,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08 /*sequence_struct.c.mheader (extended)*/,
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       0x00 /*padding bytes (1)*/,
       0x7F, 0x01, 0x00, 0x08 /*sequence_struct.l.mheader (pid_list_extended + length = 8)*/,
@@ -267,7 +267,7 @@ TEST_F(CDRStreamer, cdr_sequence)
       };
   bytes SSM_xcdr_v1_key {
       0x7F, 0x01, 0x00, 0x08 /*sequence_struct.c.mheader (pid_list_extended + length = 8)*/,
-      0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08 /*sequence_struct.c.mheader (extended)*/,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08 /*sequence_struct.c.mheader (extended)*/,
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       0x00 /*padding bytes (1)*/,
       0x7F, 0x02, 0x00, 0x00 /*inner list termination header*/
@@ -585,13 +585,13 @@ TEST_F(CDRStreamer, cdr_optional)
       0x00, 0x01, 0x00, 0x04 /*optional_mutable_struct.b.mheader*/,
       'b'/*optional_mutable_struct.b*/,
       0x00, 0x00, 0x00/*padding bytes (3)*/,
-      0x40, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
+      0x00, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
       'c'/*optional_final_struct.c*/,
       0x00, 0x00, 0x00/*padding bytes (3)*/,
       0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
       };
   bytes OMS_xcdr_v1_key {
-      0x40, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
+      0x00, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
       'c'/*optional_final_struct.c*/,
       0x00, 0x00, 0x00/*padding bytes (3)*/,
       0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
@@ -659,13 +659,13 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x40, 0x02, 0x00, 0x04 /*must_understand_struct.b.mheader*/,
       'b'/*must_understand_struct.b*/,
       0x00, 0x00, 0x00/*padding bytes*/,
-      0x40, 0x03, 0x00, 0x04 /*must_understand_struct.c.mheader*/,
+      0x00, 0x03, 0x00, 0x04 /*must_understand_struct.c.mheader*/,
       'c'/*must_understand_struct.c*/,
       0x00, 0x00, 0x00/*padding bytes*/,
       0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
       };
   bytes v1_key {
-      0x40, 0x03, 0x00, 0x04 /*must_understand_struct.c.mheader*/,
+      0x00, 0x03, 0x00, 0x04 /*must_understand_struct.c.mheader*/,
       'c'/*must_understand_struct.c*/,
       0x00, 0x00, 0x00/*padding bytes*/,
       0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
@@ -729,7 +729,7 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x40, 0x02, 0x00, 0x04 /*must_understand_struct.b.mheader*/,
       'b'/*must_understand_struct.b*/,
       0x00, 0x00, 0x00/*padding bytes*/,
-      0x40, 0x03, 0x00, 0x04 /*must_understand_struct.c.mheader*/,
+      0x00, 0x03, 0x00, 0x04 /*must_understand_struct.c.mheader*/,
       'c'/*must_understand_struct.c*/,
       0x00, 0x00, 0x00/*padding bytes*/,
       0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
