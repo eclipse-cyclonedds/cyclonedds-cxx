@@ -266,10 +266,13 @@ bool xcdr_v1_stream::write_header(const entity_properties_t &props)
 
 bool xcdr_v1_stream::finish_write_header(const entity_properties_t &props)
 {
-  // RTI needs the size in the XCDR1 parameter header to be a multiple of 4 bytes (XTypes
-  // 1.1), instead of the exact size as required by XTypes 1.3
-  if (!align(4, true)) {
-    return false;
+  // RTI needs the size in the XCDR1 parameter header in a mutable struct
+  // to be a multiple of 4 bytes (XTypes 1.1), instead of the exact size as
+  // required by XTypes 1.3
+  if (props.p_ext == extensibility::ext_mutable) {
+    if (!align(4, true)) {
+      return false;
+    }
   }
 
   auto current_position = position();
