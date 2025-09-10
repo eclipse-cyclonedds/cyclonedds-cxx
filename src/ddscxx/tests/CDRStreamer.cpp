@@ -573,6 +573,10 @@ TEST_F(CDRStreamer, cdr_optional)
   optional_appendable_struct OAS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
   optional_mutable_struct OMS(DDSCXX_STD_IMPL_NULLOPT, 'b', 'c');
 
+  optional_final_struct OFSp('a', 'b', 'c');
+  optional_appendable_struct OASp('a', 'b', 'c');
+  optional_mutable_struct OMSp('a', 'b', 'c');
+
   bytes OFS_xcdr_v1_normal {
       0x00, 0x00, 0x00, 0x00 /*optional_final_struct.a.mheader*/,
       'b'/*optional_final_struct.a*/,
@@ -591,6 +595,33 @@ TEST_F(CDRStreamer, cdr_optional)
       0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
       };
   bytes OMS_xcdr_v1_key {
+      0x00, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
+      'c'/*optional_final_struct.c*/,
+      0x00, 0x00, 0x00/*padding bytes (3)*/,
+      0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
+      };
+  bytes OFSp_xcdr_v1_normal {
+      0x00, 0x00, 0x00, 0x01 /*optional_final_struct.a.mheader*/,
+      'a'/*optional_final_struct.a*/,
+      'b'/*optional_final_struct.b*/,
+      'c'/*optional_final_struct.c*/
+      };
+  bytes OFSp_key {
+      'c'/*optional_final_struct.c*/
+      };
+  bytes OMSp_xcdr_v1_normal {
+      0x00, 0x00, 0x00, 0x04 /*optional_mutable_struct.a.mheader*/,
+      'a'/*optional_mutable_struct.a*/,
+      0x00, 0x00, 0x00/*padding bytes (3)*/,
+      0x00, 0x01, 0x00, 0x04 /*optional_mutable_struct.b.mheader*/,
+      'b'/*optional_mutable_struct.b*/,
+      0x00, 0x00, 0x00/*padding bytes (3)*/,
+      0x00, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
+      'c'/*optional_final_struct.c*/,
+      0x00, 0x00, 0x00/*padding bytes (3)*/,
+      0x7F, 0x02, 0x00, 0x00 /*optional_mutable_struct list termination header*/
+      };
+  bytes OMSp_xcdr_v1_key {
       0x00, 0x02, 0x00, 0x04 /*optional_mutable_struct.c.mheader*/,
       'c'/*optional_final_struct.c*/,
       0x00, 0x00, 0x00/*padding bytes (3)*/,
@@ -631,6 +662,10 @@ TEST_F(CDRStreamer, cdr_optional)
   readwrite_test(OFS, OFS, OFS_xcdr_v1_normal, OFS_key,         xcdr_v1_stream);
   readwrite_test(OAS, OAS, OFS_xcdr_v1_normal, OFS_key,         xcdr_v1_stream);
   readwrite_test(OMS, OMS, OMS_xcdr_v1_normal, OMS_xcdr_v1_key, xcdr_v1_stream);
+
+  readwrite_test(OFSp, OFSp, OFSp_xcdr_v1_normal, OFSp_key,         xcdr_v1_stream);
+  readwrite_test(OASp, OASp, OFSp_xcdr_v1_normal, OFSp_key,         xcdr_v1_stream);
+  readwrite_test(OMSp, OMSp, OMSp_xcdr_v1_normal, OMSp_xcdr_v1_key, xcdr_v1_stream);
 
   readwrite_test(OFS, OFS, OFS_xcdr_v2_normal, OFS_key,         xcdr_v2_stream);
   readwrite_test(OAS, OAS, OAS_xcdr_v2_normal, OAS_xcdr_v2_key, xcdr_v2_stream);

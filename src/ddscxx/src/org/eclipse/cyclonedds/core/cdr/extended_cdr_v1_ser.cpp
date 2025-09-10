@@ -30,18 +30,22 @@ const uint32_t xcdr_v1_stream::pl_extended_flag_must_understand = 0x40000000;
 
 bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
 {
-  if (header_necessary(prop) && (prop.p_ext != extensibility::ext_mutable || is_set)) {
+  if (header_necessary(prop)) {
     switch (m_mode) {
       case stream_mode::write:
-        if (!write_header(prop))
+        if ((prop.p_ext != extensibility::ext_mutable || is_set) &&
+            !write_header(prop))
           return false;
         break;
       case stream_mode::move:
       case stream_mode::max:
-        if (!move_header(prop))
+        if ((prop.p_ext != extensibility::ext_mutable || is_set) &&
+            !move_header(prop))
           return false;
         break;
       case stream_mode::read:
+        // is_set comes from sample that is being filled (and so is typically false), but
+        // we only get here if the field is present
         m_buffer_end.push(position() + m_e_sz.top());
         break;
       default:
@@ -57,8 +61,7 @@ bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
 bool xcdr_v1_stream::finish_member(const entity_properties_t &prop, member_id_set &member_ids, bool is_set)
 {
   if (header_necessary(prop)) {
-    if (prop.p_ext != extensibility::ext_mutable || is_set)
-      pop_align_offset();
+    pop_align_offset();
     switch (m_mode) {
       case stream_mode::write:
         if ((prop.p_ext != extensibility::ext_mutable || is_set) &&
