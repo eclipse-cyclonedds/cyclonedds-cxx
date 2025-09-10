@@ -31,8 +31,11 @@ void VerifyWrite_Impl(const T& in, const bytes &out, S &stream, key_mode _key, b
   stream.set_buffer(buffer.data(), buffer.size());
   ASSERT_TRUE(write(stream, in, _key));
 
-  result = (buffer == out);
-  ASSERT_EQ(result, compare_success);
+  if (compare_success) {
+    ASSERT_EQ(buffer, out);
+  } else {
+    ASSERT_NE(buffer, out);
+  }
 }
 
 template<typename T, typename S>
@@ -47,12 +50,19 @@ void VerifyRead_Impl(const bytes &in, const T& out, S &stream, key_mode _key, bo
   if (!result)
     return;
 
-  if (_key == key_mode::sorted || _key == key_mode::unsorted)
-    result = (buffer.c() == out.c());
-  else
-    result = (buffer == out);
-
-  ASSERT_EQ(result, compare_success);
+  if (_key == key_mode::sorted || _key == key_mode::unsorted) {
+    if (compare_success) {
+      ASSERT_EQ(buffer.c(), out.c());
+    } else {
+      ASSERT_NE(buffer.c(), out.c());
+    }
+  } else {
+    if (compare_success) {
+      ASSERT_EQ(buffer, out);
+    } else {
+      ASSERT_NE(buffer, out);
+    }
+  }
 }
 
 template<typename T, typename S>
