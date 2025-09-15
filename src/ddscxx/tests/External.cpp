@@ -167,5 +167,5 @@ TEST(External, reading_writing)
   }
 
   EXPECT_FALSE(timedout);
-  EXPECT_EQ(samplesread,1);
+  EXPECT_EQ(samplesread,1u);
 }

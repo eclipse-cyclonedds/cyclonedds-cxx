@@ -37,7 +37,7 @@ TEST_F(DataModels, implicit_defaults)
   EXPECT_EQ(ds.c(), '\0');
   EXPECT_EQ(ds.s(), "");
   EXPECT_EQ(ds.e(), test_enum::e_2);
-  EXPECT_EQ(ds.b(), 0);
+  EXPECT_EQ(ds.b(), 0u);
 }
 
 /*testing explicit defaults of structs*/
@@ -55,6 +55,6 @@ TEST_F(DataModels, explicit_defaults)
   this test will fail until we support enum values as annotation parameters
   EXPECT_EQ(ds.e(), test_enum::e_1);
   */
-  EXPECT_EQ(ds.b(), 5);
-  EXPECT_EQ(ds.b(), f_0|f_2);
+  EXPECT_EQ(ds.b(), 5u);
+  EXPECT_EQ(ds.b(), static_cast<uint32_t>(f_0|f_2));
 }

@@ -296,7 +296,7 @@ TEST_F(Condition, status_condition)
 
     // Check if successfully attached
     dds::core::cond::WaitSet::ConditionSeq conds = waitset.conditions();
-    ASSERT_EQ(conds.size(), 1) << "Number of conditions incorrect";
+    ASSERT_EQ(conds.size(), 1u) << "Number of conditions incorrect";
     ASSERT_EQ(conds[0], reader_status_cond) << "Attached condition is not the expected StatusCondition";
 }
 
@@ -354,7 +354,7 @@ TEST_F(Condition, guard_condition)
 
     // Check if successfully attached
     dds::core::cond::WaitSet::ConditionSeq conds = waitset.conditions();
-    ASSERT_EQ(conds.size(), 1) << "Number of conditions incorrect";
+    ASSERT_EQ(conds.size(), 1u) << "Number of conditions incorrect";
     ASSERT_EQ(conds[0], guard_cond) << "Attached condition is not the expected GuardCondition";
 }
 

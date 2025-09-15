@@ -414,7 +414,7 @@ TEST_F(DataReader, read_no_data)
 
     /* Check result by reading. */
     samples = this->reader.read();
-    ASSERT_EQ(samples.length(), 0);
+    ASSERT_EQ(samples.length(), 0u);
 }
 
 
@@ -607,7 +607,7 @@ TEST_F(DataReader, read_default_filter_not_alive_disposed)
 
     /* First read should return nothing. */
     samples = this->reader.read();
-    ASSERT_EQ(samples.length(), 0);
+    ASSERT_EQ(samples.length(), 0u);
 
     /* Dispose the instances. */
     for (size_t i = 0; i < test_samples.size(); i++) {
@@ -637,7 +637,7 @@ TEST_F(DataReader, read_default_filter_not_alive_no_writers)
 
     /* First read should return nothing. */
     samples = this->reader.read();
-    ASSERT_EQ(samples.length(), 0);
+    ASSERT_EQ(samples.length(), 0u);
 
     /* Unregister the instances. */
     for (size_t i = 0; i < test_samples.size(); i++) {
@@ -673,7 +673,7 @@ TEST_F(DataReader, take_no_data)
 
     /* Check result by reading. */
     samples = this->reader.take();
-    ASSERT_EQ(samples.length(), 0);
+    ASSERT_EQ(samples.length(), 0u);
 }
 
 
@@ -852,7 +852,7 @@ TEST_F(DataReader, take_default_filter_not_alive_disposed)
 
     /* First read should return nothing. */
     samples = this->reader.take();
-    ASSERT_EQ(samples.length(), 0);
+    ASSERT_EQ(samples.length(), 0u);
 
     /* Dispose the instances. */
     for (size_t i = 0; i < test_samples.size(); i++) {
@@ -882,7 +882,7 @@ TEST_F(DataReader, take_default_filter_not_alive_no_writers)
 
     /* First take should return nothing. */
     samples = this->reader.take();
-    ASSERT_EQ(samples.length(), 0);
+    ASSERT_EQ(samples.length(), 0u);
 
     /* Unregister the instances. */
     for (size_t i = 0; i < test_samples.size(); i++) {
