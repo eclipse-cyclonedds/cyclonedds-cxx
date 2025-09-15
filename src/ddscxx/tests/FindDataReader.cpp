@@ -74,8 +74,8 @@ TEST_F(FindDataReader, BinIterator_tname_find_with_empty)
             std::string(TOPIC1_NAME),
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataReader, BinIterator_tname_find_with_other_type)
@@ -92,8 +92,8 @@ TEST_F(FindDataReader, BinIterator_tname_find_with_other_type)
             std::string(TOPIC1_NAME),  // <- not matching Space::Type2
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type2> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataReader, BinIterator_tname_find_nonexisting)
@@ -110,8 +110,8 @@ TEST_F(FindDataReader, BinIterator_tname_find_nonexisting)
             std::string("non-existing"),
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataReader, BinIterator_tname_find)
@@ -129,8 +129,8 @@ TEST_F(FindDataReader, BinIterator_tname_find)
             std::string(TOPIC1_NAME),
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 2);
-    ASSERT_EQ(found.size(), 2);
+    ASSERT_EQ(cnt, 2u);
+    ASSERT_EQ(found.size(), 2u);
     ASSERT_TRUE((found[0] == this->reader1A) || (found[0] == this->reader1B));
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
@@ -150,8 +150,8 @@ TEST_F(FindDataReader, BinIterator_tname_find_any)
             std::string(TOPIC2_NAME),
             std::back_inserter<std::vector<dds::sub::AnyDataReader> >(found));
 
-    ASSERT_EQ(cnt, 1);
-    ASSERT_EQ(found.size(), 1);
+    ASSERT_EQ(cnt, 1u);
+    ASSERT_EQ(found.size(), 1u);
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
@@ -167,8 +167,8 @@ TEST_F(FindDataReader, BinIterator_tdesc_find_with_empty)
             this->topic1,
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataReader, BinIterator_tdesc_find_with_other_type)
@@ -185,8 +185,8 @@ TEST_F(FindDataReader, BinIterator_tdesc_find_with_other_type)
             this->topic1,  // <- not matching Space::Type2
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type2> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataReader, BinIterator_tdesc_find)
@@ -204,8 +204,8 @@ TEST_F(FindDataReader, BinIterator_tdesc_find)
             this->topic1,
             std::back_inserter<std::vector<dds::sub::DataReader<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 2);
-    ASSERT_EQ(found.size(), 2);
+    ASSERT_EQ(cnt, 2u);
+    ASSERT_EQ(found.size(), 2u);
     ASSERT_TRUE((found[0] == this->reader1A) || (found[0] == this->reader1B));
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
@@ -225,8 +225,8 @@ TEST_F(FindDataReader, BinIterator_tdesc_find_any)
             this->topic2,
             std::back_inserter<std::vector<dds::sub::AnyDataReader> >(found));
 
-    ASSERT_EQ(cnt, 1);
-    ASSERT_EQ(found.size(), 1);
+    ASSERT_EQ(cnt, 1u);
+    ASSERT_EQ(found.size(), 1u);
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
@@ -243,7 +243,7 @@ TEST_F(FindDataReader, FwdIterator_tname_find_with_empty)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataReader, FwdIterator_tname_find_with_other_type)
@@ -261,7 +261,7 @@ TEST_F(FindDataReader, FwdIterator_tname_find_with_other_type)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataReader, FwdIterator_tname_find_nonexisting)
@@ -279,7 +279,7 @@ TEST_F(FindDataReader, FwdIterator_tname_find_nonexisting)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataReader, FwdIterator_tname_find)
@@ -298,7 +298,7 @@ TEST_F(FindDataReader, FwdIterator_tname_find)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 2);
+    ASSERT_EQ(cnt, 2u);
     ASSERT_TRUE((found[0] == this->reader1A) || (found[0] == this->reader1B));
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
@@ -319,7 +319,7 @@ TEST_F(FindDataReader, FwdIterator_tname_find_any)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 1);
+    ASSERT_EQ(cnt, 1u);
     ASSERT_TRUE(found[0] == this->reader2);
 }
 
@@ -336,7 +336,7 @@ TEST_F(FindDataReader, FwdIterator_tdesc_find_with_empty)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataReader, FwdIterator_tdesc_find_with_other_type)
@@ -354,7 +354,7 @@ TEST_F(FindDataReader, FwdIterator_tdesc_find_with_other_type)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataReader, FwdIterator_tdesc_find)
@@ -373,7 +373,7 @@ TEST_F(FindDataReader, FwdIterator_tdesc_find)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 2);
+    ASSERT_EQ(cnt, 2u);
     ASSERT_TRUE((found[0] == this->reader1A) || (found[0] == this->reader1B));
     ASSERT_TRUE((found[1] == this->reader1A) || (found[1] == this->reader1B));
 }
@@ -394,7 +394,7 @@ TEST_F(FindDataReader, FwdIterator_tdesc_find_any)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 1);
+    ASSERT_EQ(cnt, 1u);
     ASSERT_TRUE(found[0] == this->reader2);
 }
 

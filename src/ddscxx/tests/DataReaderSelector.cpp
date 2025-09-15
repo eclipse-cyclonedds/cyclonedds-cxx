@@ -1291,7 +1291,7 @@ TEST_F(DataReaderSelector, take_FWIterator)
 
     /* A second time should return nothing. */
     cnt = selector.take(take_samples.begin(), static_cast<uint32_t>(take_samples.size()));
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(DataReaderSelector, take_FWIterator_instance)
@@ -1524,7 +1524,7 @@ TEST_F(DataReaderSelector, take_BIIterator)
     std::vector<dds::sub::Sample<Space::Type1> > take_samples2;
     std::back_insert_iterator< std::vector<dds::sub::Sample<Space::Type1> > > biter2(take_samples2);
     cnt = selector.take(biter2);
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
     this->CheckData(take_samples2, std::vector<Space::Type1>());
 }
 

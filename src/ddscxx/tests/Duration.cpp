@@ -33,7 +33,7 @@ TEST(Duration, plus)
 
     d = d1 + d2;
     ASSERT_EQ(d.sec(), 20);
-    ASSERT_EQ(d.nanosec(), 20);
+    ASSERT_EQ(d.nanosec(), 20u);
 }
 
 TEST(Duration, plus_is)
@@ -44,11 +44,11 @@ TEST(Duration, plus_is)
 
     d += d1;
     ASSERT_EQ(d.sec(), 20);
-    ASSERT_EQ(d.nanosec(), 20);
+    ASSERT_EQ(d.nanosec(), 20u);
 
     d += d2;
     ASSERT_EQ(d.sec(), 22);
-    ASSERT_EQ(d.nanosec(), 19);
+    ASSERT_EQ(d.nanosec(), 19u);
 }
 
 TEST(Duration, minus)
@@ -57,15 +57,15 @@ TEST(Duration, minus)
 
     d = dds::core::Duration(10, 10) - dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 0);
-    ASSERT_EQ(d.nanosec(), 0);
+    ASSERT_EQ(d.nanosec(), 0u);
 
     d = dds::core::Duration(12, 12) - dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 2);
-    ASSERT_EQ(d.nanosec(), 2);
+    ASSERT_EQ(d.nanosec(), 2u);
 
     d = dds::core::Duration(11, 9) - dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 0);
-    ASSERT_EQ(d.nanosec(), 999999999);
+    ASSERT_EQ(d.nanosec(), 999999999u);
 
     ASSERT_THROW({
         /* Negative nsecs. */
@@ -90,17 +90,17 @@ TEST(Duration, minus_is)
     d = dds::core::Duration(10, 10);
     d -= dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 0);
-    ASSERT_EQ(d.nanosec(), 0);
+    ASSERT_EQ(d.nanosec(), 0u);
 
     d = dds::core::Duration(12, 12);
     d -= dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 2);
-    ASSERT_EQ(d.nanosec(), 2);
+    ASSERT_EQ(d.nanosec(), 2u);
 
     d = dds::core::Duration(11, 9);
     d -= dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 0);
-    ASSERT_EQ(d.nanosec(), 999999999);
+    ASSERT_EQ(d.nanosec(), 999999999u);
 
     ASSERT_THROW({
         /* Negative nsecs. */
@@ -127,11 +127,11 @@ TEST(Duration, times)
 
     d = 2 * dds::core::Duration(10, 10);
     ASSERT_EQ(d.sec(), 20);
-    ASSERT_EQ(d.nanosec(), 20);
+    ASSERT_EQ(d.nanosec(), 20u);
 
     d = dds::core::Duration(1, 999999999) * 10;
     ASSERT_EQ(d.sec(), 19);
-    ASSERT_EQ(d.nanosec(), 999999990);
+    ASSERT_EQ(d.nanosec(), 999999990u);
 }
 
 TEST(Duration, times_is)
@@ -141,12 +141,12 @@ TEST(Duration, times_is)
     d = dds::core::Duration(10, 10);
     d *= 2;
     ASSERT_EQ(d.sec(), 20);
-    ASSERT_EQ(d.nanosec(), 20);
+    ASSERT_EQ(d.nanosec(), 20u);
 
     d = dds::core::Duration(1, 999999999);
     d *= 10;
     ASSERT_EQ(d.sec(), 19);
-    ASSERT_EQ(d.nanosec(), 999999990);
+    ASSERT_EQ(d.nanosec(), 999999990u);
 }
 
 TEST(Duration, divide)
@@ -156,7 +156,7 @@ TEST(Duration, divide)
     /* Allow for the round up to microseconds. */
     d = dds::core::Duration(10, 100000000) / 2;
     ASSERT_EQ(d.sec(), 5);
-    ASSERT_EQ(d.nanosec(),  50000000);
+    ASSERT_EQ(d.nanosec(),  50000000u);
 
     ASSERT_THROW({
         d = dds::core::Duration(10, 100000000) / 0;
@@ -168,7 +168,7 @@ TEST(Duration, nanosec)
     dds::core::Duration d;
 
     d.nanosec(100000000);
-    ASSERT_EQ(d.nanosec(), 100000000);
+    ASSERT_EQ(d.nanosec(), 100000000u);
     ASSERT_EQ(d.to_millisecs(), 100);
 
     ASSERT_THROW({
@@ -184,7 +184,7 @@ TEST(Duration, microsec)
     ASSERT_EQ(micros, 10000001);
     d = dds::core::Duration::from_microsecs(micros);
     ASSERT_EQ(d.sec(), 10);
-    ASSERT_EQ(d.nanosec(), 1000);
+    ASSERT_EQ(d.nanosec(), 1000u);
 }
 
 TEST(Duration, millisec)
@@ -194,7 +194,7 @@ TEST(Duration, millisec)
     ASSERT_EQ(millis, 10001);
     d = dds::core::Duration::from_millisecs(millis);
     ASSERT_EQ(d.sec(), 10);
-    ASSERT_EQ(d.nanosec(), 1000000);
+    ASSERT_EQ(d.nanosec(), 1000000u);
 }
 
 TEST(Duration, sec)
@@ -204,7 +204,7 @@ TEST(Duration, sec)
     ASSERT_EQ(secs, 10.5);
     d = dds::core::Duration::from_secs(secs);
     ASSERT_EQ(d.sec(), 10);
-    ASSERT_EQ(d.nanosec(), 500000000);
+    ASSERT_EQ(d.nanosec(), 500000000u);
 }
 
 TEST(Duration, greater)

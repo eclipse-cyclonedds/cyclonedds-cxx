@@ -100,12 +100,12 @@ TEST(DomainParticipant, create_with_str_conf)
         dds::core::status::StatusMask::none(),
         simple_config);
     ASSERT_NE(dp1, dds::core::null);
-    ASSERT_EQ(dp1.domain_id(), 7);
+    ASSERT_EQ(dp1.domain_id(), 7u);
 
     dp2 = dds::domain::DomainParticipant(
         org::eclipse::cyclonedds::domain::default_id());
     ASSERT_NE(dp2, dds::core::null);
-    ASSERT_EQ(dp2.domain_id(), 7);
+    ASSERT_EQ(dp2.domain_id(), 7u);
 
     dp3 = dds::domain::DomainParticipant(
         8,
@@ -114,12 +114,12 @@ TEST(DomainParticipant, create_with_str_conf)
         dds::core::status::StatusMask::none(),
         simple_config);
     ASSERT_NE(dp3, dds::core::null);
-    ASSERT_EQ(dp3.domain_id(), 8);
+    ASSERT_EQ(dp3.domain_id(), 8u);
 
     dp4 = dds::domain::DomainParticipant(
         org::eclipse::cyclonedds::domain::default_id());
     ASSERT_NE(dp4, dds::core::null);
-    ASSERT_EQ(dp4.domain_id(), 7);
+    ASSERT_EQ(dp4.domain_id(), 7u);
 }
 
 TEST(DomainParticipant, recreate_with_str_conf)

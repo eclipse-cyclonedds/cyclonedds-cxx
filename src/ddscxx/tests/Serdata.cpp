@@ -117,9 +117,9 @@ TEST_F(Serdata, deserialization_big_endianness)
     auto msg = getMsg(endianness::big_endian);
 
     if (native_endianness() == endianness::big_endian)
-      ASSERT_EQ(msg.l(), 0x04030201);
+      ASSERT_EQ(msg.l(), 0x04030201u);
     else
-      ASSERT_EQ(msg.l(), 0x01020304);
+      ASSERT_EQ(msg.l(), 0x01020304u);
 }
 
 /*
@@ -131,9 +131,9 @@ TEST_F(Serdata, deserialization_little_endianness)
     auto msg = getMsg(endianness::little_endian);
 
     if (native_endianness() == endianness::little_endian)
-      ASSERT_EQ(msg.l(), 0x04030201);
+      ASSERT_EQ(msg.l(), 0x04030201u);
     else
-      ASSERT_EQ(msg.l(), 0x01020304);
+      ASSERT_EQ(msg.l(), 0x01020304u);
 }
 
 /*

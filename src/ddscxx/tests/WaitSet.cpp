@@ -425,22 +425,22 @@ TEST_F(WaitSet, attach_conditions)
 
     // Add statuscondition and check if in list
     waitSet += readerStatus;
-    ASSERT_EQ(waitSet.conditions().size(), 1);
+    ASSERT_EQ(waitSet.conditions().size(), 1u);
 
     // Remove statuscondition and check if removed from list
     waitSet -= readerStatus;
-    ASSERT_EQ(waitSet.conditions().size(), 0);
+    ASSERT_EQ(waitSet.conditions().size(), 0u);
 
     // Add status and wait condition and check condition count
     waitSet += readerStatus;
     waitSet += guard;
-    ASSERT_EQ(waitSet.conditions().size(), 2);
+    ASSERT_EQ(waitSet.conditions().size(), 2u);
 
     // Remove conditions and check count
     waitSet -= readerStatus;
-    ASSERT_EQ(waitSet.conditions().size(), 1);
+    ASSERT_EQ(waitSet.conditions().size(), 1u);
     waitSet -= guard;
-    ASSERT_EQ(waitSet.conditions().size(), 0);
+    ASSERT_EQ(waitSet.conditions().size(), 0u);
 }
 
 /**
@@ -454,7 +454,7 @@ TEST_F(WaitSet, wait_timeout)
     ASSERT_THROW({
         dds::core::Duration waitTimeout = dds::core::Duration::from_millisecs(100);
         dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
-        ASSERT_EQ(conditionList.size(), 0);
+        ASSERT_EQ(conditionList.size(), 0u);
     }, dds::core::TimeoutError);
 
     waitSet -= readerStatus;
@@ -478,7 +478,7 @@ TEST_F(WaitSet, wait_reader_status)
         dds::core::Duration waitTimeout = dds::core::Duration::from_millisecs(500);
         dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
 
-        ASSERT_EQ(conditionList.size(), 1);
+        ASSERT_EQ(conditionList.size(), 1u);
         ASSERT_EQ(conditionList[0], readerStatus);
     });
 
@@ -509,7 +509,7 @@ TEST_F(WaitSet, wait_reader_timeout)
         waitTimeout = dds::core::Duration::from_millisecs(500);
         waitSet.wait(conditionList, waitTimeout);
     });
-    ASSERT_EQ(conditionList.size(), 1);
+    ASSERT_EQ(conditionList.size(), 1u);
     ASSERT_EQ(conditionList[0], readerStatus);
 
     // Take the data
@@ -549,7 +549,7 @@ TEST_F(WaitSet, guard_trigger_during_wait)
         waitTimeout = dds::core::Duration::from_millisecs(500);
         conditionList = waitSet.wait(waitTimeout);
     });
-    ASSERT_EQ(conditionList.size(), 1);
+    ASSERT_EQ(conditionList.size(), 1u);
     ASSERT_EQ(conditionList[0], guard);
 
     // Clean-up
@@ -578,7 +578,7 @@ TEST_F(WaitSet, guard_trigger_before_wait)
         waitTimeout = dds::core::Duration::from_millisecs(500);
         conditionList = waitSet.wait(waitTimeout);
     });
-    ASSERT_EQ(conditionList.size(), 1);
+    ASSERT_EQ(conditionList.size(), 1u);
     ASSERT_EQ(conditionList[0], guard);
 
     // Clean-up
@@ -600,7 +600,7 @@ TEST_F(WaitSet, multiple_conditions)
     waitSet += readCond;
     waitSet += readerStatus;
     waitSet += guard;
-    ASSERT_EQ(waitSet.conditions().size(), 3);
+    ASSERT_EQ(waitSet.conditions().size(), 3u);
 
     // Write data to trigger read and status condition
     Space::Type1 testData(1, 2, 3);
@@ -614,7 +614,7 @@ TEST_F(WaitSet, multiple_conditions)
     dds::core::cond::WaitSet::ConditionSeq conditionList;
     waitSet.wait(conditionList);
 
-    ASSERT_EQ(conditionList.size(), 3);
+    ASSERT_EQ(conditionList.size(), 3u);
 
     // Check if all conditions in resulting list
     bool readSeen = false;
@@ -657,7 +657,7 @@ TEST_F(WaitSet, multiple_conditions_handlers)
     waitSet += readCond;
     waitSet += readerStatus;
     waitSet += guard;
-    ASSERT_EQ(waitSet.conditions().size(), 3);
+    ASSERT_EQ(waitSet.conditions().size(), 3u);
 
     // Write data
     Space::Type1 testData(1, 2, 3);
@@ -710,12 +710,12 @@ TEST_F(WaitSet, multiple_conditions_same)
         waitSet += readerStatus;
     });
 
-    ASSERT_EQ(waitSet.conditions().size(), 2);
+    ASSERT_EQ(waitSet.conditions().size(), 2u);
 
     waitSet -= guard;
     waitSet -= readerStatus;
 
-    ASSERT_EQ(waitSet.conditions().size(), 0);
+    ASSERT_EQ(waitSet.conditions().size(), 0u);
 }
 
 /**
@@ -751,7 +751,7 @@ TEST_F(WaitSet, attach_detach_during_wait)
     dds::core::Duration waitTimeout (1, 0);
     dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
 
-    ASSERT_EQ(conditionList.size(), 1) << "Incorrect number of triggered conditions";
+    ASSERT_EQ(conditionList.size(), 1u) << "Incorrect number of triggered conditions";
     ASSERT_EQ(conditionList[0], readerStatus) << "Wrong condition returned";
     ASSERT_TRUE(actionThreadArgs.result) << actionThreadArgs.message;
 
@@ -786,7 +786,7 @@ TEST_F(WaitSet, attach_detach_guard_during_wait)
     dds::core::Duration waitTimeout (1, 0);
     dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.wait(waitTimeout);
 
-    ASSERT_EQ(conditionList.size(), 1) << "Incorrect number of triggered conditions";
+    ASSERT_EQ(conditionList.size(), 1u) << "Incorrect number of triggered conditions";
     ASSERT_NE(conditionList[0], guard) << "Wrong condition returned";
     ASSERT_TRUE(actionThreadArgs.result) << actionThreadArgs.message;
 
@@ -855,7 +855,7 @@ TEST_F(WaitSet, attach_detach_multiple_during_wait)
 
     // check the attached conditions
     dds::core::cond::WaitSet::ConditionSeq conditionList = waitSet.conditions();
-    ASSERT_EQ(conditionList.size(), 3) << "Incorrect number of attached conditions";
+    ASSERT_EQ(conditionList.size(), 3u) << "Incorrect number of attached conditions";
     ASSERT_TRUE(std::find(conditionList.begin(), conditionList.end(), guard)
               != conditionList.end()) << "Expected guard condition";
     ASSERT_TRUE(std::find(conditionList.begin(), conditionList.end(), readerStatus)
@@ -874,12 +874,12 @@ TEST_F(WaitSet, attach_detach_multiple_during_wait)
     conditionList = waitSet.wait(waitTimeout);
 
     // Check if correct condition triggered
-    ASSERT_EQ(conditionList.size(), 1) << "Incorrect number of triggered conditions";
+    ASSERT_EQ(conditionList.size(), 1u) << "Incorrect number of triggered conditions";
     ASSERT_EQ(conditionList[0], guard) << "The GuardCondition was not triggered";
 
     // Check if conditions are removed
     conditionList = waitSet.conditions();
-    ASSERT_EQ(conditionList.size(), 1) << "The status-, read- and query-conditions are not removed";
+    ASSERT_EQ(conditionList.size(), 1u) << "The status-, read- and query-conditions are not removed";
 
     ASSERT_TRUE(actionThreadArgs.result) << actionThreadArgs.message;
 
@@ -941,7 +941,7 @@ TEST_F(WaitSet, status_condition_trigger)
   auto triggered_conditions = ws.wait(dds::core::Duration{3, 0});
 
   // both conditions (requested/offered incompatible QoS) should be triggered
-  EXPECT_EQ(triggered_conditions.size(), 2);
+  EXPECT_EQ(triggered_conditions.size(), 2u);
   EXPECT_EQ(triggered_conditions[0]->get_ddsc_entity(), sc_w->get_ddsc_entity());
   EXPECT_EQ(triggered_conditions[1]->get_ddsc_entity(), sc_r->get_ddsc_entity());
 
@@ -973,7 +973,7 @@ TEST_F(WaitSet, close_during_wait)
 
     // closing the reader should detach the conditions from the waitset
     auto conditionList = waitSet.conditions();
-    EXPECT_EQ(conditionList.size(), 0);
+    EXPECT_EQ(conditionList.size(), 0u);
     ddsrt_thread_join(threadId, nullptr);
   }
 
@@ -996,7 +996,7 @@ TEST_F(WaitSet, close_during_wait)
 //
 //    // closing the reader should detach the conditions from the waitset
 //    auto conditionList = waitSet.conditions();
-//    EXPECT_EQ(conditionList.size(), 0);
+//    EXPECT_EQ(conditionList.size(), 0u);
 //    ddsrt_thread_join(threadId, nullptr);
 //  }
 
@@ -1022,7 +1022,7 @@ TEST_F(WaitSet, close_during_wait)
 
     // closing the reader should detach the conditions from the waitset
     auto conditionList = waitSet.conditions();
-    ASSERT_EQ(conditionList.size(), 1);
+    ASSERT_EQ(conditionList.size(), 1u);
     EXPECT_EQ(conditionList[0], statusCondition);
     ddsrt_thread_join(threadId, nullptr);
   }
@@ -1042,7 +1042,7 @@ TEST_F(WaitSet, close_during_wait)
 
     // take data
     auto samples = reader.take();
-    ASSERT_EQ(samples.length(), 1);
+    ASSERT_EQ(samples.length(), 1u);
     ASSERT_TRUE(samples.begin()->info().valid());
     EXPECT_EQ(samples.begin()->data().long_1(), 1);
 
@@ -1056,7 +1056,7 @@ TEST_F(WaitSet, close_during_wait)
 
     // closing the reader should detach the conditions from the waitset
     auto conditionList = waitSet.conditions();
-    EXPECT_EQ(conditionList.size(), 0);
+    EXPECT_EQ(conditionList.size(), 0u);
     ddsrt_thread_join(threadId, nullptr);
   }
 }
@@ -1071,7 +1071,7 @@ TEST_F(WaitSet, detach_after_close)
   EXPECT_NO_THROW(readCondition.delegate()->close());
   EXPECT_THROW(readCondition->get_ddsc_entity(), dds::core::AlreadyClosedError);
   // closing the condition, should automatically detach it from waitset
-  EXPECT_EQ(waitSet.conditions().size(), 0);
+  EXPECT_EQ(waitSet.conditions().size(), 0u);
   // detach the closed condition, which should fail returning false
   EXPECT_FALSE(waitSet.detach_condition(readCondition));
 }

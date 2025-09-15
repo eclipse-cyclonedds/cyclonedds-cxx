@@ -82,7 +82,7 @@ public:
         ASSERT_EQ(s.data().long_2()+s.info().rank().sample(), history_depth-1);
       }
 
-      ASSERT_EQ(occurances.size(), number_of_keys);
+      ASSERT_EQ(occurances.size(), static_cast<uint32_t>(number_of_keys));
       for (const auto & p:occurances) {
         ASSERT_EQ(p.second, history_depth);
       }
@@ -108,7 +108,7 @@ public:
         ASSERT_EQ(s.data().long_2()+s.info().rank().sample(), history_depth-1);
       }
 
-      ASSERT_EQ(occurances.size(), number_of_keys);
+      ASSERT_EQ(occurances.size(), static_cast<uint32_t>(number_of_keys));
       for (const auto & p:occurances) {
         ASSERT_EQ(p.second, history_depth);
       }

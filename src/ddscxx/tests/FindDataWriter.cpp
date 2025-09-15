@@ -74,8 +74,8 @@ TEST_F(FindDataWriter, BinIterator_find_with_empty)
             TOPIC1_NAME,
             std::back_inserter<std::vector<dds::pub::DataWriter<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataWriter, BinIterator_find_with_other_type)
@@ -92,8 +92,8 @@ TEST_F(FindDataWriter, BinIterator_find_with_other_type)
             TOPIC1_NAME,  // <- not matching Space::Type2
             std::back_inserter<std::vector<dds::pub::DataWriter<Space::Type2> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataWriter, BinIterator_find_nonexisting)
@@ -110,8 +110,8 @@ TEST_F(FindDataWriter, BinIterator_find_nonexisting)
             std::string("non-existing"),
             std::back_inserter<std::vector<dds::pub::DataWriter<Space::Type1> > >(found));
 
-    ASSERT_EQ(cnt, 0);
-    ASSERT_EQ(found.size(), 0);
+    ASSERT_EQ(cnt, 0u);
+    ASSERT_EQ(found.size(), 0u);
 }
 
 TEST_F(FindDataWriter, BinIterator_find)
@@ -131,12 +131,12 @@ TEST_F(FindDataWriter, BinIterator_find)
 
 #if 1
     /* Currently, the find() will only return 1 writer. */
-    ASSERT_EQ(cnt, 1);
-    ASSERT_EQ(found.size(), 1);
+    ASSERT_EQ(cnt, 1u);
+    ASSERT_EQ(found.size(), 1u);
     ASSERT_TRUE((found[0] == this->writer1A) || (found[0] == this->writer1B));
 #else
-    ASSERT_EQ(cnt, 2);
-    ASSERT_EQ(found.size(), 2);
+    ASSERT_EQ(cnt, 2u);
+    ASSERT_EQ(found.size(), 2u);
     ASSERT_TRUE((found[0] == this->writer1A) || (found[0] == this->writer1B));
     ASSERT_TRUE((found[1] == this->writer1A) || (found[1] == this->writer1B));
 #endif
@@ -157,8 +157,8 @@ TEST_F(FindDataWriter, BinIterator_find_any)
             TOPIC2_NAME,
             std::back_inserter<std::vector<dds::pub::AnyDataWriter> >(found));
 
-    ASSERT_EQ(cnt, 1);
-    ASSERT_EQ(found.size(), 1);
+    ASSERT_EQ(cnt, 1u);
+    ASSERT_EQ(found.size(), 1u);
     ASSERT_TRUE(found[0] == this->writer2);
 }
 
@@ -176,7 +176,7 @@ TEST_F(FindDataWriter, FwdIterator_find_with_empty)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataWriter, FwdIterator_find_with_other_type)
@@ -194,7 +194,7 @@ TEST_F(FindDataWriter, FwdIterator_find_with_other_type)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataWriter, FwdIterator_find_nonexisting)
@@ -212,7 +212,7 @@ TEST_F(FindDataWriter, FwdIterator_find_nonexisting)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 0);
+    ASSERT_EQ(cnt, 0u);
 }
 
 TEST_F(FindDataWriter, FwdIterator_find)
@@ -233,10 +233,10 @@ TEST_F(FindDataWriter, FwdIterator_find)
 
 #if 1
     /* Currently, the find() will only return 1 writer. */
-    ASSERT_EQ(cnt, 1);
+    ASSERT_EQ(cnt, 1u);
     ASSERT_TRUE((found[0] == this->writer1A) || (found[0] == this->writer1B));
 #else
-    ASSERT_EQ(cnt, 2);
+    ASSERT_EQ(cnt, 2u);
     ASSERT_TRUE((found[0] == this->writer1A) || (found[0] == this->writer1B));
     ASSERT_TRUE((found[1] == this->writer1A) || (found[1] == this->writer1B));
 #endif
@@ -258,7 +258,7 @@ TEST_F(FindDataWriter, FwdIterator_find_any)
             found.begin(),
             static_cast<uint32_t>(found.size()));
 
-    ASSERT_EQ(cnt, 1);
+    ASSERT_EQ(cnt, 1u);
     ASSERT_TRUE(found[0] == this->writer2);
 }
 

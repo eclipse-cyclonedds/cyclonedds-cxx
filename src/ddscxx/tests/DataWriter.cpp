@@ -204,7 +204,7 @@ public:
         } else {
             count = this->reader.read(singlesample.begin(), 1);
         }
-        ASSERT_EQ(count, 1);
+        ASSERT_EQ(count, 1u);
 
         ASSERT_EQ(singlesample[0]->data(), testData);
 

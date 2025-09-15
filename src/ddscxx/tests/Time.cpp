@@ -32,11 +32,11 @@ TEST(Time, plus)
 
     t = t1 + d1;
     ASSERT_EQ(t.sec(), 20);
-    ASSERT_EQ(t.nanosec(), 20);
+    ASSERT_EQ(t.nanosec(), 20u);
 
     t = d1 + t;
     ASSERT_EQ(t.sec(), 30);
-    ASSERT_EQ(t.nanosec(), 30);
+    ASSERT_EQ(t.nanosec(), 30u);
 }
 
 TEST(Time, plus_is)
@@ -47,11 +47,11 @@ TEST(Time, plus_is)
 
     t += d1;
     ASSERT_EQ(t.sec(), 20);
-    ASSERT_EQ(t.nanosec(), 20);
+    ASSERT_EQ(t.nanosec(), 20u);
 
     t += d2;
     ASSERT_EQ(t.sec(), 22);
-    ASSERT_EQ(t.nanosec(), 19);
+    ASSERT_EQ(t.nanosec(), 19u);
 }
 
 TEST(Time, minus)
@@ -60,15 +60,15 @@ TEST(Time, minus)
 
     t = dds::core::Time(10, 10) - dds::core::Duration(10, 10);
     ASSERT_EQ(t.sec(), 0);
-    ASSERT_EQ(t.nanosec(), 0);
+    ASSERT_EQ(t.nanosec(), 0u);
 
     t = dds::core::Time(12, 12) - dds::core::Duration(10, 10);
     ASSERT_EQ(t.sec(), 2);
-    ASSERT_EQ(t.nanosec(), 2);
+    ASSERT_EQ(t.nanosec(), 2u);
 
     t = dds::core::Time(11, 9) - dds::core::Duration(10, 10);
     ASSERT_EQ(t.sec(), 0);
-    ASSERT_EQ(t.nanosec(), 999999999);
+    ASSERT_EQ(t.nanosec(), 999999999u);
 
     ASSERT_THROW({
         /* Negative nsecs. */
@@ -93,17 +93,17 @@ TEST(Time, minus_is)
     t = dds::core::Time(10, 10);
     t -= dds::core::Duration(10, 10);
     ASSERT_EQ(t.sec(), 0);
-    ASSERT_EQ(t.nanosec(), 0);
+    ASSERT_EQ(t.nanosec(), 0u);
 
     t = dds::core::Time(12, 12);
     t -= dds::core::Duration(10, 10);
     ASSERT_EQ(t.sec(), 2);
-    ASSERT_EQ(t.nanosec(), 2);
+    ASSERT_EQ(t.nanosec(), 2u);
 
     t = dds::core::Time(11, 9);
     t -= dds::core::Duration(10, 10);
     ASSERT_EQ(t.sec(), 0);
-    ASSERT_EQ(t.nanosec(), 999999999);
+    ASSERT_EQ(t.nanosec(), 999999999u);
 
     ASSERT_THROW({
         /* Negative nsecs. */
@@ -129,7 +129,7 @@ TEST(Time, nanosec)
     dds::core::Time t;
 
     t.nanosec(100000000);
-    ASSERT_EQ(t.nanosec(), 100000000);
+    ASSERT_EQ(t.nanosec(), 100000000u);
     ASSERT_EQ(t.to_millisecs(), 100);
 
     ASSERT_THROW({
@@ -145,7 +145,7 @@ TEST(Time, microsec)
     ASSERT_EQ(micros, 10000001);
     t = dds::core::Time::from_microsecs(micros);
     ASSERT_EQ(t.sec(), 10);
-    ASSERT_EQ(t.nanosec(), 1000);
+    ASSERT_EQ(t.nanosec(), 1000u);
 }
 
 TEST(Time, millisec)
@@ -155,7 +155,7 @@ TEST(Time, millisec)
     ASSERT_EQ(millis, 10001);
     t = dds::core::Time::from_millisecs(millis);
     ASSERT_EQ(t.sec(), 10);
-    ASSERT_EQ(t.nanosec(), 1000000);
+    ASSERT_EQ(t.nanosec(), 1000000u);
 }
 
 TEST(Time, sec)
@@ -165,7 +165,7 @@ TEST(Time, sec)
     ASSERT_EQ(secs, 10.5);
     t = dds::core::Time::from_secs(secs);
     ASSERT_EQ(t.sec(), 10);
-    ASSERT_EQ(t.nanosec(), 500000000);
+    ASSERT_EQ(t.nanosec(), 500000000u);
 }
 
 TEST(Time, greater)

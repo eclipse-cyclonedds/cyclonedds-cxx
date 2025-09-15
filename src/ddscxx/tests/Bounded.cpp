@@ -75,7 +75,7 @@ public:
     void TakeAndVerifyBoundedString(size_t N)
     {
         auto msgs = reader.take();
-        ASSERT_EQ(msgs.length(),1);
+        ASSERT_EQ(msgs.length(), 1u);
 
         for (const auto &sample:msgs) {
             const auto& msg  = sample.data();
@@ -93,7 +93,7 @@ public:
     void TakeAndVerifyBoundedSequence(size_t N)
     {
         auto msgs = reader.take();
-        ASSERT_EQ(msgs.length(),1);
+        ASSERT_EQ(msgs.length(),1u);
 
         for (const auto &sample:msgs) {
             const auto& msg  = sample.data();
@@ -111,7 +111,7 @@ public:
     void TakeAndVerifyBooleanSequence(size_t N)
     {
         auto msgs = reader.take();
-        ASSERT_EQ(msgs.length(),1);
+        ASSERT_EQ(msgs.length(),1u);
 
         for (const auto &sample:msgs) {
             const auto& msg  = sample.data();
