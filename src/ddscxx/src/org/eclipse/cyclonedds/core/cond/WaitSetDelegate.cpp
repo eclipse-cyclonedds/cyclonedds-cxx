@@ -73,8 +73,7 @@ org::eclipse::cyclonedds::core::cond::WaitSetDelegate::wait(
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     const size_t sz = conditions_.size();
     scopedLock.unlock();
-    dds_attach_t * attach = new dds_attach_t[sz];
-    memset (attach, 0, sizeof(dds_attach_t) * sz);
+    dds_attach_t * attach = (sz == 0) ? nullptr : new dds_attach_t[sz];
 
     dds_return_t n_triggered = dds_waitset_wait(this->get_ddsc_entity(), attach, sz, c_timeout);
 
