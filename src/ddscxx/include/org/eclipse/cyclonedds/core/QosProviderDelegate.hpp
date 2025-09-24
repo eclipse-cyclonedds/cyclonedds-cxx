@@ -64,7 +64,10 @@ public:
     datawriter_qos(const std::string& id = "");
 
 private:
+    bool is_valid_scope(const std::string& scope, const size_t count, const bool strict);
+
     dds_qos_provider *qosProvider;
+    std::string access_scope;
 };
 
 #endif /* CYCLONEDDS_CORE_QOSPROVIDERDELEGATE_HPP_ */

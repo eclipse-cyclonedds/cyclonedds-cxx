@@ -38,7 +38,7 @@ template <typename DELEGATE>
 dds::domain::qos::DomainParticipantQos
 TQosProvider<DELEGATE>::participant_qos()
 {
-    return this->delegate()->participant_qos(NULL);
+    return this->delegate()->participant_qos();
 }
 
 template <typename DELEGATE>
@@ -52,7 +52,7 @@ template <typename DELEGATE>
 dds::topic::qos::TopicQos
 TQosProvider<DELEGATE>::topic_qos()
 {
-    return this->delegate()->topic_qos(NULL);
+    return this->delegate()->topic_qos();
 }
 
 template <typename DELEGATE>
@@ -67,7 +67,7 @@ template <typename DELEGATE>
 dds::sub::qos::SubscriberQos
 TQosProvider<DELEGATE>::subscriber_qos()
 {
-    return this->delegate()->subscriber_qos(NULL);
+    return this->delegate()->subscriber_qos();
 }
 
 template <typename DELEGATE>
@@ -81,7 +81,7 @@ template <typename DELEGATE>
 dds::sub::qos::DataReaderQos
 TQosProvider<DELEGATE>::datareader_qos()
 {
-    return this->delegate()->datareader_qos(NULL);
+    return this->delegate()->datareader_qos();
 }
 
 template <typename DELEGATE>
@@ -95,7 +95,7 @@ template <typename DELEGATE>
 dds::pub::qos::PublisherQos
 TQosProvider<DELEGATE>::publisher_qos()
 {
-    return this->delegate()->publisher_qos(NULL);
+    return this->delegate()->publisher_qos();
 }
 
 template <typename DELEGATE>
@@ -109,7 +109,7 @@ template <typename DELEGATE>
 dds::pub::qos::DataWriterQos
 TQosProvider<DELEGATE>::datawriter_qos()
 {
-    return this->delegate()->datawriter_qos(NULL);
+    return this->delegate()->datawriter_qos();
 }
 
 template <typename DELEGATE>
