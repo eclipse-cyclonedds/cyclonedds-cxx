@@ -946,59 +946,48 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
         {
         case DDS_PARTICIPANT_QOS:
         {
-            dds::domain::qos::DomainParticipantQos qpQos0 = qp.participant_qos("lib1::pro00");
             dds::domain::qos::DomainParticipantQos qpQos1 = qp.participant_qos("");
             dds::domain::qos::DomainParticipantQos qpQos2 = qp.participant_qos();
-            ASSERT_TRUE(pQos == qpQos0);
             ASSERT_TRUE(pQos == qpQos1);
             ASSERT_TRUE(pQos == qpQos2);
             break;
         }
         case DDS_PUBLISHER_QOS:
         {
-            dds::pub::qos::PublisherQos qpQos0 = qp.publisher_qos("lib1::pro00");
             dds::pub::qos::PublisherQos qpQos1 = qp.publisher_qos("");
             dds::pub::qos::PublisherQos qpQos2 = qp.publisher_qos();
-            ASSERT_TRUE(pubQos == qpQos0);
             ASSERT_TRUE(pubQos == qpQos1);
             ASSERT_TRUE(pubQos == qpQos2);
             break;
         }
         case DDS_SUBSCRIBER_QOS:
         {
-            dds::sub::qos::SubscriberQos qpQos0 = qp.subscriber_qos("lib1::pro00");
             dds::sub::qos::SubscriberQos qpQos1 = qp.subscriber_qos("");
             dds::sub::qos::SubscriberQos qpQos2 = qp.subscriber_qos();
-            ASSERT_TRUE(subQos == qpQos0);
             ASSERT_TRUE(subQos == qpQos1);
+            ASSERT_TRUE(subQos == qpQos2);
             break;
         }
         case DDS_TOPIC_QOS:
         {
-            dds::topic::qos::TopicQos qpQos0 = qp.topic_qos("lib1::pro00");
             dds::topic::qos::TopicQos qpQos1 = qp.topic_qos("");
             dds::topic::qos::TopicQos qpQos2 = qp.topic_qos();
-            ASSERT_TRUE(tQos == qpQos0);
             ASSERT_TRUE(tQos == qpQos1);
             ASSERT_TRUE(tQos == qpQos2);
             break;
         }
         case DDS_READER_QOS:
         {
-            dds::sub::qos::DataReaderQos qpQos0 = qp.datareader_qos("lib1::pro00");
             dds::sub::qos::DataReaderQos qpQos1 = qp.datareader_qos("");
             dds::sub::qos::DataReaderQos qpQos2 = qp.datareader_qos();
-            ASSERT_TRUE(rQos == qpQos0);
             ASSERT_TRUE(rQos == qpQos1);
             ASSERT_TRUE(rQos == qpQos2);
             break;
         }
         case DDS_WRITER_QOS:
         {
-            dds::pub::qos::DataWriterQos qpQos0 = qp.datawriter_qos("lib1::pro00");
             dds::pub::qos::DataWriterQos qpQos1 = qp.datawriter_qos("");
             dds::pub::qos::DataWriterQos qpQos2 = qp.datawriter_qos();
-            ASSERT_TRUE(wQos == qpQos0);
             ASSERT_TRUE(wQos == qpQos1);
             ASSERT_TRUE(wQos == qpQos2);
             break;
@@ -1117,7 +1106,7 @@ TEST_F(QosProvider, invalid_access_scope)
     ASSERT_EQ(result, DDS_RETCODE_ERROR);
   }
 
-  /* validate one success case the was not handled previously */
+  /* validate one success case that was not handled previously */
   dds::domain::qos::DomainParticipantQos pQos = qp.participant_qos("pp00");
   ASSERT_TRUE (this->pQos == pQos);
 

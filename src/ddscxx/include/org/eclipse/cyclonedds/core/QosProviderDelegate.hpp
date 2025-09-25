@@ -41,7 +41,7 @@ struct dds_qos_provider;
 class OMG_DDS_API org::eclipse::cyclonedds::core::QosProviderDelegate
 {
 public:
-    QosProviderDelegate(const std::string& uri, const std::string& id = "");
+    QosProviderDelegate(const std::string& uri, const std::string& id);
 
     ~QosProviderDelegate();
 
@@ -65,6 +65,7 @@ public:
 
 private:
     bool is_valid_scope(const std::string& scope, const size_t count, const bool strict);
+    std::string get_endpoint_access_scope(const std::string& id);
 
     dds_qos_provider *qosProvider;
     std::string access_scope;

@@ -35,7 +35,7 @@ bool QosProviderDelegate::is_valid_scope(const std::string& scope, const size_t 
   }
 
   std::string it(scope);
-  size_t pos = 0, i = 0;
+  size_t pos = 0, i = !scope.empty();
   for (;(pos = it.find(del)) != std::string::npos; i++) {
       if (it.substr(0, pos).empty()) return false;
       it.erase(0, pos + del.length());
@@ -47,11 +47,30 @@ bool QosProviderDelegate::is_valid_scope(const std::string& scope, const size_t 
   return true;
 }
 
+std::string QosProviderDelegate::get_endpoint_access_scope(const std::string& id)
+{
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = id;
+
+    if (id.empty()) {
+      scope = access_scope + id;
+    } else if (!is_valid_scope(id, 1U, true)) {
+      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested QoS id.");
+    } else if (scope.find(access_scope) == std::string::npos) {
+      scope = access_scope + "::" + scope;
+    }
+
+    return scope;
+}
+
 QosProviderDelegate::QosProviderDelegate(const std::string& uri, const std::string& id) : qosProvider(nullptr)
 {
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    if (id.empty() || !is_valid_scope(id, 1U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to create QosProvider with provided library and profile name.");
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    if (id.empty()) {
+      ISOCPP_THROW_EXCEPTION(DDS_RETCODE_UNSUPPORTED, "Unable to create QosProvider without library/profile.");
+    }
+    if (!is_valid_scope(id, 2U, true)) {
+      ISOCPP_THROW_EXCEPTION(ret, "Unable to create QosProvider with provided library/profile.");
     }
 
     access_scope = id;
@@ -69,16 +88,8 @@ QosProviderDelegate::participant_qos(const std::string &id)
 {
     dds::domain::qos::DomainParticipantQos dpq;
     const dds_qos_t *c_dpq = NULL;
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    std::string scope = id;
-
-    if (id.empty()) {
-      scope = access_scope;
-    } else if (!is_valid_scope(id, 0U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested participant QoS id.");
-    } else if (scope.find(access_scope) == std::string::npos) {
-      scope = access_scope + "::" + scope;
-    }
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = get_endpoint_access_scope(id);
 
     ret = dds_qos_provider_get_qos(qosProvider, DDS_PARTICIPANT_QOS, scope.c_str(), &c_dpq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested participant QoS.");
@@ -93,16 +104,8 @@ QosProviderDelegate::topic_qos(const std::string &id)
 {
     dds::topic::qos::TopicQos tq;
     const dds_qos_t *c_tq = NULL;
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    std::string scope = id;
-
-    if (id.empty()) {
-      scope = access_scope + id;
-    } else if (!is_valid_scope(id, 0U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested topic QoS id.");
-    } else if (scope.find(access_scope) == std::string::npos) {
-      scope = access_scope + "::" + scope;
-    }
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = get_endpoint_access_scope(id);
 
     ret = dds_qos_provider_get_qos(qosProvider, DDS_TOPIC_QOS, scope.c_str(), &c_tq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested topic QoS.");
@@ -118,16 +121,8 @@ QosProviderDelegate::subscriber_qos(const std::string &id)
 {
     dds::sub::qos::SubscriberQos sq;
     const dds_qos_t *c_sq = NULL;
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    std::string scope = id;
-
-    if (id.empty()) {
-      scope = access_scope + id;
-    } else if (!is_valid_scope(id, 0U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested subscriber QoS id.");
-    } else if (scope.find(access_scope) == std::string::npos) {
-      scope = access_scope + "::" + scope;
-    }
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = get_endpoint_access_scope(id);
 
     ret = dds_qos_provider_get_qos(qosProvider, DDS_SUBSCRIBER_QOS, scope.c_str(), &c_sq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested subscriber QoS.");
@@ -142,16 +137,8 @@ QosProviderDelegate::datareader_qos(const std::string &id)
 {
     dds::sub::qos::DataReaderQos drq;
     const dds_qos_t *c_drq = NULL;
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    std::string scope = id;
-
-    if (id.empty()) {
-      scope = access_scope + id;
-    } else if (!is_valid_scope(id, 0U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested datareader QoS id.");
-    } else if (scope.find(access_scope) == std::string::npos) {
-      scope = access_scope + "::" + scope;
-    }
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = get_endpoint_access_scope(id);
 
     ret = dds_qos_provider_get_qos(qosProvider, DDS_READER_QOS, scope.c_str(), &c_drq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested datareader QoS.");
@@ -166,16 +153,8 @@ QosProviderDelegate::publisher_qos(const std::string &id)
 {
     dds::pub::qos::PublisherQos pq;
     const dds_qos_t *c_pq = NULL;
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    std::string scope = id;
-
-    if (id.empty()) {
-      scope = access_scope + id;
-    } else if (!is_valid_scope(id, 0U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested publisher QoS id.");
-    } else if (scope.find(access_scope) == std::string::npos) {
-      scope = access_scope + "::" + scope;
-    }
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = get_endpoint_access_scope(id);
 
     ret = dds_qos_provider_get_qos(qosProvider, DDS_PUBLISHER_QOS, scope.c_str(), &c_pq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested publisher QoS.");
@@ -190,16 +169,8 @@ QosProviderDelegate::datawriter_qos(const std::string &id)
 {
     dds::pub::qos::DataWriterQos dwq;
     const dds_qos_t *c_dwq = NULL;
-    dds_return_t ret = DDS_RETCODE_BAD_PARAMETER;
-    std::string scope = id;
-
-    if (id.empty()) {
-      scope = access_scope + id;
-    } else if (!is_valid_scope(id, 0U, true)) {
-      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested datawriter QoS id.");
-    } else if (scope.find(access_scope) == std::string::npos) {
-      scope = access_scope + "::" + scope;
-    }
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = get_endpoint_access_scope(id);
 
     ret = dds_qos_provider_get_qos(qosProvider, DDS_WRITER_QOS, scope.c_str(), &c_dwq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested datawriter QoS.");
