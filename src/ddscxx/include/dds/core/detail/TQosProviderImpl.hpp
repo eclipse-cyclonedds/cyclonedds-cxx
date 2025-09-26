@@ -31,6 +31,10 @@ TQosProvider<DELEGATE>::TQosProvider(const std::string& uri, const std::string& 
     : Reference<DELEGATE>(new DELEGATE(uri, profile)) { }
 
 template <typename DELEGATE>
+TQosProvider<DELEGATE>::TQosProvider(const std::string& uri)
+    : Reference<DELEGATE>(new DELEGATE(uri)) { }
+
+template <typename DELEGATE>
 dds::domain::qos::DomainParticipantQos
 TQosProvider<DELEGATE>::participant_qos()
 {

@@ -73,17 +73,41 @@ public:
      *                  ‘file’ scheme that point to an XML file are supported. If profiles and/or QoS
      *                  settings are not uniquely identifiable by name within the resource pointed to by
      *                  uri, a random one of them will be stored.
-     * @param profile   The name of the QoS profile (include parent library name) within the xml file that serves as the default QoS
+     * @param profile   The name of the QoS profile within the xml file that serves as the default QoS
      *                  profile for the get qos operations.
      * @throws dds::core::Error
      *                  An internal error has occurred.
      * @throws dds::core::PreconditionNotMetError
      *                  When multiple thread try to invoke the function concurrently.
-     *                  When provided profile identifier is invalid.
-     * @throws dds::core::UnsupportedError
-     *                  When provided profile name is empty.
      */
     explicit TQosProvider(const std::string& uri, const std::string& profile);
+
+    /**
+     * Constructs a new QosProvider based on the provided uri.
+     *
+     * A QosProvider instance that is instantiated with all profiles and/or QoS’s loaded
+     * from the location specified by the provided uri.
+     *
+     * Initialization of the QosProvider will fail under the following conditions:<br>
+     * - No uri is provided.
+     * - The resource pointed to by uri cannot be found.
+     * - The content of the resource pointed to by uri is malformed (e.g., malformed XML).
+     * When initialization fails (for example, due to a parse error or when the resource
+     * identified by uri cannot be found), then PreconditionNotMetError will be thrown.
+     *
+     * Look @ref DCPS_QoS_Provider "here" for more information.
+     *
+     * @param uri       A Uniform Resource Identifier (URI) that points to the location
+     *                  where the QoS profile needs to be loaded from. Currently only URI’s with a
+     *                  ‘file’ scheme that point to an XML file are supported. If profiles and/or QoS
+     *                  settings are not uniquely identifiable by name within the resource pointed to by
+     *                  uri, a random one of them will be stored.
+     * @throws dds::core::Error
+     *                  An internal error has occurred.
+     * @throws dds::core::PreconditionNotMetError
+     *                  When multiple thread try to invoke the function concurrently.
+     */
+    explicit TQosProvider(const std::string& uri);
 
     /**
      * Resolves the DomainParticipantQos from the uri this QosProvider is associated with.
