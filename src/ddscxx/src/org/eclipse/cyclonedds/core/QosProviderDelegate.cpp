@@ -25,10 +25,55 @@ namespace cyclonedds
 namespace core
 {
 
+bool QosProviderDelegate::is_valid_scope(const std::string& scope, const size_t count, bool strict)
+{
+  bool result = false;
+  std::string del = "::";
+  if (scope.find('*') != std::string::npos
+      || scope.find('?') != std::string::npos) {
+    return result;
+  }
+
+  std::string it(scope);
+  size_t pos = 0, i = !scope.empty();
+  for (;(pos = it.find(del)) != std::string::npos; i++) {
+      if (it.substr(0, pos).empty()) return false;
+      it.erase(0, pos + del.length());
+  }
+  if ((strict? i != count: i < count) || it.empty()) {
+    return result;
+  }
+
+  return true;
+}
+
+std::string QosProviderDelegate::get_entity_scope(const std::string& id)
+{
+    dds_return_t ret = DDS_RETCODE_PRECONDITION_NOT_MET;
+    std::string scope = id;
+
+    if (id.empty()) {
+      scope = access_scope + id;
+    } else if (!is_valid_scope(id, 1U, true)) {
+      ISOCPP_THROW_EXCEPTION(ret, "Unable to resolve requested QoS id.");
+    } else if (scope.find(access_scope) == std::string::npos) {
+      scope = access_scope + "::" + scope;
+    }
+
+    return scope;
+}
+
 QosProviderDelegate::QosProviderDelegate(const std::string& uri, const std::string& id) : qosProvider(nullptr)
 {
     dds_return_t ret;
+    if (id.empty()) {
+      ISOCPP_THROW_EXCEPTION(DDS_RETCODE_UNSUPPORTED, "Unable to create QosProvider without library/profile.");
+    }
+    if (!is_valid_scope(id, 2U, true)) {
+      ISOCPP_THROW_EXCEPTION(DDS_RETCODE_PRECONDITION_NOT_MET, "Unable to create QosProvider with provided library/profile.");
+    }
 
+    access_scope = id;
     ret = dds_create_qos_provider_scope(uri.c_str(), &qosProvider, id.c_str());
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to create QosProvider.");
 }
@@ -44,8 +89,9 @@ QosProviderDelegate::participant_qos(const std::string &id)
     dds::domain::qos::DomainParticipantQos dpq;
     const dds_qos_t *c_dpq = NULL;
     dds_return_t ret;
+    std::string scope = get_entity_scope(id);
 
-    ret = dds_qos_provider_get_qos(qosProvider, DDS_PARTICIPANT_QOS, id.c_str(), &c_dpq);
+    ret = dds_qos_provider_get_qos(qosProvider, DDS_PARTICIPANT_QOS, scope.c_str(), &c_dpq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested participant QoS.");
 
     dpq.delegate().ddsc_qos(c_dpq, false);
@@ -59,8 +105,9 @@ QosProviderDelegate::topic_qos(const std::string &id)
     dds::topic::qos::TopicQos tq;
     const dds_qos_t *c_tq = NULL;
     dds_return_t ret;
+    std::string scope = get_entity_scope(id);
 
-    ret = dds_qos_provider_get_qos(qosProvider, DDS_TOPIC_QOS, id.c_str(), &c_tq);
+    ret = dds_qos_provider_get_qos(qosProvider, DDS_TOPIC_QOS, scope.c_str(), &c_tq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested topic QoS.");
 
     tq.delegate().ddsc_qos(c_tq, false);
@@ -75,8 +122,9 @@ QosProviderDelegate::subscriber_qos(const std::string &id)
     dds::sub::qos::SubscriberQos sq;
     const dds_qos_t *c_sq = NULL;
     dds_return_t ret;
+    std::string scope = get_entity_scope(id);
 
-    ret = dds_qos_provider_get_qos(qosProvider, DDS_SUBSCRIBER_QOS, id.c_str(), &c_sq);
+    ret = dds_qos_provider_get_qos(qosProvider, DDS_SUBSCRIBER_QOS, scope.c_str(), &c_sq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested subscriber QoS.");
 
     sq.delegate().ddsc_qos(c_sq, false);
@@ -90,8 +138,9 @@ QosProviderDelegate::datareader_qos(const std::string &id)
     dds::sub::qos::DataReaderQos drq;
     const dds_qos_t *c_drq = NULL;
     dds_return_t ret;
+    std::string scope = get_entity_scope(id);
 
-    ret = dds_qos_provider_get_qos(qosProvider, DDS_READER_QOS, id.c_str(), &c_drq);
+    ret = dds_qos_provider_get_qos(qosProvider, DDS_READER_QOS, scope.c_str(), &c_drq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested datareader QoS.");
 
     drq.delegate().ddsc_qos(c_drq, false);
@@ -105,8 +154,9 @@ QosProviderDelegate::publisher_qos(const std::string &id)
     dds::pub::qos::PublisherQos pq;
     const dds_qos_t *c_pq = NULL;
     dds_return_t ret;
+    std::string scope = get_entity_scope(id);
 
-    ret = dds_qos_provider_get_qos(qosProvider, DDS_PUBLISHER_QOS, id.c_str(), &c_pq);
+    ret = dds_qos_provider_get_qos(qosProvider, DDS_PUBLISHER_QOS, scope.c_str(), &c_pq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested publisher QoS.");
 
     pq.delegate().ddsc_qos(c_pq, false);
@@ -120,8 +170,9 @@ QosProviderDelegate::datawriter_qos(const std::string &id)
     dds::pub::qos::DataWriterQos dwq;
     const dds_qos_t *c_dwq = NULL;
     dds_return_t ret;
+    std::string scope = get_entity_scope(id);
 
-    ret = dds_qos_provider_get_qos(qosProvider, DDS_WRITER_QOS, id.c_str(), &c_dwq);
+    ret = dds_qos_provider_get_qos(qosProvider, DDS_WRITER_QOS, scope.c_str(), &c_dwq);
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested datawriter QoS.");
 
     dwq.delegate().ddsc_qos(c_dwq, false);

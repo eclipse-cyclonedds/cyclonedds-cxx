@@ -772,7 +772,7 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
 #undef QOS_FORMAT
 
     static dds_return_t 
-    get_single_configuration(dds_qos_t *qos, sysdef_qos_conf_t *conf, dds_qos_kind_t kind, char **out_conf, uint64_t *validate_mask)
+    get_single_configuration(dds_qos_t *qos, sysdef_qos_conf_t *conf, dds_qos_kind_t kind, const char *name, char **out_conf, uint64_t *validate_mask)
     {
       dds_return_t ret = DDS_RETCODE_OK;
       char *qos_conf = NULL;
@@ -783,168 +783,213 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
         switch(kind)
         {
           case DDS_PARTICIPANT_QOS:
-            def = DEF(LIB(lib1,PRO(pro00,ENT("%s",domain_participant))));
+            if (name != NULL) def = DEF(LIB(lib1,PRO(pro00,ENT_N(%s,"%s",domainparticipant))));
+            else def = DEF(LIB(lib1,PRO(pro00,ENT("%s",domain_participant))));
             break;
           case DDS_PUBLISHER_QOS:
-            def = DEF(LIB(lib1,PRO(pro00,ENT("%s",publisher))));
+            if (name != NULL) def = DEF(LIB(lib1,PRO(pro00,ENT_N(%s,"%s",publisher))));
+            else def = DEF(LIB(lib1,PRO(pro00,ENT("%s",publisher))));
             break;
           case DDS_SUBSCRIBER_QOS:
-            def = DEF(LIB(lib1,PRO(pro00,ENT("%s",subscriber))));
+            if (name != NULL) def = DEF(LIB(lib1,PRO(pro00,ENT_N(%s,"%s",subscriber))));
+            else def = DEF(LIB(lib1,PRO(pro00,ENT("%s",subscriber))));
             break;
           case DDS_TOPIC_QOS:
-            def = DEF(LIB(lib1,PRO(pro00,ENT("%s",topic))));
+            if (name != NULL) def = DEF(LIB(lib1,PRO(pro00,ENT_N(%s,"%s",topic))));
+            else def = DEF(LIB(lib1,PRO(pro00,ENT("%s",topic))));
             break;
           case DDS_READER_QOS:
-            def = DEF(LIB(lib1,PRO(pro00,ENT("%s",datareader))));
+            if (name != NULL) def = DEF(LIB(lib1,PRO(pro00,ENT_N(%s,"%s",datareader))));
+            else def = DEF(LIB(lib1,PRO(pro00,ENT("%s",datareader))));
             break;
           case DDS_WRITER_QOS:
-            def = DEF(LIB(lib1,PRO(pro00,ENT("%s",datawriter))));
+            if (name != NULL) def = DEF(LIB(lib1,PRO(pro00,ENT_N(%s,"%s",datawriter))));
+            else def = DEF(LIB(lib1,PRO(pro00,ENT("%s",datawriter))));
             break;
           default:
             ddsrt_free(qos_conf);
             return DDS_RETCODE_ERROR;
         }
-        ret = ddsrt_asprintf(out_conf, def, qos_conf);
+
+        if (name != NULL) ret = ddsrt_asprintf(out_conf, def, name, qos_conf);
+        else ret = ddsrt_asprintf(out_conf, def, qos_conf);
         ddsrt_free(qos_conf);
       }
 
       return ret;
     }
 
+    static dds_qos_t *get_gen_qos(const dds_qos_kind_t kind, QosProvider *qp)
+    {
+      dds::domain::DomainParticipant dp(org::eclipse::cyclonedds::domain::default_id());
+      dds::pub::Publisher pub(dp);
+      dds::sub::Subscriber sub(dp);
+      dds_qos_t *qos = NULL;
+      dds::core::ByteSeq bs;
+      dds::core::StringSeq pList;
+
+      for (unsigned char c = 'a'; c <= 'd'; c++) bs.push_back(c);
+      pList.push_back("abcd");
+      pList.push_back("efgh");
+      pList.push_back("ijkl");
+      switch(kind)
+      {
+      case DDS_PARTICIPANT_QOS:
+      {
+        dds::domain::qos::DomainParticipantQos p_Qos = dds::domain::DomainParticipant::default_participant_qos()
+            << dds::core::policy::UserData(bs)
+            << dds::core::policy::EntityFactory::AutoEnable();
+        if (qp) qp->pQos = p_Qos;
+        qos = p_Qos.delegate().ddsc_qos();
+        break;
+      }
+      case DDS_PUBLISHER_QOS:
+      {
+          dds::pub::qos::PublisherQos pub_Qos = dp.default_publisher_qos()
+              << dds::core::policy::GroupData(bs)
+              << dds::core::policy::Partition(pList)
+              << dds::core::policy::Presentation::InstanceAccessScope(false, false)
+              << dds::core::policy::EntityFactory::AutoEnable();
+          if (qp) qp->pubQos = pub_Qos;
+          qos = pub_Qos.delegate().ddsc_qos();
+          break;
+      }
+      case DDS_SUBSCRIBER_QOS:
+      {
+          dds::sub::qos::SubscriberQos sub_Qos = dp.default_subscriber_qos()
+              << dds::core::policy::GroupData(bs)
+              << dds::core::policy::Partition(pList)
+              << dds::core::policy::Presentation::InstanceAccessScope(false, false)
+              << dds::core::policy::EntityFactory::AutoEnable();
+          if (qp) qp->subQos = sub_Qos;
+          qos = sub_Qos.delegate().ddsc_qos();
+          break;
+      }
+      case DDS_TOPIC_QOS:
+      {
+          dds::topic::qos::TopicQos t_Qos = dp.default_topic_qos()
+              << dds::core::policy::TopicData(bs)
+              << dds::core::policy::Durability::Volatile()
+              << dds::core::policy::Deadline(dds::core::Duration(1,0))
+              << dds::core::policy::LatencyBudget(dds::core::Duration(1,0))
+              << dds::core::policy::Ownership::Exclusive()
+              << dds::core::policy::Liveliness::Automatic(dds::core::Duration::infinite())
+              << dds::core::policy::Reliability::Reliable(dds::core::Duration(1, 0))
+              << dds::core::policy::TransportPriority(1000)
+              << dds::core::policy::Lifespan(dds::core::Duration(1, 0))
+              << dds::core::policy::DestinationOrder::SourceTimestamp()
+              << dds::core::policy::History::KeepLast(1)
+              << dds::core::policy::ResourceLimits(1, 1, 1)
+              << dds::core::policy::DurabilityService(dds::core::Duration(1, 0), dds::core::policy::HistoryKind::KEEP_ALL, -1, 1, 1, 1);
+          if (qp) qp->tQos = t_Qos;
+          qos = t_Qos.delegate().ddsc_qos();
+          break;
+      }
+      case DDS_READER_QOS:
+      {
+          dds::sub::qos::DataReaderQos r_Qos = sub.default_datareader_qos()
+              << dds::core::policy::UserData(bs)
+              << dds::core::policy::Durability::Volatile()
+              << dds::core::policy::Deadline(dds::core::Duration(1,0))
+              << dds::core::policy::LatencyBudget(dds::core::Duration(1,0))
+              << dds::core::policy::Ownership::Exclusive()
+              << dds::core::policy::Liveliness::Automatic(dds::core::Duration::infinite())
+              << dds::core::policy::Reliability::Reliable(dds::core::Duration(1, 0))
+              << dds::core::policy::DestinationOrder::SourceTimestamp()
+              << dds::core::policy::History::KeepLast(1)
+              << dds::core::policy::ResourceLimits(1, 1, 1)
+              << dds::core::policy::TimeBasedFilter(dds::core::Duration(1, 0))
+              << dds::core::policy::ReaderDataLifecycle(dds::core::Duration(1,0), dds::core::Duration(1,0));
+          if (qp) qp->rQos = r_Qos;
+          qos = r_Qos.delegate().ddsc_qos();
+          break;
+      }
+      case DDS_WRITER_QOS:
+      {
+          dds::pub::qos::DataWriterQos w_Qos = pub.default_datawriter_qos()
+              << dds::core::policy::UserData(bs)
+              << dds::core::policy::Durability::Volatile()
+              << dds::core::policy::Deadline(dds::core::Duration(1,0))
+              << dds::core::policy::LatencyBudget(dds::core::Duration(1,0))
+              << dds::core::policy::Ownership::Exclusive()
+              << dds::core::policy::OwnershipStrength(100)
+              << dds::core::policy::Liveliness::Automatic(dds::core::Duration::infinite())
+              << dds::core::policy::Reliability::Reliable(dds::core::Duration(1, 0))
+              << dds::core::policy::DestinationOrder::SourceTimestamp()
+              << dds::core::policy::History::KeepLast(1)
+              << dds::core::policy::ResourceLimits(1, 1, 1)
+              << dds::core::policy::WriterDataLifecycle::AutoDisposeUnregisteredInstances();
+          if (qp) qp->wQos = w_Qos;
+          qos = w_Qos.delegate().ddsc_qos();
+          break;
+      }
+      default:
+          assert(0);
+          break;
+      }
+
+      return qos;
+    }
+
 
     void doTest(dds_qos_kind_t kind)
     {
-        dds::domain::DomainParticipant dp(org::eclipse::cyclonedds::domain::default_id());
-        dds::pub::Publisher pub(dp);
-        dds::sub::Subscriber sub(dp);
-        dds_qos_t *qos = NULL;
-        dds::core::ByteSeq bs;
-        dds::core::StringSeq pList;
-        dds_return_t result;
-        sysdef_qos_conf_t dur_conf = {sec,sec,sec,sec,sec,sec,sec,sec,sec};
         char *full_configuration = NULL;
         uint64_t validate_mask = 0;
+        sysdef_qos_conf_t dur_conf = {sec,sec,sec,sec,sec,sec,sec,sec,sec};
 
-        for (unsigned char c = 'a'; c <= 'd'; c++) bs.push_back(c);
-        pList.push_back("abcd");
-        pList.push_back("efgh");
-        pList.push_back("ijkl");
-        switch(kind)
-        {
-        case DDS_PARTICIPANT_QOS:
-            pQos = dds::domain::DomainParticipant::default_participant_qos()
-                << dds::core::policy::UserData(bs)
-                << dds::core::policy::EntityFactory::AutoEnable();
-            qos = pQos.delegate().ddsc_qos();
-            break;
-        case DDS_PUBLISHER_QOS:
-            pubQos = dp.default_publisher_qos()
-                << dds::core::policy::GroupData(bs)
-                << dds::core::policy::Partition(pList)
-                << dds::core::policy::Presentation::InstanceAccessScope(false, false)
-                << dds::core::policy::EntityFactory::AutoEnable();
-            qos = pubQos.delegate().ddsc_qos();
-            break;
-        case DDS_SUBSCRIBER_QOS:
-            subQos = dp.default_subscriber_qos()
-                << dds::core::policy::GroupData(bs)
-                << dds::core::policy::Partition(pList)
-                << dds::core::policy::Presentation::InstanceAccessScope(false, false)
-                << dds::core::policy::EntityFactory::AutoEnable();
-            qos = subQos.delegate().ddsc_qos();
-            break;
-        case DDS_TOPIC_QOS:
-            tQos = dp.default_topic_qos()
-                << dds::core::policy::TopicData(bs)
-                << dds::core::policy::Durability::Volatile()
-                << dds::core::policy::Deadline(dds::core::Duration(1,0))
-                << dds::core::policy::LatencyBudget(dds::core::Duration(1,0))
-                << dds::core::policy::Ownership::Exclusive()
-                << dds::core::policy::Liveliness::Automatic(dds::core::Duration::infinite())
-                << dds::core::policy::Reliability::Reliable(dds::core::Duration(1, 0))
-                << dds::core::policy::TransportPriority(1000)
-                << dds::core::policy::Lifespan(dds::core::Duration(1, 0))
-                << dds::core::policy::DestinationOrder::SourceTimestamp()
-                << dds::core::policy::History::KeepLast(1)
-                << dds::core::policy::ResourceLimits(1, 1, 1)
-                << dds::core::policy::DurabilityService(dds::core::Duration(1, 0), dds::core::policy::HistoryKind::KEEP_ALL, -1, 1, 1, 1);
-            qos = tQos.delegate().ddsc_qos();
-            break;
-        case DDS_READER_QOS:
-            rQos = sub.default_datareader_qos()
-                << dds::core::policy::UserData(bs)
-                << dds::core::policy::Durability::Volatile()
-                << dds::core::policy::Deadline(dds::core::Duration(1,0))
-                << dds::core::policy::LatencyBudget(dds::core::Duration(1,0))
-                << dds::core::policy::Ownership::Exclusive()
-                << dds::core::policy::Liveliness::Automatic(dds::core::Duration::infinite())
-                << dds::core::policy::Reliability::Reliable(dds::core::Duration(1, 0))
-                << dds::core::policy::DestinationOrder::SourceTimestamp()
-                << dds::core::policy::History::KeepLast(1)
-                << dds::core::policy::ResourceLimits(1, 1, 1)
-                << dds::core::policy::TimeBasedFilter(dds::core::Duration(1, 0))
-                << dds::core::policy::ReaderDataLifecycle(dds::core::Duration(1,0), dds::core::Duration(1,0));
-            qos = rQos.delegate().ddsc_qos();
-            break;
-        case DDS_WRITER_QOS:
-            wQos = pub.default_datawriter_qos()
-                << dds::core::policy::UserData(bs)
-                << dds::core::policy::Durability::Volatile()
-                << dds::core::policy::Deadline(dds::core::Duration(1,0))
-                << dds::core::policy::LatencyBudget(dds::core::Duration(1,0))
-                << dds::core::policy::Ownership::Exclusive()
-                << dds::core::policy::OwnershipStrength(100)
-                << dds::core::policy::Liveliness::Automatic(dds::core::Duration::infinite())
-                << dds::core::policy::Reliability::Reliable(dds::core::Duration(1, 0))
-                << dds::core::policy::DestinationOrder::SourceTimestamp()
-                << dds::core::policy::History::KeepLast(1)
-                << dds::core::policy::ResourceLimits(1, 1, 1)
-                << dds::core::policy::WriterDataLifecycle::AutoDisposeUnregisteredInstances();
-            qos = wQos.delegate().ddsc_qos();
-            break;
-        default:
-            assert(0);
-            break;
-        }
-        result = get_single_configuration(qos, &dur_conf, kind, &full_configuration, &validate_mask);
+        dds_qos_t *qos = get_gen_qos(kind, this);
+        dds_return_t result = get_single_configuration(qos, &dur_conf, kind, NULL, &full_configuration, &validate_mask);
         ASSERT_TRUE(result >= 0);
-        dds::core::QosProvider qp(full_configuration);
+        dds::core::QosProvider qp(full_configuration, "lib1::pro00");
         switch(kind)
         {
         case DDS_PARTICIPANT_QOS:
         {
-            dds::domain::qos::DomainParticipantQos qpQos = qp.participant_qos("lib1::pro00");
-            ASSERT_TRUE(pQos == qpQos);
+            dds::domain::qos::DomainParticipantQos qpQos1 = qp.participant_qos("");
+            dds::domain::qos::DomainParticipantQos qpQos2 = qp.participant_qos();
+            ASSERT_TRUE(pQos == qpQos1);
+            ASSERT_TRUE(pQos == qpQos2);
             break;
         }
         case DDS_PUBLISHER_QOS:
         {
-            dds::pub::qos::PublisherQos qpQos = qp.publisher_qos("lib1::pro00");
-            ASSERT_TRUE(pubQos == qpQos);
+            dds::pub::qos::PublisherQos qpQos1 = qp.publisher_qos("");
+            dds::pub::qos::PublisherQos qpQos2 = qp.publisher_qos();
+            ASSERT_TRUE(pubQos == qpQos1);
+            ASSERT_TRUE(pubQos == qpQos2);
             break;
         }
         case DDS_SUBSCRIBER_QOS:
         {
-            dds::sub::qos::SubscriberQos qpQos = qp.subscriber_qos("lib1::pro00");
-            ASSERT_TRUE(subQos == qpQos);
+            dds::sub::qos::SubscriberQos qpQos1 = qp.subscriber_qos("");
+            dds::sub::qos::SubscriberQos qpQos2 = qp.subscriber_qos();
+            ASSERT_TRUE(subQos == qpQos1);
+            ASSERT_TRUE(subQos == qpQos2);
             break;
         }
         case DDS_TOPIC_QOS:
         {
-            dds::topic::qos::TopicQos qpQos = qp.topic_qos("lib1::pro00");
-            ASSERT_TRUE(tQos == qpQos);
+            dds::topic::qos::TopicQos qpQos1 = qp.topic_qos("");
+            dds::topic::qos::TopicQos qpQos2 = qp.topic_qos();
+            ASSERT_TRUE(tQos == qpQos1);
+            ASSERT_TRUE(tQos == qpQos2);
             break;
         }
         case DDS_READER_QOS:
         {
-            dds::sub::qos::DataReaderQos qpQos = qp.datareader_qos("lib1::pro00");
-            ASSERT_TRUE(rQos == qpQos);
+            dds::sub::qos::DataReaderQos qpQos1 = qp.datareader_qos("");
+            dds::sub::qos::DataReaderQos qpQos2 = qp.datareader_qos();
+            ASSERT_TRUE(rQos == qpQos1);
+            ASSERT_TRUE(rQos == qpQos2);
             break;
         }
         case DDS_WRITER_QOS:
         {
-            dds::pub::qos::DataWriterQos qpQos = qp.datawriter_qos("lib1::pro00");
-            ASSERT_TRUE(wQos == qpQos);
+            dds::pub::qos::DataWriterQos qpQos1 = qp.datawriter_qos("");
+            dds::pub::qos::DataWriterQos qpQos2 = qp.datawriter_qos();
+            ASSERT_TRUE(wQos == qpQos1);
+            ASSERT_TRUE(wQos == qpQos2);
             break;
         }
         }
@@ -990,3 +1035,81 @@ TEST_F(QosProvider, topicQos)
     this->doTest(DDS_TOPIC_QOS);
 }
 
+TEST_F(QosProvider, invalid_scope)
+{
+  (void) this;
+  char *full_configuration = NULL;
+  uint64_t validate_mask = 0;
+
+  QosProvider::sysdef_qos_conf_t dur_conf = {
+#define sec QosProvider::sec
+    sec,sec,sec,sec,sec,sec,sec,sec,sec
+#undef sec
+  };
+
+  dds_qos_kind_t kind = DDS_PARTICIPANT_QOS;
+  dds_qos_t *qos = QosProvider::get_gen_qos(kind, NULL);
+  dds_return_t result = QosProvider::get_single_configuration(qos, &dur_conf, kind, NULL, &full_configuration, &validate_mask);
+  ASSERT_TRUE(result >= 0);
+  std::vector<std::string> invalid_scope = {
+    "", "::", "::::", "*", "*::", "**", "::*::", "::::::",
+    "lib1::", "lib1::*", "lib1::*::", "lib1*::*",
+    "lib1::pro01", "lib1::pro00::*",
+    "::pro00",
+  };
+  for (auto it = invalid_scope.begin(); it != invalid_scope.end(); it++)
+  {
+    result = DDS_RETCODE_OK;
+    try {
+      dds::core::QosProvider qp(full_configuration, *it);
+    } catch (const dds::core::Exception &e) {
+      result = DDS_RETCODE_ERROR;
+    }
+    ASSERT_EQ(result, DDS_RETCODE_ERROR);
+  }
+
+  dds_delete_qos(qos);
+  ddsrt_free(full_configuration);
+}
+
+TEST_F(QosProvider, invalid_access_scope)
+{
+  char *full_configuration = NULL;
+  uint64_t validate_mask = 0;
+
+  QosProvider::sysdef_qos_conf_t dur_conf = {
+#define sec QosProvider::sec
+    sec,sec,sec,sec,sec,sec,sec,sec,sec
+#undef sec
+  };
+
+  dds_qos_kind_t kind = DDS_PARTICIPANT_QOS;
+  dds_qos_t *qos = QosProvider::get_gen_qos(kind, this);
+  dds_return_t result = QosProvider::get_single_configuration(qos, &dur_conf, kind, "pp00", &full_configuration, &validate_mask);
+  ASSERT_TRUE(result >= 0);
+  dds::core::QosProvider qp(full_configuration, "lib1::pro00");
+  std::vector<std::string> invalid_scope = {
+    "::", "::::", "*", "*::", "**", "::*::", "::::::",
+    "lib1::", "lib1::*", "lib1::*::", "lib1*::*",
+    "lib1::pro01", "lib1::pro00::*",
+    "::pro00", "pro00::", "pro00", "pro01",
+    "::pp00"
+  };
+  for (auto it = invalid_scope.begin(); it != invalid_scope.end(); it++)
+  {
+    result = DDS_RETCODE_OK;
+    try{
+      (void) qp.participant_qos(*it);
+    } catch (const dds::core::Exception &e) {
+      result = DDS_RETCODE_ERROR;
+    }
+    ASSERT_EQ(result, DDS_RETCODE_ERROR);
+  }
+
+  /* validate one success case that was not handled previously */
+  dds::domain::qos::DomainParticipantQos pQos = qp.participant_qos("pp00");
+  ASSERT_TRUE (this->pQos == pQos);
+
+  dds_delete_qos(qos);
+  ddsrt_free(full_configuration);
+}
