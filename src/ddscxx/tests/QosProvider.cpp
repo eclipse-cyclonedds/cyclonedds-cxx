@@ -173,7 +173,7 @@ constexpr static const unsigned char base64_etable[64] = {
 
 static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsigned char **buff)
 {
-  uint32_t act_len = (sz * 4U/3U); 
+  uint32_t act_len = (sz * 4U/3U);
   uint32_t buff_len = (act_len % 4U) != 0u? ((act_len / 4U + 1U)*4U): act_len;
   *buff =  static_cast<unsigned char *>(ddsrt_malloc(buff_len));
   (void) memset (*buff, '=', buff_len);
@@ -771,7 +771,7 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
 
 #undef QOS_FORMAT
 
-    static dds_return_t 
+    static dds_return_t
     get_single_configuration(dds_qos_t *qos, sysdef_qos_conf_t *conf, dds_qos_kind_t kind, const char *name, char **out_conf, uint64_t *validate_mask)
     {
       dds_return_t ret = DDS_RETCODE_OK;
@@ -1062,7 +1062,7 @@ TEST_F(QosProvider, invalid_scope)
     result = DDS_RETCODE_OK;
     try {
       dds::core::QosProvider qp(full_configuration, *it);
-    } catch (const dds::core::Exception &e) {
+    } catch (const dds::core::Exception &) {
       result = DDS_RETCODE_ERROR;
     }
     ASSERT_EQ(result, DDS_RETCODE_ERROR);
@@ -1100,7 +1100,7 @@ TEST_F(QosProvider, invalid_access_scope)
     result = DDS_RETCODE_OK;
     try{
       (void) qp.participant_qos(*it);
-    } catch (const dds::core::Exception &e) {
+    } catch (const dds::core::Exception &) {
       result = DDS_RETCODE_ERROR;
     }
     ASSERT_EQ(result, DDS_RETCODE_ERROR);
