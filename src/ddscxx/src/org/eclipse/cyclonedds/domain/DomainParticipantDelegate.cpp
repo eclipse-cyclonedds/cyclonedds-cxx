@@ -202,7 +202,7 @@ org::eclipse::cyclonedds::domain::DomainParticipantDelegate::assert_liveliness()
 {
     org::eclipse::cyclonedds::core::ScopedObjectLock scopedLock(*this);
     this->check();
-    ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
+    dds_assert_liveliness (this->ddsc_entity);
 }
 
 bool

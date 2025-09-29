@@ -458,7 +458,7 @@ AnyDataWriterDelegate::matched_subscription_data(const ::dds::core::InstanceHand
 void
 AnyDataWriterDelegate::assert_liveliness()
 {
-   ISOCPP_THROW_EXCEPTION(ISOCPP_UNSUPPORTED_ERROR, "Function not currently supported");
+    dds_assert_liveliness (ddsc_entity);
 }
 
 void
