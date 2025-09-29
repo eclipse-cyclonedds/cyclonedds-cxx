@@ -70,7 +70,8 @@ set(sources
   DataModels.cpp
   SampleInfo.cpp
   DeferredDestruction.cpp
-  KeyHash.cpp)
+  KeyHash.cpp
+  Liveliness.cpp)
 
 if (ENABLE_TYPELIB AND ENABLE_TOPIC_DISCOVERY)
   # Add topic/type discovery tests
