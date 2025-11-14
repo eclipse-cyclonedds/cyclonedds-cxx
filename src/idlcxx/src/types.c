@@ -260,6 +260,9 @@ emit_struct(
 
   /* class */
   name = get_cpp11_name(_struct);
+  char *fqname = NULL;
+  if (IDL_PRINTA(&fqname, get_cpp11_fully_scoped_name, node, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
   if (_struct->inherit_spec) {
     const idl_type_spec_t *type_spec = _struct->inherit_spec->base;
     char *base = NULL;
@@ -276,7 +279,7 @@ emit_struct(
   fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n"
         "  (void) rhs;\n"
         "  os << \"[\";\n";
-  if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
+  if (idl_fprintf(gen->impl.handle, fmt, fqname) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   if (fputs("{\nprivate:\n", gen->header.handle) < 0)
@@ -368,7 +371,7 @@ emit_struct(
 
   // ostream - hpp
   fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n\n";
-  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, fqname) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream - cpp
@@ -397,6 +400,9 @@ emit_enum(
   (void)path;
 
   name = get_cpp11_name(node);
+  char *fqname = NULL;
+  if (IDL_PRINTA(&fqname, get_cpp11_fully_scoped_name, node, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
   if (idl_fprintf(gen->header.handle, "enum class %s\n{\n", name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -404,22 +410,20 @@ emit_enum(
   fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs)\n{\n"
         "  (void) rhs;\n"
         "  switch (rhs)\n  {\n";
-  if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
+  if (idl_fprintf(gen->impl.handle, fmt, fqname) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
-  const char* struct_name = get_cpp11_name(node);
-
   IDL_FOREACH(enumerator, _enum->enumerators) {
-    name = get_cpp11_name(enumerator);
+    const char *symname = get_cpp11_name(enumerator);
     value = enumerator->value.value;
     fmt = (value == skip) ? "%s%s" : "%s%s = %" PRIu32 "\n";
-    if (idl_fprintf(gen->header.handle, fmt, sep, name, value) < 0)
+    if (idl_fprintf(gen->header.handle, fmt, sep, symname, value) < 0)
       return IDL_RETCODE_NO_MEMORY;
 
     // ostream cpp
-    fmt = "    case %2$s::%1$s:\n"
+    fmt = "    case %3$s::%1$s:\n"
           "      os << \"%2$s::%1$s\"; break;\n";
-    if (idl_fprintf(gen->impl.handle, fmt, name, struct_name) < 0)
+    if (idl_fprintf(gen->impl.handle, fmt, symname, name, fqname) < 0)
       return IDL_RETCODE_NO_MEMORY;
 
     skip = value + 1;
@@ -434,7 +438,7 @@ emit_enum(
     return IDL_RETCODE_NO_MEMORY;
 
   // ostream hpp
-  if (idl_fprintf(gen->header.handle, "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n\n", struct_name) < 0)
+  if (idl_fprintf(gen->header.handle, "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n\n", fqname) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   return IDL_VISIT_DONT_RECURSE;
@@ -1054,6 +1058,9 @@ emit_union(
   name = get_cpp11_name(_union);
   if (IDL_PRINTA(&type, get_cpp11_type, type_spec, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
+  char *fqname = NULL;
+  if (IDL_PRINTA(&fqname, get_cpp11_fully_scoped_name, node, gen) < 0)
+    return IDL_RETCODE_NO_MEMORY;
   if (IDL_PRINTA(&value, get_cpp11_value, _union->default_case->const_expr, gen) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
@@ -1148,7 +1155,7 @@ cleanup:
         "{\n"
         "  (void) rhs;\n"
         "  switch (rhs._d()) {\n";
-  if (idl_fprintf(gen->impl.handle, fmt, name) < 0)
+  if (idl_fprintf(gen->impl.handle, fmt, fqname) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   visitor.visit = IDL_CASE | IDL_CASE_LABEL;
@@ -1273,7 +1280,7 @@ cleanup:
 
   // ostream hpp
   fmt = "std::ostream& operator<<(std::ostream& os, %s const& rhs);\n";
-  if (idl_fprintf(gen->header.handle, fmt, name) < 0)
+  if (idl_fprintf(gen->header.handle, fmt, fqname) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
 
