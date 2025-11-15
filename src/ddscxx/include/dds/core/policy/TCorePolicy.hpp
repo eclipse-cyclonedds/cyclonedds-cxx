@@ -139,7 +139,7 @@ public:
      *
      * @param entries the sequence of octets
      */
-    explicit TProperty(std::initializer_list<Entry> entries, bool propagate=false);
+    explicit TProperty(std::initializer_list<Entry> entries, bool is_propagate=false);
 
     /**
      * Copies a Property QoS instance
@@ -164,7 +164,7 @@ public:
      *
      * @param property a proeprty entry
      */
-    TProperty& set(const Entry& property, bool propagate=false);
+    TProperty& set(const Entry& property, bool is_propagate=false);
 
     /**
      * Removes entry by key

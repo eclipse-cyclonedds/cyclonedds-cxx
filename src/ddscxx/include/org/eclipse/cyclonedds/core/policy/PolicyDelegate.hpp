@@ -922,12 +922,12 @@ public:
      * @param entries List of entires.
      * @param propagate Propagate properties in discovery
      */
-    explicit PropertyDelegate(std::initializer_list<Entry> entries, bool propagate=false);
+    explicit PropertyDelegate(std::initializer_list<Entry> entries, bool is_propagate=false);
 
     /**
      *  @internal Add or assign property.
     */
-    PropertyDelegate& set(const Entry& property, bool propagate=false);
+    PropertyDelegate& set(const Entry& property, bool is_propagate=false);
 
     /**
      *  @internal Get a property by key.
@@ -978,6 +978,7 @@ public:
 
 private:
     std::map<std::string, std::string> props_;
+    std::map<std::string, bool> props_to_propagate_;
 };
 
 //==============================================================================

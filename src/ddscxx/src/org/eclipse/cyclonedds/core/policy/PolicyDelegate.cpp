@@ -1587,30 +1587,30 @@ void UserDataDelegate::set_c_policy(dds_qos_t* qos) const
 //==============================================================================
 
 PropertyDelegate::PropertyDelegate()
-    : props_()
+    : props_(), props_to_propagate_()
 {
 }
 
 PropertyDelegate::PropertyDelegate(const PropertyDelegate& other)
-    : props_(other.props_)
+    : props_(other.props_), props_to_propagate_(other.props_to_propagate_)
 {
 }
 
-PropertyDelegate::PropertyDelegate(std::initializer_list<Entry> entries, bool propagate)
-    : props_()
+PropertyDelegate::PropertyDelegate(std::initializer_list<Entry> entries, bool is_propagate)
+    : props_(), props_to_propagate_()
 {
-    (void) propagate;
     for (const auto& pair : entries)
     {
+        props_to_propagate_[pair.first] = is_propagate;
         props_[pair.first] = pair.second;
     }
 
     this->check();
 }
 
-PropertyDelegate& PropertyDelegate::set(const Entry& property, bool propagate)
+PropertyDelegate& PropertyDelegate::set(const Entry& property, bool is_propagate)
 {
-    (void)propagate;
+    props_to_propagate_[property.first] = is_propagate;
     props_[property.first] = property.second;
     return *this;
 }
@@ -1640,13 +1640,20 @@ bool PropertyDelegate::exists(const std::string& key) const
 
 bool PropertyDelegate::remove(const std::string& key)
 {
-    return props_.erase(key) > 0;
+    if (exists(key)) {
+        (void)props_to_propagate_.erase(key);
+        return props_.erase(key) > 0;
+    }
+
+    return false;
 }
 
 bool PropertyDelegate::propagate(const std::string& key) const
 {
-    (void) key;
-    return false;
+    if (props_to_propagate_.count(key) == 0) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "Property %s does not exist.", key.c_str());
+    }
+    return props_to_propagate_.at(key);
 }
 
 bool PropertyDelegate::operator==(const PropertyDelegate& other) const
@@ -1670,10 +1677,14 @@ void PropertyDelegate::set_iso_policy(const dds_qos_t* qos)
     for (uint32_t i = 0; i < n; ++i)
     {
         char* value = nullptr;
+        bool is_propa = false;
+
         bool found = dds_qget_prop(qos, names[i], &value);
+        (void)dds_qset_prop_get_propagate(qos, names[i], &is_propa);
 
         if (found && value != nullptr)
         {
+            props_to_propagate_[names[i]] = is_propa;
             props_[names[i]] = value;
             dds_free(value);
         }
@@ -1686,12 +1697,15 @@ void PropertyDelegate::set_iso_policy(const dds_qos_t* qos)
 
 void PropertyDelegate::set_c_policy(dds_qos_t* qos) const
 {
-    for(const auto& pair : props_)
+    for (const auto& pair : props_)
     {
         dds_qset_prop(qos, pair.first.c_str(), pair.second.c_str());
+        if (props_to_propagate_.at(pair.first))
+        {
+            dds_qset_prop_set_propagate(qos, pair.first.c_str(), props_to_propagate_.at(pair.first));
+        }
     }
 }
-
 
 //==============================================================================
 

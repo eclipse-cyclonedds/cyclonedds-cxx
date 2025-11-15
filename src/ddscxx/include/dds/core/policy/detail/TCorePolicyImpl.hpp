@@ -107,12 +107,12 @@ template <typename D>
 TProperty<D>::TProperty(const TProperty& other) : dds::core::Value<D>(other.delegate()) { }
 
 template <typename D>
-TProperty<D>::TProperty(std::initializer_list<Entry> entries, bool propagate) : dds::core::Value<D>(entries, propagate) { }
+TProperty<D>::TProperty(std::initializer_list<Entry> entries, bool is_propagate) : dds::core::Value<D>(entries, is_propagate) { }
 
 template <typename D>
-TProperty<D>& TProperty<D>::set(const Entry& property, bool propagate)
+TProperty<D>& TProperty<D>::set(const Entry& property, bool is_propagate)
 {
-    this->delegate().set(property, propagate);
+    this->delegate().set(property, is_propagate);
     return *this;
 }
 
