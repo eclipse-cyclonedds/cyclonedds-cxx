@@ -970,11 +970,6 @@ public:
      * @param qos the ddsc policy
      */
     void set_iso_policy(const dds_qos_t* qos);
-    /**
-     *  @internal Set internals by the ddsc policy.
-     *
-     * @param the ddsc policy
-     */
 
     /**
      *  @internal Get the ddsc policy representation.
