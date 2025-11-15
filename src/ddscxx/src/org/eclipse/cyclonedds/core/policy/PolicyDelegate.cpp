@@ -1584,6 +1584,114 @@ void UserDataDelegate::set_c_policy(dds_qos_t* qos) const
     }
 }
 
+//==============================================================================
+
+PropertyDelegate::PropertyDelegate()
+    : props_()
+{
+}
+
+PropertyDelegate::PropertyDelegate(const PropertyDelegate& other)
+    : props_(other.props_)
+{
+}
+
+PropertyDelegate::PropertyDelegate(std::initializer_list<Entry> entries, bool propagate)
+    : props_()
+{
+    (void) propagate;
+    for (const auto& pair : entries)
+    {
+        props_[pair.first] = pair.second;
+    }
+
+    this->check();
+}
+
+PropertyDelegate& PropertyDelegate::set(const Entry& property, bool propagate)
+{
+    (void)propagate;
+    props_[property.first] = property.second;
+    return *this;
+}
+
+std::string PropertyDelegate::get(const std::string& key) const
+{
+    if (props_.count(key) == 0) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "Property %s does not exist.", key.c_str());
+    }
+    return props_.at(key);
+}
+
+std::map<std::string, std::string> PropertyDelegate::get_all() const
+{
+    return props_; 
+}
+
+size_t PropertyDelegate::size() const
+{
+    return props_.size();
+}
+
+bool PropertyDelegate::exists(const std::string& key) const
+{
+    return props_.count(key) > 0;
+}
+
+bool PropertyDelegate::remove(const std::string& key)
+{
+    return props_.erase(key) > 0;
+}
+
+bool PropertyDelegate::propagate(const std::string& key) const
+{
+    (void) key;
+    return false;
+}
+
+bool PropertyDelegate::operator==(const PropertyDelegate& other) const
+{
+    return other.props_ == props_;
+}
+
+void PropertyDelegate::check() const
+{
+    /* The value_ is just a map: nothing to check. */
+}
+
+void PropertyDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    uint32_t n = 0;
+    char** names = nullptr;
+
+    if (!dds_qget_propnames(qos, &n, &names) || names == nullptr)
+        return;
+
+    for (uint32_t i = 0; i < n; ++i)
+    {
+        char* value = nullptr;
+        bool found = dds_qget_prop(qos, names[i], &value);
+
+        if (found && value != nullptr)
+        {
+            props_[names[i]] = value;
+            dds_free(value);
+        }
+
+        dds_free(names[i]);
+    }
+
+    dds_free(names);
+}
+
+void PropertyDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    for(const auto& pair : props_)
+    {
+        dds_qset_prop(qos, pair.first.c_str(), pair.second.c_str());
+    }
+}
+
 
 //==============================================================================
 

@@ -39,6 +39,12 @@ const ::dds::core::policy::UserData& TParticipantBuiltinTopicData<D>::user_data(
     return this->delegate().user_data();
 }
 
+template <typename D>
+const ::dds::core::policy::Property& TParticipantBuiltinTopicData<D>::property() const
+{
+    return this->delegate().property();
+}
+
 //TTopicBuiltinTopicData
 template <typename D>
 const dds::topic::BuiltinTopicKey& TTopicBuiltinTopicData<D>::key() const
@@ -215,6 +221,12 @@ template <typename D>
 const ::dds::core::policy::UserData& TPublicationBuiltinTopicData<D>::user_data() const
 {
     return this->delegate().user_data();
+}
+
+template <typename D>
+const ::dds::core::policy::Property& TPublicationBuiltinTopicData<D>::property() const
+{
+    return this->delegate().property();
 }
 
 template <typename D>

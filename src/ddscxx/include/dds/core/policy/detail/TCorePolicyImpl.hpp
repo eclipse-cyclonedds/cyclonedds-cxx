@@ -98,6 +98,59 @@ const uint8_t* TUserData<D>::end() const
     return NULL;
 }
 
+//TProperty
+
+template <typename D>
+TProperty<D>::TProperty() : dds::core::Value<D>() { }
+
+template <typename D>
+TProperty<D>::TProperty(const TProperty& other) : dds::core::Value<D>(other.delegate()) { }
+
+template <typename D>
+TProperty<D>::TProperty(std::initializer_list<Entry> entries, bool propagate) : dds::core::Value<D>(entries, propagate) { }
+
+template <typename D>
+TProperty<D>& TProperty<D>::set(const Entry& property, bool propagate)
+{
+    this->delegate().set(property, propagate);
+    return *this;
+}
+
+template <typename D>
+bool TProperty<D>::remove(const std::string& key)
+{
+    return this->delegate().remove(key);
+}
+
+template <typename D>
+std::string TProperty<D>::get(const std::string& key) const
+{
+    return this->delegate().get(key);
+}
+
+template <typename D>
+std::map<std::string, std::string> TProperty<D>::get_all() const
+{
+    return this->delegate().get_all();
+}
+
+template <typename D>
+size_t TProperty<D>::size() const
+{
+    return this->delegate().size();
+}
+
+template <typename D>
+bool TProperty<D>::exists(const std::string& key) const
+{
+    return this->delegate().exists(key);
+}
+template <typename D>
+bool TProperty<D>::propagate(const std::string& key) const
+{
+    return this->delegate().propagate(key);
+}
+
 //TGroupData
 
 template <typename D>

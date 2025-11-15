@@ -119,6 +119,93 @@ public:
 };
 
 //==============================================================================
+/**
+ * \copydoc DCPS_QoS_Property
+ */
+template <typename D>
+class TProperty : public dds::core::Value<D>
+{
+public:
+
+    typedef std::pair<std::string, std::string> Entry;
+
+    /**
+     * Creates a empty Property QoS instance
+     */
+    TProperty();
+
+    /**
+     * Creates a Property QoS instance
+     *
+     * @param entries the sequence of octets
+     */
+    explicit TProperty(std::initializer_list<Entry> entries, bool propagate=false);
+
+    /**
+     * Copies a Property QoS instance
+     *
+     * @param other the Property QoS instance to copy
+     */
+    TProperty(const TProperty& other);
+
+    /**
+    * Copies a Property QoS instance
+    *
+    * @param other the Property QoS instance to copy
+    *
+    * @return Reference to the Property QoS instance that was copied to
+    */
+    TProperty& operator=(const TProperty& other) = default;
+
+public:
+
+    /**
+     * Assign or add entry
+     *
+     * @param property a proeprty entry
+     */
+    TProperty& set(const Entry& property, bool propagate=false);
+
+    /**
+     * Removes entry by key
+     *
+     * @param key a string value
+     */
+    bool remove(const std::string& key);
+
+    /**
+     * Get the value for key
+     *
+     * @param key a string value
+     */
+    std::string get(const std::string& key) const;
+
+    /**
+     * Get all key value pairs.
+     */
+    std::map<std::string, std::string> get_all() const;
+
+    /**
+     * Get total amount keys.
+     */
+    size_t size() const;
+
+    /**
+     * Check if key exists.
+     *
+     * @param key a string value
+     */
+    bool exists(const std::string& key) const;
+
+    /**
+     * Check if property is propagated.
+     *
+     * @param key a string value
+     */
+    bool propagate(const std::string& key) const;
+};
+
+//==============================================================================
 
 /**
  * \copydoc DCPS_QoS_GroupData

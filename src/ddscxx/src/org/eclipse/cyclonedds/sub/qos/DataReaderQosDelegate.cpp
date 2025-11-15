@@ -52,6 +52,14 @@ DataReaderQosDelegate::policy(const dds::core::policy::UserData& user_data)
 }
 
 void
+DataReaderQosDelegate::policy(const dds::core::policy::Property& property)
+{
+    property.delegate().check();
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    property_ = property;
+}
+
+void
 DataReaderQosDelegate::policy(const dds::core::policy::Durability& durability)
 {
     durability.delegate().check();
@@ -214,6 +222,8 @@ DataReaderQosDelegate::ddsc_qos() const
         psmxinstances_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_PROPERTY_LIST)
+        property_.delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -257,6 +267,8 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
         psmxinstances_.delegate().set_iso_policy(qos);
     if (qos->present & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_iso_policy(qos);
+    if (qos->present & DDSI_QP_PROPERTY_LIST)
+        property_.delegate().set_iso_policy(qos);
 }
 
 void
@@ -320,7 +332,8 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
            other.typeconsistencyenforcement_ == typeconsistencyenforcement_ &&
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
            other.psmxinstances_ == psmxinstances_ &&
-           other.ignorelocal_ == ignorelocal_
+           other.ignorelocal_ == ignorelocal_ &&
+           other.property_ == property_
            ;
 }
 
@@ -368,6 +381,14 @@ DataReaderQosDelegate::policy<dds::core::policy::UserData>()
 {
     present_ |= DDSI_QP_USER_DATA;
     return user_data_;
+}
+
+template<>
+dds::core::policy::Property&
+DataReaderQosDelegate::policy<dds::core::policy::Property>()
+{
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    return property_;
 }
 
 template<>

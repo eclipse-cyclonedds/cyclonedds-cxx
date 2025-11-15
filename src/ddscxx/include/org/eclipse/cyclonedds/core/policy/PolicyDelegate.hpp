@@ -28,6 +28,8 @@
 
 #include <dds/dds.h>
 
+#include <map>
+
 //==============================================================================
 /*
  * Unfortunately, there isn't an ddsc or builtin SubscriptionKey policy that
@@ -869,6 +871,118 @@ public:
 
 private:
     dds::core::ByteSeq value_;
+};
+
+//==============================================================================
+
+/**
+ *  @internal The purpose of this QoS is to allow the application to attach additional
+ * information to the created Entity objects such that when a remote application
+ * discovers their existence it can access that information and use it for its
+ * own purposes. One possible use of this QoS is to attach security credentials
+ * or some other information that can be used by the remote application to
+ * authenticate the source. In combination with operations such as
+ * ignore_participant, ignore_publication, ignore_subscription,
+ * and ignore_topic these QoS can assist an application to define and enforce
+ * its own security policies. The use of this QoS is not limited to security,
+ * rather it offers a simple, yet flexible extensibility mechanism.
+ */
+class OMG_DDS_API PropertyDelegate
+{
+public:
+
+    typedef std::pair<std::string, std::string> Entry;
+
+    /**
+     *  @internal Create a <code>Property</code> instance with an empty user data.
+     */
+    PropertyDelegate();
+
+    /**
+     *  @internal Create a <code>Property</code> instance.
+     *
+     * @param other the user data to copy
+     */
+    PropertyDelegate(const PropertyDelegate& other);
+
+    /**
+     *  @internal Copies a <code>Property</code> instance.
+     *
+     * @param other the user data to copy
+     *
+     * @return reference to the instance that was copied to
+     */
+    PropertyDelegate& operator=(const PropertyDelegate& other) = default;
+
+    bool operator ==(const PropertyDelegate& other) const;
+
+    /**
+     *  @internal Create a <code>Property</code> instance.
+     *
+     * @param entries List of entires.
+     * @param propagate Propagate properties in discovery
+     */
+    explicit PropertyDelegate(std::initializer_list<Entry> entries, bool propagate=false);
+
+    /**
+     *  @internal Add or assign property.
+    */
+    PropertyDelegate& set(const Entry& property, bool propagate=false);
+
+    /**
+     *  @internal Get a property by key.
+    */
+    std::string get(const std::string& key) const;
+
+    /**
+     *  @internal Get all properties.
+    */
+    std::map<std::string, std::string> get_all() const;
+
+    /**
+     *  @internal Get total amount of properties.
+    */
+    size_t size() const;
+
+    /**
+     *  @internal Check if key exits.
+    */
+    bool exists(const std::string& key) const;
+
+    /**
+     *  @internal Remove the property by key.
+    */
+    bool remove(const std::string& key);
+
+    /**
+     *  @internal Check if property is propagated.
+    */
+    bool propagate(const std::string& key) const;
+
+    /**
+     *  @internal Check if policy is consistent.
+     */
+    void check() const;
+
+    /**
+     *  @internal Set internals by the ddsc policy.
+     *
+     * @param qos the ddsc policy
+     */
+    void set_iso_policy(const dds_qos_t* qos);
+    /**
+     *  @internal Set internals by the ddsc policy.
+     *
+     * @param the ddsc policy
+     */
+
+    /**
+     *  @internal Get the ddsc policy representation.
+     */
+    void set_c_policy(dds_qos_t* qos) const;
+
+private:
+    std::map<std::string, std::string> props_;
 };
 
 //==============================================================================

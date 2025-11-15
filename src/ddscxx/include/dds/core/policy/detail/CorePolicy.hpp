@@ -104,6 +104,9 @@ namespace dds { namespace core { namespace policy { namespace detail {
     typedef dds::core::policy::TUserData<org::eclipse::cyclonedds::core::policy::UserDataDelegate>
     UserData;
 
+    typedef dds::core::policy::TProperty<org::eclipse::cyclonedds::core::policy::PropertyDelegate>
+    Property;
+
     typedef dds::core::policy::TWriterDataLifecycle<org::eclipse::cyclonedds::core::policy::WriterDataLifecycleDelegate>
     WriterDataLifecycle;
 

@@ -38,6 +38,7 @@ public:
     DataWriterQosDelegate(const org::eclipse::cyclonedds::topic::qos::TopicQosDelegate& tqos);
 
     void policy(const dds::core::policy::UserData&          user_data);
+    void policy(const dds::core::policy::Property&          property);
     void policy(const dds::core::policy::Durability&        durability);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
     void policy(const dds::core::policy::DurabilityService& durability_service);
@@ -83,6 +84,7 @@ public:
 private:
     uint64_t                                   present_ = 0;
     dds::core::policy::UserData                user_data_;
+    dds::core::policy::Property                property_;
     dds::core::policy::Durability              durability_;
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
     dds::core::policy::DurabilityService       durability_service_;
@@ -122,6 +124,16 @@ DataWriterQosDelegate::policy<dds::core::policy::UserData>() const
 
 template<> OMG_DDS_API dds::core::policy::UserData&
 DataWriterQosDelegate::policy<dds::core::policy::UserData>();
+
+template<> inline const dds::core::policy::Property&
+DataWriterQosDelegate::policy<dds::core::policy::Property>() const
+{
+    return property_;
+}
+
+template<> OMG_DDS_API dds::core::policy::Property&
+DataWriterQosDelegate::policy<dds::core::policy::Property>();
+
 
 template<> inline const dds::core::policy::Durability&
 DataWriterQosDelegate::policy<dds::core::policy::Durability>() const
