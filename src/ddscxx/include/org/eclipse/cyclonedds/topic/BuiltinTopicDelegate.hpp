@@ -90,7 +90,7 @@ public:
 
     bool operator ==(const ParticipantBuiltinTopicDataDelegate& other) const
     {
-        return other.key_ == key_ && other.user_data_ == user_data_ && other.prop_ == prop_;
+        return other.key_ == key_ && other.user_data_ == user_data_ && other.prop_ == prop_ && other.binary_prop_ == binary_prop_;
     }
 
 protected:

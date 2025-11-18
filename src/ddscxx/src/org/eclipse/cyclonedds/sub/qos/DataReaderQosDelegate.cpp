@@ -231,9 +231,10 @@ DataReaderQosDelegate::ddsc_qos() const
     if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_PROPERTY_LIST)
+    {
         property_.delegate().set_c_policy(qos);
-    if (present_ & DDSI_QP_PROPERTY_LIST)
         binary_property_.delegate().set_c_policy(qos);
+    }
     return qos;
 }
 

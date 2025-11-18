@@ -80,9 +80,10 @@ DomainParticipantQosDelegate::ddsc_qos() const
     if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_PROPERTY_LIST)
+    {
         prop_.delegate().set_c_policy(qos);
-    if (present_ & DDSI_QP_PROPERTY_LIST)
         bin_prop_.delegate().set_c_policy(qos);
+    }
     return qos;
 }
 
@@ -97,9 +98,10 @@ DomainParticipantQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
     if (qos->present & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_iso_policy(qos);
     if (qos->present & DDSI_QP_PROPERTY_LIST)
+    {
         prop_.delegate().set_iso_policy(qos);
-    if (qos->present & DDSI_QP_PROPERTY_LIST)
         bin_prop_.delegate().set_iso_policy(qos);
+    }
 }
 
 void
@@ -131,6 +133,7 @@ DomainParticipantQosDelegate::operator ==(const DomainParticipantQosDelegate& ot
     return other.present_             == present_   &&
            other.user_data_           == user_data_ &&
            other.prop_                == prop_ &&
+           other.bin_prop_            == bin_prop_ &&
            other.entity_factory_      == entity_factory_;
 
 }

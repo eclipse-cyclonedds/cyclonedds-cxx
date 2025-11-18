@@ -279,9 +279,10 @@ DataWriterQosDelegate::ddsc_qos() const
     if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_PROPERTY_LIST)
+    {
         property_   .delegate().set_c_policy(qos);
-    if (present_ & DDSI_QP_PROPERTY_LIST)
         binary_property_   .delegate().set_c_policy(qos);
+    }
     return qos;
 }
 
@@ -338,9 +339,10 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
     if (qos->present & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_iso_policy(qos);
     if (qos->present & DDSI_QP_PROPERTY_LIST)
+    {
         property_    .delegate().set_iso_policy(qos);
-    if (qos->present & DDSI_QP_PROPERTY_LIST)
         binary_property_    .delegate().set_iso_policy(qos);
+    }
 }
 
 void
