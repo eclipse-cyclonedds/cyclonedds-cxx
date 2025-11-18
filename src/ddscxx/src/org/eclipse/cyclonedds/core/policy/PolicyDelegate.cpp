@@ -1679,8 +1679,7 @@ void PropertyDelegate::set_iso_policy(const dds_qos_t* qos)
         char* value = nullptr;
         bool is_propa = false;
 
-        bool found = dds_qget_prop(qos, names[i], &value);
-        (void)dds_qget_prop_propagate(qos, names[i], &is_propa);
+        bool found = dds_qget_prop_propagate(qos, names[i], &value, &is_propa);
 
         if (found && value != nullptr)
         {
@@ -1699,11 +1698,7 @@ void PropertyDelegate::set_c_policy(dds_qos_t* qos) const
 {
     for (const auto& pair : props_)
     {
-        dds_qset_prop(qos, pair.first.c_str(), pair.second.c_str());
-        if (props_to_propagate_.at(pair.first))
-        {
-            (void)dds_qset_prop_propagate(qos, pair.first.c_str(), props_to_propagate_.at(pair.first));
-        }
+        dds_qset_prop_propagate(qos, pair.first.c_str(), pair.second.c_str(), props_to_propagate_.at(pair.first));
     }
 }
 
