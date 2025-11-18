@@ -45,6 +45,12 @@ const ::dds::core::policy::Property& TParticipantBuiltinTopicData<D>::property()
     return this->delegate().property();
 }
 
+template <typename D>
+const ::dds::core::policy::BinaryProperty& TParticipantBuiltinTopicData<D>::binary_property() const
+{
+    return this->delegate().binary_property();
+}
+
 //TTopicBuiltinTopicData
 template <typename D>
 const dds::topic::BuiltinTopicKey& TTopicBuiltinTopicData<D>::key() const
@@ -228,6 +234,13 @@ const ::dds::core::policy::Property& TPublicationBuiltinTopicData<D>::property()
 {
     return this->delegate().property();
 }
+
+template <typename D>
+const ::dds::core::policy::BinaryProperty& TPublicationBuiltinTopicData<D>::binary_property() const
+{
+    return this->delegate().binary_property();
+}
+
 
 template <typename D>
 const ::dds::core::policy::Ownership& TPublicationBuiltinTopicData<D>::ownership() const

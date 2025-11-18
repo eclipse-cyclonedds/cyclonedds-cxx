@@ -157,6 +157,9 @@ UserData;
 typedef dds::core::policy::detail::Property
 Property;
 
+typedef dds::core::policy::detail::BinaryProperty
+BinaryProperty;
+
 typedef dds::core::policy::detail::WriterDataLifecycle
 WriterDataLifecycle;
 
@@ -205,6 +208,7 @@ OMG_DDS_POLICY_TRAITS(TypeConsistencyEnforcement, 24)
 #endif  // OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
 OMG_DDS_POLICY_TRAITS(WriterBatching,       25)
 OMG_DDS_POLICY_TRAITS(Property,             29)
+OMG_DDS_POLICY_TRAITS(BinaryProperty,       30)
 OMG_DDS_POLICY_TRAITS(PSMXInstances,        34)
 OMG_DDS_POLICY_TRAITS(IgnoreLocal,          35)
 

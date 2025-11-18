@@ -92,6 +92,11 @@ public:
      * User-defined Property attached to the participant via a QosPolicy
      */
     const ::dds::core::policy::Property& property() const;
+
+    /**
+     * User-defined BinaryProperty attached to the participant via a QosPolicy
+     */
+    const ::dds::core::policy::BinaryProperty& binary_property() const;
 };
 
 /// @brief
@@ -324,6 +329,11 @@ public:
     /**
      * QosPolicy attached to the DataWriter
      */
+    const ::dds::core::policy::BinaryProperty&     binary_property() const;
+
+    /**
+     * QosPolicy attached to the DataWriter
+     */
     const ::dds::core::policy::Ownership&          ownership() const;
 
     #ifdef OMG_DDS_OWNERSHIP_SUPPORT
@@ -462,6 +472,11 @@ public:
      * QosPolicy attached to the DataReader
      */
     const ::dds::core::policy::Property&           property() const;
+
+    /**
+     * QosPolicy attached to the DataReader
+     */
+    const ::dds::core::policy::BinaryProperty&     binary_property() const;
 
     /**
      * QosPolicy attached to the DataReader

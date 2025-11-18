@@ -983,6 +983,116 @@ private:
 
 //==============================================================================
 
+
+/**
+ *  @internal The purpose of this QoS is to allow the application to attach additional
+ * information to the created Entity objects such that when a remote application
+ * discovers their existence it can access that information and use it for its
+ * own purposes. One possible use of this QoS is to attach security credentials
+ * or some other information that can be used by the remote application to
+ * authenticate the source. In combination with operations such as
+ * ignore_participant, ignore_publication, ignore_subscription,
+ * and ignore_topic these QoS can assist an application to define and enforce
+ * its own security policies. The use of this QoS is not limited to security,
+ * rather it offers a simple, yet flexible extensibility mechanism.
+ */
+class OMG_DDS_API BinaryPropertyDelegate
+{
+public:
+
+    typedef std::pair<std::string, dds::core::ByteSeq> BinaryEntry;
+
+    /**
+     *  @internal Create a <code>BinaryProperty</code> instance with an empty user data.
+     */
+    BinaryPropertyDelegate();
+
+    /**
+     *  @internal Create a <code>BinaryProperty</code> instance.
+     *
+     * @param other the user data to copy
+     */
+    BinaryPropertyDelegate(const BinaryPropertyDelegate& other);
+
+    /**
+     *  @internal Copies a <code>BinaryProperty</code> instance.
+     *
+     * @param other the user data to copy
+     *
+     * @return reference to the instance that was copied to
+     */
+    BinaryPropertyDelegate& operator=(const BinaryPropertyDelegate& other) = default;
+
+    bool operator ==(const BinaryPropertyDelegate& other) const;
+
+    /**
+     *  @internal Create a <code>BinaryProperty</code> instance.
+     *
+     * @param entries List of entires.
+     * @param propagate Propagate properties in discovery
+     */
+    explicit BinaryPropertyDelegate(std::initializer_list<BinaryEntry> entries, bool is_propagate=false);
+
+    /**
+     *  @internal Add or assign binary_property.
+    */
+    BinaryPropertyDelegate& set(const BinaryEntry& binary_property, bool is_propagate=false);
+
+    /**
+     *  @internal Get a binary_property by key.
+    */
+    dds::core::ByteSeq get(const std::string& key) const;
+
+    /**
+     *  @internal Get all properties.
+    */
+    std::map<std::string, dds::core::ByteSeq> get_all() const;
+
+    /**
+     *  @internal Get total amount of properties.
+    */
+    size_t size() const;
+
+    /**
+     *  @internal Check if key exits.
+    */
+    bool exists(const std::string& key) const;
+
+    /**
+     *  @internal Remove the binary_property by key.
+    */
+    bool remove(const std::string& key);
+
+    /**
+     *  @internal Check if binary_property is propagated.
+    */
+    bool propagate(const std::string& key) const;
+
+    /**
+     *  @internal Check if policy is consistent.
+     */
+    void check() const;
+
+    /**
+     *  @internal Set internals by the ddsc policy.
+     *
+     * @param qos the ddsc policy
+     */
+    void set_iso_policy(const dds_qos_t* qos);
+
+    /**
+     *  @internal Get the ddsc policy representation.
+     */
+    void set_c_policy(dds_qos_t* qos) const;
+
+private:
+    std::map<std::string, dds::core::ByteSeq> bprops_;
+    std::map<std::string, bool> bprops_to_propagate_;
+};
+
+//==============================================================================
+
+
 class OMG_DDS_API WriterDataLifecycleDelegate
 {
 public:

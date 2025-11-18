@@ -37,6 +37,7 @@ public:
 
     void policy(const dds::core::policy::UserData& ud);
     void policy(const dds::core::policy::Property& prop);
+    void policy(const dds::core::policy::BinaryProperty& prop);
     void policy(const dds::core::policy::EntityFactory& efp);
 
     template <typename POLICY> const POLICY& policy() const;
@@ -58,6 +59,7 @@ private:
     uint64_t                          present_ = 0;
     dds::core::policy::UserData       user_data_;
     dds::core::policy::Property       prop_;
+    dds::core::policy::BinaryProperty bin_prop_;
     dds::core::policy::EntityFactory  entity_factory_;
 };
 
@@ -87,6 +89,17 @@ DomainParticipantQosDelegate::policy<dds::core::policy::Property> () const
 template<>
 OMG_DDS_API dds::core::policy::Property&
 DomainParticipantQosDelegate::policy<dds::core::policy::Property> ();
+
+template<>
+inline const dds::core::policy::BinaryProperty&
+DomainParticipantQosDelegate::policy<dds::core::policy::BinaryProperty> () const
+{
+    return bin_prop_;
+}
+
+template<>
+OMG_DDS_API dds::core::policy::BinaryProperty&
+DomainParticipantQosDelegate::policy<dds::core::policy::BinaryProperty> ();
 
 
 template<>

@@ -38,6 +38,7 @@
  * --------------------------------------- | -------------------------------------------------------------------------- | --------------------
  * dds::core::policy::UserData             | Additional information (@ref DCPS_QoS_UserData "info")                     | UserData::UserData(empty)
  * dds::core::policy::Property             | Additional information (@ref DCPS_QoS_Property "info")                     | Property::Proeprty(empty)
+ * dds::core::policy::BinaryProperty       | Additional information (@ref DCPS_QoS_BinaryProperty "info")               | BinaryProperty::Proeprty(empty)
  * dds::core::policy::Durability           | Data storage settings for late joiners (@ref DCPS_QoS_Durability "info")   | Durability::Volatile()
  * dds::core::policy::DurabilityService    | Transient/persistent behaviour (@ref DCPS_QoS_DurabilityService "info")    | DurabilityService::DurabilityService()
  * dds::core::policy::Deadline             | Period in which new sample is written (@ref DCPS_QoS_Deadline "info")      | Deadline::Deadline(infinite)

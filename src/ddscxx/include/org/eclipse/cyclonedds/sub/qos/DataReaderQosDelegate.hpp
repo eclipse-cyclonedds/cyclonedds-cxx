@@ -39,6 +39,7 @@ public:
 
     void policy(const dds::core::policy::UserData&            user_data);
     void policy(const dds::core::policy::Property&            property);
+    void policy(const dds::core::policy::BinaryProperty&      binary_property);
     void policy(const dds::core::policy::Durability&          durability);
     void policy(const dds::core::policy::Deadline&            deadline);
     void policy(const dds::core::policy::LatencyBudget&       budget);
@@ -77,6 +78,7 @@ private:
     uint64_t                                   present_ = 0;
     dds::core::policy::UserData                user_data_;
     dds::core::policy::Property                property_;
+    dds::core::policy::BinaryProperty          binary_property_;
     dds::core::policy::Durability              durability_;
     dds::core::policy::Deadline                deadline_;
     dds::core::policy::LatencyBudget           budget_;
@@ -130,6 +132,17 @@ DataReaderQosDelegate::policy<dds::core::policy::Property>() const
 template<>
 OMG_DDS_API dds::core::policy::Property&
 DataReaderQosDelegate::policy<dds::core::policy::Property>();
+
+template<>
+inline const dds::core::policy::BinaryProperty&
+DataReaderQosDelegate::policy<dds::core::policy::BinaryProperty>() const
+{
+    return binary_property_;
+}
+template<>
+OMG_DDS_API dds::core::policy::BinaryProperty&
+DataReaderQosDelegate::policy<dds::core::policy::BinaryProperty>();
+
 
 template<> inline const dds::core::policy::Deadline&
 DataReaderQosDelegate::policy<dds::core::policy::Deadline>() const

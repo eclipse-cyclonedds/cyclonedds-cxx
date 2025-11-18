@@ -60,6 +60,14 @@ DataReaderQosDelegate::policy(const dds::core::policy::Property& property)
 }
 
 void
+DataReaderQosDelegate::policy(const dds::core::policy::BinaryProperty& binary_property)
+{
+    binary_property.delegate().check();
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    binary_property_ = binary_property;
+}
+
+void
 DataReaderQosDelegate::policy(const dds::core::policy::Durability& durability)
 {
     durability.delegate().check();
@@ -224,6 +232,8 @@ DataReaderQosDelegate::ddsc_qos() const
         ignorelocal_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_PROPERTY_LIST)
         property_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_PROPERTY_LIST)
+        binary_property_.delegate().set_c_policy(qos);
     return qos;
 }
 
@@ -268,7 +278,10 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
     if (qos->present & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_iso_policy(qos);
     if (qos->present & DDSI_QP_PROPERTY_LIST)
+    {
         property_.delegate().set_iso_policy(qos);
+        binary_property_.delegate().set_iso_policy(qos);
+    }
 }
 
 void
@@ -333,7 +346,8 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
 #endif //  OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
            other.psmxinstances_ == psmxinstances_ &&
            other.ignorelocal_ == ignorelocal_ &&
-           other.property_ == property_
+           other.property_ == property_ &&
+           other.binary_property_ == binary_property_
            ;
 }
 
@@ -389,6 +403,14 @@ DataReaderQosDelegate::policy<dds::core::policy::Property>()
 {
     present_ |= DDSI_QP_PROPERTY_LIST;
     return property_;
+}
+
+template<>
+dds::core::policy::BinaryProperty&
+DataReaderQosDelegate::policy<dds::core::policy::BinaryProperty>()
+{
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    return binary_property_;
 }
 
 template<>

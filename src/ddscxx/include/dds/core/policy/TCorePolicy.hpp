@@ -208,6 +208,94 @@ public:
 //==============================================================================
 
 /**
+ * \copydoc DCPS_QoS_BinaryProperty
+ */
+template <typename D>
+class TBinaryProperty : public dds::core::Value<D>
+{
+public:
+
+    typedef std::pair<std::string, dds::core::ByteSeq> BinaryEntry;
+
+    /**
+     * Creates a empty BinaryProperty QoS instance
+     */
+    TBinaryProperty();
+
+    /**
+     * Creates a BinaryProperty QoS instance
+     *
+     * @param entries the sequence of octets
+     */
+    explicit TBinaryProperty(std::initializer_list<BinaryEntry> entries, bool is_propagate=false);
+
+    /**
+     * Copies a BinaryProperty QoS instance
+     *
+     * @param other the BinaryProperty QoS instance to copy
+     */
+    TBinaryProperty(const TBinaryProperty& other);
+
+    /**
+    * Copies a BinaryProperty QoS instance
+    *
+    * @param other the BinaryProperty QoS instance to copy
+    *
+    * @return Reference to the BinaryProperty QoS instance that was copied to
+    */
+    TBinaryProperty& operator=(const TBinaryProperty& other) = default;
+
+public:
+
+    /**
+     * Assign or add entry
+     *
+     * @param binary_property a proeprty entry
+     */
+    TBinaryProperty& set(const BinaryEntry& binary_property, bool is_propagate=false);
+
+    /**
+     * Removes entry by key
+     *
+     * @param key a string value
+     */
+    bool remove(const std::string& key);
+
+    /**
+     * Get the value for key
+     *
+     * @param key a ByteSeq value
+     */
+    dds::core::ByteSeq get(const std::string& key) const;
+
+    /**
+     * Get all key value pairs.
+     */
+    std::map<std::string, dds::core::ByteSeq> get_all() const;
+
+    /**
+     * Get total amount keys.
+     */
+    size_t size() const;
+
+    /**
+     * Check if key exists.
+     *
+     * @param key a string value
+     */
+    bool exists(const std::string& key) const;
+
+    /**
+     * Check if binary_property is propagated.
+     *
+     * @param key a string value
+     */
+    bool propagate(const std::string& key) const;
+};
+
+//==============================================================================
+
+/**
  * \copydoc DCPS_QoS_GroupData
  */
 template <typename D>
