@@ -920,7 +920,7 @@ public:
      *  @internal Create a <code>Property</code> instance.
      *
      * @param entries List of entires.
-     * @param propagate Propagate properties in discovery
+     * @param is_propagate Propagate properties in discovery
      */
     explicit PropertyDelegate(std::initializer_list<Entry> entries, bool is_propagate=false);
 
@@ -1029,7 +1029,7 @@ public:
      *  @internal Create a <code>BinaryProperty</code> instance.
      *
      * @param entries List of entires.
-     * @param propagate Propagate properties in discovery
+     * @param is_propagate Propagate properties in discovery
      */
     explicit BinaryPropertyDelegate(std::initializer_list<BinaryEntry> entries, bool is_propagate=false);
 
