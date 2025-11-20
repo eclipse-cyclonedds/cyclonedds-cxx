@@ -12,6 +12,7 @@
  * @file
  */
 
+#include <dds/ddsi/ddsi_xqos.h>
 #include <org/eclipse/cyclonedds/core/QosProviderDelegate.hpp>
 
 #include <dds/ddsc/dds_public_qos_provider.h>
@@ -95,6 +96,7 @@ QosProviderDelegate::participant_qos(const std::string &id)
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested participant QoS.");
 
     dpq.delegate().ddsc_qos(c_dpq, false);
+    dpq.delegate().present() |= c_dpq->present;
 
     return dpq;
 }
@@ -111,6 +113,7 @@ QosProviderDelegate::topic_qos(const std::string &id)
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested topic QoS.");
 
     tq.delegate().ddsc_qos(c_tq, false);
+    tq.delegate().present() |= c_tq->present;
 
     return tq;
 }
@@ -128,6 +131,7 @@ QosProviderDelegate::subscriber_qos(const std::string &id)
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested subscriber QoS.");
 
     sq.delegate().ddsc_qos(c_sq, false);
+    sq.delegate().present() |= c_sq->present;
 
     return sq;
 }
@@ -144,6 +148,7 @@ QosProviderDelegate::datareader_qos(const std::string &id)
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested datareader QoS.");
 
     drq.delegate().ddsc_qos(c_drq, false);
+    drq.delegate().present() |= c_drq->present;
 
     return drq;
 }
@@ -160,6 +165,7 @@ QosProviderDelegate::publisher_qos(const std::string &id)
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested publisher QoS.");
 
     pq.delegate().ddsc_qos(c_pq, false);
+    pq.delegate().present() |= c_pq->present;
 
     return pq;
 }
@@ -176,6 +182,7 @@ QosProviderDelegate::datawriter_qos(const std::string &id)
     ISOCPP_DDSC_RESULT_CHECK_AND_THROW(ret, "Unable to obtain requested datawriter QoS.");
 
     dwq.delegate().ddsc_qos(c_dwq, false);
+    dwq.delegate().present() |= c_dwq->present;
 
     return dwq;
 }

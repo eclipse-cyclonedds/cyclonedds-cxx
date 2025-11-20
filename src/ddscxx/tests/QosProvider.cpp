@@ -15,6 +15,10 @@
 #include "dds/ddsrt/string.h"
 #include "dds/ddsrt/io.h"
 
+#define QOS_DATA_REPRESENTATION_XCDR1 "XCDR1"
+#define QOS_DATA_REPRESENTATION_XCDR2 "XCDR2"
+#define QOS_DATA_REPRESENTATION_XML   "XML"
+
 #define QOS_LENGTH_UNLIMITED       "LENGTH_UNLIMITED"
 #define QOS_DURATION_INFINITY      "DURATION_INFINITY"
 #define QOS_DURATION_INFINITY_SEC  "DURATION_INFINITE_SEC"
@@ -90,8 +94,16 @@
   "<ownership_strength><value>%d</value></ownership_strength>"
 #define QOS_PARTITION_ELEMENT \
   "<element>%s</element>"
+#define QOS_PARTITION_NAME \
+  "<name>%s</name>"
 #define QOS_POLIC_PARTITION_FMT \
-  "<partition><name>%s</name></partition>"
+  "<partition>%s</partition>"
+#define QOS_DATA_REPRESENTATION_ELEMENT \
+  "<element>%s</element>"
+#define QOS_DATA_REPRESENTATION_ID \
+  "<id>%s</id>"
+#define QOS_POLICY_DATAREPRESENTATION_FMT \
+  "<data_representation>%s</data_representation>"
 #define QOS_ACCESS_SCOPE_KIND(ask) \
   "<access_scope>" #ask "</access_scope>"
 #define QOS_COHERENT_ACCESS(ca) \
@@ -130,6 +142,11 @@
   "<writer_data_lifecycle>" \
     "<autodispose_unregistered_instances>" #aui "</autodispose_unregistered_instances>" \
   "</writer_data_lifecycle>"
+#define QOS_BATCH_UPDATES(v) \
+  "<batch_updates>"#v"</batch_updates>"
+#define QOS_POLICY_WRITERBATCHING_FMT \
+  "<writer_batching>%s</writer_batching>"
+
 
 
 
@@ -311,45 +328,43 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
       if ((ignore_ent || (kind == DDS_PARTICIPANT_QOS || kind == DDS_PUBLISHER_QOS || kind == DDS_SUBSCRIBER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_ADLINK_ENTITY_FACTORY)
       {
-        char *entity_factory;
-        if (qos->entity_factory.autoenable_created_entities == 0)
-          ret = ddsrt_asprintf(&entity_factory, "%s", QOS_POLICY_ENTITYFACTORY_FMT(false));
-        else
+        // Only true allowed in XML, otherwise sysdef validation fails
+        if (qos->entity_factory.autoenable_created_entities != 0)
+        {
+          char *entity_factory;
           ret = ddsrt_asprintf(&entity_factory, "%s", QOS_POLICY_ENTITYFACTORY_FMT(true));
-        CHECK_RET_OK(ret);
-        char *tmp = sysdef_qos;
-        ret = ddsrt_asprintf(&sysdef_qos,   QOS_FORMAT  "%s\n" QOS_FORMAT "%s", sysdef_qos, entity_factory);
-        ddsrt_free(tmp);
-        ddsrt_free(entity_factory);
-        *validate_mask |= DDSI_QP_ADLINK_ENTITY_FACTORY;
+          CHECK_RET_OK(ret);
+          char *tmp = sysdef_qos;
+          ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT "%s\n" QOS_FORMAT "%s", sysdef_qos, entity_factory);
+          ddsrt_free(tmp);
+          ddsrt_free(entity_factory);
+          *validate_mask |= DDSI_QP_ADLINK_ENTITY_FACTORY;
+        }
       }
       if ((ignore_ent || (kind == DDS_PUBLISHER_QOS || kind == DDS_SUBSCRIBER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_GROUP_DATA)
       {
-        if (qos->group_data.length > 0)
-        {
-          unsigned char *data_buff;
-          size_t len = b64_encode(qos->group_data.value, qos->group_data.length, &data_buff);
+        unsigned char *data_buff;
+        size_t len = b64_encode(qos->group_data.value, qos->group_data.length, &data_buff);
 
-          char *data = ddsrt_strdup("");
-          for (uint32_t i = 0; i < len; i++) {
-            char *tmp = data;
-            ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
-            ddsrt_free(tmp);
-            CHECK_RET_OK(ret);
-          }
-
-          char *group_data;
-          ret = ddsrt_asprintf(&group_data, QOS_POLICY_GOUPDATA_FMT, data);
-          ddsrt_free(data_buff);
-          ddsrt_free(data);
-          CHECK_RET_OK(ret);
-          char *tmp = sysdef_qos;
-          ret = ddsrt_asprintf(&sysdef_qos,   QOS_FORMAT  "%s\n" QOS_FORMAT "%s", sysdef_qos, group_data);
+        char *data = ddsrt_strdup("");
+        for (uint32_t i = 0; i < len; i++) {
+          char *tmp = data;
+          ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
           ddsrt_free(tmp);
-          ddsrt_free(group_data);
-          *validate_mask |= DDSI_QP_GROUP_DATA;
+          CHECK_RET_OK(ret);
         }
+
+        char *group_data;
+        ret = ddsrt_asprintf(&group_data, QOS_POLICY_GOUPDATA_FMT, data);
+        ddsrt_free(data_buff);
+        ddsrt_free(data);
+        CHECK_RET_OK(ret);
+        char *tmp = sysdef_qos;
+        ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT"%s\n" QOS_FORMAT "%s", sysdef_qos, group_data);
+        ddsrt_free(tmp);
+        ddsrt_free(group_data);
+        *validate_mask |= DDSI_QP_GROUP_DATA;
       }
       if ((ignore_ent || (kind == DDS_TOPIC_QOS || kind == DDS_READER_QOS || kind == DDS_WRITER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_HISTORY)
@@ -419,6 +434,42 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
         ddsrt_free(tmp);
         ddsrt_free(lifespan);
         *validate_mask |= DDSI_QP_LIFESPAN;
+      }
+      if ((ignore_ent || (kind == DDS_TOPIC_QOS || kind == DDS_WRITER_QOS || kind == DDS_READER_QOS)) &&
+          (ret >= 0) && qos->present & DDSI_QP_DATA_REPRESENTATION)
+      {
+        char *dr_elems = ddsrt_strdup("");
+        for (uint32_t i = 0; i < qos->data_representation.value.n; i++) {
+          char *tmp = dr_elems;
+          char *id = NULL;
+          switch (qos->data_representation.value.ids[i])
+          {
+            case DDS_DATA_REPRESENTATION_XCDR1: id = const_cast<char *>(QOS_DATA_REPRESENTATION_XCDR1); break;
+            case DDS_DATA_REPRESENTATION_XCDR2: id = const_cast<char *>(QOS_DATA_REPRESENTATION_XCDR2); break;
+            case DDS_DATA_REPRESENTATION_XML:   id = const_cast<char *>(QOS_DATA_REPRESENTATION_XML); break;
+          }
+          ret = ddsrt_asprintf(&dr_elems, "%s" QOS_DATA_REPRESENTATION_ELEMENT, dr_elems, id);
+          CHECK_RET_OK(ret);
+          ddsrt_free (tmp);
+        }
+        CHECK_RET_OK(ret);
+        char *dr_ids = ddsrt_strdup("");
+        if (qos->data_representation.value.n > 0) {
+          char *tmp = dr_ids;
+          ret = ddsrt_asprintf(&dr_ids, QOS_DATA_REPRESENTATION_ID, dr_elems);
+          CHECK_RET_OK(ret);
+          ddsrt_free (tmp);
+        }
+        ddsrt_free (dr_elems);
+        char *dr;
+        ret = ddsrt_asprintf(&dr, QOS_POLICY_DATAREPRESENTATION_FMT, dr_ids);
+        CHECK_RET_OK(ret);
+        ddsrt_free (dr_ids);
+        char *tmp = sysdef_qos;
+        ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT"%s\n" QOS_FORMAT "%s", sysdef_qos, dr);
+        ddsrt_free(tmp);
+        ddsrt_free(dr);
+        *validate_mask |= DDSI_QP_DATA_REPRESENTATION;
       }
       if ((ignore_ent || (kind != DDS_PUBLISHER_QOS && kind != DDS_SUBSCRIBER_QOS && kind != DDS_PARTICIPANT_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_LIVELINESS)
@@ -490,26 +541,31 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
       if ((ignore_ent || (kind == DDS_PUBLISHER_QOS || kind == DDS_SUBSCRIBER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_PARTITION)
       {
-        if (qos->partition.n > 0)
-        {
-          char *part_elems = ddsrt_strdup("");
-          for (uint32_t i = 0; i < qos->partition.n; i++) {
-            char *tmp = part_elems;
-            ret = ddsrt_asprintf(&part_elems, "%s" QOS_PARTITION_ELEMENT, part_elems, qos->partition.strs[i]);
-            CHECK_RET_OK(ret);
-            ddsrt_free(tmp);
-          }
+        char *part_elems = ddsrt_strdup("");
+        for (uint32_t i = 0; i < qos->partition.n; i++) {
+          char *tmp = part_elems;
+          ret = ddsrt_asprintf(&part_elems, "%s" QOS_PARTITION_ELEMENT, part_elems, qos->partition.strs[i]);
           CHECK_RET_OK(ret);
-          char *partition;
-          ret = ddsrt_asprintf(&partition, QOS_POLIC_PARTITION_FMT, part_elems);
-          ddsrt_free(part_elems);
-          CHECK_RET_OK(ret);
-          char *tmp = sysdef_qos;
-          ret = ddsrt_asprintf(&sysdef_qos,   QOS_FORMAT  "%s\n" QOS_FORMAT "%s", sysdef_qos, partition);
           ddsrt_free(tmp);
-          ddsrt_free(partition);
-          *validate_mask |= DDSI_QP_PARTITION;
         }
+        CHECK_RET_OK(ret);
+        char *part_names = ddsrt_strdup("");
+        if (qos->partition.n > 0) {
+          char *tmp = part_names;
+          ret = ddsrt_asprintf(&part_names, QOS_PARTITION_NAME, part_elems);
+          CHECK_RET_OK(ret);
+          ddsrt_free (tmp);
+        }
+        ddsrt_free(part_elems);
+        char *partition;
+        ret = ddsrt_asprintf(&partition, QOS_POLIC_PARTITION_FMT, part_names);
+        ddsrt_free (part_names);
+        CHECK_RET_OK(ret);
+        char *tmp = sysdef_qos;
+        ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT"%s\n" QOS_FORMAT "%s", sysdef_qos, partition);
+        ddsrt_free(tmp);
+        ddsrt_free(partition);
+        *validate_mask |= DDSI_QP_PARTITION;
       }
       if ((ignore_ent || (kind == DDS_PUBLISHER_QOS || kind == DDS_SUBSCRIBER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_PRESENTATION)
@@ -635,29 +691,27 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
       if ((ignore_ent || (kind == DDS_TOPIC_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_TOPIC_DATA)
       {
-        if (qos->topic_data.length > 0)
-        {
-          unsigned char *data_buff;
-          size_t len = b64_encode(qos->topic_data.value, qos->topic_data.length, &data_buff);
+        unsigned char *data_buff;
+        size_t len = b64_encode(qos->topic_data.value, qos->topic_data.length, &data_buff);
 
-          char *data = ddsrt_strdup("");
-          for (uint32_t i = 0; i < len; i++) {
-            char *tmp = data;
-            ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
-            ddsrt_free(tmp);
-            CHECK_RET_OK(ret);
-          }
-          char *topic_data;
-          ret = ddsrt_asprintf(&topic_data, QOS_POLICY_TOPICDATA_FMT, data);
-          ddsrt_free(data_buff);
-          ddsrt_free(data);
-          CHECK_RET_OK(ret);
-          char *tmp = sysdef_qos;
-          ret = ddsrt_asprintf(&sysdef_qos,   QOS_FORMAT  "%s\n" QOS_FORMAT "%s", sysdef_qos, topic_data);
+        char *data = ddsrt_strdup("");
+        for (uint32_t i = 0; i < len; i++) {
+          char *tmp = data;
+          ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
           ddsrt_free(tmp);
-          ddsrt_free(topic_data);
-          *validate_mask |= DDSI_QP_TOPIC_DATA;
+          CHECK_RET_OK(ret);
         }
+
+        char *topic_data;
+        ret = ddsrt_asprintf(&topic_data, QOS_POLICY_TOPICDATA_FMT, data);
+        ddsrt_free(data_buff);
+        ddsrt_free(data);
+        CHECK_RET_OK(ret);
+        char *tmp = sysdef_qos;
+        ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT"%s\n" QOS_FORMAT "%s", sysdef_qos, topic_data);
+        ddsrt_free(tmp);
+        ddsrt_free(topic_data);
+        *validate_mask |= DDSI_QP_TOPIC_DATA;
       }
       if ((ignore_ent || (kind == DDS_TOPIC_QOS || kind == DDS_WRITER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_TRANSPORT_PRIORITY)
@@ -674,29 +728,27 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
       if ((ignore_ent || (kind == DDS_PARTICIPANT_QOS || kind == DDS_READER_QOS || kind == DDS_WRITER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_USER_DATA)
       {
-        if (qos->user_data.length > 0)
-        {
-          unsigned char *data_buff;
-          size_t len = b64_encode(qos->user_data.value, qos->user_data.length, &data_buff);
+        unsigned char *data_buff;
+        size_t len = b64_encode(qos->user_data.value, qos->user_data.length, &data_buff);
 
-          char *data = ddsrt_strdup("");
-          for (uint32_t i = 0; i < len; i++) {
-            char *tmp = data;
-            ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
-            ddsrt_free(tmp);
-            CHECK_RET_OK(ret);
-          }
-          char *user_data;
-          ret = ddsrt_asprintf(&user_data, QOS_POLICY_USERDATA_FMT, data);
-          ddsrt_free(data_buff);
-          ddsrt_free(data);
-          CHECK_RET_OK(ret);
-          char *tmp = sysdef_qos;
-          ret = ddsrt_asprintf(&sysdef_qos,   QOS_FORMAT  "%s\n" QOS_FORMAT "%s", sysdef_qos, user_data);
+        char *data = ddsrt_strdup("");
+        for (uint32_t i = 0; i < len; i++) {
+          char *tmp = data;
+          ret = ddsrt_asprintf(&data, "%s%c", data, data_buff[i]);
           ddsrt_free(tmp);
-          ddsrt_free(user_data);
-          *validate_mask |= DDSI_QP_USER_DATA;
+          CHECK_RET_OK(ret);
         }
+
+        char *user_data;
+        ret = ddsrt_asprintf(&user_data, QOS_POLICY_USERDATA_FMT, data);
+        ddsrt_free(data_buff);
+        ddsrt_free(data);
+        CHECK_RET_OK(ret);
+        char *tmp = sysdef_qos;
+        ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT"%s\n" QOS_FORMAT "%s", sysdef_qos, user_data);
+        ddsrt_free(tmp);
+        ddsrt_free(user_data);
+        *validate_mask |= DDSI_QP_USER_DATA;
       }
       if ((ignore_ent || (kind == DDS_READER_QOS)) &&
           (ret >= 0) && qos->present & DDSI_QP_ADLINK_READER_DATA_LIFECYCLE)
@@ -762,6 +814,27 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
         ddsrt_free(tmp);
         ddsrt_free(writer_data_lifecycle);
         *validate_mask |= DDSI_QP_ADLINK_WRITER_DATA_LIFECYCLE;
+      }
+      if ((ignore_ent || (kind == DDS_WRITER_QOS)) &&
+          (ret >= 0) && qos->present & DDSI_QP_CYCLONE_WRITER_BATCHING)
+      {
+        char *batching_updates;
+        if (qos->writer_batching.batch_updates)
+          ret = ddsrt_asprintf(&batching_updates, "%s", QOS_BATCH_UPDATES(true));
+        else
+          ret = ddsrt_asprintf(&batching_updates, "%s", QOS_BATCH_UPDATES(false));
+        CHECK_RET_OK(ret);
+        char *writer_batching;
+        char *tmp = batching_updates;
+        ret = ddsrt_asprintf(&writer_batching, QOS_POLICY_WRITERBATCHING_FMT, batching_updates);
+        CHECK_RET_OK(ret);
+        ddsrt_free (tmp);
+        tmp = sysdef_qos;
+        ret = ddsrt_asprintf(&sysdef_qos, QOS_FORMAT"%s\n" QOS_FORMAT "%s", sysdef_qos, writer_batching);
+        CHECK_RET_OK(ret);
+        ddsrt_free (tmp);
+        ddsrt_free (writer_batching);
+        *validate_mask |= DDSI_QP_CYCLONE_WRITER_BATCHING;
       }
 
       *out = sysdef_qos;
@@ -880,6 +953,13 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
               << dds::core::policy::DestinationOrder::SourceTimestamp()
               << dds::core::policy::History::KeepLast(1)
               << dds::core::policy::ResourceLimits(1, 1, 1)
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+              << dds::core::policy::DataRepresentation({
+                  dds::core::policy::DataRepresentationId::XCDR1,
+                  dds::core::policy::DataRepresentationId::XCDR2,
+                  dds::core::policy::DataRepresentationId::XML
+                  })
+#endif
               << dds::core::policy::DurabilityService(dds::core::Duration(1, 0), dds::core::policy::HistoryKind::KEEP_ALL, -1, 1, 1, 1);
           if (qp) qp->tQos = t_Qos;
           qos = t_Qos.delegate().ddsc_qos();
@@ -899,6 +979,13 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
               << dds::core::policy::History::KeepLast(1)
               << dds::core::policy::ResourceLimits(1, 1, 1)
               << dds::core::policy::TimeBasedFilter(dds::core::Duration(1, 0))
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+              << dds::core::policy::DataRepresentation({
+                  dds::core::policy::DataRepresentationId::XCDR1,
+                  dds::core::policy::DataRepresentationId::XCDR2,
+                  dds::core::policy::DataRepresentationId::XML
+                  })
+#endif
               << dds::core::policy::ReaderDataLifecycle(dds::core::Duration(1,0), dds::core::Duration(1,0));
           if (qp) qp->rQos = r_Qos;
           qos = r_Qos.delegate().ddsc_qos();
@@ -918,6 +1005,13 @@ static uint32_t b64_encode (const unsigned char *text, const uint32_t sz, unsign
               << dds::core::policy::DestinationOrder::SourceTimestamp()
               << dds::core::policy::History::KeepLast(1)
               << dds::core::policy::ResourceLimits(1, 1, 1)
+#ifdef OMG_DDS_EXTENSIBLE_AND_DYNAMIC_TOPIC_TYPE_SUPPORT
+              << dds::core::policy::DataRepresentation({
+                  dds::core::policy::DataRepresentationId::XCDR1,
+                  dds::core::policy::DataRepresentationId::XCDR2,
+                  dds::core::policy::DataRepresentationId::XML
+                  })
+#endif
               << dds::core::policy::WriterDataLifecycle::AutoDisposeUnregisteredInstances();
           if (qp) qp->wQos = w_Qos;
           qos = w_Qos.delegate().ddsc_qos();
