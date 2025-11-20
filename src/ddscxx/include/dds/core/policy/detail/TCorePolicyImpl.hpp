@@ -98,6 +98,112 @@ const uint8_t* TUserData<D>::end() const
     return NULL;
 }
 
+//TProperty
+
+template <typename D>
+TProperty<D>::TProperty() : dds::core::Value<D>() { }
+
+template <typename D>
+TProperty<D>::TProperty(const TProperty& other) : dds::core::Value<D>(other.delegate()) { }
+
+template <typename D>
+TProperty<D>::TProperty(std::initializer_list<Entry> entries, bool is_propagate) : dds::core::Value<D>(entries, is_propagate) { }
+
+template <typename D>
+TProperty<D>& TProperty<D>::set(const Entry& property, bool is_propagate)
+{
+    this->delegate().set(property, is_propagate);
+    return *this;
+}
+
+template <typename D>
+bool TProperty<D>::remove(const std::string& key)
+{
+    return this->delegate().remove(key);
+}
+
+template <typename D>
+std::string TProperty<D>::get(const std::string& key) const
+{
+    return this->delegate().get(key);
+}
+
+template <typename D>
+std::map<std::string, std::string> TProperty<D>::get_all() const
+{
+    return this->delegate().get_all();
+}
+
+template <typename D>
+size_t TProperty<D>::size() const
+{
+    return this->delegate().size();
+}
+
+template <typename D>
+bool TProperty<D>::exists(const std::string& key) const
+{
+    return this->delegate().exists(key);
+}
+template <typename D>
+bool TProperty<D>::propagate(const std::string& key) const
+{
+    return this->delegate().propagate(key);
+}
+
+//TBinaryProperty
+
+template <typename D>
+TBinaryProperty<D>::TBinaryProperty() : dds::core::Value<D>() { }
+
+template <typename D>
+TBinaryProperty<D>::TBinaryProperty(const TBinaryProperty& other) : dds::core::Value<D>(other.delegate()) { }
+
+template <typename D>
+TBinaryProperty<D>::TBinaryProperty(std::initializer_list<BinaryEntry> entries, bool is_propagate) : dds::core::Value<D>(entries, is_propagate) { }
+
+template <typename D>
+TBinaryProperty<D>& TBinaryProperty<D>::set(const BinaryEntry& binary_property, bool is_propagate)
+{
+    this->delegate().set(binary_property, is_propagate);
+    return *this;
+}
+
+template <typename D>
+bool TBinaryProperty<D>::remove(const std::string& key)
+{
+    return this->delegate().remove(key);
+}
+
+template <typename D>
+dds::core::ByteSeq TBinaryProperty<D>::get(const std::string& key) const
+{
+    return this->delegate().get(key);
+}
+
+template <typename D>
+std::map<std::string, dds::core::ByteSeq> TBinaryProperty<D>::get_all() const
+{
+    return this->delegate().get_all();
+}
+
+template <typename D>
+size_t TBinaryProperty<D>::size() const
+{
+    return this->delegate().size();
+}
+
+template <typename D>
+bool TBinaryProperty<D>::exists(const std::string& key) const
+{
+    return this->delegate().exists(key);
+}
+template <typename D>
+bool TBinaryProperty<D>::propagate(const std::string& key) const
+{
+    return this->delegate().propagate(key);
+}
+
 //TGroupData
 
 template <typename D>

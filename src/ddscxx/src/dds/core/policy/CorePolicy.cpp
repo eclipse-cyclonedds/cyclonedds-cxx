@@ -17,6 +17,8 @@
 
 
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::UserData,            UserData)
+OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::Property,            Property)
+OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::BinaryProperty,      BinaryProperty)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::Durability,          Durability)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::Presentation,        Presentation)
 OMG_DDS_DEFINE_POLICY_TRAITS(dds::core::policy::Deadline,            Deadline)

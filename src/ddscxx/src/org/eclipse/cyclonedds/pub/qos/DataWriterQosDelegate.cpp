@@ -52,6 +52,22 @@ DataWriterQosDelegate::policy(const dds::core::policy::UserData& user_data)
 }
 
 void
+DataWriterQosDelegate::policy(const dds::core::policy::Property& property)
+{
+    property.delegate().check();
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    property_ = property;
+}
+
+void
+DataWriterQosDelegate::policy(const dds::core::policy::BinaryProperty& binary_property)
+{
+    binary_property.delegate().check();
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    binary_property_ = binary_property;
+}
+
+void
 DataWriterQosDelegate::policy(const dds::core::policy::Durability& durability)
 {
     durability.delegate().check();
@@ -262,6 +278,11 @@ DataWriterQosDelegate::ddsc_qos() const
         psmxinstances_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_PROPERTY_LIST)
+    {
+        property_   .delegate().set_c_policy(qos);
+        binary_property_   .delegate().set_c_policy(qos);
+    }
     return qos;
 }
 
@@ -317,6 +338,11 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
         psmxinstances_.delegate().set_iso_policy(qos);
     if (qos->present & DDSI_QP_CYCLONE_IGNORELOCAL)
         ignorelocal_.delegate().set_iso_policy(qos);
+    if (qos->present & DDSI_QP_PROPERTY_LIST)
+    {
+        property_    .delegate().set_iso_policy(qos);
+        binary_property_    .delegate().set_iso_policy(qos);
+    }
 }
 
 void
@@ -370,6 +396,8 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
 {
     return other.present_     == present_     &&
            other.user_data_   == user_data_   &&
+           other.property_    == property_    &&
+           other.binary_property_ == binary_property_ &&
            other.durability_  == durability_  &&
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
            other.durability_service_ == durability_service_ &&
@@ -441,6 +469,20 @@ DataWriterQosDelegate::policy<dds::core::policy::UserData>()
 {
     present_ |= DDSI_QP_USER_DATA;
     return user_data_;
+}
+
+template<> dds::core::policy::Property&
+DataWriterQosDelegate::policy<dds::core::policy::Property>()
+{
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    return property_;
+}
+
+template<> dds::core::policy::BinaryProperty&
+DataWriterQosDelegate::policy<dds::core::policy::BinaryProperty>()
+{
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    return binary_property_;
 }
 
 template<> dds::core::policy::Durability&

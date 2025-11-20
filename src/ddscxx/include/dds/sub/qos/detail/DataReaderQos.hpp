@@ -45,6 +45,8 @@
  * dds::core::policy::History                     | Data storage settings (@ref DCPS_QoS_History "info")                                | History::KeepLast(depth 1)
  * dds::core::policy::ResourceLimits              | Maximum resource settings (@ref DCPS_QoS_ResourceLimits "info")                     | ResourceLimits::ResourceLimits(all unlimited)
  * dds::core::policy::UserData                    | Additional information (@ref DCPS_QoS_UserData "info")                              | UserData::UserData(empty)
+ * dds::core::policy::Property                    | Additional information (@ref DCPS_QoS_Property "info")                              | Property::Property(empty)
+ * dds::core::policy::BinaryProperty              | Additional information (@ref DCPS_QoS_BinaryProperty "info")                        | BinaryProperty::BinaryProperty(empty)
  * dds::core::policy::Ownership                   | Exclusive ownership or not (@ref DCPS_QoS_Ownership "info")                         | Ownership::Shared()
  * dds::core::policy::TimeBasedFilter             | Maximum data rate (@ref DCPS_QoS_TimeBasedFilter "info")                            | TimeBasedFilter::TimeBasedFilter(0)
  * dds::core::policy::ReaderDataLifecycle         | Instance state changes and notifications (@ref DCPS_QoS_ReaderDataLifecycle "info") | ReaderDataLifecycle::NoAutoPurgeDisposedSamples()

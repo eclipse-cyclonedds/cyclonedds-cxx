@@ -1584,6 +1584,247 @@ void UserDataDelegate::set_c_policy(dds_qos_t* qos) const
     }
 }
 
+//==============================================================================
+
+PropertyDelegate::PropertyDelegate()
+    : props_(), props_to_propagate_()
+{
+}
+
+PropertyDelegate::PropertyDelegate(const PropertyDelegate& other)
+    : props_(other.props_), props_to_propagate_(other.props_to_propagate_)
+{
+}
+
+PropertyDelegate::PropertyDelegate(std::initializer_list<Entry> entries, bool is_propagate)
+    : props_(), props_to_propagate_()
+{
+    for (const auto& pair : entries)
+    {
+        props_to_propagate_[pair.first] = is_propagate;
+        props_[pair.first] = pair.second;
+    }
+
+    this->check();
+}
+
+PropertyDelegate& PropertyDelegate::set(const Entry& property, bool is_propagate)
+{
+    props_to_propagate_[property.first] = is_propagate;
+    props_[property.first] = property.second;
+    return *this;
+}
+
+std::string PropertyDelegate::get(const std::string& key) const
+{
+    if (props_.count(key) == 0) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "Property %s does not exist.", key.c_str());
+    }
+    return props_.at(key);
+}
+
+std::map<std::string, std::string> PropertyDelegate::get_all() const
+{
+    return props_; 
+}
+
+size_t PropertyDelegate::size() const
+{
+    return props_.size();
+}
+
+bool PropertyDelegate::exists(const std::string& key) const
+{
+    return props_.count(key) > 0;
+}
+
+bool PropertyDelegate::remove(const std::string& key)
+{
+    if (exists(key)) {
+        (void)props_to_propagate_.erase(key);
+        return props_.erase(key) > 0;
+    }
+
+    return false;
+}
+
+bool PropertyDelegate::propagate(const std::string& key) const
+{
+    if (props_to_propagate_.count(key) == 0) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "Property %s does not exist.", key.c_str());
+    }
+    return props_to_propagate_.at(key);
+}
+
+bool PropertyDelegate::operator==(const PropertyDelegate& other) const
+{
+    return other.props_ == props_;
+}
+
+void PropertyDelegate::check() const
+{
+    /* The value_ is just a map: nothing to check. */
+}
+
+void PropertyDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    uint32_t n = 0;
+    char** names = nullptr;
+
+    if (!dds_qget_propnames(qos, &n, &names) || names == nullptr)
+        return;
+
+    for (uint32_t i = 0; i < n; ++i)
+    {
+        char* value = nullptr;
+        bool is_propa = false;
+
+        bool found = dds_qget_prop_propagate(qos, names[i], &value, &is_propa);
+
+        if (found && value != nullptr)
+        {
+            props_to_propagate_[names[i]] = is_propa;
+            props_[names[i]] = value;
+            dds_free(value);
+        }
+
+        dds_free(names[i]);
+    }
+
+    dds_free(names);
+}
+
+void PropertyDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    for (const auto& pair : props_)
+    {
+        dds_qset_prop_propagate(qos, pair.first.c_str(), pair.second.c_str(), props_to_propagate_.at(pair.first));
+    }
+}
+
+//==============================================================================
+
+BinaryPropertyDelegate::BinaryPropertyDelegate()
+    : bprops_(), bprops_to_propagate_()
+{
+}
+
+BinaryPropertyDelegate::BinaryPropertyDelegate(const BinaryPropertyDelegate& other)
+    : bprops_(other.bprops_), bprops_to_propagate_(other.bprops_to_propagate_)
+{
+}
+
+BinaryPropertyDelegate::BinaryPropertyDelegate(std::initializer_list<BinaryEntry> entries, bool is_propagate)
+    : bprops_(), bprops_to_propagate_()
+{
+    for (const auto& pair : entries)
+    {
+        bprops_to_propagate_[pair.first] = is_propagate;
+        bprops_[pair.first] = pair.second;
+    }
+
+    this->check();
+}
+
+BinaryPropertyDelegate& BinaryPropertyDelegate::set(const BinaryEntry& bproperty, bool is_propagate)
+{
+    bprops_to_propagate_[bproperty.first] = is_propagate;
+    bprops_[bproperty.first] = bproperty.second;
+    return *this;
+}
+
+dds::core::ByteSeq BinaryPropertyDelegate::get(const std::string& key) const
+{
+    if (bprops_.count(key) == 0) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "BinaryProperty %s does not exist.", key.c_str());
+    }
+    return bprops_.at(key);
+}
+
+std::map<std::string, dds::core::ByteSeq> BinaryPropertyDelegate::get_all() const
+{
+    return bprops_; 
+}
+
+size_t BinaryPropertyDelegate::size() const
+{
+    return bprops_.size();
+}
+
+bool BinaryPropertyDelegate::exists(const std::string& key) const
+{
+    return bprops_.count(key) > 0;
+}
+
+bool BinaryPropertyDelegate::remove(const std::string& key)
+{
+    if (exists(key)) {
+        (void)bprops_to_propagate_.erase(key);
+        return bprops_.erase(key) > 0;
+    }
+
+    return false;
+}
+
+bool BinaryPropertyDelegate::propagate(const std::string& key) const
+{
+    if (bprops_to_propagate_.count(key) == 0) {
+        ISOCPP_THROW_EXCEPTION(ISOCPP_PRECONDITION_NOT_MET_ERROR, "BinaryProperty %s does not exist.", key.c_str());
+    }
+    return bprops_to_propagate_.at(key);
+}
+
+bool BinaryPropertyDelegate::operator==(const BinaryPropertyDelegate& other) const
+{
+    return other.bprops_ == bprops_;
+}
+
+void BinaryPropertyDelegate::check() const
+{
+    /* The value_ is just a map: nothing to check. */
+}
+
+void BinaryPropertyDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    uint32_t n = 0;
+    char** names = nullptr;
+
+    if (!dds_qget_bpropnames(qos, &n, &names) || names == nullptr)
+        return;
+
+    for (uint32_t i = 0; i < n; ++i)
+    {
+        void *value;
+        size_t sz;
+        bool is_propa = false;
+
+        bool found = dds_qget_bprop_propagate(qos, names[i], &value, &sz, &is_propa);
+
+        if (found && value != nullptr)
+        {
+            bprops_to_propagate_[names[i]] = is_propa;
+            if(sz > 0)
+            {
+                org::eclipse::cyclonedds::core::convertByteSeq(value, static_cast<int32_t>(sz), bprops_[names[i]]);
+            }
+            dds_free(value);
+        }
+
+        dds_free(names[i]);
+    }
+
+    dds_free(names);
+}
+
+void BinaryPropertyDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    for (const auto& pair : bprops_)
+    {
+        void* data = NULL;
+        org::eclipse::cyclonedds::core::convertByteSeq(pair.second, data, static_cast<int32_t>(pair.second.size()));
+        dds_qset_bprop_propagate(qos, pair.first.c_str(), data, pair.second.size(), bprops_to_propagate_.at(pair.first));
+    }
+}
 
 //==============================================================================
 

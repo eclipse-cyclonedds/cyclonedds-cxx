@@ -668,6 +668,8 @@ TEST(Qos, invalid_policies)
 TEST(Qos, policy_name)
 {
     ASSERT_EQ(dds::core::policy::policy_name<UserData>::name(),            "UserData");
+    ASSERT_EQ(dds::core::policy::policy_name<Property>::name(),            "Property");
+    ASSERT_EQ(dds::core::policy::policy_name<BinaryProperty>::name(),            "BinaryProperty");
     ASSERT_EQ(dds::core::policy::policy_name<Durability>::name(),          "Durability");
     ASSERT_EQ(dds::core::policy::policy_name<Presentation>::name(),        "Presentation");
     ASSERT_EQ(dds::core::policy::policy_name<Deadline>::name(),            "Deadline");

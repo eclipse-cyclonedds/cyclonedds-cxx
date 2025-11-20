@@ -45,6 +45,22 @@ DomainParticipantQosDelegate::policy(const dds::core::policy::UserData& user_dat
 }
 
 void
+DomainParticipantQosDelegate::policy(const dds::core::policy::Property& prop)
+{
+    prop.delegate().check();
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    prop_ = prop;
+}
+
+void
+DomainParticipantQosDelegate::policy(const dds::core::policy::BinaryProperty& binary_prop)
+{
+    binary_prop.delegate().check();
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    bin_prop_ = binary_prop;
+}
+
+void
 DomainParticipantQosDelegate::policy(const dds::core::policy::EntityFactory& entity_factory)
 {
     entity_factory.delegate().check();
@@ -63,6 +79,11 @@ DomainParticipantQosDelegate::ddsc_qos() const
         user_data_.delegate().set_c_policy(qos);
     if (present_ & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_c_policy(qos);
+    if (present_ & DDSI_QP_PROPERTY_LIST)
+    {
+        prop_.delegate().set_c_policy(qos);
+        bin_prop_.delegate().set_c_policy(qos);
+    }
     return qos;
 }
 
@@ -76,6 +97,11 @@ DomainParticipantQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
         user_data_.delegate().set_iso_policy(qos);
     if (qos->present & DDSI_QP_ADLINK_ENTITY_FACTORY)
         entity_factory_.delegate().set_iso_policy(qos);
+    if (qos->present & DDSI_QP_PROPERTY_LIST)
+    {
+        prop_.delegate().set_iso_policy(qos);
+        bin_prop_.delegate().set_iso_policy(qos);
+    }
 }
 
 void
@@ -106,6 +132,8 @@ DomainParticipantQosDelegate::operator ==(const DomainParticipantQosDelegate& ot
 {
     return other.present_             == present_   &&
            other.user_data_           == user_data_ &&
+           other.prop_                == prop_ &&
+           other.bin_prop_            == bin_prop_ &&
            other.entity_factory_      == entity_factory_;
 
 }
@@ -116,6 +144,22 @@ DomainParticipantQosDelegate::policy<dds::core::policy::UserData> ()
 {
     present_ |= DDSI_QP_USER_DATA;
     return user_data_;
+}
+
+template<>
+dds::core::policy::Property&
+DomainParticipantQosDelegate::policy<dds::core::policy::Property> ()
+{
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    return prop_;
+}
+
+template<>
+dds::core::policy::BinaryProperty&
+DomainParticipantQosDelegate::policy<dds::core::policy::BinaryProperty> ()
+{
+    present_ |= DDSI_QP_PROPERTY_LIST;
+    return bin_prop_;
 }
 
 template<>
