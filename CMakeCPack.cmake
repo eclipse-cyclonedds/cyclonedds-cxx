@@ -45,13 +45,11 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_BINARY_DIR}/LICENSE")
 #       Although that does not make sense from a technical point-of-view, it
 #       does help to clearify which settings are required for a platform.
 
-set(CPACK_COMPONENTS_ALL dev lib idlcxx)
+set(CPACK_COMPONENTS_ALL dev lib)
 set(CPACK_COMPONENT_LIB_DISPLAY_NAME "${PROJECT_NAME_FULL} library")
 set(CPACK_COMPONENT_LIB_DESCRIPTION  "Library used to run programs with ${PROJECT_NAME_FULL}")
 set(CPACK_COMPONENT_DEV_DISPLAY_NAME "${PROJECT_NAME_FULL} development")
 set(CPACK_COMPONENT_DEV_DESCRIPTION  "Development files for use with ${PROJECT_NAME_FULL}")
-set(CPACK_COMPONENT_IDLCXX_DISPLAY_NAME "${PROJECT_NAME_FULL} compiler plugin for idlc")
-set(CPACK_COMPONENT_IDLCXX_DESCRIPTION  "Idl compiler plugin library for ${PROJECT_NAME_FULL}")
 
 if(WIN32 AND NOT UNIX)
   file(COPY "${PROJECT_SOURCE_DIR}/WiX/LICENSE.rtf" DESTINATION "${CMAKE_BINARY_DIR}")
