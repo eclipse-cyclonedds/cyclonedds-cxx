@@ -1826,6 +1826,60 @@ void BinaryPropertyDelegate::set_c_policy(dds_qos_t* qos) const
     }
 }
 
+
+//============= EntityNameDelegate =========================================
+
+EntityNameDelegate::EntityNameDelegate()
+    : entity_name_()
+{
+}
+
+EntityNameDelegate::EntityNameDelegate(const EntityNameDelegate& other)
+    : entity_name_(other.entity_name_)
+{
+}
+
+EntityNameDelegate::EntityNameDelegate(const std::string& entity_name)
+    : entity_name_(entity_name)
+{
+    this->check();
+}
+
+EntityNameDelegate& EntityNameDelegate::name(const std::string& entity_name)
+{
+    entity_name_ = entity_name;
+    return *this;
+}
+
+std::string EntityNameDelegate::name() const
+{
+    return entity_name_;
+}
+
+bool EntityNameDelegate::operator==(const EntityNameDelegate& other) const
+{
+    return other.entity_name_ == entity_name_;
+}
+
+void EntityNameDelegate::check() const
+{
+    /* The value_ is just a map: nothing to check. */
+}
+
+void EntityNameDelegate::set_iso_policy(const dds_qos_t* qos)
+{
+    char* name = nullptr;
+    if (dds_qget_entity_name (qos, &name)) {
+        entity_name_ = std::string(name);
+        dds_free(name);
+    }
+}
+
+void EntityNameDelegate::set_c_policy(dds_qos_t* qos) const
+{
+    dds_qset_entity_name (qos, entity_name_.c_str());
+}
+
 //==============================================================================
 
 WriterDataLifecycleDelegate::WriterDataLifecycleDelegate(const WriterDataLifecycleDelegate& other)

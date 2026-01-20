@@ -204,6 +204,30 @@ bool TBinaryProperty<D>::propagate(const std::string& key) const
     return this->delegate().propagate(key);
 }
 
+//TEntityName
+
+template <typename D>
+TEntityName<D>::TEntityName() : dds::core::Value<D>() { }
+
+template <typename D>
+TEntityName<D>::TEntityName(const TEntityName& other) : dds::core::Value<D>(other.delegate()) { }
+
+template <typename D>
+TEntityName<D>::TEntityName(const std::string &entity_name) : dds::core::Value<D>(entity_name) { }
+
+template <typename D>
+TEntityName<D>& TEntityName<D>::name(const std::string &entity_name)
+{
+    this->delegate().name(entity_name);
+    return *this;
+}
+
+template <typename D>
+std::string TEntityName<D>::name() const
+{
+    return this->delegate().name();
+}
+
 //TGroupData
 
 template <typename D>

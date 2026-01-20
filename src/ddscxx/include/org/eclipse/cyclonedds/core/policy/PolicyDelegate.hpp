@@ -1092,6 +1092,79 @@ private:
 
 //==============================================================================
 
+/**
+ *  @internal EntityName
+ */
+class OMG_DDS_API EntityNameDelegate
+{
+public:
+
+    typedef std::pair<std::string, std::string> Entry;
+
+    /**
+     *  @internal Create a <code>Property</code> instance with an empty user data.
+     */
+    EntityNameDelegate();
+
+    /**
+     *  @internal Create a <code>Property</code> instance.
+     *
+     * @param other the user data to copy
+     */
+    EntityNameDelegate(const EntityNameDelegate& other);
+
+    /**
+     *  @internal Copies a <code>Property</code> instance.
+     *
+     * @param other the user data to copy
+     *
+     * @return reference to the instance that was copied to
+     */
+    EntityNameDelegate& operator=(const EntityNameDelegate& other) = default;
+
+    bool operator ==(const EntityNameDelegate& other) const;
+
+    /**
+     *  @internal Create a <code>EntityName</code> instance.
+     *
+     * @param entity_name The entity name
+     */
+    explicit EntityNameDelegate(const std::string& entity_name);
+
+    /**
+     *  @internal Set or assign entity name.
+    */
+    EntityNameDelegate& name(const std::string& entity_name);
+
+    /**
+     *  @internal Get entity name.
+    */
+    std::string name() const;
+
+    /**
+     *  @internal Check if policy is consistent.
+     */
+    void check() const;
+
+    /**
+     *  @internal Set internals by the ddsc policy.
+     *
+     * @param qos the ddsc policy
+     */
+    void set_iso_policy(const dds_qos_t* qos);
+
+    /**
+     *  @internal Get the ddsc policy representation.
+     */
+    void set_c_policy(dds_qos_t* qos) const;
+
+private:
+    std::string entity_name_;
+};
+
+
+//==============================================================================
+
 
 class OMG_DDS_API WriterDataLifecycleDelegate
 {
