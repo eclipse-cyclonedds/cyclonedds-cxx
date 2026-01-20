@@ -68,6 +68,14 @@ DataReaderQosDelegate::policy(const dds::core::policy::BinaryProperty& binary_pr
 }
 
 void
+DataReaderQosDelegate::policy(const dds::core::policy::EntityName& entity_name)
+{
+    entity_name.delegate().check();
+    present_ |= DDSI_QP_ENTITY_NAME;
+    entity_name_ = entity_name;
+}
+
+void
 DataReaderQosDelegate::policy(const dds::core::policy::Durability& durability)
 {
     durability.delegate().check();
@@ -235,6 +243,10 @@ DataReaderQosDelegate::ddsc_qos() const
         property_.delegate().set_c_policy(qos);
         binary_property_.delegate().set_c_policy(qos);
     }
+    if (present_ & DDSI_QP_ENTITY_NAME)
+    {
+        entity_name_.delegate().set_c_policy(qos);
+    }
     return qos;
 }
 
@@ -282,6 +294,10 @@ DataReaderQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
     {
         property_.delegate().set_iso_policy(qos);
         binary_property_.delegate().set_iso_policy(qos);
+    }
+    if (qos->present & DDSI_QP_ENTITY_NAME)
+    {
+        entity_name_.delegate().set_iso_policy(qos);
     }
 }
 
@@ -348,7 +364,8 @@ DataReaderQosDelegate::operator==(const DataReaderQosDelegate& other) const
            other.psmxinstances_ == psmxinstances_ &&
            other.ignorelocal_ == ignorelocal_ &&
            other.property_ == property_ &&
-           other.binary_property_ == binary_property_
+           other.binary_property_ == binary_property_ &&
+           other.entity_name_ == entity_name_
            ;
 }
 
@@ -412,6 +429,14 @@ DataReaderQosDelegate::policy<dds::core::policy::BinaryProperty>()
 {
     present_ |= DDSI_QP_PROPERTY_LIST;
     return binary_property_;
+}
+
+template<>
+dds::core::policy::EntityName&
+DataReaderQosDelegate::policy<dds::core::policy::EntityName>()
+{
+    present_ |= DDSI_QP_ENTITY_NAME;
+    return entity_name_;
 }
 
 template<>

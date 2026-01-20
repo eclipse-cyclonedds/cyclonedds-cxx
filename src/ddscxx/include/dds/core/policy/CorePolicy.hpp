@@ -160,6 +160,9 @@ Property;
 typedef dds::core::policy::detail::BinaryProperty
 BinaryProperty;
 
+typedef dds::core::policy::detail::EntityName
+EntityName;
+
 typedef dds::core::policy::detail::WriterDataLifecycle
 WriterDataLifecycle;
 
@@ -209,6 +212,7 @@ OMG_DDS_POLICY_TRAITS(TypeConsistencyEnforcement, 24)
 OMG_DDS_POLICY_TRAITS(WriterBatching,       25)
 OMG_DDS_POLICY_TRAITS(Property,             29)
 OMG_DDS_POLICY_TRAITS(BinaryProperty,       30)
+OMG_DDS_POLICY_TRAITS(EntityName,           31)
 OMG_DDS_POLICY_TRAITS(PSMXInstances,        34)
 OMG_DDS_POLICY_TRAITS(IgnoreLocal,          35)
 

@@ -293,6 +293,63 @@ public:
     bool propagate(const std::string& key) const;
 };
 
+
+//==============================================================================
+/**
+ * \copydoc DCPS_QoS_EntityName
+ */
+template <typename D>
+class TEntityName : public dds::core::Value<D>
+{
+public:
+
+    typedef std::pair<std::string, std::string> Entry;
+
+    /**
+     * Creates a empty EntityName QoS instance
+     */
+    TEntityName();
+
+    /**
+     * Creates a EntityName QoS instance
+     *
+     * @param entity_name the sequence of octets
+     */
+    explicit TEntityName(const std::string &entity_name);
+
+    /**
+     * Copies a EntityName QoS instance
+     *
+     * @param other the Property QoS instance to copy
+     */
+    TEntityName(const TEntityName& other);
+
+    /**
+    * Copies a EntityName QoS instance
+    *
+    * @param other the EntityName QoS instance to copy
+    *
+    * @return Reference to the EntityName QoS instance that was copied to
+    */
+    TEntityName& operator=(const TEntityName& other) = default;
+
+public:
+
+    /**
+     * Sets the entity name
+     *
+     * @param entity_name name of the entity
+     */
+    TEntityName& name(const std::string &entity_name);
+
+    /**
+     * Get the value for name
+     * 
+     * @return a string value
+     */
+    std::string name() const;
+};
+
 //==============================================================================
 
 /**

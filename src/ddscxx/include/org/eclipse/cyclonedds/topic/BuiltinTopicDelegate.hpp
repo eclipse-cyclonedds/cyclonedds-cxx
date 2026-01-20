@@ -88,6 +88,16 @@ public:
         binary_prop_.delegate().set_iso_policy(policy);
     }
 
+    const ::dds::core::policy::EntityName& entity_name() const
+    {
+        return entity_name_;
+    }
+
+    void entity_name(const dds_qos_t* policy)
+    {
+        entity_name_.delegate().set_iso_policy(policy);
+    }
+
     bool operator ==(const ParticipantBuiltinTopicDataDelegate& other) const
     {
         return other.key_ == key_ && other.user_data_ == user_data_ && other.prop_ == prop_ && other.binary_prop_ == binary_prop_;
@@ -98,6 +108,7 @@ protected:
     ::dds::core::policy::UserData     user_data_;
     dds::core::policy::Property       prop_;
     dds::core::policy::BinaryProperty binary_prop_;
+    dds::core::policy::EntityName     entity_name_;
 };
 
 class org::eclipse::cyclonedds::topic::TopicBuiltinTopicDataDelegate
@@ -536,6 +547,16 @@ public:
         binary_property_.delegate().set_iso_policy(policy);
     }
 
+    const ::dds::core::policy::EntityName&     entity_name() const
+    {
+        return entity_name_;
+    }
+
+    void entity_name(const dds_qos_t* policy)
+    {
+        entity_name_.delegate().set_iso_policy(policy);
+    }
+
     const ::dds::core::policy::GroupData&          group_data() const
     {
         return group_data_;
@@ -577,6 +598,7 @@ public:
         group_data(endpoint->qos);
         property(endpoint->qos);
         binary_property(endpoint->qos);
+        entity_name(endpoint->qos);
     }
 
     bool operator ==(const PublicationBuiltinTopicDataDelegate& other) const
@@ -603,7 +625,8 @@ public:
                && other.topic_data_ == topic_data_
                && other.group_data_ == group_data_
                && other.property_ == property_
-               && other.binary_property_ == binary_property_;
+               && other.binary_property_ == binary_property_
+               && other.entity_name_ == entity_name_;
     }
 
 public:
@@ -636,6 +659,7 @@ public:
     ::dds::core::policy::GroupData          group_data_;
     ::dds::core::policy::Property           property_;
     ::dds::core::policy::BinaryProperty     binary_property_;
+    ::dds::core::policy::EntityName         entity_name_;
 
     dds_builtintopic_endpoint_t* ddsc_endpoint_;
 };
@@ -835,6 +859,16 @@ public:
         binary_property_.delegate().set_iso_policy(policy);
     }
 
+    const ::dds::core::policy::EntityName&     entity_name() const
+    {
+        return entity_name_;
+    }
+
+    void entity_name(const dds_qos_t* policy)
+    {
+        entity_name_.delegate().set_iso_policy(policy);
+    }
+
     const ::dds::core::policy::GroupData&          group_data() const
     {
         return group_data_;
@@ -870,6 +904,7 @@ public:
         group_data(endpoint->qos);
         property(endpoint->qos);
         binary_property(endpoint->qos);
+        entity_name(endpoint->qos);
     }
 
     bool operator ==(const SubscriptionBuiltinTopicDataDelegate& other) const
@@ -892,7 +927,8 @@ public:
                && other.topic_data_ == topic_data_
                && other.group_data_ == group_data_
                && other.property_ == property_
-               && other.binary_property_ == binary_property_;
+               && other.binary_property_ == binary_property_
+               && other.entity_name_ == entity_name_;
     }
 
 public:
@@ -915,6 +951,7 @@ public:
     ::dds::core::policy::GroupData          group_data_;
     ::dds::core::policy::Property           property_;
     ::dds::core::policy::BinaryProperty     binary_property_;
+    ::dds::core::policy::EntityName         entity_name_;
 
     dds_builtintopic_endpoint_t* ddsc_endpoint_;
 };

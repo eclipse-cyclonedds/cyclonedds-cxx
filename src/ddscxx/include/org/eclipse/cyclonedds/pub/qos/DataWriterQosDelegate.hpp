@@ -40,6 +40,7 @@ public:
     void policy(const dds::core::policy::UserData&          user_data);
     void policy(const dds::core::policy::Property&          property);
     void policy(const dds::core::policy::BinaryProperty&    binary_property);
+    void policy(const dds::core::policy::EntityName&        entity_name);
     void policy(const dds::core::policy::Durability&        durability);
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
     void policy(const dds::core::policy::DurabilityService& durability_service);
@@ -87,6 +88,7 @@ private:
     dds::core::policy::UserData                user_data_;
     dds::core::policy::Property                property_;
     dds::core::policy::BinaryProperty          binary_property_;
+    dds::core::policy::EntityName              entity_name_;
     dds::core::policy::Durability              durability_;
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
     dds::core::policy::DurabilityService       durability_service_;
@@ -144,6 +146,15 @@ DataWriterQosDelegate::policy<dds::core::policy::BinaryProperty>() const
 
 template<> OMG_DDS_API dds::core::policy::BinaryProperty&
 DataWriterQosDelegate::policy<dds::core::policy::BinaryProperty>();
+
+template<> inline const dds::core::policy::EntityName&
+DataWriterQosDelegate::policy<dds::core::policy::EntityName>() const
+{
+    return entity_name_;
+}
+
+template<> OMG_DDS_API dds::core::policy::EntityName&
+DataWriterQosDelegate::policy<dds::core::policy::EntityName>();
 
 
 template<> inline const dds::core::policy::Durability&

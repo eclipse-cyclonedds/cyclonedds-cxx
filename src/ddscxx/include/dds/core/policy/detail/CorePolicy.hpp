@@ -110,6 +110,9 @@ namespace dds { namespace core { namespace policy { namespace detail {
     typedef dds::core::policy::TBinaryProperty<org::eclipse::cyclonedds::core::policy::BinaryPropertyDelegate>
     BinaryProperty;
 
+    typedef dds::core::policy::TEntityName<org::eclipse::cyclonedds::core::policy::EntityNameDelegate>
+    EntityName;
+    
     typedef dds::core::policy::TWriterDataLifecycle<org::eclipse::cyclonedds::core::policy::WriterDataLifecycleDelegate>
     WriterDataLifecycle;
 

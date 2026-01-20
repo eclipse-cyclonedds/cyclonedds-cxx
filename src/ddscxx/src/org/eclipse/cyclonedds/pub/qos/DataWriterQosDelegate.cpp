@@ -68,6 +68,14 @@ DataWriterQosDelegate::policy(const dds::core::policy::BinaryProperty& binary_pr
 }
 
 void
+DataWriterQosDelegate::policy(const dds::core::policy::EntityName& entity_name)
+{
+    entity_name.delegate().check();
+    present_ |= DDSI_QP_ENTITY_NAME;
+    entity_name_ = entity_name;
+}
+
+void
 DataWriterQosDelegate::policy(const dds::core::policy::Durability& durability)
 {
     durability.delegate().check();
@@ -283,6 +291,10 @@ DataWriterQosDelegate::ddsc_qos() const
         property_   .delegate().set_c_policy(qos);
         binary_property_   .delegate().set_c_policy(qos);
     }
+    if (present_ & DDSI_QP_ENTITY_NAME)
+    {
+        entity_name_.delegate().set_c_policy(qos);
+    }
     return qos;
 }
 
@@ -343,6 +355,10 @@ DataWriterQosDelegate::ddsc_qos(const dds_qos_t* qos, bool copy_flags)
         property_    .delegate().set_iso_policy(qos);
         binary_property_    .delegate().set_iso_policy(qos);
     }
+    if (qos->present & DDSI_QP_ENTITY_NAME)
+    {
+        entity_name_.delegate().set_iso_policy(qos);
+    }
 }
 
 void
@@ -398,6 +414,7 @@ DataWriterQosDelegate::operator ==(const DataWriterQosDelegate& other) const
            other.user_data_   == user_data_   &&
            other.property_    == property_    &&
            other.binary_property_ == binary_property_ &&
+           other.entity_name_ == entity_name_ &&
            other.durability_  == durability_  &&
 #ifdef  OMG_DDS_PERSISTENCE_SUPPORT
            other.durability_service_ == durability_service_ &&
@@ -483,6 +500,13 @@ DataWriterQosDelegate::policy<dds::core::policy::BinaryProperty>()
 {
     present_ |= DDSI_QP_PROPERTY_LIST;
     return binary_property_;
+}
+
+template<> dds::core::policy::EntityName&
+DataWriterQosDelegate::policy<dds::core::policy::EntityName>()
+{
+    present_ |= DDSI_QP_ENTITY_NAME;
+    return entity_name_;
 }
 
 template<> dds::core::policy::Durability&
