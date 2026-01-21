@@ -48,6 +48,7 @@ public:
     dds_entity_t get_ddsc_entity ();
     void set_ddsc_entity (dds_entity_t e);
     void add_to_entity_map (org::eclipse::cyclonedds::core::ObjectDelegate::weak_ref_type weak_ref);
+    bool is_valid () const;
 
 public:
     static ObjectDelegate::ref_type extract_strong_ref(dds_entity_t e);
