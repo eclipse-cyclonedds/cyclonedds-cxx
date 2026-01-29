@@ -49,3 +49,5 @@ install(
   COMPONENT dev)
 
 add_subdirectory(roundtrip)
+
+add_subdirectory(hop)
