@@ -156,7 +156,7 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x40, 0x00, 0x00, 0x07 /*mutablestruct.l.emheader*/,
       0x00, 0x00, 0x00, 0x04 /*mutablestruct.l.emheader.nextint*/,
       0x00, 0x01, 0xE2, 0x40 /*mutablestruct.l*/,
-      0xC0, 0x00, 0x00, 0x05 /*mutablestruct.c.emheader*/,
+      0x40, 0x00, 0x00, 0x05 /*mutablestruct.c.emheader*/,
       0x00, 0x00, 0x00, 0x01 /*mutablestruct.l.emheader.nextint*/,
       'g' /*mutablestruct.c*/,
       0x00, 0x00, 0x00 /*padding bytes (3)*/,
@@ -174,14 +174,14 @@ TEST_F(CDRStreamer, cdr_mutable)
       0x40, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x0B /*mutablestruct.str.emheader*/,
       0x00, 0x00, 0x00, 0x07 /*mutablestruct.str.length*/, 'a', 'b', 'c', 'd', 'e', 'f', '\0' /*mutablestruct.str.c_str*/,
       0x00 /*padding bytes (1)*/,
-      0x80, 0x00, 0x00, 0x05 /*mutablestruct.c.emheader*/,
+      0x00, 0x00, 0x00, 0x05 /*mutablestruct.c.emheader*/,
       'g' /*mutablestruct.c*/,
       0x00, 0x00, 0x00 /*padding bytes (3)*/,
       0x20, 0x00, 0x00, 0x07 /*mutablestruct.l.emheader*/,
       0x00, 0x01, 0xE2, 0x40 /*mutablestruct.l*/};
   bytes MS_xcdr_v2_key {
       0x00, 0x00, 0x00, 0x09 /*dheader*/,
-      0xC0, 0x00, 0x00, 0x05 /*mutablestruct.c.emheader*/,
+      0x40, 0x00, 0x00, 0x05 /*mutablestruct.c.emheader*/,
       0x00, 0x00, 0x00, 0x01 /*mutablestruct.l.emheader.nextint*/,
       'g' /*mutablestruct.c*/};
 
@@ -274,7 +274,7 @@ TEST_F(CDRStreamer, cdr_sequence)
       };
   bytes SSM_xcdr_v2_normal {
       0x00, 0x00, 0x00, 0x2C/*sequence_struct.dheader*/,
-      0xC0, 0x00, 0x00, 0x00 /*sequence_struct.c.emheader.lc = 4 (nextint) + must_understand + id(0)*/,
+      0x40, 0x00, 0x00, 0x00 /*sequence_struct.c.emheader.lc = 4 (nextint) + id(0)*/,
       0x00, 0x00, 0x00, 0x07 /*sequence_struct.c.emheader.nextint */,
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       0x00 /*padding bytes (1)*/,
@@ -284,7 +284,7 @@ TEST_F(CDRStreamer, cdr_sequence)
       };
   bytes SSM_xcdr_v2_key {
       0x00, 0x00, 0x00, 0x0F/*sequence_struct.dheader*/,
-      0xC0, 0x00, 0x00, 0x00 /*sequence_struct.c.emheader.lc = 4 (nextint) + must_understand + id(0)*/,
+      0x40, 0x00, 0x00, 0x00 /*sequence_struct.c.emheader.lc = 4 (nextint) + id(0)*/,
       0x00, 0x00, 0x00, 0x07 /*sequence_struct.c.emheader.nextint */,
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       };
@@ -293,7 +293,7 @@ TEST_F(CDRStreamer, cdr_sequence)
     read it*/
   bytes SSM_xcdr_v2_normal_lc_not_4 {
       0x00, 0x00, 0x00, 0x24/*sequence_struct.dheader*/,
-      0xD0, 0x00, 0x00, 0x00 /*derived.c_d.emheader*/, /*lc = 5: length = sequence_struct.c.length*1 + must_understand + id(0)*/
+      0x50, 0x00, 0x00, 0x00 /*derived.c_d.emheader*/, /*lc = 5: length = sequence_struct.c.length*1 + id(0)*/
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       0x00 /*padding bytes (1)*/,
       0x60, 0x00, 0x00, 0x01 /*derived.l.emheader*/, /*lc = 6: length = sequence_struct.c.length*4 + id(1)*/
@@ -301,7 +301,7 @@ TEST_F(CDRStreamer, cdr_sequence)
       };
   bytes SSM_xcdr_v2_key_lc_not_4 {
       0x00, 0x00, 0x00, 0x0B/*sequence_struct.dheader*/,
-      0xD0, 0x00, 0x00, 0x00 /*derived.c_d.emheader*/, /*lc = 5: length = sequence_struct.c.length*1 + must_understand + id(0)*/
+      0x50, 0x00, 0x00, 0x00 /*derived.c_d.emheader*/, /*lc = 5: length = sequence_struct.c.length*1 + id(0)*/
       0x00, 0x00, 0x00, 0x03/*sequence_struct.c.length*/, 'z', 'y', 'x'/*sequence_struct.c.data*/,
       };
 
@@ -648,13 +648,13 @@ TEST_F(CDRStreamer, cdr_optional)
       0x00, 0x00, 0x00, 0x01, /*optional_mutable_struct.b.emheader.nextint*/
       'b', /*optional_mutable_struct.b*/
       0x00, 0x00, 0x00, /*padding bytes*/
-      0xC0, 0x00, 0x00, 0x02, /*optional_mutable_struct.c.emheader*/
+      0x40, 0x00, 0x00, 0x02, /*optional_mutable_struct.c.emheader*/
       0x00, 0x00, 0x00, 0x01, /*optional_mutable_struct.c.emheader.nextint*/
       'c' /*optional_mutable_struct.c*/
       };
   bytes OMS_xcdr_v2_key {
       0x00, 0x00, 0x00, 0x09, /*dheader*/
-      0xC0, 0x00, 0x00, 0x02, /*optional_mutable_struct.c.emheader*/
+      0x40, 0x00, 0x00, 0x02, /*optional_mutable_struct.c.emheader*/
       0x00, 0x00, 0x00, 0x01, /*optional_mutable_struct.c.emheader.nextint*/
       'c' /*optional_mutable_struct.c*/
       };
@@ -715,13 +715,13 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.b.emheader.nextint*/
       'b', /*must_understand_struct.b*/
       0x00, 0x00, 0x00, /*padding bytes*/
-      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x40, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
   bytes v2_key {
       0x00, 0x00, 0x00, 0x09, /*dheader*/
-      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x40, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
@@ -744,7 +744,7 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.a.emheader.nextint*/
       'a', /*must_understand_struct.a*/
       0x00, 0x00, 0x00, /*padding bytes*/
-      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x40, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
@@ -782,7 +782,7 @@ TEST_F(CDRStreamer, cdr_must_understand)
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.b.emheader.nextint*/
       'b', /*must_understand_struct.b*/
       0x00, 0x00, 0x00, /*padding bytes*/
-      0xC0, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
+      0x40, 0x00, 0x00, 0x03, /*must_understand_struct.c.emheader*/
       0x00, 0x00, 0x00, 0x01, /*must_understand_struct.c.emheader.nextint*/
       'c', /*must_understand_struct.c*/
       };
