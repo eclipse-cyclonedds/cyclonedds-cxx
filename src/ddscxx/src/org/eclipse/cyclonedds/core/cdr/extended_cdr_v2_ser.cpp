@@ -383,7 +383,7 @@ bool xcdr_v2_stream::finish_consecutive()
 
 bool xcdr_v2_stream::write_em_header(const entity_properties_t &props)
 {
-  uint32_t mheader = (props.must_understand || props.is_key ? must_understand : 0)
+  uint32_t mheader = (props.must_understand ? must_understand : 0)
                      + (id_mask & props.m_id) + nextint;
 
   return write(*this, mheader) && write(*this, uint32_t(0));
