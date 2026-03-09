@@ -126,6 +126,14 @@ install(
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ddscxx"
   COMPONENT dev)
 
+if (INSTALL_PDB)
+  install(FILES $<TARGET_PDB_FILE:ddscxx>
+    DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    COMPONENT dev
+    OPTIONAL
+  )
+endif()
+
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
