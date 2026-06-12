@@ -1,0 +1,6 @@
+module optional_array_probe {
+  struct node;
+  @mutable struct node {
+    @id(1) @optional node child[2];
+  };
+};

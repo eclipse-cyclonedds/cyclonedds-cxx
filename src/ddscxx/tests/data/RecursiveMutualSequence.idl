@@ -1,0 +1,12 @@
+module mutual_sequence_probe {
+  struct a;
+  struct b;
+
+  @mutable struct a {
+    @id(1) sequence<b> bs;
+  };
+
+  @mutable struct b {
+    @id(1) sequence<a> as;
+  };
+};

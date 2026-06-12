@@ -28,6 +28,12 @@ idlcxx_generate(TARGET ddscxx_test_types FILES
   data/TraitsModels.idl
   WARNINGS no-implicit-extensibility)
 
+idlcxx_generate(TARGET ddscxx_recursive_probe_types FILES
+  data/RecursiveMutualSequence.idl
+  data/RecursiveOptionalSequenceSelf.idl
+  data/RecursiveOptionalTypedefSequenceSelf.idl
+  WARNINGS no-implicit-extensibility)
+
 configure_file(
   config_simple.xml.in config_simple.xml @ONLY)
 
@@ -104,7 +110,6 @@ target_include_directories(
   PRIVATE
     "$<BUILD_INTERFACE:${CYCLONE_SOURCE_DIR}/src/core/ddsc/src>")
 
-
 set_property(TARGET ddscxx_tests PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
 target_link_libraries(
   ddscxx_tests PRIVATE
@@ -112,6 +117,55 @@ target_link_libraries(
     GTest::GTest
     GTest::Main
     ddscxx_test_types)
+
+add_executable(ddscxx_recursive_idlcxx_probes
+  RecursiveIdlcxxProbes.cpp)
+set_property(TARGET ddscxx_recursive_idlcxx_probes PROPERTY CXX_STANDARD ${cyclonedds_cpp_std_to_use})
+target_link_libraries(
+  ddscxx_recursive_idlcxx_probes PRIVATE
+    CycloneDDS-CXX::ddscxx
+    ddscxx_recursive_probe_types)
+add_test(
+  NAME IDLCXXRecursiveProbes.supported_recursive_type_forms
+  COMMAND ddscxx_recursive_idlcxx_probes)
+set_tests_properties(
+  IDLCXXRecursiveProbes.supported_recursive_type_forms
+  PROPERTIES TIMEOUT 30)
+
+function(add_idlcxx_rejection_test name idl_file expect_error)
+  add_test(
+    NAME ${name}
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DIDLC=$<TARGET_FILE:CycloneDDS::idlc>
+      -DIDLCXX_BACKEND=$<TARGET_FILE:CycloneDDS-CXX::idlcxx>
+      -DIDL_FILE=${CMAKE_CURRENT_SOURCE_DIR}/data/${idl_file}
+      -DOUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/${name}
+      "-DEXPECT_ERROR=${expect_error}"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/check_idlcxx_rejection.cmake)
+  set_tests_properties(${name} PROPERTIES TIMEOUT 30)
+endfunction()
+
+add_idlcxx_rejection_test(
+  IDLCXXRecursiveProbes.optional_self_rejected
+  RecursiveOptionalSelf.idl
+  "Recursive @optional member 'child' is not supported by the C\\+\\+ generator")
+add_idlcxx_rejection_test(
+  IDLCXXRecursiveProbes.optional_array_self_rejected
+  RecursiveOptionalArraySelf.idl
+  "Recursive @optional member 'child' is not supported by the C\\+\\+ generator")
+add_idlcxx_rejection_test(
+  IDLCXXRecursiveProbes.optional_typedef_array_self_rejected
+  RecursiveOptionalTypedefArraySelf.idl
+  "Array has incomplete element type")
+add_idlcxx_rejection_test(
+  IDLCXXRecursiveProbes.external_union_case_rejected
+  RecursiveExternalUnionCase.idl
+  "@external union branches are not supported by the C\\+\\+ generator")
+add_idlcxx_rejection_test(
+  IDLCXXRecursiveProbes.optional_external_rejected
+  RecursiveOptionalExternal.idl
+  "Combining @optional and @external is not supported by the C\\+\\+ generator")
 
 if(ENABLE_ICEORYX)
   target_link_libraries(
@@ -127,6 +181,13 @@ endif()
 target_link_libraries(ddscxx_tests ${TEST_LINK_LIBS})
 
 gtest_add_tests(TARGET ddscxx_tests SOURCES ${sources} TEST_LIST tests)
+list(APPEND tests
+  IDLCXXRecursiveProbes.supported_recursive_type_forms
+  IDLCXXRecursiveProbes.optional_self_rejected
+  IDLCXXRecursiveProbes.optional_array_self_rejected
+  IDLCXXRecursiveProbes.optional_typedef_array_self_rejected
+  IDLCXXRecursiveProbes.external_union_case_rejected
+  IDLCXXRecursiveProbes.optional_external_rejected)
 
 # Ensure shared libraries are found
 if(WIN32)

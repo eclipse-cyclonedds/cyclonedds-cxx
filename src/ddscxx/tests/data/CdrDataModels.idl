@@ -59,6 +59,26 @@ module CDR_testing {
     sequence<long> l;
   };
 
+  struct recursive_node;
+  @mutable struct recursive_node {
+    @id(1) long value;
+    @id(2) sequence<recursive_node> children;
+  };
+
+  union recursive_union;
+  @mutable union recursive_union switch(long) {
+    case 1:
+      sequence<recursive_union> children;
+    case 0:
+      long value;
+  };
+
+  struct recursive_external_node;
+  @mutable struct recursive_external_node {
+    @id(1) long value;
+    @id(2) @external recursive_external_node child;
+  };
+
   @mutable struct sequence_struct_mutable {
     @key sequence<char> c;
     sequence<long> l;

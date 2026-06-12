@@ -1,0 +1,7 @@
+module optional_typedef_sequence_probe {
+  struct node;
+  typedef sequence<node> node_sequence;
+  @mutable struct node {
+    @id(1) @optional node_sequence children;
+  };
+};

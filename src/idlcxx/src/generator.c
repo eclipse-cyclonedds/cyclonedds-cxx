@@ -611,6 +611,159 @@ idl_type_t unalias_bitmask(const idl_node_t *node)
     return IDL_UINT8;
 }
 
+static bool
+type_in_visit_stack(
+  const idl_type_spec_t *type_spec,
+  const idl_type_spec_t **visited,
+  size_t nvisited)
+{
+  for (size_t i = 0; i < nvisited; i++) {
+    if (visited[i] == type_spec)
+      return true;
+  }
+
+  return false;
+}
+
+static bool
+type_reaches_target_by_value_impl(
+  const idl_type_spec_t *type_spec,
+  const idl_type_spec_t *target,
+  const idl_type_spec_t **visited,
+  size_t *nvisited,
+  size_t visited_max)
+{
+  type_spec = idl_strip(type_spec, IDL_STRIP_ALIASES | IDL_STRIP_ALIASES_ARRAY | IDL_STRIP_FORWARD);
+  target = idl_strip(target, IDL_STRIP_ALIASES | IDL_STRIP_FORWARD);
+
+  if (!type_spec || !target)
+    return false;
+  if (type_spec == target)
+    return true;
+  if (idl_is_sequence(type_spec))
+    return false;
+  if (type_in_visit_stack(type_spec, visited, *nvisited))
+    return false;
+  if (*nvisited == visited_max)
+    return true;
+
+  visited[(*nvisited)++] = type_spec;
+
+  if (idl_is_struct(type_spec)) {
+    const idl_struct_t *_struct = (const idl_struct_t *)type_spec;
+    if (_struct->inherit_spec &&
+        type_reaches_target_by_value_impl(
+          _struct->inherit_spec->base, target, visited, nvisited, visited_max))
+      return true;
+
+    const idl_member_t *member = NULL;
+    IDL_FOREACH(member, _struct->members) {
+      if (is_external(member))
+        continue;
+      if (type_reaches_target_by_value_impl(
+            member->type_spec, target, visited, nvisited, visited_max))
+        return true;
+    }
+  } else if (idl_is_union(type_spec)) {
+    const idl_union_t *_union = (const idl_union_t *)type_spec;
+    const idl_case_t *_case = NULL;
+    IDL_FOREACH(_case, _union->cases) {
+      if (is_external(_case))
+        continue;
+      if (type_reaches_target_by_value_impl(
+            _case->type_spec, target, visited, nvisited, visited_max))
+        return true;
+    }
+  }
+
+  return false;
+}
+
+static bool
+type_reaches_target_by_value(
+  const idl_type_spec_t *type_spec,
+  const idl_type_spec_t *target)
+{
+  const idl_type_spec_t *visited[128];
+  size_t nvisited = 0;
+
+  return type_reaches_target_by_value_impl(
+    type_spec, target, visited, &nvisited, sizeof(visited) / sizeof(visited[0]));
+}
+
+static idl_retcode_t
+validate_member(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
+{
+  const idl_member_t *member = node;
+  const idl_node_t *owner = ((const idl_node_t *)node)->parent;
+
+  (void)revisit;
+  (void)path;
+  (void)user_data;
+
+  if (is_optional(member) && is_external(member)) {
+    idl_error(pstate, idl_location(member),
+      "Combining @optional and @external is not supported by the C++ generator");
+    return IDL_RETCODE_SEMANTIC_ERROR;
+  }
+
+  if (!is_optional(member) || !owner || !idl_is_struct(owner))
+    return IDL_RETCODE_OK;
+
+  const idl_declarator_t *decl = NULL;
+  IDL_FOREACH(decl, member->declarators) {
+    if (type_reaches_target_by_value(member->type_spec, (const idl_type_spec_t *)owner)) {
+      idl_error(pstate, idl_location(decl),
+        "Recursive @optional member '%s' is not supported by the C++ generator",
+        decl->name->identifier);
+      return IDL_RETCODE_SEMANTIC_ERROR;
+    }
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+validate_case(
+  const idl_pstate_t *pstate,
+  bool revisit,
+  const idl_path_t *path,
+  const void *node,
+  void *user_data)
+{
+  const idl_case_t *_case = node;
+
+  (void)revisit;
+  (void)path;
+  (void)user_data;
+
+  if (is_external(_case)) {
+    idl_error(pstate, idl_location(_case),
+      "@external union branches are not supported by the C++ generator");
+    return IDL_RETCODE_SEMANTIC_ERROR;
+  }
+
+  return IDL_RETCODE_OK;
+}
+
+static idl_retcode_t
+validate_types(const idl_pstate_t *pstate)
+{
+  idl_visitor_t visitor;
+
+  memset(&visitor, 0, sizeof(visitor));
+  visitor.visit = IDL_MEMBER | IDL_CASE;
+  visitor.accept[IDL_ACCEPT_MEMBER] = &validate_member;
+  visitor.accept[IDL_ACCEPT_CASE] = &validate_case;
+
+  return idl_visit(pstate, pstate->root, &visitor, NULL);
+}
+
 static char *
 figure_guard(const char *file, const idl_md5_byte_t digest[16])
 {
@@ -922,6 +1075,8 @@ idl_retcode_t generate_nosetup(const idl_pstate_t *pstate, struct generator *gen
 
   if (!(guard = figure_guard(gen->header.path, pstate->digest)))
     return IDL_RETCODE_NO_MEMORY;
+  if ((ret = validate_types(pstate)))
+    goto err_print;
   if ((ret = print_header(gen->header.handle, gen->path, gen->header.path)))
     goto err_print;
   if ((ret = print_impl_header(gen->impl.handle, gen->path, gen->impl.path, gen->header.path)))
