@@ -345,6 +345,80 @@ TEST_F(CDRStreamer, cdr_sequence_nested)
   readwrite_deeper_test(SS, SS, SS_basic_normal_delimited, SS_key_v2, xcdr_v2_stream);
 }
 
+template<typename S, typename T>
+static void cdr_roundtrip(const T& in, T& out)
+{
+  S size_stream(endianness::big_endian);
+  ASSERT_TRUE(move(size_stream, in, key_mode::not_key));
+
+  bytes buffer(size_stream.position());
+  S write_stream(endianness::big_endian);
+  write_stream.set_buffer(buffer.data(), buffer.size());
+  ASSERT_TRUE(write(write_stream, in, key_mode::not_key));
+
+  S read_stream(endianness::big_endian);
+  read_stream.set_buffer(buffer.data(), buffer.size());
+  ASSERT_TRUE(read(read_stream, out, key_mode::not_key));
+}
+
+template<typename S>
+static void recursive_node_roundtrip(const recursive_node& in)
+{
+  recursive_node out;
+  cdr_roundtrip<S>(in, out);
+  ASSERT_EQ(out, in);
+}
+
+TEST_F(CDRStreamer, cdr_recursive_sequence)
+{
+  recursive_node root;
+  root.value(1);
+
+  recursive_node child;
+  child.value(2);
+
+  recursive_node grandchild;
+  grandchild.value(3);
+  child.children().push_back(grandchild);
+  root.children().push_back(child);
+
+  recursive_node_roundtrip<xcdr_v1_stream>(root);
+  recursive_node_roundtrip<xcdr_v2_stream>(root);
+}
+
+template<typename S>
+static void recursive_union_roundtrip(const recursive_union& in)
+{
+  recursive_union out;
+  cdr_roundtrip<S>(in, out);
+  ASSERT_EQ(out, in);
+}
+
+TEST_F(CDRStreamer, cdr_recursive_union_sequence)
+{
+  recursive_union leaf;
+  leaf.value(7);
+
+  recursive_union child;
+  child.children({leaf});
+
+  recursive_union root;
+  root.children({child});
+
+  recursive_union_roundtrip<xcdr_v1_stream>(root);
+  recursive_union_roundtrip<xcdr_v2_stream>(root);
+}
+
+TEST_F(CDRStreamer, cdr_recursive_external_metadata)
+{
+  const auto &props = get_type_props<recursive_external_node>();
+
+  ASSERT_EQ(props.size(), 3u);
+  ASSERT_EQ(props[1].m_id, 1u);
+  ASSERT_EQ(props[2].m_id, 2u);
+  ASSERT_EQ(props[2].first_member, nullptr);
+}
+
 
 /*verifying reads/writes of a struct containing arrays*/
 

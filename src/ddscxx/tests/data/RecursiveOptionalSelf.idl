@@ -1,0 +1,7 @@
+module optional_probe {
+  struct optional_node;
+  @mutable struct optional_node {
+    @id(1) long value;
+    @id(2) @optional optional_node child;
+  };
+};

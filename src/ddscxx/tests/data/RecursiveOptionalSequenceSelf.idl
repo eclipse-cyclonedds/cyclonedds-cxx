@@ -1,0 +1,7 @@
+module optional_sequence_probe {
+  struct optional_sequence_node;
+  @mutable struct optional_sequence_node {
+    @id(1) long value;
+    @id(2) @optional sequence<optional_sequence_node> children;
+  };
+};

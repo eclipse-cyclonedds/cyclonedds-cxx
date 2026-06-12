@@ -1,0 +1,9 @@
+module external_union_probe {
+  union external_union;
+  @mutable union external_union switch(long) {
+    case 1:
+      @external external_union child;
+    case 0:
+      long value;
+  };
+};

@@ -1,0 +1,7 @@
+module optional_typedef_array_probe {
+  struct node;
+  typedef node node_array[2];
+  @mutable struct node {
+    @id(1) @optional node_array child;
+  };
+};

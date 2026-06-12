@@ -1,0 +1,9 @@
+module optional_external_probe {
+  struct leaf {
+    long value;
+  };
+
+  @mutable struct holder {
+    @id(1) @optional @external leaf child;
+  };
+};
