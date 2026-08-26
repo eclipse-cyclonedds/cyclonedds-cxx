@@ -941,10 +941,15 @@ bool move_string(S& str, const T& toincr, size_t N)
 template<typename S, typename T, std::enable_if_t<std::is_base_of<cdr_stream, S>::value, bool> = true >
 bool max_string(S& str, const T& max_sz, size_t N)
 {
+  (void)max_sz;
   if (N == 0)
     str.position(SIZE_MAX); //unbounded string, theoretical length unlimited
-  else
-    return move_string(str, max_sz, N);
+  else if (str.position() != SIZE_MAX) {
+    if (!move(str, uint32_t()))
+      return false;
+    str.incr_position(N + 1);
+    str.alignment(1);
+  }
 
   return true;
 }
