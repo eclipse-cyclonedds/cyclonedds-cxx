@@ -46,7 +46,8 @@ bool xcdr_v1_stream::start_member(const entity_properties_t &prop, bool is_set)
       case stream_mode::read:
         // is_set comes from sample that is being filled (and so is typically false), but
         // we only get here if the field is present
-        m_buffer_end.push(position() + m_e_sz.top());
+        if (!push_buffer_end(m_e_sz.top()))
+          return false;
         break;
       default:
         break;
@@ -119,7 +120,8 @@ const entity_properties_t* xcdr_v1_stream::next_entity(const entity_properties_t
         continue;  //empty field
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
         continue;
       }
@@ -140,7 +142,8 @@ const entity_properties_t* xcdr_v1_stream::next_entity(const entity_properties_t
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
       } else {
         prop = p;
@@ -185,7 +188,8 @@ const entity_properties_t* xcdr_v1_stream::first_entity(const entity_properties_
         continue;  //empty field
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
         continue;
       }
@@ -199,7 +203,8 @@ const entity_properties_t* xcdr_v1_stream::first_entity(const entity_properties_
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
       } else {
         prop = p;

@@ -542,6 +542,24 @@ protected:
     bool check_struct_completeness(const entity_properties_t &props, const member_id_set &member_ids);
 
     /**
+     * @brief Pushes a bounded read limit relative to the current position.
+     *
+     * @param[in] N Number of bytes in the nested serialized entity.
+     *
+     * @return Whether the nested entity fits within the current read limit.
+     */
+    bool push_buffer_end(size_t N);
+
+    /**
+     * @brief Skips bytes while respecting the current read limit.
+     *
+     * @param[in] N Number of bytes to skip.
+     *
+     * @return Whether the skipped bytes fit within the current read limit.
+     */
+    bool skip(size_t N);
+
+    /**
      * @brief
      * Returns the previous entity at the current level (if any).
      *

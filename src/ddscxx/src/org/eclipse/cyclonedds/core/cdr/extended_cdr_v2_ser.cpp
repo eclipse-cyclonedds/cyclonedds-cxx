@@ -51,7 +51,8 @@ bool xcdr_v2_stream::start_member(const entity_properties_t &prop, bool is_set)
       break;
     case stream_mode::read:
       if (em_header_necessary(prop))
-        m_buffer_end.push(position() + m_e_sz.top());
+        if (!push_buffer_end(m_e_sz.top()))
+          return false;
       break;
     default:
       break;
@@ -129,7 +130,8 @@ const entity_properties_t* xcdr_v2_stream::next_entity(const entity_properties_t
         continue; //this field is empty
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
         continue;
       }
@@ -150,7 +152,8 @@ const entity_properties_t* xcdr_v2_stream::next_entity(const entity_properties_t
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
       } else {
         prop = p;
@@ -188,7 +191,8 @@ const entity_properties_t* xcdr_v2_stream::first_entity(const entity_properties_
         continue; //this field is empty
       } else if (temp.ignore) {
         //ignore this field
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
         continue;
       }
@@ -202,7 +206,8 @@ const entity_properties_t* xcdr_v2_stream::first_entity(const entity_properties_
         if (temp.must_understand &&
             status(must_understand_fail))
           return nullptr;
-        incr_position(m_e_sz.top());
+        if (!skip(m_e_sz.top()))
+          return nullptr;
         alignment(0);
       } else {
         prop = p;
@@ -254,10 +259,14 @@ bool xcdr_v2_stream::read_em_header(entity_properties_t &props)
   }
 
   if (factor) {
-    if (!read(*this, m_e_sz.top()))
+    uint32_t nextint_sz = 0;
+    if (!read(*this, nextint_sz))
       return false;
-    m_e_sz.top() *= factor;
-    m_e_sz.top() += 4;
+    if (nextint_sz > (UINT32_MAX - 4) / factor) {
+      status(read_bound_exceeded);
+      return false;
+    }
+    m_e_sz.top() = nextint_sz * factor + 4;
     //move cursor back 4 bytes, due to overlap of nextint and entity
     if ((emheader & lc_mask) > nextint)
       position(position()-4);
@@ -271,8 +280,7 @@ bool xcdr_v2_stream::read_d_header()
   uint32_t d_sz;
   if (!read(*this, d_sz))
     return false;
-  m_buffer_end.push(position() + d_sz);
-  return true;
+  return push_buffer_end(d_sz);
 }
 
 bool xcdr_v2_stream::start_struct(const entity_properties_t &props)

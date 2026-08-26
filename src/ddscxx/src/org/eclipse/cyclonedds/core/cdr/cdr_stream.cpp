@@ -85,7 +85,8 @@ const entity_properties_t* cdr_stream::previous_entity(const entity_properties_t
 bool cdr_stream::bytes_available(size_t N, bool peek)
 {
   assert(m_buffer_end.size());
-  if (position()+N > m_buffer_end.top()) {
+  const size_t end = std::min(m_buffer_end.top(), m_buffer_size);
+  if (position() > end || N > end - position()) {
     switch (m_mode) {
       case stream_mode::read:
         return !peek && !status(read_bound_exceeded);
@@ -97,6 +98,30 @@ bool cdr_stream::bytes_available(size_t N, bool peek)
         break;
     }
   }
+  return true;
+}
+
+bool cdr_stream::push_buffer_end(size_t N)
+{
+  assert(m_buffer_end.size());
+  const size_t end = std::min(m_buffer_end.top(), m_buffer_size);
+  if (position() > end || N > end - position()) {
+    status(read_bound_exceeded);
+    return false;
+  }
+  m_buffer_end.push(position() + N);
+  return true;
+}
+
+bool cdr_stream::skip(size_t N)
+{
+  assert(m_buffer_end.size());
+  const size_t end = std::min(m_buffer_end.top(), m_buffer_size);
+  if (position() > end || N > end - position()) {
+    status(read_bound_exceeded);
+    return false;
+  }
+  incr_position(N);
   return true;
 }
 

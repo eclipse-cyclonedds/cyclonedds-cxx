@@ -60,6 +60,17 @@ public:
 
 };
 
+template<typename T, typename S>
+static void verify_read_bound_exceeded(const bytes &in)
+{
+  bytes incopy(in);
+  T buffer;
+  S stream(endianness::big_endian);
+  stream.set_buffer(incopy.data(), incopy.size());
+  ASSERT_FALSE(read(stream, buffer, key_mode::not_key));
+  ASSERT_NE(static_cast<uint64_t>(0), stream.status() & serialization_status::read_bound_exceeded);
+}
+
 /*verifying streamer will not read/write beyond the end of the indicated buffer*/
 
 TEST_F(CDRStreamer, cdr_boundary)
@@ -89,6 +100,41 @@ TEST_F(CDRStreamer, cdr_boundary)
 
   ASSERT_TRUE(read(str, BS2, key_mode::not_key)); /*this write should finish, as the buffer limit is set as "unlimited"*/
   ASSERT_EQ(BS, BS2);
+}
+
+TEST_F(CDRStreamer, cdr_reject_oversized_nested_read_limits)
+{
+  bytes v2_dheader {
+      0x00, 0x00, 0x01, 0x00 /*appendablestruct.dheader*/
+      };
+  bytes v2_emheader_known {
+      0x00, 0x00, 0x00, 0x08 /*mutablestruct.dheader*/,
+      0x40, 0x00, 0x00, 0x03 /*mutablestruct.str.emheader*/,
+      0x00, 0x00, 0x01, 0x00 /*mutablestruct.str.emheader.nextint*/
+      };
+  bytes v2_emheader_unknown {
+      0x00, 0x00, 0x00, 0x08 /*mutablestruct.dheader*/,
+      0x40, 0x00, 0x00, 0x02 /*unknown emheader*/,
+      0x00, 0x00, 0x01, 0x00 /*unknown emheader.nextint*/
+      };
+  bytes v2_emheader_overflow {
+      0x00, 0x00, 0x00, 0x08 /*mutablestruct.dheader*/,
+      0x70, 0x00, 0x00, 0x03 /*mutablestruct.str.emheader, nextint*8*/,
+      0xff, 0xff, 0xff, 0xff /*mutablestruct.str.emheader.nextint*/
+      };
+  bytes v1_member_known {
+      0x00, 0x05, 0x01, 0x00 /*mutablestruct.c.mheader*/
+      };
+  bytes v1_member_unknown {
+      0x00, 0x02, 0x01, 0x00 /*unknown mheader*/
+      };
+
+  verify_read_bound_exceeded<appendablestruct, xcdr_v2_stream>(v2_dheader);
+  verify_read_bound_exceeded<mutablestruct, xcdr_v2_stream>(v2_emheader_known);
+  verify_read_bound_exceeded<mutablestruct, xcdr_v2_stream>(v2_emheader_unknown);
+  verify_read_bound_exceeded<mutablestruct, xcdr_v2_stream>(v2_emheader_overflow);
+  verify_read_bound_exceeded<mutablestruct, xcdr_v1_stream>(v1_member_known);
+  verify_read_bound_exceeded<mutablestruct, xcdr_v1_stream>(v1_member_unknown);
 }
 
 /*verifying reads/writes of a basic struct*/
