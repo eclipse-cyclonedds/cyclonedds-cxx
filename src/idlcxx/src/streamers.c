@@ -730,7 +730,7 @@ type_references_type_impl(
   if (type_in_visit_stack(type_spec, visited, *nvisited))
     return false;
   /* Prefer a finite property table if the type graph is unexpectedly deep. */
-  if (*nvisited == visited_max)
+  if (*nvisited >= visited_max)
     return true;
 
   visited[(*nvisited)++] = type_spec;
@@ -759,11 +759,11 @@ type_references_type(
   const idl_type_spec_t *type_spec,
   const idl_type_spec_t *target)
 {
-  const idl_type_spec_t *visited[128];
+  const idl_type_spec_t *visited[IDLCXX_TYPE_VISIT_LIMIT];
   size_t nvisited = 0;
 
   return type_references_type_impl(
-    type_spec, target, visited, &nvisited, sizeof(visited) / sizeof(visited[0]));
+    type_spec, target, visited, &nvisited, IDLCXX_TYPE_VISIT_LIMIT);
 }
 
 static idl_retcode_t

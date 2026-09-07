@@ -579,6 +579,100 @@ bool is_selfcontained(const void *node)
   return true;
 }
 
+static bool css_union(const idl_union_t *_union)
+{
+  (void)_union;
+
+  /* TopicTraits::isConstantSerializedSize() is a fixed-serialized-size cache
+     hint.  A union may serialize to a different size depending on the active
+     branch, so take the conservative path for all unions. */
+  return false;
+}
+
+static bool
+type_in_visit_stack(
+  const idl_type_spec_t *type_spec,
+  const idl_type_spec_t **visited,
+  size_t nvisited);
+
+static bool
+is_constant_serialized_size_impl(
+  const void *node,
+  const idl_type_spec_t **visited,
+  size_t *nvisited,
+  size_t visited_max);
+
+static bool css_struct(
+  const idl_struct_t *str,
+  const idl_type_spec_t **visited,
+  size_t *nvisited,
+  size_t visited_max)
+{
+  bool result = true;
+  const idl_member_t *mem = NULL;
+  const idl_type_spec_t *type_spec =
+    idl_strip((const idl_type_spec_t *)str,
+      IDL_STRIP_ALIASES | IDL_STRIP_ALIASES_ARRAY | IDL_STRIP_FORWARD);
+
+  if (!type_spec || type_in_visit_stack(type_spec, visited, *nvisited))
+    return false;
+  if (*nvisited >= visited_max)
+    return false;
+
+  visited[(*nvisited)++] = type_spec;
+
+  IDL_FOREACH(mem, str->members) {
+    if (!is_constant_serialized_size_impl(
+          mem->type_spec, visited, nvisited, visited_max)) {
+      result = false;
+      break;
+    }
+  }
+
+  if (result && str->inherit_spec)
+    result = is_constant_serialized_size_impl(
+      str->inherit_spec->base, visited, nvisited, visited_max);
+
+  (*nvisited)--;
+
+  return result;
+}
+
+static bool
+is_constant_serialized_size_impl(
+  const void *node,
+  const idl_type_spec_t **visited,
+  size_t *nvisited,
+  size_t visited_max)
+{
+  if (idl_is_sequence(node)
+   || idl_is_string(node)
+   || is_optional(node)) {
+    return false;
+  } else if (idl_is_typedef(node)) {
+    return is_constant_serialized_size_impl(
+      ((const idl_typedef_t*)node)->type_spec, visited, nvisited, visited_max);
+  } else if (idl_is_struct(node)) {
+    return css_struct((const idl_struct_t*)node, visited, nvisited, visited_max);
+  } else if (idl_is_union(node)) {
+    return css_union((const idl_union_t*)node);
+  } else if (idl_is_declarator(node)) {
+    const idl_node_t *parent = ((const idl_node_t*)node)->parent;
+    assert (idl_is_typedef(parent));
+    return is_constant_serialized_size_impl(parent, visited, nvisited, visited_max);
+  }
+  return true;
+}
+
+bool is_constant_serialized_size(const void *node)
+{
+  const idl_type_spec_t *visited[IDLCXX_TYPE_VISIT_LIMIT];
+  size_t nvisited = 0;
+
+  return is_constant_serialized_size_impl(
+    node, visited, &nvisited, IDLCXX_TYPE_VISIT_LIMIT);
+}
+
 idl_extensibility_t
 get_extensibility(const void *node)
 {
@@ -644,7 +738,7 @@ type_reaches_target_by_value_impl(
     return false;
   if (type_in_visit_stack(type_spec, visited, *nvisited))
     return false;
-  if (*nvisited == visited_max)
+  if (*nvisited >= visited_max)
     return true;
 
   visited[(*nvisited)++] = type_spec;
@@ -684,11 +778,11 @@ type_reaches_target_by_value(
   const idl_type_spec_t *type_spec,
   const idl_type_spec_t *target)
 {
-  const idl_type_spec_t *visited[128];
+  const idl_type_spec_t *visited[IDLCXX_TYPE_VISIT_LIMIT];
   size_t nvisited = 0;
 
   return type_reaches_target_by_value_impl(
-    type_spec, target, visited, &nvisited, sizeof(visited) / sizeof(visited[0]));
+    type_spec, target, visited, &nvisited, IDLCXX_TYPE_VISIT_LIMIT);
 }
 
 static idl_retcode_t

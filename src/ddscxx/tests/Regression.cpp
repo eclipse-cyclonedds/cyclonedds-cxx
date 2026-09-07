@@ -421,6 +421,69 @@ TEST_F(Regression, unaligned_access)
   ASSERT_EQ(s.ll(), int64_t(0x08090A0B0C0D0E0F));  //size 4 reads should be done at 4 byte offsets in stream
 }
 
+TEST_F(Regression, union_selfcontained_and_serialized_size_traits)
+{
+  using org::eclipse::cyclonedds::topic::TopicTraits;
+
+  EXPECT_TRUE(TopicTraits<different_size_union>::isSelfContained());
+  EXPECT_TRUE(TopicTraits<different_size_union_topic>::isSelfContained());
+  EXPECT_TRUE(TopicTraits<small_union_case>::isConstantSerializedSize());
+  EXPECT_TRUE(TopicTraits<big_union_case>::isConstantSerializedSize());
+  EXPECT_FALSE(TopicTraits<different_size_union>::isConstantSerializedSize());
+  EXPECT_FALSE(TopicTraits<different_size_union_topic>::isConstantSerializedSize());
+  EXPECT_FALSE(TopicTraits<external_fixed_size_member>::isSelfContained());
+  EXPECT_TRUE(TopicTraits<external_fixed_size_member>::isConstantSerializedSize());
+}
+
+TEST_F(Regression, serialized_size_uses_active_union_case)
+{
+  small_union_case small_variant;
+  small_variant.f32_value(12.3F);
+  different_size_union_topic small_sample;
+  small_sample.internal().small_variant(small_variant);
+
+  big_union_case big_variant;
+  big_variant.d_value_1(11.9);
+  big_variant.d_value_2(32.2);
+  different_size_union_topic big_sample;
+  big_sample.internal().big_variant(big_variant);
+
+  size_t small_size = 0;
+  size_t big_size = 0;
+  using topic_type = different_size_union_topic;
+
+  ASSERT_TRUE((get_serialized_size<topic_type, xcdr_v2_stream, key_mode::not_key>(
+    small_sample, small_size)));
+  ASSERT_TRUE((get_serialized_size<topic_type, xcdr_v2_stream, key_mode::not_key>(
+    big_sample, big_size)));
+  EXPECT_GT(big_size, small_size);
+}
+
+TEST_F(Regression, write_union_case_larger_than_first_case)
+{
+  char topic_name[100];
+  create_unique_topic_name("different_size_union_topic", topic_name, sizeof(topic_name));
+
+  dds::domain::DomainParticipant participant(org::eclipse::cyclonedds::domain::default_id());
+  dds::topic::Topic<different_size_union_topic> topic(participant, topic_name);
+  dds::pub::Publisher publisher(participant);
+  dds::pub::DataWriter<different_size_union_topic> writer(publisher, topic);
+
+  small_union_case small_variant;
+  small_variant.f32_value(12.3F);
+  different_size_union_topic small_sample;
+  small_sample.internal().small_variant(small_variant);
+
+  big_union_case big_variant;
+  big_variant.d_value_1(11.9);
+  big_variant.d_value_2(32.2);
+  different_size_union_topic big_sample;
+  big_sample.internal().big_variant(big_variant);
+
+  ASSERT_NO_THROW(writer.write(small_sample));
+  ASSERT_NO_THROW(writer.write(big_sample));
+}
+
 TEST_F(Regression, union_comparisons)
 {
   regression_models::union_without_default u_1, u_2, u_3, u_4;

@@ -259,6 +259,36 @@ struct s_unaligned_access {
   long long ll;
 };
 
+struct small_union_case {
+  float f32_value;
+};
+
+struct big_union_case {
+  double d_value_1;
+  double d_value_2;
+};
+
+enum different_size_union_discriminator {
+  ds_small,
+  ds_big
+};
+
+union different_size_union switch(different_size_union_discriminator) {
+  case ds_small:
+    small_union_case small_variant;
+  case ds_big:
+    big_union_case big_variant;
+};
+
+@topic @final
+struct different_size_union_topic {
+  different_size_union internal;
+};
+
+struct external_fixed_size_member {
+  @external long value;
+};
+
 enum regression_enum {
     case_1,
     case_2,

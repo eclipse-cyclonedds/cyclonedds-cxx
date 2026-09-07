@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include "idlc/generator.h"
 
+enum { IDLCXX_TYPE_VISIT_LIMIT = 128 };
+
 struct generator {
   const char *path;
   char *array_format;
@@ -86,6 +88,9 @@ bool is_nested(
   const void *node);
 
 bool is_selfcontained(
+  const void *node);
+
+bool is_constant_serialized_size(
   const void *node);
 
 idl_extensibility_t get_extensibility(

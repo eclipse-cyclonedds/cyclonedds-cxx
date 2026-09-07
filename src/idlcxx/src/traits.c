@@ -117,6 +117,11 @@ emit_traits(
     "{\n"
     "  return false;\n"
     "}\n\n";
+  static const char *constantsizefmt =
+    "template <> constexpr bool TopicTraits<%1$s>::isConstantSerializedSize()\n"
+    "{\n"
+    "  return true;\n"
+    "}\n\n";
   static const char *datarepsfmt =
     "template <> constexpr allowable_encodings_t TopicTraits<%1$s>::allowableEncodings()\n"
     "{\n"
@@ -164,6 +169,10 @@ emit_traits(
 
   if (!is_selfcontained(node) &&
       idl_fprintf(gen->header.handle, selfcontainedfmt, name) < 0)
+    return IDL_RETCODE_NO_MEMORY;
+
+  if (is_constant_serialized_size(node) &&
+      idl_fprintf(gen->header.handle, constantsizefmt, name) < 0)
     return IDL_RETCODE_NO_MEMORY;
 
   if (emit_isKeyless(pstate, node) &&

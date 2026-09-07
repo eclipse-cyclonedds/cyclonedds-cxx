@@ -137,6 +137,20 @@ public:
     }
 
     /**
+     * @brief Returns whether all instances of TOPIC serialize to the same size.
+     *
+     * Used by serialization code to decide whether a computed serialized size can be cached.
+     * The default is conservative so older or hand-written topic traits stay on the per-sample
+     * size calculation path unless they explicitly opt in.
+     *
+     * @return Whether TOPIC has a constant serialized size.
+     */
+    static constexpr bool isConstantSerializedSize()
+    {
+        return false;
+    }
+
+    /**
      * @brief Returns the allowable encodings for this topic.
      *
      * Used to determine which encoding type to write in combination with the data representation QoS.

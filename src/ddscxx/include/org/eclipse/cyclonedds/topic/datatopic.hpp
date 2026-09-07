@@ -17,6 +17,7 @@
 #include <cstring>
 #include <vector>
 #include <atomic>
+#include <type_traits>
 
 #include "dds/ddsrt/md5.h"
 #include "dds/ddsc/dds_loaned_sample.h"
@@ -287,10 +288,17 @@ bool get_serialized_fixed_size(const T& sample, size_t &sz)
   return true;
 }
 
+template<typename T, typename = void>
+struct constant_serialized_size_trait: std::false_type { };
+
+template<typename T>
+struct constant_serialized_size_trait<T, std::void_t<decltype(TopicTraits<T>::isConstantSerializedSize())>>
+  : std::integral_constant<bool, TopicTraits<T>::isConstantSerializedSize()> { };
+
 template<typename T, class S, key_mode K>
 bool get_serialized_size(const T& sample, size_t &sz)
 {
-  if (TopicTraits<T>::isSelfContained()) {
+  if (constant_serialized_size_trait<T>::value) {
     if (!get_serialized_fixed_size<T,S,K>(sample,sz))
       return false;
   } else {
