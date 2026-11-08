@@ -80,10 +80,10 @@ struct dds::topic::topic_type_support { };
 /** @endcond */
 
 
+// The caller supplies the semicolon terminating the specialization.
 #define REGISTER_TOPIC_TYPE(TOPIC_TYPE) \
-    namespace dds { namespace topic { \
-    template<> struct is_topic_type<TOPIC_TYPE> { \
+    template<> struct dds::topic::is_topic_type<TOPIC_TYPE> { \
         enum { value = 1 }; \
-    }; } }
+    }
 
 #endif /* OMG_DDS_TOPIC_TOPIC_TRAITS_HPP_ */
