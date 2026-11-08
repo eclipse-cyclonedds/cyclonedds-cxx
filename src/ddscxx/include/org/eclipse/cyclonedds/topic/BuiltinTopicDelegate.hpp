@@ -661,7 +661,7 @@ public:
     ::dds::core::policy::BinaryProperty     binary_property_;
     ::dds::core::policy::EntityName         entity_name_;
 
-    dds_builtintopic_endpoint_t* ddsc_endpoint_;
+    dds_builtintopic_endpoint_t* ddsc_endpoint_ = nullptr;
 };
 
 //==============================================================================
@@ -953,7 +953,7 @@ public:
     ::dds::core::policy::BinaryProperty     binary_property_;
     ::dds::core::policy::EntityName         entity_name_;
 
-    dds_builtintopic_endpoint_t* ddsc_endpoint_;
+    dds_builtintopic_endpoint_t* ddsc_endpoint_ = nullptr;
 };
 
 //==============================================================================
