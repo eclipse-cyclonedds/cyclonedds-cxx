@@ -246,6 +246,29 @@ TEST_F(KeyHash, wire_keyhash_mutable)
   verify_wire_keyhash<SerdataKeyOrderMutable, xcdr_v2_stream>(sample, key, false);
 }
 
+TEST_F(KeyHash, wire_keyhash_mutable_xcdr1)
+{
+  const SerdataKeyOrderMutable sample{1, 2, 3};
+  const bytes key{
+    0, 0, 0, 0, 0, 0, 0, 3, // c
+    1};                   // a
+  // The final key-holder is nine bytes: mutable parameter headers do not
+  // contribute to its maximum size or force MD5. This matches Fast DDS.
+  verify_wire_keyhash<SerdataKeyOrderMutable, xcdr_v1_stream>(sample, key, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_nested_mutable_xcdr1)
+{
+  const SerdataKeyOrderFinalNestedMutable sample{4, 5, SerdataKeyOrderMutable{1, 2, 3}};
+  const bytes key{
+    0, 0, 0, 0, 0, 0, 0, 3, // z.c
+    1,                       // z.a
+    4};                      // x
+  // Nested mutable types also become final in the key-holder.
+  verify_wire_keyhash<SerdataKeyOrderFinalNestedMutable, xcdr_v1_stream>(sample, key, false);
+  verify_wire_keyhash<SerdataKeyOrderFinalNestedMutable, xcdr_v2_stream>(sample, key, false);
+}
+
 TEST_F(KeyHash, wire_keyhash_nested)
 {
   const SerdataKeyOrderMutableNestedFinal sample{4, 5, SerdataKeyOrder{1, 2, 3}};
