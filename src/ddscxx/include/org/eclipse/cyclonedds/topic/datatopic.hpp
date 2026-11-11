@@ -297,7 +297,7 @@ template<typename T, typename = void>
 struct constant_serialized_size_trait: std::false_type { };
 
 template<typename T>
-struct constant_serialized_size_trait<T, std::void_t<decltype(TopicTraits<T>::isConstantSerializedSize())>>
+struct constant_serialized_size_trait<T, decltype(void(TopicTraits<T>::isConstantSerializedSize()))>
   : std::integral_constant<bool, TopicTraits<T>::isConstantSerializedSize()> { };
 
 template<typename T, class S, key_mode K>
