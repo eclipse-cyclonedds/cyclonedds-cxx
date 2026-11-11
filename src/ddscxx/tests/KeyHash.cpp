@@ -10,6 +10,7 @@
 
 #include "StreamingUtility.hpp"
 #include "KeyHashModels.hpp"
+#include <org/eclipse/cyclonedds/topic/datatopic.hpp>
 
 using namespace Keyhash_testing;
 
@@ -170,4 +171,108 @@ TEST_F(KeyHash, nested_types_implicit)
   hash_test(n_f_i, n_f_i_h);
   hash_test(n_f_i_2, n_f_i_2_h);
   hash_test(n_m_i, n_m_i_h);
+}
+
+// These bytes are the big-endian, sorted key serialization, without an
+// encapsulation header or struct/member headers. Keep them explicit to catch bugs.
+template<typename T, typename S>
+static void verify_wire_keyhash(const T& sample, bytes key_bytes, bool hashed)
+{
+  ddscxx_sertype<T, S> st;
+  ddsi_keyhash_t basic_key;
+  to_key(sample, basic_key);
+
+  ddsi_keyhash_t expected{};
+  if (hashed)
+    org::eclipse::cyclonedds::topic::complex_key(key_bytes, expected);
+  else
+    std::copy(key_bytes.begin(), key_bytes.end(), expected.value);
+
+  for (auto kind : {SDK_DATA, SDK_KEY}) {
+    auto sd = serdata_from_sample<T, S>(&st, kind, &sample);
+    ASSERT_NE(sd, nullptr);
+    // Instance identity must remain independent of the wire representation.
+    auto typed_sd = static_cast<ddscxx_serdata<T>*>(sd);
+    EXPECT_EQ(0, memcmp(typed_sd->key().value, basic_key.value, 16));
+    const auto instance_hash = sd->hash;
+
+    for (bool force_md5 : {false, true}) {
+      ddsi_keyhash_t actual, expected_hash = expected;
+      if (force_md5 && !hashed)
+        org::eclipse::cyclonedds::topic::complex_key(key_bytes, expected_hash);
+      // Use the installed callback to check that it selects the writer's stream.
+      sd->ops->get_keyhash(sd, &actual, force_md5);
+      EXPECT_EQ(0, memcmp(actual.value, expected_hash.value, 16));
+    }
+    EXPECT_EQ(sd->hash, instance_hash);
+    EXPECT_EQ(0, memcmp(typed_sd->key().value, basic_key.value, 16));
+    ddsi_serdata_unref(sd);
+  }
+  ddsrt_atomic_st32(&st.flags_refc, 0);
+  ddsi_sertype_fini(&st);
+}
+
+TEST_F(KeyHash, wire_keyhash_alignment)
+{
+  const SerdataKeyAlignment sample{1, 3, 4};
+  const bytes cdr_key{
+    1, 0, 0, 0, 0, 0, 0, 0, // a and 8-byte alignment
+    0, 0, 0, 0, 0, 0, 0, 3, // b
+    4};                       // c
+  const bytes xcdr2_key{
+    1, 0, 0, 0,             // a and 4-byte alignment
+    0, 0, 0, 0, 0, 0, 0, 3, // b
+    4};                     // c
+  verify_wire_keyhash<SerdataKeyAlignment, basic_cdr_stream>(sample, cdr_key, true);
+  verify_wire_keyhash<SerdataKeyAlignment, xcdr_v1_stream>(sample, cdr_key, true);
+  verify_wire_keyhash<SerdataKeyAlignment, xcdr_v2_stream>(sample, xcdr2_key, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_appendable)
+{
+  const SerdataKeyStringBoundedAppendable sample{1, "abc"};
+  const bytes key{
+    1, 0, 0, 0,           // a and padding
+    0, 0, 0, 4, 'a', 'b', 'c', 0}; // b
+  verify_wire_keyhash<SerdataKeyStringBoundedAppendable, xcdr_v2_stream>(sample, key, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_mutable)
+{
+  const SerdataKeyOrderMutable sample{1, 2, 3};
+  const bytes key{
+    0, 0, 0, 0, 0, 0, 0, 3, // c
+    1};                   // a
+  verify_wire_keyhash<SerdataKeyOrderMutable, xcdr_v2_stream>(sample, key, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_nested)
+{
+  const SerdataKeyOrderMutableNestedFinal sample{4, 5, SerdataKeyOrder{1, 2, 3}};
+  const bytes key{
+    1, 0, 0, 0,              // z.a and padding
+    0, 0, 0, 0, 0, 0, 0, 3, // z.c
+    4};                      // x
+  verify_wire_keyhash<SerdataKeyOrderMutableNestedFinal, xcdr_v2_stream>(sample, key, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_collection)
+{
+  const SerdataKeyArrStrBounded sample{{"ab", "cd"}};
+  const bytes key{
+    0, 0, 0, 15,             // Collection DHEADER is retained
+    0, 0, 0, 3, 'a', 'b', 0,
+    0,                       // padding
+    0, 0, 0, 3, 'c', 'd', 0};
+  verify_wire_keyhash<SerdataKeyArrStrBounded, xcdr_v2_stream>(sample, key, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_unbounded)
+{
+  const SerdataKeyStringAppendable sample{1, "abc"};
+  const bytes key{
+    1, 0, 0, 0,
+    0, 0, 0, 4, 'a', 'b', 'c', 0};
+  // Hashing depends on the maximum key size, even for a short string value.
+  verify_wire_keyhash<SerdataKeyStringAppendable, xcdr_v2_stream>(sample, key, true);
 }

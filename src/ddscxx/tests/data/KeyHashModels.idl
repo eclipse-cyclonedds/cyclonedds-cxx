@@ -10,6 +10,12 @@
 
 module Keyhash_testing {
 
+@final struct SerdataKeyAlignment {
+    @key uint8 a;
+    @key uint64 b;
+    @key uint8 c;
+};
+
 @final struct SerdataInner1 {
     @id(2) long i_2;
     @id(1) long i_1;

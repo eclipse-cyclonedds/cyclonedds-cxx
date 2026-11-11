@@ -83,8 +83,8 @@ using org::eclipse::cyclonedds::topic::TopicTraits;
 template<typename T, class S, key_mode K>
 bool get_serialized_size(const T& sample, size_t &sz);
 
-template<typename T>
-bool to_key(const T& tokey, ddsi_keyhash_t& hash)
+template<typename T, class S = basic_cdr_stream, bool PadMD5 = true>
+bool to_key(const T& tokey, ddsi_keyhash_t& hash, bool force_md5 = false)
 {
   if (TopicTraits<T>::isKeyless())
   {
@@ -92,9 +92,9 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
     return true;
   } else
   {
-    basic_cdr_stream str(endianness::big_endian);
+    S str(endianness::big_endian);
     size_t sz = 0;
-    if (!get_serialized_size<T, basic_cdr_stream, key_mode::sorted>(tokey, sz)) {
+    if (!get_serialized_size<T, S, key_mode::sorted>(tokey, sz)) {
       assert(false);
       return false;
     }
@@ -127,7 +127,12 @@ bool to_key(const T& tokey, ddsi_keyhash_t& hash)
         fptr = &org::eclipse::cyclonedds::topic::complex_key;
       }
     }
-    return (*fptr)(buffer, hash);
+    const auto hash_function = force_md5 ? &org::eclipse::cyclonedds::topic::complex_key : fptr;
+    // Preserve the cached instance key's historical padding, but wire MD5
+    // hashes cover only the serialized bytes, without the 16-byte key padding.
+    if (!PadMD5 && hash_function == &org::eclipse::cyclonedds::topic::complex_key)
+      buffer.resize(sz);
+    return (*hash_function)(buffer, hash);
   }
 }
 
@@ -636,24 +641,18 @@ size_t serdata_print(
   return copy_len;
 }
 
-template <typename T>
+template <typename T, class S = basic_cdr_stream>
 void serdata_get_keyhash(
   const ddsi_serdata* d, struct ddsi_keyhash* buf,
   bool force_md5)
 {
-  auto ptr = static_cast<const ddscxx_serdata<T>*>(d);
+  // The cached basic CDR key is used for representation-independent instance
+  // lookup. The wire key hash must use the writer's data representation.
+  auto ptr = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(d));
   assert(buf);
-  if (force_md5 && !ptr->key_md5_hashed())
-  {
-    ddsrt_md5_state_t md5st;
-    ddsrt_md5_init(&md5st);
-    ddsrt_md5_append(&md5st, static_cast<const ddsrt_md5_byte_t*>(ptr->key().value), 16);
-    ddsrt_md5_finish(&md5st, static_cast<ddsrt_md5_byte_t*>(buf->value));
-  }
-  else
-  {
-    memcpy(buf->value, ptr->key().value, 16);
-  }
+  using key_stream = typename std::conditional<std::is_same<S, xcdr_v2_stream>::value,
+    xcdr_v2_stream, basic_cdr_stream>::type;
+  to_key<T, key_stream, false>(*ptr->getT(), *buf, force_md5);
 }
 
 template<typename T, typename S>
@@ -781,7 +780,7 @@ struct ddscxx_serdata_ops: public ddsi_serdata_ops {
   &serdata_untyped_to_sample<T>,
   &serdata_free<T>,
   &serdata_print<T>,
-  &serdata_get_keyhash<T>,
+  &serdata_get_keyhash<T, S>,
   &serdata_from_loaned_sample<T, S>,
   &serdata_from_psmx<T>
   } { ; }

@@ -270,22 +270,29 @@ private:
   /**
    * @brief
    * Checks whether a D-header is necessary for the indicated entity.
+   * Struct headers are omitted from the sorted key-hash serialization.
    *
    * @param[in] props The entity whose properties to check.
    *
    * @return Whether the entity props needs a D-header
    */
-  inline bool d_header_necessary(const entity_properties_t &props) const { return props.e_ext == extensibility::ext_appendable || props.e_ext == extensibility::ext_mutable; }
+  inline bool d_header_necessary(const entity_properties_t &props) const {
+    return m_key != key_mode::sorted &&
+      (props.e_ext == extensibility::ext_appendable || props.e_ext == extensibility::ext_mutable);
+  }
 
   /**
    * @brief
    * Checks whether a EM-header is necessary for the indicated entity.
+   * Member headers are omitted from the sorted key-hash serialization.
    *
    * @param[in] props The entity whose properties to check.
    *
    * @return Whether the entity props needs a EM-header
    */
-  inline bool em_header_necessary(const entity_properties_t &props) const { return props.p_ext == extensibility::ext_mutable; }
+  inline bool em_header_necessary(const entity_properties_t &props) const {
+    return m_key != key_mode::sorted && props.p_ext == extensibility::ext_mutable;
+  }
 
   /**
    * @brief
