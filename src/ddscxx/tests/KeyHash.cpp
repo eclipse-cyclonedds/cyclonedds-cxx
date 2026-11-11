@@ -196,6 +196,13 @@ static void verify_wire_keyhash(const T& sample, bytes key_bytes, bool hashed)
     EXPECT_EQ(0, memcmp(typed_sd->key().value, basic_key.value, 16));
     const auto instance_hash = sd->hash;
 
+    ddsrt_iovec_t iov{};
+    iov.iov_base = typed_sd->data();
+    iov.iov_len = static_cast<decltype(iov.iov_len)>(typed_sd->size());
+    auto received = serdata_from_ser_iov<T>(&st, kind, 1, &iov, typed_sd->size());
+    ASSERT_NE(received, nullptr);
+    EXPECT_TRUE(serdata_eqkey<T>(sd, received));
+
     for (bool force_md5 : {false, true}) {
       ddsi_keyhash_t actual, expected_hash = expected;
       if (force_md5 && !hashed)
@@ -203,9 +210,12 @@ static void verify_wire_keyhash(const T& sample, bytes key_bytes, bool hashed)
       // Use the installed callback to check that it selects the writer's stream.
       sd->ops->get_keyhash(sd, &actual, force_md5);
       EXPECT_EQ(0, memcmp(actual.value, expected_hash.value, 16));
+      received->ops->get_keyhash(received, &actual, force_md5);
+      EXPECT_EQ(0, memcmp(actual.value, expected_hash.value, 16));
     }
     EXPECT_EQ(sd->hash, instance_hash);
     EXPECT_EQ(0, memcmp(typed_sd->key().value, basic_key.value, 16));
+    ddsi_serdata_unref(received);
     ddsi_serdata_unref(sd);
   }
   ddsrt_atomic_st32(&st.flags_refc, 0);
@@ -298,4 +308,148 @@ TEST_F(KeyHash, wire_keyhash_unbounded)
     0, 0, 0, 4, 'a', 'b', 'c', 0};
   // Hashing depends on the maximum key size, even for a short string value.
   verify_wire_keyhash<SerdataKeyStringAppendable, xcdr_v2_stream>(sample, key, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_bounded_sequence)
+{
+  verify_wire_keyhash<KeyAuditBoundedSequence, xcdr_v2_stream>(
+    KeyAuditBoundedSequence{{}, 99}, bytes{0, 0, 0, 0}, false);
+  verify_wire_keyhash<KeyAuditBoundedSequence, xcdr_v2_stream>(
+    KeyAuditBoundedSequence{{1, 2}, 99}, bytes{0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2}, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_unbounded_sequence)
+{
+  verify_wire_keyhash<KeyAuditUnboundedSequence, xcdr_v2_stream>(
+    KeyAuditUnboundedSequence{{}}, bytes{0, 0, 0, 0}, true);
+  verify_wire_keyhash<KeyAuditUnboundedSequence, xcdr_v2_stream>(
+    KeyAuditUnboundedSequence{{1, 2}}, bytes{0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2}, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_size_boundary)
+{
+  verify_wire_keyhash<KeyAuditString16, xcdr_v2_stream>(
+    KeyAuditString16{""}, bytes{0, 0, 0, 1, 0}, false);
+  verify_wire_keyhash<KeyAuditString16, xcdr_v2_stream>(
+    KeyAuditString16{"abcdefghijk"}, bytes{0, 0, 0, 12, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 0}, false);
+  verify_wire_keyhash<KeyAuditString17, xcdr_v2_stream>(
+    KeyAuditString17{""}, bytes{0, 0, 0, 1, 0}, true);
+  verify_wire_keyhash<KeyAuditString17, xcdr_v2_stream>(
+    KeyAuditString17{"abcdefghijkl"}, bytes{0, 0, 0, 13, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 0}, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_spec_example)
+{
+  // DDS-XTypes 1.3 section 7.6.8, example 2; also RTPS 2.5 section 9.6.4.8.
+  const KeyAuditSpecExample sample{"BLUE", UINT64_C(0x123456789abcdef0)};
+  const bytes key{0, 0, 0, 5, 'B', 'L', 'U', 'E', 0, 0, 0, 0,
+    0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0};
+  verify_wire_keyhash<KeyAuditSpecExample, xcdr_v2_stream>(sample, key, true);
+  const unsigned char normative_hash[]{0xf9, 0x1a, 0x59, 0xe3, 0x2e, 0x45, 0x35, 0xd9,
+    0xa6, 0x9c, 0xd5, 0xd9, 0xf5, 0xb6, 0xe3, 0x6e};
+  ddsi_keyhash_t hash;
+  to_key<KeyAuditSpecExample, xcdr_v2_stream, false>(sample, hash);
+  EXPECT_EQ(0, memcmp(hash.value, normative_hash, 16));
+}
+
+TEST_F(KeyHash, wire_keyhash_enum_and_bitmask)
+{
+  verify_wire_keyhash<KeyAuditEnumKey, xcdr_v2_stream>(
+    KeyAuditEnumKey{KeyAuditEnum::one, 3}, bytes{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3}, false);
+  verify_wire_keyhash<KeyAuditEnumArray, xcdr_v2_stream>(
+    KeyAuditEnumArray{{KeyAuditEnum::one, KeyAuditEnum::two}}, bytes{0, 0, 0, 2, 1, 2}, false);
+  verify_wire_keyhash<KeyAuditMaskKey, xcdr_v2_stream>(KeyAuditMaskKey{3}, bytes{3}, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_primitive_encodings)
+{
+  const KeyAuditPrimitives sample{true, 'Z', -2, 0x01020304, 1.0f, -2.0};
+  const bytes key{1, 'Z', 0xff, 0xfe, 1, 2, 3, 4, 0x3f, 0x80, 0, 0,
+    0xc0, 0, 0, 0, 0, 0, 0, 0};
+  verify_wire_keyhash<KeyAuditPrimitives, xcdr_v2_stream>(sample, key, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_aggregate_collections)
+{
+  const std::array<SerdataInner2, 2> values{{SerdataInner2{1, 99}, SerdataInner2{2, 98}}};
+  verify_wire_keyhash<KeyAuditAggregateArray, xcdr_v2_stream>(
+    KeyAuditAggregateArray{values}, bytes{0, 0, 0, 8, 0, 0, 0, 1, 0, 0, 0, 2}, false);
+  verify_wire_keyhash<KeyAuditAggregateSequence, xcdr_v2_stream>(
+    KeyAuditAggregateSequence{{values[0], values[1]}}, bytes{0, 0, 0, 12, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2}, false);
+  verify_wire_keyhash<KeyAuditImplicitArray, xcdr_v2_stream>(
+    KeyAuditImplicitArray{{SerdataInner1{1, 2}, SerdataInner1{3, 4}}},
+    bytes{0, 0, 0, 16, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 3}, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_inheritance)
+{
+  KeyAuditDerived sample;
+  sample.a() = 1;
+  sample.b() = 3;
+  sample.ignored() = 99;
+  sample.extra() = 98;
+  verify_wire_keyhash<KeyAuditDerived, xcdr_v2_stream>(sample,
+    bytes{0, 0, 0, 0, 0, 0, 0, 3, 1}, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_union_discriminator)
+{
+  KeyAuditUnion sample;
+  sample.ignored(1234);
+  verify_wire_keyhash<KeyAuditUnion, xcdr_v2_stream>(sample, bytes{0, 0, 0, 1}, false);
+  sample.other("non-key value");
+  verify_wire_keyhash<KeyAuditUnion, xcdr_v2_stream>(sample, bytes{0, 0, 0, 2}, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_external)
+{
+  KeyAuditExternal sample;
+  sample.value(new uint64_t(3));
+  verify_wire_keyhash<KeyAuditExternal, xcdr_v2_stream>(sample,
+    bytes{0, 0, 0, 0, 0, 0, 0, 3}, false);
+}
+
+TEST_F(KeyHash, wire_keyhash_nested_arrays)
+{
+  KeyAuditNestedArrays sample;
+  sample.values()[0] = {{"ab", "cd"}};
+  sample.values()[1] = {{"ef", "gh"}};
+  const bytes key{0, 0, 0, 31,
+    0, 0, 0, 3, 'a', 'b', 0, 0,
+    0, 0, 0, 3, 'c', 'd', 0, 0,
+    0, 0, 0, 3, 'e', 'f', 0, 0,
+    0, 0, 0, 3, 'g', 'h', 0};
+  verify_wire_keyhash<KeyAuditNestedArrays, xcdr_v2_stream>(sample, key, true);
+}
+
+TEST_F(KeyHash, wire_keyhash_raw_loan)
+{
+  SerdataKeyAlignment sample{1, 3, 4};
+  ddscxx_sertype<SerdataKeyAlignment, xcdr_v2_stream> st;
+  const unsigned char expected[]{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 0, 0, 0};
+  const unsigned char expected_md5[]{0xe9, 0xf0, 0x5d, 0x4d, 0xed, 0xf0, 0xc7, 0x79,
+    0x15, 0xcd, 0xc7, 0x91, 0xfd, 0x9b, 0x29, 0xa0};
+  for (auto kind : {SDK_DATA, SDK_KEY}) {
+    dds_psmx_metadata metadata{};
+    metadata.sample_size = sizeof(sample);
+    dds_loaned_sample_t loan{};
+    loan.ops.free = [](dds_loaned_sample_t*) { };
+    loan.loan_origin.origin_kind = DDS_LOAN_ORIGIN_KIND_PSMX;
+    loan.metadata = &metadata;
+    loan.sample_ptr = &sample;
+    ddsrt_atomic_st32(&loan.refc, 1);
+    auto sd = serdata_from_loaned_sample<SerdataKeyAlignment, xcdr_v2_stream>(
+      &st, kind, reinterpret_cast<const char*>(&sample), &loan, false);
+    ASSERT_NE(sd, nullptr);
+    EXPECT_EQ(static_cast<ddscxx_serdata<SerdataKeyAlignment>*>(sd)->data(), nullptr);
+    ddsi_keyhash_t actual;
+    sd->ops->get_keyhash(sd, &actual, false);
+    EXPECT_EQ(0, memcmp(actual.value, expected, 16));
+    sd->ops->get_keyhash(sd, &actual, true);
+    EXPECT_EQ(0, memcmp(actual.value, expected_md5, 16));
+    ddsi_serdata_unref(sd);
+    EXPECT_EQ(ddsrt_atomic_ld32(&loan.refc), 0u);
+  }
+  ddsrt_atomic_st32(&st.flags_refc, 0);
+  ddsi_sertype_fini(&st);
 }

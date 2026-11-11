@@ -650,9 +650,15 @@ void serdata_get_keyhash(
   // lookup. The wire key hash must use the writer's data representation.
   auto ptr = const_cast<ddscxx_serdata<T>*>(static_cast<const ddscxx_serdata<T>*>(d));
   assert(buf);
+  const T* sample;
+  if (ptr->loan && (ptr->loan->metadata->sample_state == DDS_LOANED_SAMPLE_STATE_RAW_KEY ||
+                   ptr->loan->metadata->sample_state == DDS_LOANED_SAMPLE_STATE_RAW_DATA))
+    sample = static_cast<const T*>(ptr->loan->sample_ptr);
+  else
+    sample = ptr->getT();
   using key_stream = typename std::conditional<std::is_same<S, xcdr_v2_stream>::value,
     xcdr_v2_stream, basic_cdr_stream>::type;
-  to_key<T, key_stream, false>(*ptr->getT(), *buf, force_md5);
+  to_key<T, key_stream, false>(*sample, *buf, force_md5);
 }
 
 template<typename T, typename S>
