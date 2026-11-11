@@ -247,8 +247,8 @@ static void test_keyhash(const T& sample, const kh_t& expected, const kh_t& expe
     auto sd = serdata_from_sample<T, org::eclipse::cyclonedds::core::cdr::xcdr_v1_stream>(st, SDK_DATA, &sample);
     ASSERT_GT(sd->hash, static_cast<uint32_t>(0));
     struct ddsi_keyhash khraw, khraw_md5;
-    serdata_get_keyhash<T>(sd, &khraw, false);
-    serdata_get_keyhash<T>(sd, &khraw_md5, true);
+    sd->ops->get_keyhash(sd, &khraw, false);
+    sd->ops->get_keyhash(sd, &khraw_md5, true);
     kh_t kh, kh_md5;
     std::copy(std::begin(khraw.value), std::end(khraw.value), std::begin(kh));
     std::copy(std::begin(khraw_md5.value), std::end(khraw_md5.value), std::begin(kh_md5));
@@ -272,11 +272,11 @@ TEST_F(Serdata, keyhash_nokey)
 
 TEST_F(Serdata, keyhash_smallkey)
 {
-    // perl -e 'print pack("N*",0x12345678,0,0,0)' | md5 | sed -e 's/\(..\)/0x\1,/g' -e 's/,$//'
+    // MD5 covers the four serialized key bytes, without the trailing padding.
     using T = Keyhash::SmallKey;
     const T v{0x12345678, 0xabcdef01};
     const kh_t kh{0x12,0x34,0x56,0x78,0,0,0,0,0,0,0,0,0,0,0,0};
-    const kh_t kh_md5{0x85,0x47,0xc6,0x54,0x16,0x3c,0x12,0x43,0x85,0x14,0x91,0x8a,0x1b,0xa8,0x7f,0xeb};
+    const kh_t kh_md5{0x89,0x1a,0x26,0xe0,0x58,0x1a,0x7f,0x2c,0x9a,0x57,0x4c,0xef,0xf1,0x54,0x9e,0xe1};
     test_keyhash<T>(v, kh, kh_md5);
 }
 
@@ -302,11 +302,11 @@ TEST_F(Serdata, keyhash_stringkey)
 
 TEST_F(Serdata, keyhash_bstringkey)
 {
-    // perl -e '$v=pack("N/Z*x@16","Elckerlijc");print $v' | md5 | sed -e 's/\(..\)/0x\1,/g' -e 's/,$//'
+    // MD5 covers the length and null-terminated string, without trailing padding.
     using T = Keyhash::BStringKey;
     const T v{"Elckerlijc",0xabcdef01};
     const kh_t kh{0x00,0x00,0x00,0x0b,0x45,0x6c,0x63,0x6b,0x65,0x72,0x6c,0x69,0x6a,0x63,0x00,0x00};
-    const kh_t kh_md5{0x39, 0x59, 0x90, 0xf2, 0x0f, 0xd2, 0x53, 0x5a, 0x54, 0x07, 0xec, 0xa5, 0x65, 0xcc, 0xd2, 0xd7};
+    const kh_t kh_md5{0xea,0x5d,0x9c,0xa7,0x34,0x3a,0x83,0x1e,0x4d,0x96,0xa9,0x15,0x5f,0x86,0xe6,0xac};
     test_keyhash<T>(v, kh, kh_md5);
 }
 
@@ -314,7 +314,7 @@ TEST_F(Serdata, keyhash_long_bstringkey)
 {
     using T = Keyhash::BStringLongKey;
     const T short_v{"short",0xabcdef01};
-    const kh_t short_kh{0x41,0xf7,0x2a,0x7b,0x10,0x90,0xf7,0xdc,0x87,0x0e,0x64,0x7f,0x52,0x3c,0x3d,0x5b};
+    const kh_t short_kh{0xa8,0x8e,0xd6,0x84,0xd3,0xcd,0xcb,0x7c,0x86,0xd4,0x88,0x9b,0xc9,0xb2,0xca,0x51};
     test_keyhash<T>(short_v, short_kh, short_kh);
 
     const T long_v{"longkeyabcdefghijklm",0xabcdef01};
