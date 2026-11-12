@@ -80,7 +80,7 @@ typedef string<2> KeyAuditStringPair[2];
 
 @final union KeyAuditUnion switch (@key long) {
     case 1: uint64 ignored;
-    case 2: string other;
+    case 2: uint32 other;
 };
 
 @final struct SerdataKeyAlignment {
