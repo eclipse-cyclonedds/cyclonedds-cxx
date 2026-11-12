@@ -397,7 +397,9 @@ TEST_F(KeyHash, wire_keyhash_union_discriminator)
   KeyAuditUnion sample;
   sample.ignored(1234);
   verify_wire_keyhash<KeyAuditUnion, xcdr_v2_stream>(sample, bytes{0, 0, 0, 1}, false);
-  sample.other("non-key value");
+  sample.ignored(UINT64_C(0xfedcba9876543210));
+  verify_wire_keyhash<KeyAuditUnion, xcdr_v2_stream>(sample, bytes{0, 0, 0, 1}, false);
+  sample.other(5678);
   verify_wire_keyhash<KeyAuditUnion, xcdr_v2_stream>(sample, bytes{0, 0, 0, 2}, false);
 }
 
