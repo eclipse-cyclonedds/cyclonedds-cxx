@@ -92,13 +92,13 @@ strategy:
       cc: clang-18
       cxx: clang++-18
       legacy: on
-    'macOS 14 with Clang 15 (Debug, x86_64)':
-      image: macOS-14
+    'macOS 15 with Clang 17 (Debug, x86_64)':
+      image: macOS-15
       sanitizer: address
       cc: clang
       cxx: clang++
-    'macOS 14 with Clang 15 (Release, x86_64)':
-      image: macOS-14
+    'macOS 15 with Clang 17 (Release, x86_64)':
+      image: macOS-15
       build_type: Release
       sanitizer: address,undefined
       cc: clang

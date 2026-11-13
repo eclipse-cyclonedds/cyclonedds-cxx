@@ -10,6 +10,85 @@
 
 module Keyhash_testing {
 
+@final struct KeyAuditBoundedSequence {
+    @key sequence<uint32, 2> values;
+    uint32 ignored;
+};
+
+@final struct KeyAuditUnboundedSequence {
+    @key sequence<uint32> values;
+};
+
+@final struct KeyAuditString16 {
+    @key string<11> value;
+};
+
+@final struct KeyAuditString17 {
+    @key string<12> value;
+};
+
+@final struct KeyAuditSpecExample {
+    @key string<12> label;
+    @key uint64 id;
+};
+
+@bit_bound(8) enum KeyAuditEnum { zero, one, two };
+
+@final struct KeyAuditEnumKey {
+    @key KeyAuditEnum value;
+    @key uint64 id;
+};
+
+@final struct KeyAuditEnumArray {
+    @key KeyAuditEnum values[2];
+};
+
+@bit_bound(8) bitmask KeyAuditMask { bit_a, bit_b };
+
+@final struct KeyAuditMaskKey {
+    @key KeyAuditMask value;
+};
+
+@final struct KeyAuditPrimitives {
+    @key boolean flag;
+    @key char ch;
+    @key int16 s;
+    @key uint32 u;
+    @key float f;
+    @key double d;
+};
+
+@final struct KeyAuditExternal {
+    @key @external uint64 value;
+};
+
+typedef string<2> KeyAuditStringPair[2];
+
+@final struct KeyAuditNestedArrays {
+    @key KeyAuditStringPair values[2];
+};
+
+@final struct KeyAuditBase {
+    @id(30) @key uint8 a;
+    @id(10) @key uint64 b;
+    @id(40) uint8 ignored;
+};
+
+@final struct KeyAuditDerived : KeyAuditBase {
+    @id(20) uint32 extra;
+};
+
+@final union KeyAuditUnion switch (@key long) {
+    case 1: uint64 ignored;
+    case 2: uint32 other;
+};
+
+@final struct SerdataKeyAlignment {
+    @key uint8 a;
+    @key uint64 b;
+    @key uint8 c;
+};
+
 @final struct SerdataInner1 {
     @id(2) long i_2;
     @id(1) long i_1;
@@ -18,6 +97,18 @@ module Keyhash_testing {
 @final struct SerdataInner2 {
     @id(2) @key long i_2;
     @id(1) long i_1;
+};
+
+@final struct KeyAuditAggregateArray {
+    @key SerdataInner2 values[2];
+};
+
+@final struct KeyAuditAggregateSequence {
+    @key sequence<SerdataInner2, 2> values;
+};
+
+@final struct KeyAuditImplicitArray {
+    @key SerdataInner1 values[2];
 };
 
 @final struct SerdataOuter {
