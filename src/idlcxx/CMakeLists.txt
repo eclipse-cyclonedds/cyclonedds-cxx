@@ -28,7 +28,7 @@ if(ENABLE_LEGACY)
   target_compile_definitions(idlcxx PUBLIC "IDLCXX_USE_BOOST")
 endif()
 
-target_link_libraries(idlcxx PUBLIC CycloneDDS::idl)
+target_link_libraries(idlcxx PUBLIC CycloneDDS::idl CycloneDDS::libidlc)
 
 add_library(${PROJECT_NAME}::idlcxx ALIAS idlcxx)
 

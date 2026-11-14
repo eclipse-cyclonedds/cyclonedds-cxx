@@ -16,7 +16,9 @@ function(IDLCXX_GENERATE)
   cmake_parse_arguments(
     IDLCXX "" "${one_value_keywords}" "${multi_value_keywords}" "" ${ARGN})
 
-  find_package(CycloneDDS REQUIRED)
+  if(NOT TARGET CycloneDDS::libidlc)
+    find_package(CycloneDDS REQUIRED)
+  endif()
 
   # find idlcxx shared library
   if(CMAKE_CROSSCOMPILING)
