@@ -234,7 +234,27 @@ install(
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
   COMPONENT dev)
 
-find_package(CycloneDDS REQUIRED)
+# Search for CycloneDDS or download it if requested
+# It is possible to chose a custom tag to download by setting
+# -DCYCLONEDDS_CXX_DOWNLOAD_TAG=<custom_commit_hash/branch> at configure time
+option(CYCLONEDDS_CXX_DOWNLOAD_CYCLONEDDS "Download CycloneDDS if not found locally" ON)
+set(CYCLONEDDS_CXX_DOWNLOAD_TAG "master" CACHE STRING "CycloneDDS tag to download")
+
+if(NOT TARGET CycloneDDS::ddsc)
+  find_package(CycloneDDS QUIET)
+  if(NOT CycloneDDS_FOUND AND CYCLONEDDS_CXX_DOWNLOAD_CYCLONEDDS)
+    message(STATUS "Downloading CycloneDDS tag ${CYCLONEDDS_CXX_DOWNLOAD_TAG}")
+    include(FetchContent)
+    FetchContent_Declare(
+      CycloneDDS
+      GIT_REPOSITORY "https://github.com/eclipse-cyclonedds/cyclonedds.git"
+      GIT_TAG ${CYCLONEDDS_CXX_DOWNLOAD_TAG}
+    )
+    FetchContent_MakeAvailable(CycloneDDS)
+  endif()
+else()
+  message(FATAL_ERROR "Cyclone DDS C library was not found on the system")
+endif()
 
 get_target_property(cyclonedds_has_typelib CycloneDDS::ddsc TYPELIB_IS_AVAILABLE)
 mark_as_advanced(cyclonedds_has_typelib)
@@ -272,15 +292,12 @@ if(ENABLE_QOS_PROVIDER)
   set(DDSCXX_HAS_QOS_PROVIDER "1")
 endif()
 
-
-
 configure_file(features.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/src/ddscxx/include/dds/features.hpp")
 
 install(
   FILES "${CycloneDDS-CXX_SOURCE_DIR}/src/idlcxx/Generate.cmake"
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/idlcxx"
   COMPONENT dev)
-
 
 add_subdirectory(src)
 if(BUILD_EXAMPLES)
