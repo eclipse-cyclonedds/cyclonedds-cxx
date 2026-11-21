@@ -89,6 +89,11 @@ org::eclipse::cyclonedds::core::DDScObjectDelegate::add_to_entity_map(org::eclip
     DDScObjectDelegate::entity_map_mutex.unlock ();
 }
 
+bool org::eclipse::cyclonedds::core::DDScObjectDelegate::is_valid() const
+{
+  return org::eclipse::cyclonedds::core::ObjectDelegate::is_valid();
+}
+
 void
 org::eclipse::cyclonedds::core::DDScObjectDelegate::delete_from_entity_map()
 {
